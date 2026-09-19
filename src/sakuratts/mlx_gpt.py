@@ -81,6 +81,17 @@ class MLXGPT:
         self.length = 0
         self.text_length = 0
 
+    def release_request_state(self):
+        """Discard request KV and diagnostics while retaining model weights.
+
+        Unlike reset(), this does not allocate replacement KV. Calling it
+        repeatedly is safe; decode then requires a new prefill. Allocator
+        cache policy remains with the caller, as does model lifetime.
+        """
+        self.keys, self.values = [], []
+        self.length = self.text_length = 0
+        self.prefill_profile = None
+
     def _linear(self, x, prefix):
         result = x @ self.weights[prefix + ".weight"].T
         if prefix + ".bias" in self.weights:

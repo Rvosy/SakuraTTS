@@ -24,6 +24,7 @@
 - 准备好官方文本和参考条件后的自有 GPT → 声学 → PCM 已扩展到十例，token、停止和最终波形对照通过；仍保留独立概率和 MRTE 超差。见 [十例整链](experiments/2026-09-19-expanded-prepared-speech.md)。该路径不包含原始文本和参考准备，也不等于独立 RNG 验收。
 - [声码器逐残差对求值](experiments/2026-09-19-decoder-workspace.md)保持十例波形逐位不变，两条短句的 decoder 分配器峰值约降 45%，decoder 耗时增加约 10%–14%。结合可选 GPT 按请求释放，两条准备条件的短请求测到 622.05 MiB MLX 高水位；十例常驻策略轮则为 1,989.12 MiB。这些数据含义和条件不同，不代表完整 TTS 或统一的模型显存指标。
 - [日文原始目标文本 + 独立参考包](experiments/2026-09-19-native-japanese-text-speech.md)已接入自有生成，四例 32 次正常请求对照通过。新日文环境未安装 Torch、Transformers 或中文前端包；原始日文 WAV 与已获用户确认的样音逐字节相同。[新参考准备](experiments/2026-09-19-japanese-reference-preparation.md)已从原始音频重算出相同的五组条件，[普通日文入口](experiments/2026-09-19-japanese-cli-free-sampling.md)的两个新 seed 均正常生成。其他日文样例、新随机样音质量、更换参考和 Windows 交付继续验收。
+- [模型复用与状态释放](experiments/2026-09-19-native-model-lifecycle.md)已完成三策略对照与公开 API 回归。保留权重、释放请求 KV 相对每次重载省约 0.41–0.44 秒；相对保留旧 KV，空闲 MLX active 少 96 MiB。生成峰值和 RSS 未改善，按请求卸载仍保留。
 - 自有轻量运行时仍在研发，流式、取消、多参考 / 新模型和 Windows 干净部署未验收。
 
 ## 当前实施顺序：先完成可迁移的运行链
@@ -32,8 +33,8 @@
 
 1. 原始日文、真实语言路由、独立参考包到自有 GPT / SoVITS / PCM 已接通，继续补齐新随机样音质量和运行边界。日文按官方规则提供零 BERT，不导入中文 BERT / G2PW；遇到尚未实现的语言段明确报告不支持，不删掉文本。
 2. [离线参考准备工具](experiments/2026-09-19-japanese-reference-preparation.md)已验证同一参考重算。下一步验证实际更换参考、失败恢复和身份绑定；开发工具依赖 Torch，普通请求不常驻辅助模型。
-3. [共享声学加载](experiments/2026-09-19-sovits-shared-loading.md)已减少重复校验，WeightNorm 折叠因完整收益不稳定保留为显式选项。接着比较权重常驻、每次重载和请求状态释放，保留原模型及高精度对照。
-4. 按实测完善单请求 KV、阶段释放、参考特征复用与工作区，整理模型、语言资源和运行依赖的实际体积。[G2PW 映射权重](experiments/2026-09-19-g2pw-mapped-ort.md)已在 Mac CPU 降低 RSS；策略可迁移，优化文件须在目标运行库重新生成并验证。
+3. [共享声学加载](experiments/2026-09-19-sovits-shared-loading.md)已减少重复校验，WeightNorm 折叠因完整收益不稳定保留为显式选项。权重常驻与请求状态释放已实测并提供公开接口，保留原模型及高精度对照。
+4. 继续验证阶段释放、参考更换与请求取消，优先处理仍能在 Mac 证明的资源重叠；声学生成前释放已结束的 GPT 状态是下一项候选，需重新检查峰值与输出。依赖和模型的实际文件体积见[日文运行入口](japanese-runtime.md)。[G2PW 映射权重](experiments/2026-09-19-g2pw-mapped-ort.md)的成果保留，新增中文工作继续暂缓。
 5. 基础链路可靠后，再独立评估精度变化与量化。CUDA Graph、Tensor Core 布局、TensorRT tactic、专用 CUDA kernel 和独显峰值均留待 Windows 实机。
 
 当剩余收益只能由 CUDA 硬件或 Metal 专用实现验证时，收尾当前证据并列出 Windows 接续事项；不为维持 Mac 工作而搭建多后端框架。最终兼容、速度、质量、常驻与峰值结论仍按同能力实验判断。

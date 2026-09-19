@@ -10,6 +10,8 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 
 目前可通过[日文命令行入口](docs/japanese-runtime.md)直接输入原文并生成 WAV。新参考准备工具已从原始音频重建同一参考条件，五组数组与旧包相同；普通生成使用独立参考包和 NumPy 随机数，不读取历史实验的目标特征或 token。两个新 seed 已正常生成，新样音的内容和音色仍单独验收。
 
+连续请求可复用模型并显式释放当前 GPT 状态：四条日文实测每次省约 0.41–0.44 秒，空闲 MLX active 比保留旧 KV 少 96 MiB，所有对照 WAV 不变。生成峰值和 RSS 没有因此降低；需要更低空闲常驻时仍可卸载全部模型。见[生命周期对照](docs/experiments/2026-09-19-native-model-lifecycle.md)。
+
 ## 文档
 
 | 文档 | 内容 |

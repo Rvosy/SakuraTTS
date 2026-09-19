@@ -63,7 +63,7 @@
 | 自有 NumPy 采样与非流式停止 | 十条 Top-p 1 请求的 1805 步 token、停止和语义切片与官方相同；logits 通过，2 例 3 个概率值超差，整轮仍失败 | GPT 误差传播、其他 seed、独立 RNG、Top-p 小于 1 及 GPU 采样；见 [十例生成](../experiments/2026-09-19-expanded-native-generation.md) |
 | 日文原始目标文本与独立环境 | 四例目标 phones / BERT、生成 token / 停止 / 语义切片相同，波形通过；正常 32 请求通过；日文原报告 WAV 与已试听文件逐字节相同；见 [原文到 PCM](../experiments/2026-09-19-native-japanese-text-speech.md) | 独立 RNG 质量、其余三例人工试听与 Windows 待验；现阶段限单个 cut0 片段和 top_p=1 |
 | 普通日文独立随机生成 | 新参考包、原始三句、NumPy seed 0 / 1 / 0 三个独立进程正常 EOS；重复 seed WAV 字节相同；见 [CLI 验证](../experiments/2026-09-19-japanese-cli-free-sampling.md) | 未做这两条新 WAV 的 ASR / 人工试听，不继承旧随机回放的音质结论 |
-| 日文原始参考准备 | 固定官方 MPS / FP32 重算同一参考，五数组逐字相同；独立 reader 无 Torch 读取通过；见 [准备工具](../experiments/2026-09-19-japanese-reference-preparation.md) | 开发准备依赖 Torch；实际更换参考、多参考、CPU 准备及 Windows 未验，新包完整来源元数据约 2.3 MiB |
+| 日文原始参考准备 | 固定官方 MPS / FP32 重算同一参考，五数组逐字相同；独立 reader 无 Torch 读取通过；见 [准备工具](../experiments/2026-09-19-japanese-reference-preparation.md) | 开发准备依赖 Torch；实际更换参考、多参考、CPU 准备及 Windows 未验，新包连同来源元数据约 2.3 MiB |
 | 准备好条件的自有语音链 | 十例自有 GPT → 语义 → 声学 → PCM 的 token、停止和最终波形通过；原始两例 WAV 与用户确认的四样音逐字节相同 | 既有概率及 MRTE 超差仍保留；原始文本和参考准备、独立 RNG、扩展质量及完整延迟；见 [十例整链](../experiments/2026-09-19-expanded-prepared-speech.md) |
 | 自有完整声学链 | 650 张量解码包严格重载通过；CPU encoder + GPU flow/decoder 的十例波形通过，119/120 阶段通过 | 日文标点 MRTE 单元素超差；全 GPU 两例仍有中文波形超差；见 [扩展声学](../experiments/2026-09-19-expanded-acoustic.md) |
 | 声学 CPU softmax 高精度累积 | 显式 `encoder_softmax=fp64-accumulation` 的十例 120 阶段通过原容差；源码输出逐位复现候选；默认 FP32 保留原行为 | 编码器时间与工作区增加；新输出的整链、试听待验，其他模型与 GPU 不覆盖；见 [精度与成本](../experiments/2026-09-19-softmax-candidates.md) |
@@ -82,6 +82,7 @@
 | 声学共享归档 | 650 权重与十例 120 阶段逐位相同；整包校验 / 打开从三次变一次；五新进程加载中位 231→155 ms | 权重常驻不变，Mac 加载数据不代表 CUDA；见 [共享加载](../experiments/2026-09-19-sovits-shared-loading.md) |
 | 权重无损存储 | 三归档少 801.37 MiB；加载恢复的 1,303 张量逐位相同；复用已加载权重收回 Prefill 重复读取代价 | 加载成本和最终分发仍需衡量；不代表运行权重减少，见 [存储实验](../experiments/2026-09-19-lossless-weight-storage.md) |
 | GPT 按阶段释放 | 两条 prepared 请求的 GPT/KV 可在声学生成前释放，输出逐位保持；结合 pair 调度与缓存设置，本轮 allocator peak 为 622.05 MiB | 每次重载增加延迟；不含文本/参考准备、不推广到长句与其他模型；见 [生命周期](../experiments/2026-09-19-gpt-lifecycle.md) 与 [工作区](../experiments/2026-09-19-decoder-workspace.md) |
+| 日文模型复用与请求状态释放 | 四例三策略共 240 成功请求及 12 预期失败通过；公开 API 另有 16 成功 / 4 失败恢复，WAV 字节相同；空闲 active 少 96 MiB，复用比每次重载省约 0.41–0.44 s；见 [对照](../experiments/2026-09-19-native-model-lifecycle.md) | MLX 统一内存数据；本轮生成峰值与 RSS 未下降，长期泄漏、其他模型、Windows 和声学前释放待验 |
 | 当前单参考声学条件预计算 | ge/ge512 与官方实际条件相同；10 条 WAV 逐字节保持；请求后 allocated 少 148.99 MiB | RSS 峰值未降、通用持久化与多参考；仅显式实验选项 |
 | 模型卸载 | 官方单进程卸载后 MPS allocated / driver 边界已记录 | 多轮泄漏、空闲恢复与角色切换 |
 | 流式、取消与切换 | 未验证 | 输出顺序、资源释放及后续请求正确性 |
