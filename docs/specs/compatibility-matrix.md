@@ -76,6 +76,7 @@
 | G2PW 完整拼音接口 | 规范化中文片段经 Text → Inputs → Session → 拼音填回，27 组输出 / 异常一致，353 数组逐位相同，无 Torch/Transformers；原边界保留 | 中文段规则已另行接通，完整请求待验；见 [拼音闭环](../experiments/2026-09-19-g2pw-pinyin.md) |
 | 中文 V2 语言段 | 10 组真实 G2PW 后规范化、音素、ID、word2ph 全同；27 组规范化和 45,050 词典检查一致；五组 MLX CPU BERT 通过原阈值 | 上层语言路由与原始文本到音频仍待接入；见 [中文前端](../experiments/2026-09-19-chinese-phones.md) |
 | 日文语言段 | 26 组完整 NJD、labels、韵律和音素 ID 与官方一致，实际覆盖 Nani、Sudachi 与用户词典，无 Torch；[原始目标入口](../experiments/2026-09-19-japanese-target-frontend.md)及四例整链已另行通过 | 扩展语料和新试听待验；见 [日文前端](../experiments/2026-09-19-japanese-g2p.md) |
+| 独立日文资源导出 | 不依赖历史 Harness；三资源与已验证包逐字相同，完整语言模型保留，14 项检查通过；见 [资源导出](../experiments/2026-09-19-japanese-resource-export.md) | 当前包约 145.53 MiB，不含安装包内主词典 / Nani / Sudachi；最终分发材料与 Windows 待验 |
 | G2PW 映射 ORT 包 | 实际接口 27 组 / 353 数组逐位一致；同条件 OS 最高 RSS 约 1357→851 MiB | Mac CPU 数据；Windows 需重建包，完整 TTS 资源未测；见 [映射实验](../experiments/2026-09-19-g2pw-mapped-ort.md) |
 | 单参考持久包 | 五数组新进程逐字节相同，12 项身份 / 损坏拒绝检查通过；完整包约 203 KiB | 不含无 Torch 的新参考准备，历史缺失身份已明列；见 [参考包](../experiments/2026-09-19-reference-condition-package.md) |
 | 静态 WeightNorm 折叠 | 显式选项下 131 权重、十例 330 阶段逐位相同；Flow 峰值少约 105–107 MB，完整声学收益较小 | 加载后缓存增加、完整速度有波动，默认关闭；Mac GPU 数据，见 [预计算取舍](../experiments/2026-09-19-sovits-static-weights.md) |
