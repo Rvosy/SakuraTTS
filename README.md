@@ -6,7 +6,7 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 
 2026-09-19 在 Apple M4 上，使用“朱雀院红叶”V2Pro 完成了官方与 Lite 对照，并保存用户语音问题的消融与复听证据。自有 GPT、采样和完整声学计算已接通：使用准备好的官方条件，十例生成 token、停止和最终波形通过对照；两个原始回归样例的四条官方 / 自有样音经用户确认正常且无明显差异。独立诊断仍有三个采样概率值和一个 MRTE 中间值超差，尚未完成整体数值验收。
 
-已验证的改动包括复用 GPT 权重、降低声码器工作区、可选按请求释放 GPT，以及三个权重归档无损减少 801.37 MiB。资源数据按文本长度和运行策略分别记录，不能用短句的分配器峰值代表完整 TTS。中文 BERT、tokenizer 和 G2PW 正在迁入独立前端，原始文本与参考准备尚未接通；当前不宣称全模型兼容或完整运行包交付。
+已验证的改动包括复用 GPT 权重、降低声码器工作区、可选按请求释放 GPT，以及三个权重归档无损减少 801.37 MiB。资源数据按文本长度和运行策略分别记录，不能用短句的分配器峰值代表完整 TTS。中文音素 / BERT 和日文语言段已通过独立对照，约 203 KiB 的单参考条件包已支持独立重载；上层路由与原始文本整链仍在接通。当前不宣称全模型兼容或完整运行包交付。
 
 ## 文档
 
@@ -48,6 +48,9 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 | [G2PW 文本准备](docs/experiments/2026-09-19-g2pw-text.md) | OpenCC、查询上下文和 PyPinyin 回退迁移 |
 | [G2PW 模型推理](docs/experiments/2026-09-19-g2pw-onnx.md) | 独立 ONNX 接口、官方概率一致性与实际依赖 |
 | [G2PW 拼音闭环](docs/experiments/2026-09-19-g2pw-pinyin.md) | 文本到模型预测再填回拼音的完整对照 |
+| [中日文前端](docs/experiments/2026-09-19-chinese-phones.md) / [日文对照](docs/experiments/2026-09-19-japanese-g2p.md) | 语言段迁移、实际能力与依赖证据 |
+| [参考条件包](docs/experiments/2026-09-19-reference-condition-package.md) | 单参考身份绑定、最小产物与独立重载 |
+| [G2PW 内存映射](docs/experiments/2026-09-19-g2pw-mapped-ort.md) | 同输出降低 CPU RSS、加载与部署边界 |
 | [G2PW 释放观察](docs/experiments/2026-09-19-g2pw-lifecycle.md) | 三次创建与关闭后的 RSS 边界 |
 | [兼容矩阵](docs/specs/compatibility-matrix.md) | 各模型、语言和功能的实测范围与待验证项 |
 | [Mac 首轮验证](docs/experiments/2026-09-19-macos-reference-smoke.md) | 实际环境、运行命令、样音、耗时、资源记录和已知限制 |
@@ -56,11 +59,11 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 
 ## 第一版方向
 
-当前按“先 Mac、后 Windows”的顺序验证。Mac 使用 MPS / FP32 跑通上游实现，首个样本已确定为“朱雀院红叶”V2Pro。Windows 验证暂缓。
+生产以 Windows / NVIDIA CUDA 为重点。当前 Mac 阶段先完成可迁移的模型包、文本与参考准备、静态权重计算、KV 和资源生命周期；Mac 专用后端调优暂缓。首个样本为“朱雀院红叶”V2Pro，CUDA 性能留待目标设备验证。
 
 当前在 Mac 上实现 MLX / NumPy 计算和必要的 CPU ONNX 模块，按实测接通文本、参考条件和资源生命周期。单活动请求、`batch=1` 是当前范围。FP16 和 NVIDIA CUDA 仍是后续候选，需要保留已验证的高精度对照并独立实测；其他模型逐组验证，不默认兼容。
 
-C++ 原生运行时是拟议方向。TensorRT-RTX、ONNX Runtime CUDA 和少量原生 CUDA 算子需要通过实际模型验证后取舍，尚未选定生产后端。首发系统、目标 NVIDIA GPU 与性能预算仍待确定，Mac 的跑通结果不能替代 CUDA 验证。
+C++ 原生运行时是拟议方向。TensorRT-RTX、ONNX Runtime CUDA 和少量原生 CUDA 算子需要通过实际模型验证后取舍，尚未选定生产后端。Windows 方向已确定，具体 NVIDIA GPU 与性能预算仍待固定。通用策略完成后，若剩余工作必须依赖 NVIDIA 硬件，就转入 Windows 接续，不继续深挖 Metal 特性。
 
 ## 目录结构
 
