@@ -6,7 +6,12 @@
       "id": "ja-reported-intro",
       "language": "ja",
       "text": "こんにちは。今日はいい天気ですね。よろしくお願いします。",
-      "coverage": ["japanese", "multiple_sentences", "opening", "particle_wa"],
+      "coverage": [
+        "japanese",
+        "multiple_sentences",
+        "opening",
+        "particle_wa"
+      ],
       "status": "user_reported_failure",
       "user_reports": [
         {
@@ -27,16 +32,22 @@
         }
       ],
       "checks": {
-        "automatic": "pending_aligned_official_comparison",
-        "asr": "not_run",
-        "listening": "user_reported_failure_pending_official_comparison_and_relistening"
+        "automatic": "official_lite_fixed_history_logits_exact; frontend_and_reference_differences_confirmed; prepared_reference_pruned_bert_wav_bytes_equal",
+        "asr": "original_lite_opening_failures_corroborated; official_and_official_text_openings_recognized",
+        "listening": "user_pass_for_official_and_official_text_candidates_2026-09-19; original_failure_preserved",
+        "mlx_fixed_history": "within_preset_fp32_tolerance"
       }
     },
     {
       "id": "zh-reported-greeting",
       "language": "zh",
       "text": "你好，欢迎使用樱花语音。现在正在测试苹果电脑上的语音合成。",
-      "coverage": ["chinese", "multiple_sentences", "opening", "bert_alignment"],
+      "coverage": [
+        "chinese",
+        "multiple_sentences",
+        "opening",
+        "bert_alignment"
+      ],
       "status": "user_reported_failure",
       "user_reports": [
         {
@@ -49,82 +60,169 @@
         }
       ],
       "checks": {
-        "automatic": "pending_aligned_official_comparison",
-        "asr": "not_run",
-        "listening": "user_reported_failure_pending_official_comparison_and_relistening"
+        "automatic": "official_lite_fixed_history_logits_exact; frontend_and_reference_differences_confirmed; prepared_reference_pruned_bert_wav_bytes_equal",
+        "asr": "original_lite_opening_failures_corroborated; official_and_official_text_openings_recognized",
+        "listening": "user_pass_for_official_and_official_text_candidates_2026-09-19; original_failure_preserved",
+        "mlx_fixed_history": "within_preset_fp32_tolerance"
       }
     },
     {
       "id": "ja-short",
       "language": "ja",
       "text": "こんにちは。",
-      "coverage": ["japanese", "short", "opening"],
+      "coverage": [
+        "japanese",
+        "short",
+        "opening"
+      ],
       "status": "exploratory",
       "user_reports": [],
-      "checks": {"automatic": "not_run", "asr": "not_run", "listening": "not_run"}
+      "checks": {
+        "automatic": "official_audio_generated_with_trace; prepared_reference_pruned_bert_wav_bytes_equal",
+        "asr": "not_run",
+        "listening": "not_run",
+        "mlx_fixed_history": "within_preset_fp32_tolerance"
+      }
     },
     {
       "id": "zh-short",
       "language": "zh",
       "text": "你好。",
-      "coverage": ["chinese", "short", "opening"],
+      "coverage": [
+        "chinese",
+        "short",
+        "opening"
+      ],
       "status": "exploratory",
       "user_reports": [],
-      "checks": {"automatic": "not_run", "asr": "not_run", "listening": "not_run"}
+      "checks": {
+        "automatic": "official_audio_generated_with_trace; prepared_reference_pruned_bert_wav_bytes_equal",
+        "asr": "not_run",
+        "listening": "not_run",
+        "mlx_fixed_history": "within_preset_fp32_tolerance"
+      }
     },
     {
       "id": "ja-long",
       "language": "ja",
       "text": "今日は駅前の図書館へ行って、前から読みたかった本を借りてから、川沿いの道をゆっくり歩いて帰るつもりですが、午後は雨が降るかもしれないので、出かける前に天気予報を確認して、かばんに折り畳み傘を入れておこうと思います。",
-      "coverage": ["japanese", "long", "particle_wa", "commas", "stop_condition"],
+      "coverage": [
+        "japanese",
+        "long",
+        "particle_wa",
+        "commas",
+        "stop_condition"
+      ],
       "status": "exploratory",
       "user_reports": [],
-      "checks": {"automatic": "not_run", "asr": "not_run", "listening": "not_run"}
+      "checks": {
+        "automatic": "official_audio_generated_with_trace; prepared_reference_pruned_bert_wav_bytes_equal",
+        "asr": "not_run",
+        "listening": "not_run",
+        "mlx_fixed_history": "numerical_mismatch_at_step_329; original_tolerance_retained"
+      }
     },
     {
       "id": "zh-long",
       "language": "zh",
       "text": "今天下午，我打算先把桌上的资料整理好，再去楼下的书店取回上周订的书，如果回来的时候没有下雨，就沿着河边慢慢走一会儿，顺便看看那家刚开门的面包店还有没有热面包，最后赶在天黑之前回家，把明天需要用的东西放进背包。",
-      "coverage": ["chinese", "long", "commas", "bert_alignment", "stop_condition"],
+      "coverage": [
+        "chinese",
+        "long",
+        "commas",
+        "bert_alignment",
+        "stop_condition"
+      ],
       "status": "exploratory",
       "user_reports": [],
-      "checks": {"automatic": "not_run", "asr": "not_run", "listening": "not_run"}
+      "checks": {
+        "automatic": "official_audio_generated_with_trace; prepared_reference_pruned_bert_wav_bytes_equal",
+        "asr": "not_run",
+        "listening": "not_run",
+        "mlx_fixed_history": "within_preset_fp32_tolerance"
+      }
     },
     {
       "id": "ja-punctuation",
       "language": "ja",
       "text": "「本当ですか？」と聞くと、彼女は少し考えて……「はい、大丈夫です！」と答えました。では、また明日。",
-      "coverage": ["japanese", "multiple_sentences", "quotes", "ellipsis", "question", "exclamation"],
+      "coverage": [
+        "japanese",
+        "multiple_sentences",
+        "quotes",
+        "ellipsis",
+        "question",
+        "exclamation"
+      ],
       "status": "exploratory",
       "user_reports": [],
-      "checks": {"automatic": "not_run", "asr": "not_run", "listening": "not_run"}
+      "checks": {
+        "automatic": "official_audio_generated_with_trace; prepared_reference_pruned_bert_wav_bytes_equal",
+        "asr": "not_run",
+        "listening": "not_run",
+        "mlx_fixed_history": "within_preset_fp32_tolerance"
+      }
     },
     {
       "id": "zh-punctuation",
       "language": "zh",
       "text": "“现在出发吗？”她停了一下……又说：“好，走吧！”请带上钥匙、手机和雨伞。",
-      "coverage": ["chinese", "multiple_sentences", "quotes", "ellipsis", "question", "exclamation"],
+      "coverage": [
+        "chinese",
+        "multiple_sentences",
+        "quotes",
+        "ellipsis",
+        "question",
+        "exclamation"
+      ],
       "status": "exploratory",
       "user_reports": [],
-      "checks": {"automatic": "not_run", "asr": "not_run", "listening": "not_run"}
+      "checks": {
+        "automatic": "official_audio_generated_with_trace; prepared_reference_pruned_bert_wav_bytes_equal",
+        "asr": "not_run",
+        "listening": "not_run",
+        "mlx_fixed_history": "within_preset_fp32_tolerance"
+      }
     },
     {
       "id": "mixed-zh-en",
       "language": "auto",
       "text": "你好，欢迎使用 Sakura TTS。Please check the audio. 现在继续播放中文。",
-      "coverage": ["chinese", "english", "mixed", "multiple_sentences", "language_switch"],
+      "coverage": [
+        "chinese",
+        "english",
+        "mixed",
+        "multiple_sentences",
+        "language_switch"
+      ],
       "status": "exploratory",
       "user_reports": [],
-      "checks": {"automatic": "not_run", "asr": "not_run", "listening": "not_run"}
+      "checks": {
+        "automatic": "official_audio_generated_with_trace; prepared_reference_pruned_bert_wav_bytes_equal",
+        "asr": "not_run",
+        "listening": "not_run",
+        "mlx_fixed_history": "not_run"
+      }
     },
     {
       "id": "mixed-ja-en",
       "language": "auto",
       "text": "こんにちは。Welcome to Sakura TTS. 今日は音声を確認します。",
-      "coverage": ["japanese", "english", "mixed", "multiple_sentences", "language_switch"],
+      "coverage": [
+        "japanese",
+        "english",
+        "mixed",
+        "multiple_sentences",
+        "language_switch"
+      ],
       "status": "exploratory",
       "user_reports": [],
-      "checks": {"automatic": "not_run", "asr": "not_run", "listening": "not_run"}
+      "checks": {
+        "automatic": "official_audio_generated_with_trace; prepared_reference_pruned_bert_wav_bytes_equal",
+        "asr": "not_run",
+        "listening": "not_run",
+        "mlx_fixed_history": "not_run"
+      }
     }
   ]
 }
