@@ -63,13 +63,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--gpt-precision", choices=("fp32", "fp16"), default="fp32")
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     checks = []
     started = time.perf_counter()
-    engine = NVIDIAEngine(args.config, policy="resident")
+    engine = NVIDIAEngine(args.config, policy="resident", gpt_precision=args.gpt_precision)
     try:
         expected_pcm, expected_report = engine.synthesize(TEXT)
         np.save(args.output.parent / "baseline-pcm.npy", expected_pcm, allow_pickle=False)
@@ -136,6 +137,7 @@ def main():
         "passed": passed, "cases": checks, "text": TEXT,
         **aggregate_lifecycle(checks),
         "seed": 1234, "rng": "numpy.default_rng; same backend retries",
+        "gpt_precision": args.gpt_precision, "acoustic_precision": "fp32",
         "model_config_sha256": sha256_file(args.config),
         "source_sha256": {name: sha256_file(PROJECT / "src" / "sakuratts" / name)
                           for name in ("nvidia.py", "cuda_gpt.py", "ort_process.py", "ort_sovits.py")},

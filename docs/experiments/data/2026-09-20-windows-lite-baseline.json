@@ -1,0 +1,2630 @@
+{
+  "date": "2026-09-20",
+  "upstream_commit": "6c049397142f4c9147a85f86b6ba37546e93a188",
+  "python": "3.11.15 (main, Mar 24 2026, 22:57:51) [MSC v.1944 64 bit (AMD64)]",
+  "dependencies": {
+    "annotated-types": "0.8.0",
+    "av": "18.1.0",
+    "certifi": "2026.7.22",
+    "cffi": "2.1.1",
+    "charset-normalizer": "3.5.1",
+    "click": "8.5.0",
+    "cloudpickle": "3.1.2",
+    "colorama": "0.4.6",
+    "defusedxml": "0.7.1",
+    "einops": "0.8.2",
+    "filelock": "3.32.3",
+    "flatbuffers": "25.12.19",
+    "fsspec": "2026.7.0",
+    "future": "1.0.0",
+    "huggingface_hub": "0.36.2",
+    "idna": "3.20",
+    "inflect": "7.5.0",
+    "jieba": "0.42.1",
+    "Jinja2": "3.1.6",
+    "joblib": "1.6.0",
+    "MarkupSafe": "3.0.3",
+    "more-itertools": "11.1.0",
+    "mpmath": "1.3.0",
+    "networkx": "3.6.1",
+    "nltk": "3.10.3",
+    "numpy": "2.4.6",
+    "onnxruntime": "1.30.0",
+    "packaging": "26.3",
+    "protobuf": "7.36.2",
+    "psutil": "7.2.2",
+    "py3langid": "0.4.0",
+    "pycparser": "3.0",
+    "pydantic": "2.13.5",
+    "pydantic_core": "2.46.5",
+    "pyopenjtalk-plus": "0.4.1.post9",
+    "pypinyin": "0.55.0",
+    "pysbd": "0.3.4",
+    "PyYAML": "6.0.3",
+    "regex": "2026.9.10",
+    "requests": "2.34.2",
+    "safetensors": "0.8.0",
+    "sounddevice": "0.5.6",
+    "soundfile": "0.14.0",
+    "SudachiDict-core": "20260723",
+    "SudachiPy": "0.6.11",
+    "sympy": "1.14.0",
+    "tokenizers": "0.21.4",
+    "torch": "2.7.1+cu128",
+    "torchaudio": "2.7.1+cu128",
+    "tqdm": "4.70.1",
+    "transformers": "4.51.3",
+    "typeguard": "4.6.0",
+    "typing_extensions": "4.16.0",
+    "typing-inspection": "0.4.4",
+    "urllib3": "2.8.0",
+    "wordsegment": "1.3.1"
+  },
+  "gpu": "NVIDIA GeForce RTX 5060",
+  "capability": [
+    12,
+    0
+  ],
+  "torch_cuda": "12.8",
+  "attention_backend": "SDPBackend.EFFICIENT_ATTENTION",
+  "precision": "fp16",
+  "flash_attention": false,
+  "text_cases": {
+    "short": "おはよう。今日もよろしくね。",
+    "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+    "multi": "おかえりなさい。今日はどんな一日だった？私は図書館で本を読んでいたよ。あとで、一緒にお茶を飲もうね。"
+  },
+  "reference": {
+    "audio": "D:\\Project\\sakura\\characters\\Sakura\\voice\\refs\\tone_refs\\00_中性_VO01_2785.ogg",
+    "language": "ja",
+    "text": "でも私、初めて君に会った時、 思ったよ",
+    "tone": "中性"
+  },
+  "protected_model_sha256": {
+    "D:\\Project\\sakura\\characters\\Sakura\\character.json": "1a1a8a4e314aef7337a8cf5c0f56366fc58dada3b7c6d5a974c9d35bb87e5260",
+    "D:\\Project\\sakura\\characters\\Sakura\\voice\\refs\\ref.txt": "b7fce5ddb873b915f80c43ab70eb2427d2350a36bb0a24c409bbeed358e7af03",
+    "D:\\Project\\sakura\\characters\\Sakura\\voice\\models\\Sakura-e15.ckpt": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+    "D:\\Project\\sakura\\characters\\Sakura\\voice\\models\\Sakura_e8_s7176.pth": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+    "D:\\Project\\sakura\\characters\\Sakura\\voice\\refs\\tone_refs\\00_中性_VO01_2785.ogg": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32"
+  },
+  "resources_provenance_sha256": "68c789362e621c9722e0726897e8c0da5080711a3333d386549da3b16d96385b",
+  "g2p_source": "https://github.com/chinokikiss/GSV-TTS-Lite/releases/download/g2p/g2p.zip",
+  "g2p_archive_sha256": "8bb1d58798c49c7913f24ca53ebe1ed2f69d0fda5c7c6e158b7a36d4a160e148",
+  "runs": {
+    "lite-full-fp16-timing": {
+      "status": "measured",
+      "result_sha256": "94a8e7641a255fdf66695051171752a1f22a379657b9a7af4d72303cac8d97bc",
+      "command_argv": [
+        "D:\\Project\\SakuraTTS\\outputs\\reference-research\\lite-runtime\\Scripts\\python.exe",
+        "-B",
+        "D:\\Project\\SakuraTTS\\harness\\windows_lite_benchmark.py",
+        "--upstream",
+        "outputs/reference-research/GSV-TTS-Lite",
+        "--models-dir",
+        "outputs/reference-research/lite-models",
+        "--character",
+        "D:/Project/sakura/characters/Sakura",
+        "--output",
+        "outputs/reference-research/lite-full-fp16-timing",
+        "--cases",
+        "short",
+        "long",
+        "multi",
+        "--repeats",
+        "3",
+        "--no-memory-sampler"
+      ],
+      "harness_sha256": "ec6bc63c2d2dc4c8ea5e8f5f4aaca0be9b3b1e2bb14f457db1baae17713d7651",
+      "model_load_ms": 2692.721799998253,
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold_reference",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 2026.170600001933,
+          "first_chunk_ms": null,
+          "audio_seconds": 2.04,
+          "samples": 65280,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.9932208823538887,
+          "head_trim": [
+            {
+              "input_samples": 58880,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "cold_reference_short_0",
+            "allocated_bytes": 594103296,
+            "reserved_bytes": 771751936,
+            "peak_allocated_bytes": 851584512,
+            "peak_reserved_bytes": 1147142144,
+            "cpu_rss_bytes": 3393703936,
+            "cpu_tree_rss_bytes": 3393703936,
+            "cpu_processes": [
+              {
+                "pid": 45736,
+                "ppid": 28716,
+                "rss_bytes": 3393703936
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 275,
+          "kv_capacity": 1024,
+          "reached_kv_capacity": false,
+          "wav": "cold_reference-short-0.wav",
+          "wav_sha256": "e796a4c5814c2094e6b48fe99ef2936b1efdf93fc7d6cb88d7fbf1f942a5bc4a",
+          "semantic_token_counts": [
+            46
+          ]
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 262.1056999996654,
+          "first_chunk_ms": null,
+          "audio_seconds": 2.04,
+          "samples": 65280,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.12848318627434577,
+          "head_trim": [
+            {
+              "input_samples": 58880,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "warmup_short_0",
+            "allocated_bytes": 594103296,
+            "reserved_bytes": 773849088,
+            "peak_allocated_bytes": 616054784,
+            "peak_reserved_bytes": 799014912,
+            "cpu_rss_bytes": 3393716224,
+            "cpu_tree_rss_bytes": 3393716224,
+            "cpu_processes": [
+              {
+                "pid": 45736,
+                "ppid": 28716,
+                "rss_bytes": 3393716224
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 275,
+          "kv_capacity": 1024,
+          "reached_kv_capacity": false,
+          "wav": "warmup-short-0.wav",
+          "wav_sha256": "6bf7cde32ffeb243cdad1761d94a2f4258ad28c895412126b6dd7657e6cc4010",
+          "semantic_token_counts": [
+            46
+          ]
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 269.340300001204,
+          "first_chunk_ms": null,
+          "audio_seconds": 2.04,
+          "samples": 65280,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.13202955882411962,
+          "head_trim": [
+            {
+              "input_samples": 58880,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "hot_short_0",
+            "allocated_bytes": 593579008,
+            "reserved_bytes": 771751936,
+            "peak_allocated_bytes": 616054784,
+            "peak_reserved_bytes": 799014912,
+            "cpu_rss_bytes": 3393724416,
+            "cpu_tree_rss_bytes": 3393724416,
+            "cpu_processes": [
+              {
+                "pid": 45736,
+                "ppid": 28716,
+                "rss_bytes": 3393724416
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 275,
+          "kv_capacity": 1024,
+          "reached_kv_capacity": false,
+          "wav": "hot-short-0.wav",
+          "wav_sha256": "6bf7cde32ffeb243cdad1761d94a2f4258ad28c895412126b6dd7657e6cc4010",
+          "semantic_token_counts": [
+            46
+          ]
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 1,
+          "seed": 1234,
+          "complete_pcm_ms": 278.17059999506455,
+          "first_chunk_ms": null,
+          "audio_seconds": 2.04,
+          "samples": 65280,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.1363581372524826,
+          "head_trim": [
+            {
+              "input_samples": 58880,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "hot_short_1",
+            "allocated_bytes": 594103296,
+            "reserved_bytes": 773849088,
+            "peak_allocated_bytes": 616054784,
+            "peak_reserved_bytes": 799014912,
+            "cpu_rss_bytes": 3393728512,
+            "cpu_tree_rss_bytes": 3393728512,
+            "cpu_processes": [
+              {
+                "pid": 45736,
+                "ppid": 28716,
+                "rss_bytes": 3393728512
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 275,
+          "kv_capacity": 1024,
+          "reached_kv_capacity": false,
+          "wav": "hot-short-1.wav",
+          "wav_sha256": "6bf7cde32ffeb243cdad1761d94a2f4258ad28c895412126b6dd7657e6cc4010",
+          "semantic_token_counts": [
+            46
+          ]
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 2,
+          "seed": 1234,
+          "complete_pcm_ms": 279.547599995567,
+          "first_chunk_ms": null,
+          "audio_seconds": 2.04,
+          "samples": 65280,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.13703313725272892,
+          "head_trim": [
+            {
+              "input_samples": 58880,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "hot_short_2",
+            "allocated_bytes": 594103296,
+            "reserved_bytes": 773849088,
+            "peak_allocated_bytes": 616054784,
+            "peak_reserved_bytes": 799014912,
+            "cpu_rss_bytes": 3393728512,
+            "cpu_tree_rss_bytes": 3393728512,
+            "cpu_processes": [
+              {
+                "pid": 45736,
+                "ppid": 28716,
+                "rss_bytes": 3393728512
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 275,
+          "kv_capacity": 1024,
+          "reached_kv_capacity": false,
+          "wav": "hot-short-2.wav",
+          "wav_sha256": "6bf7cde32ffeb243cdad1761d94a2f4258ad28c895412126b6dd7657e6cc4010",
+          "semantic_token_counts": [
+            46
+          ]
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 2073.8619999974617,
+          "first_chunk_ms": null,
+          "audio_seconds": 21.748,
+          "samples": 695936,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.0953587456316655,
+          "head_trim": [
+            {
+              "input_samples": 689920,
+              "offset_samples": 384
+            }
+          ],
+          "memory": {
+            "phase": "warmup_long_0",
+            "allocated_bytes": 626210304,
+            "reserved_bytes": 845152256,
+            "peak_allocated_bytes": 865661440,
+            "peak_reserved_bytes": 1172307968,
+            "cpu_rss_bytes": 2559066112,
+            "cpu_tree_rss_bytes": 2559066112,
+            "cpu_processes": [
+              {
+                "pid": 45736,
+                "ppid": 28716,
+                "rss_bytes": 2559066112
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 1024,
+          "kv_capacity": 1024,
+          "reached_kv_capacity": true,
+          "wav": "warmup-long-0.wav",
+          "wav_sha256": "5f818b97bdf7201bbe9741534006f0749b0cd4ab2578a32cbc944ca79681c286",
+          "semantic_token_counts": [
+            539
+          ]
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 1981.7162999970606,
+          "first_chunk_ms": null,
+          "audio_seconds": 21.748,
+          "samples": 695936,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.09112177211684111,
+          "head_trim": [
+            {
+              "input_samples": 689920,
+              "offset_samples": 384
+            }
+          ],
+          "memory": {
+            "phase": "hot_long_0",
+            "allocated_bytes": 628131328,
+            "reserved_bytes": 866123776,
+            "peak_allocated_bytes": 867582464,
+            "peak_reserved_bytes": 1153433600,
+            "cpu_rss_bytes": 2558738432,
+            "cpu_tree_rss_bytes": 2558738432,
+            "cpu_processes": [
+              {
+                "pid": 45736,
+                "ppid": 28716,
+                "rss_bytes": 2558738432
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 1024,
+          "kv_capacity": 1024,
+          "reached_kv_capacity": true,
+          "wav": "hot-long-0.wav",
+          "wav_sha256": "788af29ef212849b83f063a6ef65cb7747a8784d27ad773e4fdf464bd23adf99",
+          "semantic_token_counts": [
+            539
+          ]
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 1,
+          "seed": 1234,
+          "complete_pcm_ms": 2003.6190999962855,
+          "first_chunk_ms": null,
+          "audio_seconds": 21.748,
+          "samples": 695936,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.09212889001270394,
+          "head_trim": [
+            {
+              "input_samples": 689920,
+              "offset_samples": 384
+            }
+          ],
+          "memory": {
+            "phase": "hot_long_1",
+            "allocated_bytes": 627583488,
+            "reserved_bytes": 845152256,
+            "peak_allocated_bytes": 867034624,
+            "peak_reserved_bytes": 1134559232,
+            "cpu_rss_bytes": 2558779392,
+            "cpu_tree_rss_bytes": 2558779392,
+            "cpu_processes": [
+              {
+                "pid": 45736,
+                "ppid": 28716,
+                "rss_bytes": 2558779392
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 1024,
+          "kv_capacity": 1024,
+          "reached_kv_capacity": true,
+          "wav": "hot-long-1.wav",
+          "wav_sha256": "b310ac9a6a9ae0f68ec6bdc4c140c2998ee08824047afcb6eef2a7251487b430",
+          "semantic_token_counts": [
+            539
+          ]
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 2,
+          "seed": 1234,
+          "complete_pcm_ms": 1907.6134999995702,
+          "first_chunk_ms": null,
+          "audio_seconds": 21.748,
+          "samples": 695936,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.08771443351110769,
+          "head_trim": [
+            {
+              "input_samples": 689920,
+              "offset_samples": 384
+            }
+          ],
+          "memory": {
+            "phase": "hot_long_2",
+            "allocated_bytes": 625666560,
+            "reserved_bytes": 843055104,
+            "peak_allocated_bytes": 865835520,
+            "peak_reserved_bytes": 1153433600,
+            "cpu_rss_bytes": 2558865408,
+            "cpu_tree_rss_bytes": 2558865408,
+            "cpu_processes": [
+              {
+                "pid": 45736,
+                "ppid": 28716,
+                "rss_bytes": 2558865408
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 1024,
+          "kv_capacity": 1024,
+          "reached_kv_capacity": true,
+          "wav": "hot-long-2.wav",
+          "wav_sha256": "440fd2d0eebe5323f65e346bebb3bea21cb227f100de654fb476b39fbd5e039b",
+          "semantic_token_counts": [
+            539
+          ]
+        },
+        {
+          "case": "multi",
+          "kind": "warmup",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 1181.5067999996245,
+          "first_chunk_ms": null,
+          "audio_seconds": 13.2,
+          "samples": 422400,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.08950809090906246,
+          "head_trim": [
+            {
+              "input_samples": 416000,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "warmup_multi_0",
+            "allocated_bytes": 605983744,
+            "reserved_bytes": 843055104,
+            "peak_allocated_bytes": 751362048,
+            "peak_reserved_bytes": 1000341504,
+            "cpu_rss_bytes": 2560561152,
+            "cpu_tree_rss_bytes": 2560561152,
+            "cpu_processes": [
+              {
+                "pid": 45736,
+                "ppid": 28716,
+                "rss_bytes": 2560561152
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 634,
+          "kv_capacity": 1024,
+          "reached_kv_capacity": false,
+          "wav": "warmup-multi-0.wav",
+          "wav_sha256": "2a4019c7e687245e163c50ee6f516924799bd0c07b281688e88998148018eee5",
+          "semantic_token_counts": [
+            325
+          ]
+        },
+        {
+          "case": "multi",
+          "kind": "hot",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 1097.5547000052757,
+          "first_chunk_ms": null,
+          "audio_seconds": 13.2,
+          "samples": 422400,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.08314808333373301,
+          "head_trim": [
+            {
+              "input_samples": 416000,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "hot_multi_0",
+            "allocated_bytes": 605791232,
+            "reserved_bytes": 819986432,
+            "peak_allocated_bytes": 751169536,
+            "peak_reserved_bytes": 977272832,
+            "cpu_rss_bytes": 2560761856,
+            "cpu_tree_rss_bytes": 2560761856,
+            "cpu_processes": [
+              {
+                "pid": 45736,
+                "ppid": 28716,
+                "rss_bytes": 2560761856
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 634,
+          "kv_capacity": 1024,
+          "reached_kv_capacity": false,
+          "wav": "hot-multi-0.wav",
+          "wav_sha256": "7c6a6e0f445f4787890fc741fc9cd4dadda6bc96f80c776eca37511f6701b593",
+          "semantic_token_counts": [
+            325
+          ]
+        },
+        {
+          "case": "multi",
+          "kind": "hot",
+          "index": 1,
+          "seed": 1234,
+          "complete_pcm_ms": 1096.1176000055275,
+          "first_chunk_ms": null,
+          "audio_seconds": 13.2,
+          "samples": 422400,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.08303921212163087,
+          "head_trim": [
+            {
+              "input_samples": 416000,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "hot_multi_1",
+            "allocated_bytes": 604581376,
+            "reserved_bytes": 799014912,
+            "peak_allocated_bytes": 749959680,
+            "peak_reserved_bytes": 968884224,
+            "cpu_rss_bytes": 2560815104,
+            "cpu_tree_rss_bytes": 2560815104,
+            "cpu_processes": [
+              {
+                "pid": 45736,
+                "ppid": 28716,
+                "rss_bytes": 2560815104
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 634,
+          "kv_capacity": 1024,
+          "reached_kv_capacity": false,
+          "wav": "hot-multi-1.wav",
+          "wav_sha256": "352dc2acc578736cb44e4414382914bb823b2e9ed91cf0ca0eae7b266f2fafef",
+          "semantic_token_counts": [
+            325
+          ]
+        },
+        {
+          "case": "multi",
+          "kind": "hot",
+          "index": 2,
+          "seed": 1234,
+          "complete_pcm_ms": 1082.0486000011442,
+          "first_chunk_ms": null,
+          "audio_seconds": 13.2,
+          "samples": 422400,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.08197337878796547,
+          "head_trim": [
+            {
+              "input_samples": 416000,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "hot_multi_2",
+            "allocated_bytes": 605590016,
+            "reserved_bytes": 799014912,
+            "peak_allocated_bytes": 750968320,
+            "peak_reserved_bytes": 968884224,
+            "cpu_rss_bytes": 2560937984,
+            "cpu_tree_rss_bytes": 2560937984,
+            "cpu_processes": [
+              {
+                "pid": 45736,
+                "ppid": 28716,
+                "rss_bytes": 2560937984
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 634,
+          "kv_capacity": 1024,
+          "reached_kv_capacity": false,
+          "wav": "hot-multi-2.wav",
+          "wav_sha256": "2a8e279ef38b0c7240aa7b7651c968de1a3d41d569b68bb1f25e6bb13f234d77",
+          "semantic_token_counts": [
+            325
+          ]
+        }
+      ],
+      "snapshots": [
+        {
+          "phase": "after_import",
+          "allocated_bytes": 0,
+          "reserved_bytes": 2097152,
+          "peak_allocated_bytes": 920576,
+          "peak_reserved_bytes": 2097152,
+          "cpu_rss_bytes": 790286336,
+          "cpu_tree_rss_bytes": 790286336,
+          "cpu_processes": [
+            {
+              "pid": 45736,
+              "ppid": 28716,
+              "rss_bytes": 790286336
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "after_model_load",
+          "allocated_bytes": 583766016,
+          "reserved_bytes": 771751936,
+          "peak_allocated_bytes": 596487168,
+          "peak_reserved_bytes": 771751936,
+          "cpu_rss_bytes": 2337497088,
+          "cpu_tree_rss_bytes": 2337497088,
+          "cpu_processes": [
+            {
+              "pid": 45736,
+              "ppid": 28716,
+              "rss_bytes": 2337497088
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "cold_reference_short_0",
+          "allocated_bytes": 594103296,
+          "reserved_bytes": 771751936,
+          "peak_allocated_bytes": 851584512,
+          "peak_reserved_bytes": 1147142144,
+          "cpu_rss_bytes": 3393703936,
+          "cpu_tree_rss_bytes": 3393703936,
+          "cpu_processes": [
+            {
+              "pid": 45736,
+              "ppid": 28716,
+              "rss_bytes": 3393703936
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "warmup_short_0",
+          "allocated_bytes": 594103296,
+          "reserved_bytes": 773849088,
+          "peak_allocated_bytes": 616054784,
+          "peak_reserved_bytes": 799014912,
+          "cpu_rss_bytes": 3393716224,
+          "cpu_tree_rss_bytes": 3393716224,
+          "cpu_processes": [
+            {
+              "pid": 45736,
+              "ppid": 28716,
+              "rss_bytes": 3393716224
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_short_0",
+          "allocated_bytes": 593579008,
+          "reserved_bytes": 771751936,
+          "peak_allocated_bytes": 616054784,
+          "peak_reserved_bytes": 799014912,
+          "cpu_rss_bytes": 3393724416,
+          "cpu_tree_rss_bytes": 3393724416,
+          "cpu_processes": [
+            {
+              "pid": 45736,
+              "ppid": 28716,
+              "rss_bytes": 3393724416
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_short_1",
+          "allocated_bytes": 594103296,
+          "reserved_bytes": 773849088,
+          "peak_allocated_bytes": 616054784,
+          "peak_reserved_bytes": 799014912,
+          "cpu_rss_bytes": 3393728512,
+          "cpu_tree_rss_bytes": 3393728512,
+          "cpu_processes": [
+            {
+              "pid": 45736,
+              "ppid": 28716,
+              "rss_bytes": 3393728512
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_short_2",
+          "allocated_bytes": 594103296,
+          "reserved_bytes": 773849088,
+          "peak_allocated_bytes": 616054784,
+          "peak_reserved_bytes": 799014912,
+          "cpu_rss_bytes": 3393728512,
+          "cpu_tree_rss_bytes": 3393728512,
+          "cpu_processes": [
+            {
+              "pid": 45736,
+              "ppid": 28716,
+              "rss_bytes": 3393728512
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "warmup_long_0",
+          "allocated_bytes": 626210304,
+          "reserved_bytes": 845152256,
+          "peak_allocated_bytes": 865661440,
+          "peak_reserved_bytes": 1172307968,
+          "cpu_rss_bytes": 2559066112,
+          "cpu_tree_rss_bytes": 2559066112,
+          "cpu_processes": [
+            {
+              "pid": 45736,
+              "ppid": 28716,
+              "rss_bytes": 2559066112
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_long_0",
+          "allocated_bytes": 628131328,
+          "reserved_bytes": 866123776,
+          "peak_allocated_bytes": 867582464,
+          "peak_reserved_bytes": 1153433600,
+          "cpu_rss_bytes": 2558738432,
+          "cpu_tree_rss_bytes": 2558738432,
+          "cpu_processes": [
+            {
+              "pid": 45736,
+              "ppid": 28716,
+              "rss_bytes": 2558738432
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_long_1",
+          "allocated_bytes": 627583488,
+          "reserved_bytes": 845152256,
+          "peak_allocated_bytes": 867034624,
+          "peak_reserved_bytes": 1134559232,
+          "cpu_rss_bytes": 2558779392,
+          "cpu_tree_rss_bytes": 2558779392,
+          "cpu_processes": [
+            {
+              "pid": 45736,
+              "ppid": 28716,
+              "rss_bytes": 2558779392
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_long_2",
+          "allocated_bytes": 625666560,
+          "reserved_bytes": 843055104,
+          "peak_allocated_bytes": 865835520,
+          "peak_reserved_bytes": 1153433600,
+          "cpu_rss_bytes": 2558865408,
+          "cpu_tree_rss_bytes": 2558865408,
+          "cpu_processes": [
+            {
+              "pid": 45736,
+              "ppid": 28716,
+              "rss_bytes": 2558865408
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "warmup_multi_0",
+          "allocated_bytes": 605983744,
+          "reserved_bytes": 843055104,
+          "peak_allocated_bytes": 751362048,
+          "peak_reserved_bytes": 1000341504,
+          "cpu_rss_bytes": 2560561152,
+          "cpu_tree_rss_bytes": 2560561152,
+          "cpu_processes": [
+            {
+              "pid": 45736,
+              "ppid": 28716,
+              "rss_bytes": 2560561152
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_multi_0",
+          "allocated_bytes": 605791232,
+          "reserved_bytes": 819986432,
+          "peak_allocated_bytes": 751169536,
+          "peak_reserved_bytes": 977272832,
+          "cpu_rss_bytes": 2560761856,
+          "cpu_tree_rss_bytes": 2560761856,
+          "cpu_processes": [
+            {
+              "pid": 45736,
+              "ppid": 28716,
+              "rss_bytes": 2560761856
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_multi_1",
+          "allocated_bytes": 604581376,
+          "reserved_bytes": 799014912,
+          "peak_allocated_bytes": 749959680,
+          "peak_reserved_bytes": 968884224,
+          "cpu_rss_bytes": 2560815104,
+          "cpu_tree_rss_bytes": 2560815104,
+          "cpu_processes": [
+            {
+              "pid": 45736,
+              "ppid": 28716,
+              "rss_bytes": 2560815104
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_multi_2",
+          "allocated_bytes": 605590016,
+          "reserved_bytes": 799014912,
+          "peak_allocated_bytes": 750968320,
+          "peak_reserved_bytes": 968884224,
+          "cpu_rss_bytes": 2560937984,
+          "cpu_tree_rss_bytes": 2560937984,
+          "cpu_processes": [
+            {
+              "pid": 45736,
+              "ppid": 28716,
+              "rss_bytes": 2560937984
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "after_model_unload",
+          "allocated_bytes": 26604544,
+          "reserved_bytes": 69206016,
+          "peak_allocated_bytes": 750968320,
+          "peak_reserved_bytes": 968884224,
+          "cpu_rss_bytes": 2554761216,
+          "cpu_tree_rss_bytes": 2554761216,
+          "cpu_processes": [
+            {
+              "pid": 45736,
+              "ppid": 28716,
+              "rss_bytes": 2554761216
+            }
+          ],
+          "cpu_sampling_errors": []
+        }
+      ],
+      "protected_files_changed": [],
+      "gpt_sovits_loading": [
+        {
+          "class": "Text2SemanticDecoder",
+          "missing_keys": [],
+          "unexpected_keys": []
+        },
+        {
+          "class": "SynthesizerTrn",
+          "missing_keys": [],
+          "unexpected_keys": []
+        }
+      ],
+      "timing_note": "Exploratory run may overlap unrelated CPU unittest startup; retained for capacity observations only."
+    },
+    "lite-full-fp16-kv1536-timing": {
+      "status": "measured",
+      "result_sha256": "d8b48a45ac1307d857246f58e190c3211df51a3801f04eb46eaec6bcde44614e",
+      "command_argv": [
+        "D:\\Project\\SakuraTTS\\outputs\\reference-research\\lite-runtime\\Scripts\\python.exe",
+        "-B",
+        "D:\\Project\\SakuraTTS\\harness\\windows_lite_benchmark.py",
+        "--upstream",
+        "outputs/reference-research/GSV-TTS-Lite",
+        "--models-dir",
+        "outputs/reference-research/lite-models",
+        "--character",
+        "D:/Project/sakura/characters/Sakura",
+        "--output",
+        "outputs/reference-research/lite-full-fp16-kv1536-timing",
+        "--max-kv",
+        "1536",
+        "--cases",
+        "short",
+        "long",
+        "multi",
+        "--repeats",
+        "3",
+        "--no-memory-sampler"
+      ],
+      "harness_sha256": "bd2b50e304cfb8863bf902dbb99dbd45d7b9ddf174c90fc123c401af15e1eaab",
+      "model_load_ms": 2249.263300000166,
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold_reference",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 1984.2757000005804,
+          "first_chunk_ms": null,
+          "audio_seconds": 2.04,
+          "samples": 65280,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.9726841666669511,
+          "head_trim": [
+            {
+              "input_samples": 58880,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "cold_reference_short_0",
+            "allocated_bytes": 594104320,
+            "reserved_bytes": 773849088,
+            "peak_allocated_bytes": 851585536,
+            "peak_reserved_bytes": 1149239296,
+            "cpu_rss_bytes": 3395985408,
+            "cpu_tree_rss_bytes": 3395985408,
+            "cpu_processes": [
+              {
+                "pid": 48088,
+                "ppid": 48156,
+                "rss_bytes": 3395985408
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 275,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "wav": "cold_reference-short-0.wav",
+          "wav_sha256": "e796a4c5814c2094e6b48fe99ef2936b1efdf93fc7d6cb88d7fbf1f942a5bc4a",
+          "semantic_token_counts": [
+            46
+          ]
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 272.7612000016961,
+          "first_chunk_ms": null,
+          "audio_seconds": 2.04,
+          "samples": 65280,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.13370647058906673,
+          "head_trim": [
+            {
+              "input_samples": 58880,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "warmup_short_0",
+            "allocated_bytes": 594104320,
+            "reserved_bytes": 775946240,
+            "peak_allocated_bytes": 616055808,
+            "peak_reserved_bytes": 801112064,
+            "cpu_rss_bytes": 3396014080,
+            "cpu_tree_rss_bytes": 3396014080,
+            "cpu_processes": [
+              {
+                "pid": 48088,
+                "ppid": 48156,
+                "rss_bytes": 3396014080
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 275,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "wav": "warmup-short-0.wav",
+          "wav_sha256": "6bf7cde32ffeb243cdad1761d94a2f4258ad28c895412126b6dd7657e6cc4010",
+          "semantic_token_counts": [
+            46
+          ]
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 265.80919999832986,
+          "first_chunk_ms": null,
+          "audio_seconds": 2.04,
+          "samples": 65280,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.13029862745016169,
+          "head_trim": [
+            {
+              "input_samples": 58880,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "hot_short_0",
+            "allocated_bytes": 593580032,
+            "reserved_bytes": 773849088,
+            "peak_allocated_bytes": 616055808,
+            "peak_reserved_bytes": 801112064,
+            "cpu_rss_bytes": 3396014080,
+            "cpu_tree_rss_bytes": 3396014080,
+            "cpu_processes": [
+              {
+                "pid": 48088,
+                "ppid": 48156,
+                "rss_bytes": 3396014080
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 275,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "wav": "hot-short-0.wav",
+          "wav_sha256": "6bf7cde32ffeb243cdad1761d94a2f4258ad28c895412126b6dd7657e6cc4010",
+          "semantic_token_counts": [
+            46
+          ]
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 1,
+          "seed": 1234,
+          "complete_pcm_ms": 268.3342999953311,
+          "first_chunk_ms": null,
+          "audio_seconds": 2.04,
+          "samples": 65280,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.13153642156633877,
+          "head_trim": [
+            {
+              "input_samples": 58880,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "hot_short_1",
+            "allocated_bytes": 594104320,
+            "reserved_bytes": 775946240,
+            "peak_allocated_bytes": 616055808,
+            "peak_reserved_bytes": 801112064,
+            "cpu_rss_bytes": 3396018176,
+            "cpu_tree_rss_bytes": 3396018176,
+            "cpu_processes": [
+              {
+                "pid": 48088,
+                "ppid": 48156,
+                "rss_bytes": 3396018176
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 275,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "wav": "hot-short-1.wav",
+          "wav_sha256": "6bf7cde32ffeb243cdad1761d94a2f4258ad28c895412126b6dd7657e6cc4010",
+          "semantic_token_counts": [
+            46
+          ]
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 2,
+          "seed": 1234,
+          "complete_pcm_ms": 274.98320000449894,
+          "first_chunk_ms": null,
+          "audio_seconds": 2.04,
+          "samples": 65280,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.13479568627671518,
+          "head_trim": [
+            {
+              "input_samples": 58880,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "hot_short_2",
+            "allocated_bytes": 594104320,
+            "reserved_bytes": 775946240,
+            "peak_allocated_bytes": 616055808,
+            "peak_reserved_bytes": 801112064,
+            "cpu_rss_bytes": 3396018176,
+            "cpu_tree_rss_bytes": 3396018176,
+            "cpu_processes": [
+              {
+                "pid": 48088,
+                "ppid": 48156,
+                "rss_bytes": 3396018176
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 275,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "wav": "hot-short-2.wav",
+          "wav_sha256": "6bf7cde32ffeb243cdad1761d94a2f4258ad28c895412126b6dd7657e6cc4010",
+          "semantic_token_counts": [
+            46
+          ]
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 2168.801699997857,
+          "first_chunk_ms": null,
+          "audio_seconds": 23.38,
+          "samples": 748160,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.0927631180495234,
+          "head_trim": [
+            {
+              "input_samples": 742400,
+              "offset_samples": 640
+            }
+          ],
+          "memory": {
+            "phase": "warmup_long_0",
+            "allocated_bytes": 630256640,
+            "reserved_bytes": 836763648,
+            "peak_allocated_bytes": 885838336,
+            "peak_reserved_bytes": 1207959552,
+            "cpu_rss_bytes": 2562621440,
+            "cpu_tree_rss_bytes": 2562621440,
+            "cpu_processes": [
+              {
+                "pid": 48088,
+                "ppid": 48156,
+                "rss_bytes": 2562621440
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 1070,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "wav": "warmup-long-0.wav",
+          "wav_sha256": "f2d2eb78038e7ab1a6cc35e16b092850c7f06184dbd7f30354e7e07e0fecdc7f",
+          "semantic_token_counts": [
+            580
+          ]
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 2028.8814999948954,
+          "first_chunk_ms": null,
+          "audio_seconds": 23.38,
+          "samples": 748160,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.08677850727095361,
+          "head_trim": [
+            {
+              "input_samples": 742400,
+              "offset_samples": 640
+            }
+          ],
+          "memory": {
+            "phase": "hot_long_0",
+            "allocated_bytes": 631165440,
+            "reserved_bytes": 840957952,
+            "peak_allocated_bytes": 886747136,
+            "peak_reserved_bytes": 1224736768,
+            "cpu_rss_bytes": 2562224128,
+            "cpu_tree_rss_bytes": 2562224128,
+            "cpu_processes": [
+              {
+                "pid": 48088,
+                "ppid": 48156,
+                "rss_bytes": 2562224128
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 1070,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "wav": "hot-long-0.wav",
+          "wav_sha256": "2ae342f37dd392c95604c0bd75b284433e97e8b814661dda1d4e1c76698fadea",
+          "semantic_token_counts": [
+            580
+          ]
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 1,
+          "seed": 1234,
+          "complete_pcm_ms": 2136.935500006075,
+          "first_chunk_ms": null,
+          "audio_seconds": 23.38,
+          "samples": 748160,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.09140014970085865,
+          "head_trim": [
+            {
+              "input_samples": 742400,
+              "offset_samples": 640
+            }
+          ],
+          "memory": {
+            "phase": "hot_long_1",
+            "allocated_bytes": 631694336,
+            "reserved_bytes": 843055104,
+            "peak_allocated_bytes": 887276032,
+            "peak_reserved_bytes": 1214251008,
+            "cpu_rss_bytes": 2562273280,
+            "cpu_tree_rss_bytes": 2562273280,
+            "cpu_processes": [
+              {
+                "pid": 48088,
+                "ppid": 48156,
+                "rss_bytes": 2562273280
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 1070,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "wav": "hot-long-1.wav",
+          "wav_sha256": "867a1cbfe5c0ebe4d5884de97096aa1618dcb2dd71553f04bdfa1321e416469a",
+          "semantic_token_counts": [
+            580
+          ]
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 2,
+          "seed": 1234,
+          "complete_pcm_ms": 2051.020200000494,
+          "first_chunk_ms": null,
+          "audio_seconds": 23.38,
+          "samples": 748160,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.0877254148845378,
+          "head_trim": [
+            {
+              "input_samples": 742400,
+              "offset_samples": 640
+            }
+          ],
+          "memory": {
+            "phase": "hot_long_2",
+            "allocated_bytes": 630711296,
+            "reserved_bytes": 828375040,
+            "peak_allocated_bytes": 886292992,
+            "peak_reserved_bytes": 1214251008,
+            "cpu_rss_bytes": 2562342912,
+            "cpu_tree_rss_bytes": 2562342912,
+            "cpu_processes": [
+              {
+                "pid": 48088,
+                "ppid": 48156,
+                "rss_bytes": 2562342912
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 1070,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "wav": "hot-long-2.wav",
+          "wav_sha256": "856e2e1adba7e5e1ffe9cbc3b6a575987bc1fa5e01ffdd6287eec2b243454b0a",
+          "semantic_token_counts": [
+            580
+          ]
+        },
+        {
+          "case": "multi",
+          "kind": "warmup",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 1156.9059000030393,
+          "first_chunk_ms": null,
+          "audio_seconds": 13.2,
+          "samples": 422400,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.08764438636386662,
+          "head_trim": [
+            {
+              "input_samples": 416000,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "warmup_multi_0",
+            "allocated_bytes": 605604352,
+            "reserved_bytes": 826277888,
+            "peak_allocated_bytes": 750982656,
+            "peak_reserved_bytes": 983564288,
+            "cpu_rss_bytes": 2563956736,
+            "cpu_tree_rss_bytes": 2563956736,
+            "cpu_processes": [
+              {
+                "pid": 48088,
+                "ppid": 48156,
+                "rss_bytes": 2563956736
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 634,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "wav": "warmup-multi-0.wav",
+          "wav_sha256": "19bf0f1875fab96c16ef1f5eb85ae9c80a17345e71e463e641af9c02fa41d700",
+          "semantic_token_counts": [
+            325
+          ]
+        },
+        {
+          "case": "multi",
+          "kind": "hot",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 1142.1809999956167,
+          "first_chunk_ms": null,
+          "audio_seconds": 13.2,
+          "samples": 422400,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.08652886363603157,
+          "head_trim": [
+            {
+              "input_samples": 416000,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "hot_multi_0",
+            "allocated_bytes": 606316032,
+            "reserved_bytes": 805306368,
+            "peak_allocated_bytes": 751694336,
+            "peak_reserved_bytes": 975175680,
+            "cpu_rss_bytes": 2564202496,
+            "cpu_tree_rss_bytes": 2564202496,
+            "cpu_processes": [
+              {
+                "pid": 48088,
+                "ppid": 48156,
+                "rss_bytes": 2564202496
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 634,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "wav": "hot-multi-0.wav",
+          "wav_sha256": "976a0e34bf2ece1f4a1a5c9305951f00e81b6a1ab385e58fbe222b8b511a59e7",
+          "semantic_token_counts": [
+            325
+          ]
+        },
+        {
+          "case": "multi",
+          "kind": "hot",
+          "index": 1,
+          "seed": 1234,
+          "complete_pcm_ms": 1120.9054999999353,
+          "first_chunk_ms": null,
+          "audio_seconds": 13.2,
+          "samples": 422400,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.08491708333332844,
+          "head_trim": [
+            {
+              "input_samples": 416000,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "hot_multi_1",
+            "allocated_bytes": 606772736,
+            "reserved_bytes": 805306368,
+            "peak_allocated_bytes": 752151040,
+            "peak_reserved_bytes": 1002438656,
+            "cpu_rss_bytes": 2564341760,
+            "cpu_tree_rss_bytes": 2564341760,
+            "cpu_processes": [
+              {
+                "pid": 48088,
+                "ppid": 48156,
+                "rss_bytes": 2564341760
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 634,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "wav": "hot-multi-1.wav",
+          "wav_sha256": "c49fd6a7f7d575dc68a3c3c51634ef0ff18f35ef3d04561069b952ef604832ba",
+          "semantic_token_counts": [
+            325
+          ]
+        },
+        {
+          "case": "multi",
+          "kind": "hot",
+          "index": 2,
+          "seed": 1234,
+          "complete_pcm_ms": 1231.5635000049951,
+          "first_chunk_ms": null,
+          "audio_seconds": 13.2,
+          "samples": 422400,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.09330026515189357,
+          "head_trim": [
+            {
+              "input_samples": 416000,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "hot_multi_2",
+            "allocated_bytes": 606035456,
+            "reserved_bytes": 805306368,
+            "peak_allocated_bytes": 751413760,
+            "peak_reserved_bytes": 1004535808,
+            "cpu_rss_bytes": 2564386816,
+            "cpu_tree_rss_bytes": 2564386816,
+            "cpu_processes": [
+              {
+                "pid": 48088,
+                "ppid": 48156,
+                "rss_bytes": 2564386816
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "kv_used": 634,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "wav": "hot-multi-2.wav",
+          "wav_sha256": "398ce323217a97ed04dde4f245316af6cd987aaa1731e6be71a38b99262d914d",
+          "semantic_token_counts": [
+            325
+          ]
+        }
+      ],
+      "snapshots": [
+        {
+          "phase": "after_import",
+          "allocated_bytes": 0,
+          "reserved_bytes": 2097152,
+          "peak_allocated_bytes": 920576,
+          "peak_reserved_bytes": 2097152,
+          "cpu_rss_bytes": 790503424,
+          "cpu_tree_rss_bytes": 790503424,
+          "cpu_processes": [
+            {
+              "pid": 48088,
+              "ppid": 48156,
+              "rss_bytes": 790503424
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "after_model_load",
+          "allocated_bytes": 583767040,
+          "reserved_bytes": 773849088,
+          "peak_allocated_bytes": 596488192,
+          "peak_reserved_bytes": 773849088,
+          "cpu_rss_bytes": 2341457920,
+          "cpu_tree_rss_bytes": 2341457920,
+          "cpu_processes": [
+            {
+              "pid": 48088,
+              "ppid": 48156,
+              "rss_bytes": 2341457920
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "cold_reference_short_0",
+          "allocated_bytes": 594104320,
+          "reserved_bytes": 773849088,
+          "peak_allocated_bytes": 851585536,
+          "peak_reserved_bytes": 1149239296,
+          "cpu_rss_bytes": 3395985408,
+          "cpu_tree_rss_bytes": 3395985408,
+          "cpu_processes": [
+            {
+              "pid": 48088,
+              "ppid": 48156,
+              "rss_bytes": 3395985408
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "warmup_short_0",
+          "allocated_bytes": 594104320,
+          "reserved_bytes": 775946240,
+          "peak_allocated_bytes": 616055808,
+          "peak_reserved_bytes": 801112064,
+          "cpu_rss_bytes": 3396014080,
+          "cpu_tree_rss_bytes": 3396014080,
+          "cpu_processes": [
+            {
+              "pid": 48088,
+              "ppid": 48156,
+              "rss_bytes": 3396014080
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_short_0",
+          "allocated_bytes": 593580032,
+          "reserved_bytes": 773849088,
+          "peak_allocated_bytes": 616055808,
+          "peak_reserved_bytes": 801112064,
+          "cpu_rss_bytes": 3396014080,
+          "cpu_tree_rss_bytes": 3396014080,
+          "cpu_processes": [
+            {
+              "pid": 48088,
+              "ppid": 48156,
+              "rss_bytes": 3396014080
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_short_1",
+          "allocated_bytes": 594104320,
+          "reserved_bytes": 775946240,
+          "peak_allocated_bytes": 616055808,
+          "peak_reserved_bytes": 801112064,
+          "cpu_rss_bytes": 3396018176,
+          "cpu_tree_rss_bytes": 3396018176,
+          "cpu_processes": [
+            {
+              "pid": 48088,
+              "ppid": 48156,
+              "rss_bytes": 3396018176
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_short_2",
+          "allocated_bytes": 594104320,
+          "reserved_bytes": 775946240,
+          "peak_allocated_bytes": 616055808,
+          "peak_reserved_bytes": 801112064,
+          "cpu_rss_bytes": 3396018176,
+          "cpu_tree_rss_bytes": 3396018176,
+          "cpu_processes": [
+            {
+              "pid": 48088,
+              "ppid": 48156,
+              "rss_bytes": 3396018176
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "warmup_long_0",
+          "allocated_bytes": 630256640,
+          "reserved_bytes": 836763648,
+          "peak_allocated_bytes": 885838336,
+          "peak_reserved_bytes": 1207959552,
+          "cpu_rss_bytes": 2562621440,
+          "cpu_tree_rss_bytes": 2562621440,
+          "cpu_processes": [
+            {
+              "pid": 48088,
+              "ppid": 48156,
+              "rss_bytes": 2562621440
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_long_0",
+          "allocated_bytes": 631165440,
+          "reserved_bytes": 840957952,
+          "peak_allocated_bytes": 886747136,
+          "peak_reserved_bytes": 1224736768,
+          "cpu_rss_bytes": 2562224128,
+          "cpu_tree_rss_bytes": 2562224128,
+          "cpu_processes": [
+            {
+              "pid": 48088,
+              "ppid": 48156,
+              "rss_bytes": 2562224128
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_long_1",
+          "allocated_bytes": 631694336,
+          "reserved_bytes": 843055104,
+          "peak_allocated_bytes": 887276032,
+          "peak_reserved_bytes": 1214251008,
+          "cpu_rss_bytes": 2562273280,
+          "cpu_tree_rss_bytes": 2562273280,
+          "cpu_processes": [
+            {
+              "pid": 48088,
+              "ppid": 48156,
+              "rss_bytes": 2562273280
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_long_2",
+          "allocated_bytes": 630711296,
+          "reserved_bytes": 828375040,
+          "peak_allocated_bytes": 886292992,
+          "peak_reserved_bytes": 1214251008,
+          "cpu_rss_bytes": 2562342912,
+          "cpu_tree_rss_bytes": 2562342912,
+          "cpu_processes": [
+            {
+              "pid": 48088,
+              "ppid": 48156,
+              "rss_bytes": 2562342912
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "warmup_multi_0",
+          "allocated_bytes": 605604352,
+          "reserved_bytes": 826277888,
+          "peak_allocated_bytes": 750982656,
+          "peak_reserved_bytes": 983564288,
+          "cpu_rss_bytes": 2563956736,
+          "cpu_tree_rss_bytes": 2563956736,
+          "cpu_processes": [
+            {
+              "pid": 48088,
+              "ppid": 48156,
+              "rss_bytes": 2563956736
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_multi_0",
+          "allocated_bytes": 606316032,
+          "reserved_bytes": 805306368,
+          "peak_allocated_bytes": 751694336,
+          "peak_reserved_bytes": 975175680,
+          "cpu_rss_bytes": 2564202496,
+          "cpu_tree_rss_bytes": 2564202496,
+          "cpu_processes": [
+            {
+              "pid": 48088,
+              "ppid": 48156,
+              "rss_bytes": 2564202496
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_multi_1",
+          "allocated_bytes": 606772736,
+          "reserved_bytes": 805306368,
+          "peak_allocated_bytes": 752151040,
+          "peak_reserved_bytes": 1002438656,
+          "cpu_rss_bytes": 2564341760,
+          "cpu_tree_rss_bytes": 2564341760,
+          "cpu_processes": [
+            {
+              "pid": 48088,
+              "ppid": 48156,
+              "rss_bytes": 2564341760
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_multi_2",
+          "allocated_bytes": 606035456,
+          "reserved_bytes": 805306368,
+          "peak_allocated_bytes": 751413760,
+          "peak_reserved_bytes": 1004535808,
+          "cpu_rss_bytes": 2564386816,
+          "cpu_tree_rss_bytes": 2564386816,
+          "cpu_processes": [
+            {
+              "pid": 48088,
+              "ppid": 48156,
+              "rss_bytes": 2564386816
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "after_model_unload",
+          "allocated_bytes": 26604544,
+          "reserved_bytes": 69206016,
+          "peak_allocated_bytes": 751413760,
+          "peak_reserved_bytes": 1004535808,
+          "cpu_rss_bytes": 2558464000,
+          "cpu_tree_rss_bytes": 2558464000,
+          "cpu_processes": [
+            {
+              "pid": 48088,
+              "ppid": 48156,
+              "rss_bytes": 2558464000
+            }
+          ],
+          "cpu_sampling_errors": []
+        }
+      ],
+      "protected_files_changed": [],
+      "gpt_sovits_loading": [
+        {
+          "class": "Text2SemanticDecoder",
+          "missing_keys": [],
+          "unexpected_keys": []
+        },
+        {
+          "class": "SynthesizerTrn",
+          "missing_keys": [],
+          "unexpected_keys": []
+        }
+      ],
+      "summary": {
+        "short": {
+          "n": 3,
+          "median_ms": 268.3342999953311,
+          "min_ms": 265.80919999832986,
+          "max_ms": 274.98320000449894,
+          "audio_seconds": [
+            2.04,
+            2.04,
+            2.04
+          ]
+        },
+        "long": {
+          "n": 3,
+          "median_ms": 2051.020200000494,
+          "min_ms": 2028.8814999948954,
+          "max_ms": 2136.935500006075,
+          "audio_seconds": [
+            23.38,
+            23.38,
+            23.38
+          ]
+        },
+        "multi": {
+          "n": 3,
+          "median_ms": 1142.1809999956167,
+          "min_ms": 1120.9054999999353,
+          "max_ms": 1231.5635000049951,
+          "audio_seconds": [
+            13.2,
+            13.2,
+            13.2
+          ]
+        }
+      }
+    },
+    "lite-full-fp16-kv1536-memory": {
+      "status": "measured",
+      "result_sha256": "db916baf0c6df6cecc452f161756b3934bb1851aabb896ddea545e9bf76379e4",
+      "command_argv": [
+        "D:\\Project\\SakuraTTS\\outputs\\reference-research\\lite-runtime\\Scripts\\python.exe",
+        "-B",
+        "D:\\Project\\SakuraTTS\\harness\\windows_lite_benchmark.py",
+        "--upstream",
+        "outputs/reference-research/GSV-TTS-Lite",
+        "--models-dir",
+        "outputs/reference-research/lite-models",
+        "--character",
+        "D:/Project/sakura/characters/Sakura",
+        "--output",
+        "outputs/reference-research/lite-full-fp16-kv1536-memory",
+        "--max-kv",
+        "1536",
+        "--cases",
+        "short",
+        "long",
+        "multi",
+        "--repeats",
+        "1"
+      ],
+      "harness_sha256": "3279c4756e8ce6073a68073f689a28648d092d3849fc30e8ad6229d2fa56f2ea",
+      "model_load_ms": 2709.2106000054628,
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold_reference",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 2077.8907999992953,
+          "first_chunk_ms": null,
+          "audio_seconds": 2.04,
+          "samples": 65280,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 1.018573921568282,
+          "head_trim": [
+            {
+              "input_samples": 58880,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "cold_reference_short_0",
+            "allocated_bytes": 594104320,
+            "reserved_bytes": 773849088,
+            "peak_allocated_bytes": 851585536,
+            "peak_reserved_bytes": 1149239296,
+            "cpu_rss_bytes": 3397533696,
+            "cpu_tree_rss_bytes": 3409698816,
+            "cpu_processes": [
+              {
+                "pid": 48640,
+                "ppid": 46780,
+                "rss_bytes": 3397533696
+              },
+              {
+                "pid": 30628,
+                "ppid": 45276,
+                "rss_bytes": 12165120
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "semantic_inputs": [
+            {
+              "phone_tokens": 76,
+              "reference_semantic_tokens": 149,
+              "prefill_tokens": 225
+            }
+          ],
+          "kv_used": 275,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "termination": "upstream_eos_check",
+          "wav": "cold_reference-short-0.wav",
+          "wav_sha256": "e796a4c5814c2094e6b48fe99ef2936b1efdf93fc7d6cb88d7fbf1f942a5bc4a",
+          "semantic_token_counts": [
+            46
+          ]
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 320.9583999996539,
+          "first_chunk_ms": null,
+          "audio_seconds": 2.04,
+          "samples": 65280,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.1573325490194382,
+          "head_trim": [
+            {
+              "input_samples": 58880,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "warmup_short_0",
+            "allocated_bytes": 594104320,
+            "reserved_bytes": 775946240,
+            "peak_allocated_bytes": 616055808,
+            "peak_reserved_bytes": 801112064,
+            "cpu_rss_bytes": 3397582848,
+            "cpu_tree_rss_bytes": 3409747968,
+            "cpu_processes": [
+              {
+                "pid": 48640,
+                "ppid": 46780,
+                "rss_bytes": 3397582848
+              },
+              {
+                "pid": 30628,
+                "ppid": 45276,
+                "rss_bytes": 12165120
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "semantic_inputs": [
+            {
+              "phone_tokens": 76,
+              "reference_semantic_tokens": 149,
+              "prefill_tokens": 225
+            }
+          ],
+          "kv_used": 275,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "termination": "upstream_eos_check",
+          "wav": "warmup-short-0.wav",
+          "wav_sha256": "6bf7cde32ffeb243cdad1761d94a2f4258ad28c895412126b6dd7657e6cc4010",
+          "semantic_token_counts": [
+            46
+          ]
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 314.108300000953,
+          "first_chunk_ms": null,
+          "audio_seconds": 2.04,
+          "samples": 65280,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.15397465686321227,
+          "head_trim": [
+            {
+              "input_samples": 58880,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "hot_short_0",
+            "allocated_bytes": 593580032,
+            "reserved_bytes": 773849088,
+            "peak_allocated_bytes": 616055808,
+            "peak_reserved_bytes": 801112064,
+            "cpu_rss_bytes": 3397582848,
+            "cpu_tree_rss_bytes": 3409747968,
+            "cpu_processes": [
+              {
+                "pid": 48640,
+                "ppid": 46780,
+                "rss_bytes": 3397582848
+              },
+              {
+                "pid": 30628,
+                "ppid": 45276,
+                "rss_bytes": 12165120
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "semantic_inputs": [
+            {
+              "phone_tokens": 76,
+              "reference_semantic_tokens": 149,
+              "prefill_tokens": 225
+            }
+          ],
+          "kv_used": 275,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "termination": "upstream_eos_check",
+          "wav": "hot-short-0.wav",
+          "wav_sha256": "6bf7cde32ffeb243cdad1761d94a2f4258ad28c895412126b6dd7657e6cc4010",
+          "semantic_token_counts": [
+            46
+          ]
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 2589.698000003409,
+          "first_chunk_ms": null,
+          "audio_seconds": 23.38,
+          "samples": 748160,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.1107655260908216,
+          "head_trim": [
+            {
+              "input_samples": 742400,
+              "offset_samples": 640
+            }
+          ],
+          "memory": {
+            "phase": "warmup_long_0",
+            "allocated_bytes": 630256640,
+            "reserved_bytes": 834666496,
+            "peak_allocated_bytes": 885838336,
+            "peak_reserved_bytes": 1203765248,
+            "cpu_rss_bytes": 2561716224,
+            "cpu_tree_rss_bytes": 2573881344,
+            "cpu_processes": [
+              {
+                "pid": 48640,
+                "ppid": 46780,
+                "rss_bytes": 2561716224
+              },
+              {
+                "pid": 30628,
+                "ppid": 45276,
+                "rss_bytes": 12165120
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "semantic_inputs": [
+            {
+              "phone_tokens": 336,
+              "reference_semantic_tokens": 149,
+              "prefill_tokens": 485
+            }
+          ],
+          "kv_used": 1070,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "termination": "upstream_eos_check",
+          "wav": "warmup-long-0.wav",
+          "wav_sha256": "c6d6a780b4b27f4ad703c3156116b1127dfb14dfae17bec2b21b078c3e64bfbf",
+          "semantic_token_counts": [
+            580
+          ]
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 2565.0681000042823,
+          "first_chunk_ms": null,
+          "audio_seconds": 23.38,
+          "samples": 748160,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.10971206586844665,
+          "head_trim": [
+            {
+              "input_samples": 742400,
+              "offset_samples": 640
+            }
+          ],
+          "memory": {
+            "phase": "hot_long_0",
+            "allocated_bytes": 631034368,
+            "reserved_bytes": 830472192,
+            "peak_allocated_bytes": 886651904,
+            "peak_reserved_bytes": 1224736768,
+            "cpu_rss_bytes": 2561310720,
+            "cpu_tree_rss_bytes": 2573475840,
+            "cpu_processes": [
+              {
+                "pid": 48640,
+                "ppid": 46780,
+                "rss_bytes": 2561310720
+              },
+              {
+                "pid": 30628,
+                "ppid": 45276,
+                "rss_bytes": 12165120
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "semantic_inputs": [
+            {
+              "phone_tokens": 336,
+              "reference_semantic_tokens": 149,
+              "prefill_tokens": 485
+            }
+          ],
+          "kv_used": 1070,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "termination": "upstream_eos_check",
+          "wav": "hot-long-0.wav",
+          "wav_sha256": "9b777fae1f2cd99b3c537bfb3bbe30c92f2d5adcf529ef6259928ce6e5c3587b",
+          "semantic_token_counts": [
+            580
+          ]
+        },
+        {
+          "case": "multi",
+          "kind": "warmup",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 1327.0045000026585,
+          "first_chunk_ms": null,
+          "audio_seconds": 13.2,
+          "samples": 422400,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.10053064393959535,
+          "head_trim": [
+            {
+              "input_samples": 416000,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "warmup_multi_0",
+            "allocated_bytes": 605124096,
+            "reserved_bytes": 830472192,
+            "peak_allocated_bytes": 750502400,
+            "peak_reserved_bytes": 987758592,
+            "cpu_rss_bytes": 2562805760,
+            "cpu_tree_rss_bytes": 2574970880,
+            "cpu_processes": [
+              {
+                "pid": 48640,
+                "ppid": 46780,
+                "rss_bytes": 2562805760
+              },
+              {
+                "pid": 30628,
+                "ppid": 45276,
+                "rss_bytes": 12165120
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "semantic_inputs": [
+            {
+              "phone_tokens": 155,
+              "reference_semantic_tokens": 149,
+              "prefill_tokens": 304
+            }
+          ],
+          "kv_used": 634,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "termination": "upstream_eos_check",
+          "wav": "warmup-multi-0.wav",
+          "wav_sha256": "d4ec0a971f7dceffaa6d59b9e7d222d9d697a1e509bf9b5eb5fa90f1f4565656",
+          "semantic_token_counts": [
+            325
+          ]
+        },
+        {
+          "case": "multi",
+          "kind": "hot",
+          "index": 0,
+          "seed": 1234,
+          "complete_pcm_ms": 1308.8120999964303,
+          "first_chunk_ms": null,
+          "audio_seconds": 13.2,
+          "samples": 422400,
+          "sample_rate": 32000,
+          "chunk_count": 1,
+          "rtf": 0.09915243181791139,
+          "head_trim": [
+            {
+              "input_samples": 416000,
+              "offset_samples": 0
+            }
+          ],
+          "memory": {
+            "phase": "hot_multi_0",
+            "allocated_bytes": 606656512,
+            "reserved_bytes": 792723456,
+            "peak_allocated_bytes": 752034816,
+            "peak_reserved_bytes": 977272832,
+            "cpu_rss_bytes": 2562932736,
+            "cpu_tree_rss_bytes": 2575097856,
+            "cpu_processes": [
+              {
+                "pid": 48640,
+                "ppid": 46780,
+                "rss_bytes": 2562932736
+              },
+              {
+                "pid": 30628,
+                "ppid": 45276,
+                "rss_bytes": 12165120
+              }
+            ],
+            "cpu_sampling_errors": []
+          },
+          "semantic_inputs": [
+            {
+              "phone_tokens": 155,
+              "reference_semantic_tokens": 149,
+              "prefill_tokens": 304
+            }
+          ],
+          "kv_used": 634,
+          "kv_capacity": 1536,
+          "reached_kv_capacity": false,
+          "termination": "upstream_eos_check",
+          "wav": "hot-multi-0.wav",
+          "wav_sha256": "14310d91b6a8dbef42c45cb76607e506c54a1797bfb61e96345a31d040ad9687",
+          "semantic_token_counts": [
+            325
+          ]
+        }
+      ],
+      "snapshots": [
+        {
+          "phase": "after_import",
+          "allocated_bytes": 0,
+          "reserved_bytes": 2097152,
+          "peak_allocated_bytes": 920576,
+          "peak_reserved_bytes": 2097152,
+          "cpu_rss_bytes": 791904256,
+          "cpu_tree_rss_bytes": 804069376,
+          "cpu_processes": [
+            {
+              "pid": 48640,
+              "ppid": 46780,
+              "rss_bytes": 791904256
+            },
+            {
+              "pid": 30628,
+              "ppid": 45276,
+              "rss_bytes": 12165120
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "after_model_load",
+          "allocated_bytes": 583767040,
+          "reserved_bytes": 773849088,
+          "peak_allocated_bytes": 596488192,
+          "peak_reserved_bytes": 773849088,
+          "cpu_rss_bytes": 2342371328,
+          "cpu_tree_rss_bytes": 2354536448,
+          "cpu_processes": [
+            {
+              "pid": 48640,
+              "ppid": 46780,
+              "rss_bytes": 2342371328
+            },
+            {
+              "pid": 30628,
+              "ppid": 45276,
+              "rss_bytes": 12165120
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "cold_reference_short_0",
+          "allocated_bytes": 594104320,
+          "reserved_bytes": 773849088,
+          "peak_allocated_bytes": 851585536,
+          "peak_reserved_bytes": 1149239296,
+          "cpu_rss_bytes": 3397533696,
+          "cpu_tree_rss_bytes": 3409698816,
+          "cpu_processes": [
+            {
+              "pid": 48640,
+              "ppid": 46780,
+              "rss_bytes": 3397533696
+            },
+            {
+              "pid": 30628,
+              "ppid": 45276,
+              "rss_bytes": 12165120
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "warmup_short_0",
+          "allocated_bytes": 594104320,
+          "reserved_bytes": 775946240,
+          "peak_allocated_bytes": 616055808,
+          "peak_reserved_bytes": 801112064,
+          "cpu_rss_bytes": 3397582848,
+          "cpu_tree_rss_bytes": 3409747968,
+          "cpu_processes": [
+            {
+              "pid": 48640,
+              "ppid": 46780,
+              "rss_bytes": 3397582848
+            },
+            {
+              "pid": 30628,
+              "ppid": 45276,
+              "rss_bytes": 12165120
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_short_0",
+          "allocated_bytes": 593580032,
+          "reserved_bytes": 773849088,
+          "peak_allocated_bytes": 616055808,
+          "peak_reserved_bytes": 801112064,
+          "cpu_rss_bytes": 3397582848,
+          "cpu_tree_rss_bytes": 3409747968,
+          "cpu_processes": [
+            {
+              "pid": 48640,
+              "ppid": 46780,
+              "rss_bytes": 3397582848
+            },
+            {
+              "pid": 30628,
+              "ppid": 45276,
+              "rss_bytes": 12165120
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "warmup_long_0",
+          "allocated_bytes": 630256640,
+          "reserved_bytes": 834666496,
+          "peak_allocated_bytes": 885838336,
+          "peak_reserved_bytes": 1203765248,
+          "cpu_rss_bytes": 2561716224,
+          "cpu_tree_rss_bytes": 2573881344,
+          "cpu_processes": [
+            {
+              "pid": 48640,
+              "ppid": 46780,
+              "rss_bytes": 2561716224
+            },
+            {
+              "pid": 30628,
+              "ppid": 45276,
+              "rss_bytes": 12165120
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_long_0",
+          "allocated_bytes": 631034368,
+          "reserved_bytes": 830472192,
+          "peak_allocated_bytes": 886651904,
+          "peak_reserved_bytes": 1224736768,
+          "cpu_rss_bytes": 2561310720,
+          "cpu_tree_rss_bytes": 2573475840,
+          "cpu_processes": [
+            {
+              "pid": 48640,
+              "ppid": 46780,
+              "rss_bytes": 2561310720
+            },
+            {
+              "pid": 30628,
+              "ppid": 45276,
+              "rss_bytes": 12165120
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "warmup_multi_0",
+          "allocated_bytes": 605124096,
+          "reserved_bytes": 830472192,
+          "peak_allocated_bytes": 750502400,
+          "peak_reserved_bytes": 987758592,
+          "cpu_rss_bytes": 2562805760,
+          "cpu_tree_rss_bytes": 2574970880,
+          "cpu_processes": [
+            {
+              "pid": 48640,
+              "ppid": 46780,
+              "rss_bytes": 2562805760
+            },
+            {
+              "pid": 30628,
+              "ppid": 45276,
+              "rss_bytes": 12165120
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "hot_multi_0",
+          "allocated_bytes": 606656512,
+          "reserved_bytes": 792723456,
+          "peak_allocated_bytes": 752034816,
+          "peak_reserved_bytes": 977272832,
+          "cpu_rss_bytes": 2562932736,
+          "cpu_tree_rss_bytes": 2575097856,
+          "cpu_processes": [
+            {
+              "pid": 48640,
+              "ppid": 46780,
+              "rss_bytes": 2562932736
+            },
+            {
+              "pid": 30628,
+              "ppid": 45276,
+              "rss_bytes": 12165120
+            }
+          ],
+          "cpu_sampling_errors": []
+        },
+        {
+          "phase": "after_model_unload",
+          "allocated_bytes": 26604544,
+          "reserved_bytes": 69206016,
+          "peak_allocated_bytes": 752034816,
+          "peak_reserved_bytes": 977272832,
+          "cpu_rss_bytes": 2556768256,
+          "cpu_tree_rss_bytes": 2568933376,
+          "cpu_processes": [
+            {
+              "pid": 48640,
+              "ppid": 46780,
+              "rss_bytes": 2556768256
+            },
+            {
+              "pid": 30628,
+              "ppid": 45276,
+              "rss_bytes": 12165120
+            }
+          ],
+          "cpu_sampling_errors": []
+        }
+      ],
+      "protected_files_changed": [],
+      "gpt_sovits_loading": [
+        {
+          "class": "Text2SemanticDecoder",
+          "missing_keys": [],
+          "unexpected_keys": []
+        },
+        {
+          "class": "SynthesizerTrn",
+          "missing_keys": [],
+          "unexpected_keys": []
+        }
+      ],
+      "summary": {
+        "short": {
+          "n": 1,
+          "median_ms": 314.108300000953,
+          "min_ms": 314.108300000953,
+          "max_ms": 314.108300000953,
+          "audio_seconds": [
+            2.04
+          ]
+        },
+        "long": {
+          "n": 1,
+          "median_ms": 2565.0681000042823,
+          "min_ms": 2565.0681000042823,
+          "max_ms": 2565.0681000042823,
+          "audio_seconds": [
+            23.38
+          ]
+        },
+        "multi": {
+          "n": 1,
+          "median_ms": 1308.8120999964303,
+          "min_ms": 1308.8120999964303,
+          "max_ms": 1308.8120999964303,
+          "audio_seconds": [
+            13.2
+          ]
+        }
+      },
+      "sampled_resources": {
+        "sampling_interval_ms": 100,
+        "samples": 233,
+        "global_first_mib": 2370.0,
+        "global_peak_mib": 3677.0,
+        "global_peak_minus_first_mib": 1307.0,
+        "cpu_tree_peak_bytes": 3426967552,
+        "memory_samples_sha256": "dc3a281f4b40879ad3f41eb2632e2dc0c8e4aa107c0d890318fcff96f6acd0ab"
+      }
+    }
+  },
+  "validation_boundary": {
+    "same_text_model_reference": true,
+    "numerical_parity": false,
+    "asr_checked": false,
+    "human_listening_checked": false,
+    "note": "Upstream frontend, token suppression/slicing, EOS interval, head trimming and padding are unchanged."
+  },
+  "parameters": {
+    "spk_audio_path": "D:\\Project\\sakura\\characters\\Sakura\\voice\\refs\\tone_refs\\00_中性_VO01_2785.ogg",
+    "prompt_audio_path": "D:\\Project\\sakura\\characters\\Sakura\\voice\\refs\\tone_refs\\00_中性_VO01_2785.ogg",
+    "prompt_audio_text": "でも私、初めて君に会った時、 思ったよ",
+    "prompt_language": "ja",
+    "text_language": "ja",
+    "top_k": 15,
+    "top_p": 1.0,
+    "temperature": 1.0,
+    "repetition_penalty": 1.35,
+    "noise_scale": 0.5,
+    "speed": 1.0,
+    "gpt_model": "D:\\Project\\sakura\\characters\\Sakura\\voice\\models\\Sakura-e15.ckpt",
+    "sovits_model": "D:\\Project\\sakura\\characters\\Sakura\\voice\\models\\Sakura_e8_s7176.pth"
+  }
+}

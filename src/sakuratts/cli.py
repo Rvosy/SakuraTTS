@@ -133,6 +133,8 @@ def main(argv=None):
     speech.add_argument("--repetition-penalty", type=float, default=1.35)
     speech.add_argument("--early-stop-num", type=int, default=2700)
     speech.add_argument("--capacity", type=int, default=2048)
+    speech.add_argument("--gpt-precision", choices=("fp32", "fp16"), default="fp32",
+                        help="GPT execution precision; fp16 is experimental, acoustic execution remains fp32")
     speech.add_argument("--model-policy", choices=("resident","release-state","staged"), default="resident")
     speech.add_argument("--no-cuda-graph", action="store_true")
     args = parser.parse_args(argv)

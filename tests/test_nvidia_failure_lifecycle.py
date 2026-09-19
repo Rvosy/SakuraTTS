@@ -38,6 +38,7 @@ def engine(policy):
     model.references = {"neutral": SimpleNamespace(manifest={"identity": {}})}
     model.manifests = {"frontend": {}}
     model.use_graph, model.capacity = True, 2048
+    model.gpt_precision = "fp32"
     model.gpt = model.sovits = None
     model.created_gpt, model.created_sovits, model.overlap_at_gpt_load = [], [], []
     def load_gpt():

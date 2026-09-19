@@ -1,0 +1,2277 @@
+{
+  "format": "sakuratts-windows-runtime-inventory-v1",
+  "created_at_utc": "2026-09-19T22:35:50.565871+00:00",
+  "measurement": {
+    "read_only_inputs": true,
+    "hash": "sha256",
+    "gpu_executed": false,
+    "logical_bytes": "Each distinct absolute file path counted once; overlapping roots do not add bytes.",
+    "unique_file_bytes": "Each available (device, inode) identity counted once; not allocated disk space.",
+    "duplicate_content_bytes_after_hardlinks": "Content redundancy among distinct file objects; not proven removable bytes.",
+    "links": "Symbolic links and Windows reparse points are reported and not followed or counted.",
+    "root_totals": "Inclusive; overlapping roots share files. Use scope_totals or totals for union size.",
+    "consistency": "File size, identity and timestamps checked before/after hashing and at end; no filesystem snapshot lock."
+  },
+  "roots": [
+    {
+      "name": "main",
+      "scope": "runtime",
+      "path": "d:\\project\\sakuratts\\.venv-windows-runtime",
+      "totals": {
+        "file_count": 5169,
+        "logical_bytes": 1562831265,
+        "unique_file_objects": 5169,
+        "unique_file_bytes": 1562831265,
+        "hardlink_alias_bytes": 0,
+        "unique_content_bytes": 1561941696,
+        "duplicate_content_bytes_after_hardlinks": 889569
+      }
+    },
+    {
+      "name": "ort-worker",
+      "scope": "runtime",
+      "path": "d:\\project\\sakuratts\\data\\windows-ort-runtime",
+      "totals": {
+        "file_count": 506,
+        "logical_bytes": 3069419804,
+        "unique_file_objects": 506,
+        "unique_file_bytes": 3069419804,
+        "hardlink_alias_bytes": 0,
+        "unique_content_bytes": 3069247273,
+        "duplicate_content_bytes_after_hardlinks": 172531
+      }
+    },
+    {
+      "name": "cpython311",
+      "scope": "shared_python",
+      "path": "c:\\users\\rvosy\\appdata\\roaming\\uv\\python\\cpython-3.11.15-windows-x86_64-none",
+      "totals": {
+        "file_count": 4207,
+        "logical_bytes": 74324992,
+        "unique_file_objects": 4207,
+        "unique_file_bytes": 74324992,
+        "hardlink_alias_bytes": 0,
+        "unique_content_bytes": 73888377,
+        "duplicate_content_bytes_after_hardlinks": 436615
+      }
+    },
+    {
+      "name": "gpt",
+      "scope": "model",
+      "path": "d:\\project\\sakuratts\\models\\windows-sakura\\gpt",
+      "totals": {
+        "file_count": 4,
+        "logical_bytes": 318767118,
+        "unique_file_objects": 4,
+        "unique_file_bytes": 318767118,
+        "hardlink_alias_bytes": 0,
+        "unique_content_bytes": 318767118,
+        "duplicate_content_bytes_after_hardlinks": 0
+      }
+    },
+    {
+      "name": "sovits",
+      "scope": "model",
+      "path": "d:\\project\\sakuratts\\models\\windows-sakura\\sovits-onnx-v1",
+      "totals": {
+        "file_count": 10,
+        "logical_bytes": 251347840,
+        "unique_file_objects": 10,
+        "unique_file_bytes": 251347840,
+        "hardlink_alias_bytes": 0,
+        "unique_content_bytes": 251347840,
+        "duplicate_content_bytes_after_hardlinks": 0
+      }
+    },
+    {
+      "name": "frontend",
+      "scope": "model",
+      "path": "d:\\project\\sakuratts\\models\\windows-sakura\\frontend-classic",
+      "totals": {
+        "file_count": 28,
+        "logical_bytes": 262567159,
+        "unique_file_objects": 28,
+        "unique_file_bytes": 262567159,
+        "hardlink_alias_bytes": 0,
+        "unique_content_bytes": 262489487,
+        "duplicate_content_bytes_after_hardlinks": 77672
+      }
+    },
+    {
+      "name": "references",
+      "scope": "model",
+      "path": "d:\\project\\sakuratts\\models\\windows-sakura\\references",
+      "totals": {
+        "file_count": 10,
+        "logical_bytes": 1385885,
+        "unique_file_objects": 10,
+        "unique_file_bytes": 1385885,
+        "hardlink_alias_bytes": 0,
+        "unique_content_bytes": 1385885,
+        "duplicate_content_bytes_after_hardlinks": 0
+      }
+    },
+    {
+      "name": "cupy",
+      "scope": "cache",
+      "path": "c:\\users\\rvosy\\.cupy\\kernel_cache",
+      "totals": {
+        "file_count": 31,
+        "logical_bytes": 435497,
+        "unique_file_objects": 31,
+        "unique_file_bytes": 435497,
+        "hardlink_alias_bytes": 0,
+        "unique_content_bytes": 241832,
+        "duplicate_content_bytes_after_hardlinks": 193665
+      }
+    }
+  ],
+  "totals": {
+    "file_count": 9965,
+    "logical_bytes": 5541079560,
+    "unique_file_objects": 9965,
+    "unique_file_bytes": 5541079560,
+    "hardlink_alias_bytes": 0,
+    "unique_content_bytes": 4665191553,
+    "duplicate_content_bytes_after_hardlinks": 875888007
+  },
+  "scope_totals": {
+    "cache": {
+      "file_count": 31,
+      "logical_bytes": 435497,
+      "unique_file_objects": 31,
+      "unique_file_bytes": 435497,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 241832,
+      "duplicate_content_bytes_after_hardlinks": 193665
+    },
+    "model": {
+      "file_count": 52,
+      "logical_bytes": 834068002,
+      "unique_file_objects": 52,
+      "unique_file_bytes": 834068002,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 833989265,
+      "duplicate_content_bytes_after_hardlinks": 78737
+    },
+    "runtime": {
+      "file_count": 5675,
+      "logical_bytes": 4632251069,
+      "unique_file_objects": 5675,
+      "unique_file_bytes": 4632251069,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 3762063499,
+      "duplicate_content_bytes_after_hardlinks": 870187570
+    },
+    "shared_python": {
+      "file_count": 4207,
+      "logical_bytes": 74324992,
+      "unique_file_objects": 4207,
+      "unique_file_bytes": 74324992,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 73888377,
+      "duplicate_content_bytes_after_hardlinks": 436615
+    }
+  },
+  "component_totals": {
+    "cpython311/_distutils_hack": {
+      "file_count": 4,
+      "logical_bytes": 19147,
+      "unique_file_objects": 4,
+      "unique_file_bytes": 19147,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 19147,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "cpython311/distutils-precedence.pth": {
+      "file_count": 1,
+      "logical_bytes": 151,
+      "unique_file_objects": 1,
+      "unique_file_bytes": 151,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 151,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "cpython311/dlls": {
+      "file_count": 34,
+      "logical_bytes": 17607168,
+      "unique_file_objects": 34,
+      "unique_file_bytes": 17607168,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 17607168,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "cpython311/include": {
+      "file_count": 189,
+      "logical_bytes": 859916,
+      "unique_file_objects": 189,
+      "unique_file_bytes": 859916,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 859916,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "cpython311/lib": {
+      "file_count": 1041,
+      "logical_bytes": 23450222,
+      "unique_file_objects": 1041,
+      "unique_file_bytes": 23450222,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 23450087,
+      "duplicate_content_bytes_after_hardlinks": 135
+    },
+    "cpython311/libs": {
+      "file_count": 31,
+      "logical_bytes": 697468,
+      "unique_file_objects": 31,
+      "unique_file_bytes": 697468,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 697468,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "cpython311/pip": {
+      "file_count": 846,
+      "logical_bytes": 10676898,
+      "unique_file_objects": 846,
+      "unique_file_bytes": 10676898,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 10675800,
+      "duplicate_content_bytes_after_hardlinks": 1098
+    },
+    "cpython311/pip-26.0.1.dist-info": {
+      "file_count": 30,
+      "logical_bytes": 150046,
+      "unique_file_objects": 30,
+      "unique_file_bytes": 150046,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 148974,
+      "duplicate_content_bytes_after_hardlinks": 1072
+    },
+    "cpython311/readme.txt": {
+      "file_count": 1,
+      "logical_bytes": 119,
+      "unique_file_objects": 1,
+      "unique_file_bytes": 119,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 119,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "cpython311/root-files": {
+      "file_count": 8,
+      "logical_bytes": 6282482,
+      "unique_file_objects": 8,
+      "unique_file_bytes": 6282482,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 6282482,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "cpython311/scripts": {
+      "file_count": 1,
+      "logical_bytes": 0,
+      "unique_file_objects": 1,
+      "unique_file_bytes": 0,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 0,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "cpython311/setuptools": {
+      "file_count": 747,
+      "logical_bytes": 7431610,
+      "unique_file_objects": 747,
+      "unique_file_bytes": 7431610,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 7405404,
+      "duplicate_content_bytes_after_hardlinks": 26206
+    },
+    "cpython311/setuptools-82.0.1.dist-info": {
+      "file_count": 9,
+      "logical_bytes": 75238,
+      "unique_file_objects": 9,
+      "unique_file_bytes": 75238,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 75238,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "cpython311/tcl": {
+      "file_count": 1265,
+      "logical_bytes": 7074527,
+      "unique_file_objects": 1265,
+      "unique_file_bytes": 7074527,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 6978261,
+      "duplicate_content_bytes_after_hardlinks": 96266
+    },
+    "cupy/root-files": {
+      "file_count": 31,
+      "logical_bytes": 435497,
+      "unique_file_objects": 31,
+      "unique_file_bytes": 435497,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 241832,
+      "duplicate_content_bytes_after_hardlinks": 193665
+    },
+    "frontend/classic-python": {
+      "file_count": 24,
+      "logical_bytes": 109957795,
+      "unique_file_objects": 24,
+      "unique_file_bytes": 109957795,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 109880123,
+      "duplicate_content_bytes_after_hardlinks": 77672
+    },
+    "frontend/root-files": {
+      "file_count": 4,
+      "logical_bytes": 152609364,
+      "unique_file_objects": 4,
+      "unique_file_bytes": 152609364,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 152609364,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "gpt/root-files": {
+      "file_count": 4,
+      "logical_bytes": 318767118,
+      "unique_file_objects": 4,
+      "unique_file_bytes": 318767118,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 318767118,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/__editable__.sakuratts-0.1.0.dev0.pth": {
+      "file_count": 1,
+      "logical_bytes": 26,
+      "unique_file_objects": 1,
+      "unique_file_bytes": 26,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 26,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/__pycache__": {
+      "file_count": 2,
+      "logical_bytes": 187209,
+      "unique_file_objects": 2,
+      "unique_file_bytes": 187209,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 187209,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/_virtualenv.pth": {
+      "file_count": 1,
+      "logical_bytes": 18,
+      "unique_file_objects": 1,
+      "unique_file_bytes": 18,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 18,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/_virtualenv.py": {
+      "file_count": 1,
+      "logical_bytes": 4342,
+      "unique_file_objects": 1,
+      "unique_file_bytes": 4342,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 4342,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/annotated_types": {
+      "file_count": 4,
+      "logical_bytes": 39309,
+      "unique_file_objects": 4,
+      "unique_file_bytes": 39309,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 39309,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/annotated_types-0.8.0.dist-info": {
+      "file_count": 6,
+      "logical_bytes": 16956,
+      "unique_file_objects": 6,
+      "unique_file_bytes": 16956,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 16956,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/budoux": {
+      "file_count": 17,
+      "logical_bytes": 236261,
+      "unique_file_objects": 17,
+      "unique_file_bytes": 236261,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 236261,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/budoux-0.9.2.dist-info": {
+      "file_count": 8,
+      "logical_bytes": 24433,
+      "unique_file_objects": 8,
+      "unique_file_bytes": 24433,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 24433,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/certifi": {
+      "file_count": 9,
+      "logical_bytes": 247135,
+      "unique_file_objects": 9,
+      "unique_file_bytes": 247135,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 247135,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/certifi-2026.7.22.dist-info": {
+      "file_count": 7,
+      "logical_bytes": 4691,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 4691,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 4691,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/charset_normalizer": {
+      "file_count": 22,
+      "logical_bytes": 643644,
+      "unique_file_objects": 22,
+      "unique_file_bytes": 643644,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 643644,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/charset_normalizer-3.5.1.dist-info": {
+      "file_count": 8,
+      "logical_bytes": 50177,
+      "unique_file_objects": 8,
+      "unique_file_bytes": 50177,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 50177,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/colorama": {
+      "file_count": 19,
+      "logical_bytes": 99860,
+      "unique_file_objects": 19,
+      "unique_file_bytes": 99860,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 99860,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/colorama-0.4.6.dist-info": {
+      "file_count": 6,
+      "logical_bytes": 20304,
+      "unique_file_objects": 6,
+      "unique_file_bytes": 20304,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 20304,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/colorlog": {
+      "file_count": 9,
+      "logical_bytes": 37558,
+      "unique_file_objects": 9,
+      "unique_file_bytes": 37558,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 37558,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/colorlog-6.12.0.dist-info": {
+      "file_count": 7,
+      "logical_bytes": 14007,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 14007,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 14007,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/cuda": {
+      "file_count": 61,
+      "logical_bytes": 347276,
+      "unique_file_objects": 61,
+      "unique_file_bytes": 347276,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 347276,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/cuda_pathfinder-1.8.2.dist-info": {
+      "file_count": 7,
+      "logical_bytes": 17520,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 17520,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 17520,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/cupy": {
+      "file_count": 2314,
+      "logical_bytes": 148439167,
+      "unique_file_objects": 2314,
+      "unique_file_bytes": 148439167,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 148388120,
+      "duplicate_content_bytes_after_hardlinks": 51047
+    },
+    "main/cupy_backends": {
+      "file_count": 22,
+      "logical_bytes": 2164841,
+      "unique_file_objects": 22,
+      "unique_file_bytes": 2164841,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 2164841,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/cupy_cuda12x-14.2.0.dist-info": {
+      "file_count": 8,
+      "logical_bytes": 305073,
+      "unique_file_objects": 8,
+      "unique_file_bytes": 305073,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 305073,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/cupyx": {
+      "file_count": 278,
+      "logical_bytes": 4621862,
+      "unique_file_objects": 278,
+      "unique_file_bytes": 4621862,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 4621862,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/fast_langdetect": {
+      "file_count": 7,
+      "logical_bytes": 976553,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 976553,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 976553,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/fast_langdetect-1.0.1.dist-info": {
+      "file_count": 8,
+      "logical_bytes": 14274,
+      "unique_file_objects": 8,
+      "unique_file_bytes": 14274,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 14274,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/fasttext": {
+      "file_count": 4,
+      "logical_bytes": 8097,
+      "unique_file_objects": 4,
+      "unique_file_bytes": 8097,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 8097,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/fasttext_predict-0.9.2.4.dist-info": {
+      "file_count": 7,
+      "logical_bytes": 3882,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 3882,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 3882,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/fasttext_pybind.cp311-win_amd64.pyd": {
+      "file_count": 1,
+      "logical_bytes": 216064,
+      "unique_file_objects": 1,
+      "unique_file_bytes": 216064,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 216064,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/flatbuffers": {
+      "file_count": 10,
+      "logical_bytes": 85743,
+      "unique_file_objects": 10,
+      "unique_file_bytes": 85743,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 85743,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/flatbuffers-25.12.19.dist-info": {
+      "file_count": 6,
+      "logical_bytes": 2435,
+      "unique_file_objects": 6,
+      "unique_file_bytes": 2435,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 2435,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/google": {
+      "file_count": 59,
+      "logical_bytes": 1703236,
+      "unique_file_objects": 59,
+      "unique_file_bytes": 1703236,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 1703236,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/idna": {
+      "file_count": 16,
+      "logical_bytes": 396809,
+      "unique_file_objects": 16,
+      "unique_file_bytes": 396809,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 396809,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/idna-3.20.dist-info": {
+      "file_count": 7,
+      "logical_bytes": 10284,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 10284,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 10284,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/numpy": {
+      "file_count": 1129,
+      "logical_bytes": 22990601,
+      "unique_file_objects": 1129,
+      "unique_file_bytes": 22990601,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 22990256,
+      "duplicate_content_bytes_after_hardlinks": 345
+    },
+    "main/numpy-2.4.6.dist-info": {
+      "file_count": 24,
+      "logical_bytes": 198353,
+      "unique_file_objects": 24,
+      "unique_file_bytes": 198353,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 198353,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/numpy.libs": {
+      "file_count": 2,
+      "logical_bytes": 20990544,
+      "unique_file_objects": 2,
+      "unique_file_bytes": 20990544,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 20990544,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/nvidia/cublas": {
+      "file_count": 9,
+      "logical_bytes": 772135342,
+      "unique_file_objects": 9,
+      "unique_file_bytes": 772135342,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 772135342,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/nvidia/cuda_nvrtc": {
+      "file_count": 4,
+      "logical_bytes": 186997659,
+      "unique_file_objects": 4,
+      "unique_file_bytes": 186997659,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 186997659,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/nvidia/cuda_runtime": {
+      "file_count": 104,
+      "logical_bytes": 11269633,
+      "unique_file_objects": 104,
+      "unique_file_bytes": 11269633,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 11269633,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/nvidia_cublas_cu12-12.9.2.10.dist-info": {
+      "file_count": 7,
+      "logical_bytes": 62701,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 62701,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 62701,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/nvidia_cuda_nvrtc_cu12-12.9.86.dist-info": {
+      "file_count": 7,
+      "logical_bytes": 62169,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 62169,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 62169,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/nvidia_cuda_runtime_cu12-12.9.79.dist-info": {
+      "file_count": 7,
+      "logical_bytes": 72799,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 72799,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 72799,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/onnxruntime": {
+      "file_count": 326,
+      "logical_bytes": 41923355,
+      "unique_file_objects": 326,
+      "unique_file_bytes": 41923355,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 41919405,
+      "duplicate_content_bytes_after_hardlinks": 3950
+    },
+    "main/onnxruntime-1.30.0.dist-info": {
+      "file_count": 7,
+      "logical_bytes": 41610,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 41610,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 41610,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/packaging": {
+      "file_count": 23,
+      "logical_bytes": 481499,
+      "unique_file_objects": 23,
+      "unique_file_bytes": 481499,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 481499,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/packaging-26.3.dist-info": {
+      "file_count": 8,
+      "logical_bytes": 17858,
+      "unique_file_objects": 8,
+      "unique_file_bytes": 17858,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 17858,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/protobuf-7.36.2.dist-info": {
+      "file_count": 6,
+      "logical_bytes": 8309,
+      "unique_file_objects": 6,
+      "unique_file_bytes": 8309,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 8309,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/psutil": {
+      "file_count": 11,
+      "logical_bytes": 425422,
+      "unique_file_objects": 11,
+      "unique_file_bytes": 425422,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 425422,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/psutil-7.2.2.dist-info": {
+      "file_count": 7,
+      "logical_bytes": 25806,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 25806,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 25806,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/pydantic": {
+      "file_count": 147,
+      "logical_bytes": 2803961,
+      "unique_file_objects": 147,
+      "unique_file_bytes": 2803961,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 2803961,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/pydantic-2.13.5.dist-info": {
+      "file_count": 6,
+      "logical_bytes": 120913,
+      "unique_file_objects": 6,
+      "unique_file_bytes": 120913,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 120913,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/pydantic_core": {
+      "file_count": 7,
+      "logical_bytes": 5527136,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 5527136,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 5527136,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/pydantic_core-2.46.5.dist-info": {
+      "file_count": 7,
+      "logical_bytes": 134335,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 134335,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 134335,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/pyopenjtalk": {
+      "file_count": 47,
+      "logical_bytes": 111133473,
+      "unique_file_objects": 47,
+      "unique_file_bytes": 111133473,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 111054424,
+      "duplicate_content_bytes_after_hardlinks": 79049
+    },
+    "main/pyopenjtalk_plus-0.4.1.post9.dist-info": {
+      "file_count": 8,
+      "logical_bytes": 37279,
+      "unique_file_objects": 8,
+      "unique_file_bytes": 37279,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 37279,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/pyopenjtalk_plus.libs": {
+      "file_count": 1,
+      "logical_bytes": 575056,
+      "unique_file_objects": 1,
+      "unique_file_bytes": 575056,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 575056,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/requests": {
+      "file_count": 38,
+      "logical_bytes": 478914,
+      "unique_file_objects": 38,
+      "unique_file_bytes": 478914,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 478914,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/requests-2.34.2.dist-info": {
+      "file_count": 8,
+      "logical_bytes": 17293,
+      "unique_file_objects": 8,
+      "unique_file_bytes": 17293,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 17293,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/robust_downloader": {
+      "file_count": 12,
+      "logical_bytes": 46389,
+      "unique_file_objects": 12,
+      "unique_file_bytes": 46389,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 46389,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/robust_downloader-0.0.2.dist-info": {
+      "file_count": 8,
+      "logical_bytes": 17072,
+      "unique_file_objects": 8,
+      "unique_file_bytes": 17072,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 17072,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/root-files": {
+      "file_count": 4,
+      "logical_bytes": 222,
+      "unique_file_objects": 4,
+      "unique_file_bytes": 222,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 222,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/sakuratts-0.1.0.dev0.dist-info": {
+      "file_count": 20,
+      "logical_bytes": 56620,
+      "unique_file_objects": 20,
+      "unique_file_bytes": 56620,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 56620,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/scripts": {
+      "file_count": 21,
+      "logical_bytes": 595838,
+      "unique_file_objects": 21,
+      "unique_file_bytes": 595838,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 548734,
+      "duplicate_content_bytes_after_hardlinks": 47104
+    },
+    "main/split_lang": {
+      "file_count": 16,
+      "logical_bytes": 108230,
+      "unique_file_objects": 16,
+      "unique_file_bytes": 108230,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 108230,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/split_lang-2.1.1.dist-info": {
+      "file_count": 7,
+      "logical_bytes": 89902,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 89902,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 89902,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/sudachidict_core": {
+      "file_count": 3,
+      "logical_bytes": 217466237,
+      "unique_file_objects": 3,
+      "unique_file_bytes": 217466237,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 217466237,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/sudachidict_core-20260723.dist-info": {
+      "file_count": 7,
+      "logical_bytes": 14968,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 14968,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 14968,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/sudachipy": {
+      "file_count": 19,
+      "logical_bytes": 3422939,
+      "unique_file_objects": 19,
+      "unique_file_bytes": 3422939,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 3422939,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/sudachipy-0.6.11.dist-info": {
+      "file_count": 7,
+      "logical_bytes": 15291,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 15291,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 15291,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/tests": {
+      "file_count": 7,
+      "logical_bytes": 28397,
+      "unique_file_objects": 7,
+      "unique_file_bytes": 28397,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 28397,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/tqdm": {
+      "file_count": 44,
+      "logical_bytes": 307755,
+      "unique_file_objects": 44,
+      "unique_file_bytes": 307755,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 307755,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/tqdm-4.70.1.dist-info": {
+      "file_count": 8,
+      "logical_bytes": 62650,
+      "unique_file_objects": 8,
+      "unique_file_bytes": 62650,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 62650,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/typing_extensions-4.16.0.dist-info": {
+      "file_count": 6,
+      "logical_bytes": 17953,
+      "unique_file_objects": 6,
+      "unique_file_bytes": 17953,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 17953,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/typing_extensions.py": {
+      "file_count": 1,
+      "logical_bytes": 165012,
+      "unique_file_objects": 1,
+      "unique_file_bytes": 165012,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 165012,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/typing_inspection": {
+      "file_count": 8,
+      "logical_bytes": 86772,
+      "unique_file_objects": 8,
+      "unique_file_bytes": 86772,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 86772,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/typing_inspection-0.4.4.dist-info": {
+      "file_count": 6,
+      "logical_bytes": 4711,
+      "unique_file_objects": 6,
+      "unique_file_bytes": 4711,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 4711,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/urllib3": {
+      "file_count": 67,
+      "logical_bytes": 841045,
+      "unique_file_objects": 67,
+      "unique_file_bytes": 841045,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 841045,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "main/urllib3-2.8.0.dist-info": {
+      "file_count": 6,
+      "logical_bytes": 12196,
+      "unique_file_objects": 6,
+      "unique_file_bytes": 12196,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 12196,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "ort-worker/cuda/cublas": {
+      "file_count": 2,
+      "logical_bytes": 771191808,
+      "unique_file_objects": 2,
+      "unique_file_bytes": 771191808,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 771191808,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "ort-worker/cuda/cudart": {
+      "file_count": 1,
+      "logical_bytes": 583680,
+      "unique_file_objects": 1,
+      "unique_file_bytes": 583680,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 583680,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "ort-worker/cuda/cudnn": {
+      "file_count": 10,
+      "logical_bytes": 1144448608,
+      "unique_file_objects": 10,
+      "unique_file_bytes": 1144448608,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 1144448608,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "ort-worker/cuda/cufft": {
+      "file_count": 1,
+      "logical_bytes": 276121088,
+      "unique_file_objects": 1,
+      "unique_file_bytes": 276121088,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 276121088,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "ort-worker/cuda/nvjitlink": {
+      "file_count": 1,
+      "logical_bytes": 77834752,
+      "unique_file_objects": 1,
+      "unique_file_bytes": 77834752,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 77834752,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "ort-worker/cuda/nvrtc": {
+      "file_count": 2,
+      "logical_bytes": 97050624,
+      "unique_file_objects": 2,
+      "unique_file_bytes": 97050624,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 97050624,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "ort-worker/cuda/other": {
+      "file_count": 1,
+      "logical_bytes": 89088,
+      "unique_file_objects": 1,
+      "unique_file_bytes": 89088,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 89088,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "ort-worker/licenses": {
+      "file_count": 11,
+      "logical_bytes": 769439,
+      "unique_file_objects": 11,
+      "unique_file_bytes": 769439,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 650915,
+      "duplicate_content_bytes_after_hardlinks": 118524
+    },
+    "ort-worker/numpy": {
+      "file_count": 423,
+      "logical_bytes": 47698350,
+      "unique_file_objects": 423,
+      "unique_file_bytes": 47698350,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 47693152,
+      "duplicate_content_bytes_after_hardlinks": 5198
+    },
+    "ort-worker/numpy-1.23.4.dist-info": {
+      "file_count": 4,
+      "logical_bytes": 51861,
+      "unique_file_objects": 4,
+      "unique_file_bytes": 51861,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 51861,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "ort-worker/onnxruntime": {
+      "file_count": 15,
+      "logical_bytes": 637426199,
+      "unique_file_objects": 15,
+      "unique_file_bytes": 637426199,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 637426199,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "ort-worker/onnxruntime_gpu-1.19.2.dist-info": {
+      "file_count": 2,
+      "logical_bytes": 4826,
+      "unique_file_objects": 2,
+      "unique_file_bytes": 4826,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 4826,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "ort-worker/root-files": {
+      "file_count": 33,
+      "logical_bytes": 16149481,
+      "unique_file_objects": 33,
+      "unique_file_bytes": 16149481,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 16149481,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "references/不满": {
+      "file_count": 2,
+      "logical_bytes": 346340,
+      "unique_file_objects": 2,
+      "unique_file_bytes": 346340,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 346340,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "references/中性": {
+      "file_count": 2,
+      "logical_bytes": 264006,
+      "unique_file_objects": 2,
+      "unique_file_bytes": 264006,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 264006,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "references/害羞": {
+      "file_count": 2,
+      "logical_bytes": 272277,
+      "unique_file_objects": 2,
+      "unique_file_bytes": 272277,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 272277,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "references/惊讶": {
+      "file_count": 2,
+      "logical_bytes": 144600,
+      "unique_file_objects": 2,
+      "unique_file_bytes": 144600,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 144600,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "references/请求": {
+      "file_count": 2,
+      "logical_bytes": 358662,
+      "unique_file_objects": 2,
+      "unique_file_bytes": 358662,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 358662,
+      "duplicate_content_bytes_after_hardlinks": 0
+    },
+    "sovits/root-files": {
+      "file_count": 10,
+      "logical_bytes": 251347840,
+      "unique_file_objects": 10,
+      "unique_file_bytes": 251347840,
+      "hardlink_alias_bytes": 0,
+      "unique_content_bytes": 251347840,
+      "duplicate_content_bytes_after_hardlinks": 0
+    }
+  },
+  "skipped_entries": [],
+  "full_inventory": {
+    "path": "D:\\Project\\SakuraTTS\\outputs\\windows-runtime-inventory-20260920\\inventory.json",
+    "bytes": 3365593,
+    "sha256": "2d66c8a58e43ac9c37e6920344b18f6a712cbf38ec9b8f3b36949c7afd7fd16a"
+  },
+  "largest_files": [
+    {
+      "root": "main",
+      "scope": "runtime",
+      "path": "lib/site-packages/nvidia/cublas/bin/cublaslt64_12.dll",
+      "bytes": 668673536,
+      "sha256": "71705a7cf0923f4ab034d0d2620bbfc989ff669ac3d79f868b7a7c597ca559c5",
+      "storage_id": 8339,
+      "component": "main/nvidia/cublas"
+    },
+    {
+      "root": "ort-worker",
+      "scope": "runtime",
+      "path": "cuda/cublaslt64_12.dll",
+      "bytes": 668673536,
+      "sha256": "71705a7cf0923f4ab034d0d2620bbfc989ff669ac3d79f868b7a7c597ca559c5",
+      "storage_id": 9424,
+      "component": "ort-worker/cuda/cublas"
+    },
+    {
+      "root": "ort-worker",
+      "scope": "runtime",
+      "path": "lib/site-packages/onnxruntime/capi/onnxruntime_providers_cuda.dll",
+      "bytes": 607457312,
+      "sha256": "5351fb347f6978075c6db4cf18b2c1352949f569e352a475dab667ae06be61df",
+      "storage_id": 9876,
+      "component": "ort-worker/onnxruntime"
+    },
+    {
+      "root": "ort-worker",
+      "scope": "runtime",
+      "path": "cuda/cudnn_engines_precompiled64_9.dll",
+      "bytes": 551987312,
+      "sha256": "2d609bedad06e4e4d0c5bc027df0d49b1fe77622ed7cc95ac8cd6e465ca3a678",
+      "storage_id": 9429,
+      "component": "ort-worker/cuda/cudnn"
+    },
+    {
+      "root": "gpt",
+      "scope": "model",
+      "path": "weights.npz",
+      "bytes": 318699510,
+      "sha256": "01e07f6477e327281aa3407273c69d2654d2079f72f03447bed53f8395190911",
+      "storage_id": 9944,
+      "component": "gpt/root-files"
+    },
+    {
+      "root": "ort-worker",
+      "scope": "runtime",
+      "path": "cuda/cufft64_11.dll",
+      "bytes": 276121088,
+      "sha256": "619fcb005c8a18ffad478ff68b7a9cd154fa170e835dce9d41ff4fc0c0692113",
+      "storage_id": 9436,
+      "component": "ort-worker/cuda/cufft"
+    },
+    {
+      "root": "ort-worker",
+      "scope": "runtime",
+      "path": "cuda/cudnn_adv64_9.dll",
+      "bytes": 270983792,
+      "sha256": "d2f0bef8df327f704705a208345c03d8b102105959a50b4df58a6db84b365074",
+      "storage_id": 9427,
+      "component": "ort-worker/cuda/cudnn"
+    },
+    {
+      "root": "sovits",
+      "scope": "model",
+      "path": "weights.bin",
+      "bytes": 248441344,
+      "sha256": "62ddd22044bc1d6efeaf474aa2e9bb8b65d525d6e970ead3c7a3f9850d150fdd",
+      "storage_id": 9964,
+      "component": "sovits/root-files"
+    },
+    {
+      "root": "main",
+      "scope": "runtime",
+      "path": "lib/site-packages/sudachidict_core/resources/system.dic",
+      "bytes": 217466039,
+      "sha256": "53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f",
+      "storage_id": 9205,
+      "component": "main/sudachidict_core"
+    },
+    {
+      "root": "frontend",
+      "scope": "model",
+      "path": "lid.176.bin",
+      "bytes": 131266198,
+      "sha256": "7e69ec5451bc261cc7844e49e4792a85d7f09c06789ec800fc4a44aec362764e",
+      "storage_id": 9937,
+      "component": "frontend/root-files"
+    },
+    {
+      "root": "ort-worker",
+      "scope": "runtime",
+      "path": "cuda/cudnn_ops64_9.dll",
+      "bytes": 105686640,
+      "sha256": "f8fea705eb2e766754475de0cfbc2a86127a31a4a53830d805fea46bd1f833ab",
+      "storage_id": 9435,
+      "component": "ort-worker/cuda/cudnn"
+    },
+    {
+      "root": "main",
+      "scope": "runtime",
+      "path": "lib/site-packages/pyopenjtalk/dictionary/sys.dic",
+      "bytes": 103131410,
+      "sha256": "0328ca62355100aba6df13af56912ad88cf10246e2a286005b89cb8ce2cef652",
+      "storage_id": 9046,
+      "component": "main/pyopenjtalk"
+    },
+    {
+      "root": "frontend",
+      "scope": "model",
+      "path": "classic-python/pyopenjtalk/open_jtalk_dic_utf_8-1.11/sys.dic",
+      "bytes": 103073776,
+      "sha256": "ca57d9029691a70a5dfb99afc2844180256161d7130da65b1a867510e129b9a6",
+      "storage_id": 9932,
+      "component": "frontend/classic-python"
+    },
+    {
+      "root": "main",
+      "scope": "runtime",
+      "path": "lib/site-packages/nvidia/cublas/bin/cublas64_12.dll",
+      "bytes": 102518272,
+      "sha256": "52ce5ba0ec5327d39be6021f0f9362d2ed4d64d7206f9b5afc06398d827b8e82",
+      "storage_id": 8338,
+      "component": "main/nvidia/cublas"
+    },
+    {
+      "root": "ort-worker",
+      "scope": "runtime",
+      "path": "cuda/cublas64_12.dll",
+      "bytes": 102518272,
+      "sha256": "52ce5ba0ec5327d39be6021f0f9362d2ed4d64d7206f9b5afc06398d827b8e82",
+      "storage_id": 9423,
+      "component": "ort-worker/cuda/cublas"
+    },
+    {
+      "root": "ort-worker",
+      "scope": "runtime",
+      "path": "cuda/cudnn_graph64_9.dll",
+      "bytes": 99898480,
+      "sha256": "328602d960f9dd7a2a7aa6ec301e1459dc5d05e9ee31ea13ecbd0d54c73fd2b1",
+      "storage_id": 9433,
+      "component": "ort-worker/cuda/cudnn"
+    },
+    {
+      "root": "main",
+      "scope": "runtime",
+      "path": "lib/site-packages/nvidia/cuda_nvrtc/bin/nvrtc64_120_0.alt.dll",
+      "bytes": 89899520,
+      "sha256": "ac56a4d3b5a99f294523abec28b8f648b96324a9277622a450ec20ddb9e2c47d",
+      "storage_id": 8348,
+      "component": "main/nvidia/cuda_nvrtc"
+    },
+    {
+      "root": "main",
+      "scope": "runtime",
+      "path": "lib/site-packages/nvidia/cuda_nvrtc/bin/nvrtc64_120_0.dll",
+      "bytes": 89832960,
+      "sha256": "0cc63349fedffeec1660b30955e8028b6e4e4c26cf1e41c56dc4569fd5eca82c",
+      "storage_id": 8349,
+      "component": "main/nvidia/cuda_nvrtc"
+    },
+    {
+      "root": "ort-worker",
+      "scope": "runtime",
+      "path": "cuda/nvrtc64_120_0.dll",
+      "bytes": 89832960,
+      "sha256": "0cc63349fedffeec1660b30955e8028b6e4e4c26cf1e41c56dc4569fd5eca82c",
+      "storage_id": 9439,
+      "component": "ort-worker/cuda/nvrtc"
+    },
+    {
+      "root": "ort-worker",
+      "scope": "runtime",
+      "path": "cuda/nvjitlink_120_0.dll",
+      "bytes": 77834752,
+      "sha256": "4bc81414f0c91119061aa1207d329ceb7f94959a647f865a3c44e23fb27c7907",
+      "storage_id": 9437,
+      "component": "ort-worker/cuda/nvjitlink"
+    },
+    {
+      "root": "ort-worker",
+      "scope": "runtime",
+      "path": "cuda/cudnn_heuristic64_9.dll",
+      "bytes": 73166960,
+      "sha256": "434b2095f4cd09c87319a0ea00ea2f789519be5073de5efd8e5983eaeee4455b",
+      "storage_id": 9434,
+      "component": "ort-worker/cuda/cudnn"
+    },
+    {
+      "root": "main",
+      "scope": "runtime",
+      "path": "lib/site-packages/cupy/cuda/thrust.cp311-win_amd64.pyd",
+      "bytes": 69007360,
+      "sha256": "acf19f0332138c1dab5860d99a0e051c29fda6b692df1717fe74a77cfa1afe6c",
+      "storage_id": 6672,
+      "component": "main/cupy"
+    },
+    {
+      "root": "main",
+      "scope": "runtime",
+      "path": "lib/site-packages/cupy/cuda/cub.cp311-win_amd64.pyd",
+      "bytes": 44908032,
+      "sha256": "bcd05a5a73bd7a75c74d9172035a57987a5e6748dbff5bead6e5cc3ff6ade748",
+      "storage_id": 6643,
+      "component": "main/cupy"
+    },
+    {
+      "root": "ort-worker",
+      "scope": "runtime",
+      "path": "cuda/cudnn_engines_runtime_compiled64_9.dll",
+      "bytes": 39170672,
+      "sha256": "3d511956312c31d2f7a0b13fcf11bb1615762869e38b012e22b09672b6f29460",
+      "storage_id": 9430,
+      "component": "ort-worker/cuda/cudnn"
+    },
+    {
+      "root": "ort-worker",
+      "scope": "runtime",
+      "path": "lib/site-packages/numpy/.libs/libopenblas.fb5ae2tyxyh2ijrdkgdgq3xbklktf43h.gfortran-win_amd64.dll",
+      "bytes": 35695412,
+      "sha256": "27e53faf86f9a6fcdda4df404c8cb99bd07d5bf0757f0fe190e15afd27873769",
+      "storage_id": 9446,
+      "component": "ort-worker/numpy"
+    },
+    {
+      "root": "frontend",
+      "scope": "model",
+      "path": "user.dict",
+      "bytes": 21321666,
+      "sha256": "b44817ce96e24be7bcfdd009d834b5237fe044dc9ed5f2f9709f71da9d506fed",
+      "storage_id": 9940,
+      "component": "frontend/root-files"
+    },
+    {
+      "root": "main",
+      "scope": "runtime",
+      "path": "lib/site-packages/numpy.libs/libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "bytes": 20415488,
+      "sha256": "63c857e738469261263c764a36be9436ebdeaa272e340a828f42047a97131080",
+      "storage_id": 7207,
+      "component": "main/numpy.libs"
+    },
+    {
+      "root": "main",
+      "scope": "runtime",
+      "path": "lib/site-packages/onnxruntime/capi/onnxruntime_pybind11_state.pyd",
+      "bytes": 19079480,
+      "sha256": "06b712319c15145ac68f6e0f2796ba53defc2dbdfe667a76ec7f5383798421ec",
+      "storage_id": 8504,
+      "component": "main/onnxruntime"
+    },
+    {
+      "root": "main",
+      "scope": "runtime",
+      "path": "lib/site-packages/onnxruntime/capi/onnxruntime.dll",
+      "bytes": 18446136,
+      "sha256": "44741724166ad61c8c82885e394793807f2cf5707c83b9e33c2d78d75c6e7650",
+      "storage_id": 8500,
+      "component": "main/onnxruntime"
+    },
+    {
+      "root": "ort-worker",
+      "scope": "runtime",
+      "path": "lib/site-packages/onnxruntime/capi/onnxruntime_pybind11_state.pyd",
+      "bytes": 15822904,
+      "sha256": "51c9ebbed7421c09413c45d530e41ec5ceaadb2bfa923bb58adf75bb17c5df41",
+      "storage_id": 9878,
+      "component": "ort-worker/onnxruntime"
+    }
+  ],
+  "duplicate_group_count": 224,
+  "largest_duplicate_groups": [
+    {
+      "sha256": "71705a7cf0923f4ab034d0d2620bbfc989ff669ac3d79f868b7a7c597ca559c5",
+      "bytes_each": 668673536,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 668673536,
+      "files": [
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/nvidia/cublas/bin/cublaslt64_12.dll",
+          "storage_id": 8339
+        },
+        {
+          "root": "ort-worker",
+          "scope": "runtime",
+          "path": "cuda/cublaslt64_12.dll",
+          "storage_id": 9424
+        }
+      ]
+    },
+    {
+      "sha256": "52ce5ba0ec5327d39be6021f0f9362d2ed4d64d7206f9b5afc06398d827b8e82",
+      "bytes_each": 102518272,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 102518272,
+      "files": [
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/nvidia/cublas/bin/cublas64_12.dll",
+          "storage_id": 8338
+        },
+        {
+          "root": "ort-worker",
+          "scope": "runtime",
+          "path": "cuda/cublas64_12.dll",
+          "storage_id": 9423
+        }
+      ]
+    },
+    {
+      "sha256": "0cc63349fedffeec1660b30955e8028b6e4e4c26cf1e41c56dc4569fd5eca82c",
+      "bytes_each": 89832960,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 89832960,
+      "files": [
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/nvidia/cuda_nvrtc/bin/nvrtc64_120_0.dll",
+          "storage_id": 8349
+        },
+        {
+          "root": "ort-worker",
+          "scope": "runtime",
+          "path": "cuda/nvrtc64_120_0.dll",
+          "storage_id": 9439
+        }
+      ]
+    },
+    {
+      "sha256": "c405226b0b394ed8bdc593bb1419b94a989f93248ed2873e8f2e0e27c1688ca1",
+      "bytes_each": 7217664,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 7217664,
+      "files": [
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/nvidia/cuda_nvrtc/bin/nvrtc-builtins64_129.dll",
+          "storage_id": 8347
+        },
+        {
+          "root": "ort-worker",
+          "scope": "runtime",
+          "path": "cuda/nvrtc-builtins64_129.dll",
+          "storage_id": 9438
+        }
+      ]
+    },
+    {
+      "sha256": "62fd16b4f64c851d5dc352ef0d5740c5fc83ddc7c203b2b0b1fc5271969a14ce",
+      "bytes_each": 3792262,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 3792262,
+      "files": [
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/pyopenjtalk/dictionary/matrix.bin",
+          "storage_id": 9042
+        },
+        {
+          "root": "frontend",
+          "scope": "model",
+          "path": "classic-python/pyopenjtalk/open_jtalk_dic_utf_8-1.11/matrix.bin",
+          "storage_id": 9928
+        }
+      ]
+    },
+    {
+      "sha256": "f3be49a6838904a6c218790b64e07c3e83c1886e995dca284b413caab19184de",
+      "bytes_each": 862503,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 862503,
+      "files": [
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/pyopenjtalk/htsvoice/mei_normal.htsvoice",
+          "storage_id": 9051
+        },
+        {
+          "root": "frontend",
+          "scope": "model",
+          "path": "classic-python/pyopenjtalk/htsvoice/mei_normal.htsvoice",
+          "storage_id": 9923
+        }
+      ]
+    },
+    {
+      "sha256": "760c38928bbe5759f7b31ed6692599eb7ec83cedd5702e84c2b72028a89837e1",
+      "bytes_each": 583680,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 583680,
+      "files": [
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/nvidia/cuda_runtime/bin/cudart64_12.dll",
+          "storage_id": 8351
+        },
+        {
+          "root": "ort-worker",
+          "scope": "runtime",
+          "path": "cuda/cudart64_12.dll",
+          "storage_id": 9425
+        }
+      ]
+    },
+    {
+      "sha256": "a4c2229bdc2a2a630acdc095b4d86008e5c3e3bc7773174354f3da4f5beb9cde",
+      "bytes_each": 575056,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 575056,
+      "files": [
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/numpy.libs/msvcp140-a4c2229bdc2a2a630acdc095b4d86008.dll",
+          "storage_id": 7208
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/pyopenjtalk_plus.libs/msvcp140-a4c2229bdc2a2a630acdc095b4d86008.dll",
+          "storage_id": 9086
+        }
+      ]
+    },
+    {
+      "sha256": "ad6f5853fba0ca0d159d0f58d49ae49830c2f8c93f7a92648b9ce90adb4c6ccd",
+      "bytes_each": 59262,
+      "path_count": 6,
+      "unique_file_objects": 6,
+      "duplicate_content_bytes_after_hardlinks": 296310,
+      "files": [
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/nvidia_cublas_cu12-12.9.2.10.dist-info/licenses/license.txt",
+          "storage_id": 8456
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/nvidia_cuda_nvrtc_cu12-12.9.86.dist-info/licenses/license.txt",
+          "storage_id": 8463
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/nvidia_cuda_runtime_cu12-12.9.79.dist-info/licenses/license.txt",
+          "storage_id": 8470
+        },
+        {
+          "root": "ort-worker",
+          "scope": "runtime",
+          "path": "licenses/nvidia_cublas_cu12-12.9.2.10.dist-info/licenses/license.txt",
+          "storage_id": 9891
+        },
+        {
+          "root": "ort-worker",
+          "scope": "runtime",
+          "path": "licenses/nvidia_cuda_nvrtc_cu12-12.9.86.dist-info/licenses/license.txt",
+          "storage_id": 9893
+        },
+        {
+          "root": "ort-worker",
+          "scope": "runtime",
+          "path": "licenses/nvidia_cuda_runtime_cu12-12.9.79.dist-info/licenses/license.txt",
+          "storage_id": 9895
+        }
+      ]
+    },
+    {
+      "sha256": "888ee94c5a8a7a26d24ab3f1b7155441351954fd51ea06b4a2f78bd742492b2f",
+      "bytes_each": 262496,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 262496,
+      "files": [
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/pyopenjtalk/dictionary/char.bin",
+          "storage_id": 9039
+        },
+        {
+          "root": "frontend",
+          "scope": "model",
+          "path": "classic-python/pyopenjtalk/open_jtalk_dic_utf_8-1.11/char.bin",
+          "storage_id": 9925
+        }
+      ]
+    },
+    {
+      "sha256": "596ec35e2ca0ebcba9fd8343ff0a51625af548786257815f24b41f7e08613314",
+      "bytes_each": 51122,
+      "path_count": 3,
+      "unique_file_objects": 3,
+      "duplicate_content_bytes_after_hardlinks": 102244,
+      "files": [
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/pip/_vendor/packaging/licenses/_spdx.py",
+          "storage_id": 1577
+        },
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/setuptools/_vendor/packaging/licenses/_spdx.py",
+          "storage_id": 2407
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/packaging/licenses/_spdx.py",
+          "storage_id": 8829
+        }
+      ]
+    },
+    {
+      "sha256": "1700af47dc012a48cec89cf1dfae6d1d0d2f40ed731eff6ca55296a055a11c00",
+      "bytes_each": 86971,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 86971,
+      "files": [
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "tcl/tcl8.6/encoding/euc-cn.enc",
+          "storage_id": 3015
+        },
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "tcl/tcl8.6/encoding/gb2312.enc",
+          "storage_id": 3021
+        }
+      ]
+    },
+    {
+      "sha256": "17d3cbc7a4dc3a4fac77474e6ded2758bcb3e0785b1efd8aeefa11fe4a25a465",
+      "bytes_each": 82217,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 82217,
+      "files": [
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/numpy/_core/include/numpy/random/libdivide.h",
+          "storage_id": 7333
+        },
+        {
+          "root": "ort-worker",
+          "scope": "runtime",
+          "path": "lib/site-packages/numpy/core/include/numpy/libdivide/libdivide.h",
+          "storage_id": 9545
+        }
+      ]
+    },
+    {
+      "sha256": "6431a8a19661101bac3fd1f827fd9a625215973a78fad22c9697a38528cc7b02",
+      "bytes_each": 79049,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 79049,
+      "files": [
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/pyopenjtalk/dictionary/left-id.def",
+          "storage_id": 9041
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/pyopenjtalk/dictionary/right-id.def",
+          "storage_id": 9045
+        }
+      ]
+    },
+    {
+      "sha256": "db1adac8a7f9e5854cd82ea044c85115249206c8181b9d88cf92ae2ee5e87b84",
+      "bytes_each": 77672,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 77672,
+      "files": [
+        {
+          "root": "frontend",
+          "scope": "model",
+          "path": "classic-python/pyopenjtalk/open_jtalk_dic_utf_8-1.11/left-id.def",
+          "storage_id": 9927
+        },
+        {
+          "root": "frontend",
+          "scope": "model",
+          "path": "classic-python/pyopenjtalk/open_jtalk_dic_utf_8-1.11/right-id.def",
+          "storage_id": 9931
+        }
+      ]
+    },
+    {
+      "sha256": "dc84a1ff6faf279cfabbad106066b8b04aa243a1bd71561a03d11b1b8912d499",
+      "bytes_each": 50807,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 50807,
+      "files": [
+        {
+          "root": "cupy",
+          "scope": "cache",
+          "path": "128c32dfba9c1c948e35b3359a74f10ad53a5f64.cubin",
+          "storage_id": 4
+        },
+        {
+          "root": "cupy",
+          "scope": "cache",
+          "path": "4c2bbb888f512cb557e909ae159d8307f4d8a493.cubin",
+          "storage_id": 11
+        }
+      ]
+    },
+    {
+      "sha256": "be0e909d681906de027743b19451a9be95c7605bc5e9f87f029825fa7efe4fcd",
+      "bytes_each": 48809,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 48809,
+      "files": [
+        {
+          "root": "ort-worker",
+          "scope": "runtime",
+          "path": "lib/site-packages/numpy-1.23.4.dist-info/license.txt",
+          "storage_id": 9442
+        },
+        {
+          "root": "ort-worker",
+          "scope": "runtime",
+          "path": "lib/site-packages/numpy/license.txt",
+          "storage_id": 9773
+        }
+      ]
+    },
+    {
+      "sha256": "603af8d6a7ccc82e99b849550a1d67e32272311c2f1d888dabe7fd31b0b88889",
+      "bytes_each": 47104,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 47104,
+      "files": [
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "scripts/python.exe",
+          "storage_id": 9401
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "scripts/pythonw.exe",
+          "storage_id": 9402
+        }
+      ]
+    },
+    {
+      "sha256": "096559a4dfc77e860c4920ee08fee280ebc682a03d00e9a95bc7f7a938ac7e77",
+      "bytes_each": 39360,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 39360,
+      "files": [
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/pip/_vendor/packaging/metadata.py",
+          "storage_id": 1579
+        },
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/setuptools/_vendor/packaging/metadata.py",
+          "storage_id": 2409
+        }
+      ]
+    },
+    {
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "bytes_each": 10174,
+      "path_count": 4,
+      "unique_file_objects": 4,
+      "duplicate_content_bytes_after_hardlinks": 30522,
+      "files": [
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/pip-26.0.1.dist-info/licenses/src/pip/_vendor/packaging/license.apache",
+          "storage_id": 1127
+        },
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/pip/_vendor/packaging/license.apache",
+          "storage_id": 1572
+        },
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/setuptools/_vendor/packaging-26.0.dist-info/licenses/license.apache",
+          "storage_id": 2376
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/packaging-26.3.dist-info/licenses/license.apache",
+          "storage_id": 8811
+        }
+      ]
+    },
+    {
+      "sha256": "9791bb9b25cdc04393ca7048122b47fa085a17c670e691d0023698a4f28db534",
+      "bytes_each": 23322,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 23322,
+      "files": [
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/numpy/distutils/cpuinfo.py",
+          "storage_id": 7614
+        },
+        {
+          "root": "ort-worker",
+          "scope": "runtime",
+          "path": "lib/site-packages/numpy/distutils/cpuinfo.py",
+          "storage_id": 9657
+        }
+      ]
+    },
+    {
+      "sha256": "5a831ef9319c10a1a45c96d44aac344943ec7c75dc88560fba794ce086cf16d9",
+      "bytes_each": 23215,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 23215,
+      "files": [
+        {
+          "root": "cupy",
+          "scope": "cache",
+          "path": "5e54165822aeb30c2d39c0aea0090a268cff6920.cubin",
+          "storage_id": 12
+        },
+        {
+          "root": "cupy",
+          "scope": "cache",
+          "path": "7085de375983d5c96bbdcc30019a5fdd5dd2e92c.cubin",
+          "storage_id": 15
+        }
+      ]
+    },
+    {
+      "sha256": "7172d5d69243dd4b4994383b5b3df3adf75085166aafc8ee99200a28001ddb11",
+      "bytes_each": 22856,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 22856,
+      "files": [
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/pip/_vendor/packaging/tags.py",
+          "storage_id": 1584
+        },
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/setuptools/_vendor/packaging/tags.py",
+          "storage_id": 2414
+        }
+      ]
+    },
+    {
+      "sha256": "f91d6e35f2783da2eda3b320eb662c18e1e0bec92e88812a3f0c4ecb0978d899",
+      "bytes_each": 22537,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 22537,
+      "files": [
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/pip/_vendor/packaging/pylock.py",
+          "storage_id": 1581
+        },
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/setuptools/_vendor/packaging/pylock.py",
+          "storage_id": 2411
+        }
+      ]
+    },
+    {
+      "sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b",
+      "bytes_each": 10142,
+      "path_count": 3,
+      "unique_file_objects": 3,
+      "duplicate_content_bytes_after_hardlinks": 20284,
+      "files": [
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/pip-26.0.1.dist-info/licenses/src/pip/_vendor/requests/license",
+          "storage_id": 1133
+        },
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/pip/_vendor/requests/license",
+          "storage_id": 1696
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/requests-2.34.2.dist-info/licenses/license",
+          "storage_id": 9088
+        }
+      ]
+    },
+    {
+      "sha256": "d19e72af31f1b30710546ab095348d0ec207fc0eff754c87c5685078921f9176",
+      "bytes_each": 1007,
+      "path_count": 21,
+      "unique_file_objects": 21,
+      "duplicate_content_bytes_after_hardlinks": 20140,
+      "files": [
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/count.h",
+          "storage_id": 5886
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/equal.h",
+          "storage_id": 5887
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/fill.h",
+          "storage_id": 5890
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/gather.h",
+          "storage_id": 5893
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/generate.h",
+          "storage_id": 5894
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/inner_product.h",
+          "storage_id": 5896
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/logical.h",
+          "storage_id": 5898
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/mismatch.h",
+          "storage_id": 5902
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/replace.h",
+          "storage_id": 5909
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/reverse.h",
+          "storage_id": 5910
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/scatter.h",
+          "storage_id": 5913
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/sequence.h",
+          "storage_id": 5914
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/tabulate.h",
+          "storage_id": 5918
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/transform_reduce.h",
+          "storage_id": 5921
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/transform_scan.h",
+          "storage_id": 5922
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/uninitialized_copy.h",
+          "storage_id": 5923
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cpp/detail/uninitialized_fill.h",
+          "storage_id": 5924
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cuda/detail/logical.h",
+          "storage_id": 5962
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/cuda/detail/sequence.h",
+          "storage_id": 5981
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/detail/sequential/transform_scan.h",
+          "storage_id": 6182
+        },
+        {
+          "root": "main",
+          "scope": "runtime",
+          "path": "lib/site-packages/cupy/_core/include/cupy/_cccl/thrust/thrust/system/detail/sequential/uninitialized_copy.h",
+          "storage_id": 6184
+        }
+      ]
+    },
+    {
+      "sha256": "808e10c8a6ab8deb149ff9b3fb19f447a808094606d712a9ca57fead3552599d",
+      "bytes_each": 14531,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 14531,
+      "files": [
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/pip-26.0.1.dist-info/licenses/src/pip/_vendor/distlib/license.txt",
+          "storage_id": 1122
+        },
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/pip/_vendor/distlib/license.txt",
+          "storage_id": 1504
+        }
+      ]
+    },
+    {
+      "sha256": "657f9c2ef5b54b77197047347c7238cfbcd2c795364f5f723290cffe613e098c",
+      "bytes_each": 12771,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 12771,
+      "files": [
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/pip/_vendor/packaging/markers.py",
+          "storage_id": 1578
+        },
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/setuptools/_vendor/packaging/markers.py",
+          "storage_id": 2408
+        }
+      ]
+    },
+    {
+      "sha256": "6456c25529469e51835c2693d6d6581de13729d9e8b7417341193d08b7cbc239",
+      "bytes_each": 11911,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 11911,
+      "files": [
+        {
+          "root": "cupy",
+          "scope": "cache",
+          "path": "00a8d7c21a57bc2c6e8db447980d8aee7fc41e45.cubin",
+          "storage_id": 0
+        },
+        {
+          "root": "cupy",
+          "scope": "cache",
+          "path": "0be6bad5e43acef64e9d17af589513f09b0fe211.cubin",
+          "storage_id": 2
+        }
+      ]
+    },
+    {
+      "sha256": "2800f82a1ec9d93d865294f440d8ba199ff68ea8597b0f5bd2c23ba1915447e6",
+      "bytes_each": 11776,
+      "path_count": 2,
+      "unique_file_objects": 2,
+      "duplicate_content_bytes_after_hardlinks": 11776,
+      "files": [
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/setuptools/cli-32.exe",
+          "storage_id": 2513
+        },
+        {
+          "root": "cpython311",
+          "scope": "shared_python",
+          "path": "lib/site-packages/setuptools/cli.exe",
+          "storage_id": 2516
+        }
+      ]
+    }
+  ]
+}

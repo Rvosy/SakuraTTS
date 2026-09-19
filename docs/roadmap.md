@@ -1,10 +1,20 @@
 # 实施路线
 
-状态：日文独立运行链与主要通用工作已有证据，准备转到 Windows / NVIDIA 接续；中文已有成果保留，整链与专项优化暂缓。现有 MLX 路径为 Mac 对照，Windows 自有 CUDA 后端尚待实现，完整产品仍未验收。更新日期：2026-09-20。
+状态：Windows / RTX 5060 已接通 Sakura V2ProPlus 的日文独立推理，正在验证 GPT 混合精度和运行依赖成本。现有 MLX 路径保留为 Mac 对照；中文整链与专项优化暂缓，完整产品仍未验收。更新日期：2026-09-20。
 
 目标与行为约束见 [推理契约](specs/inference-contract.md)，架构选择见 [ADR 0001](adr/0001-native-gpu-runtime.md)，测量规则见 [基准协议](specs/benchmark-protocol.md)。各阶段按证据推进，不按预估加速倍数或日历日期宣布完成。
 
 ## 当前状态
+
+- [Windows 自有后端](experiments/2026-09-20-windows-nvidia-backend.md)已有原地 KV、共享权重、单步 CUDA Graph 与日文完整 PCM。[GPT 混合精度候选](experiments/2026-09-20-windows-gpt-fp16.md)已完成 1182 步固定历史与完整请求，权重和 KV 少 247.93 MiB，仍保留 FP32 默认。[Lite 本机对照](experiments/2026-09-20-windows-lite-baseline.md)发现默认容量截短长句，扩大公开配置后完成实测。下面的 Mac 记录保留各次实验当时的范围。
+
+## Windows 下一步
+
+GPT 半精度的固定历史、完整请求和恢复状态已验证；部分自然生成历史变化、恢复波形逐字节差异和约 198 MiB 主存增量仍保留。先补内容与听感，并定位首次计算后的主存增长；声学维持 FP32 以区分收益来源。[运行依赖清点](experiments/2026-09-20-windows-runtime-inventory.md)已确认 828.58 MiB 的重复 CUDA DLL，下一步用独立搬迁包验证共享路径。
+
+之后分别测量声学半精度、逐 token 主机同步和长句后缓存保留。先移植 Lite / Genie 已验证且符合现有契约的机制，再考虑研究型优化；分句级 PCM 输出先于句内声学分块，不同时改变精度、采样和分块。
+
+## 既有实验记录
 
 - 已完成聊天记录整理、三个主仓库的定点源码核对和部分论文题录 / 摘要核对。
 - 已形成范围、架构提案、研究记录和验收协议。

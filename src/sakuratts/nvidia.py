@@ -16,9 +16,13 @@ from .synthesis import prepare_text_request, generate_prepared_semantic, synthes
 
 class NVIDIAEngine:
     """One active model pair and one synchronous request; caller owns lifetime."""
-    def __init__(self, config, *, policy="resident", use_graph=True, capacity=2048):
+    def __init__(self, config, *, policy="resident", use_graph=True, capacity=2048,
+                 gpt_precision="fp32"):
         if policy not in ("resident", "release-state", "staged"):
             raise ValueError("Unknown model policy")
+        if gpt_precision not in ("fp32", "fp16"):
+            raise ValueError("GPT precision must be fp32 or fp16")
+        self.gpt_precision = gpt_precision
         self.config_path = Path(config).resolve(strict=True)
         self.config = json.loads(self.config_path.read_text(encoding="utf-8"))
         if self.config.get("format") != "sakuratts-windows-config-v1":
@@ -102,7 +106,8 @@ class NVIDIAEngine:
     def _load_gpt(self):
         if self.gpt is None:
             from .cuda_gpt import CUDAGPT
-            self.gpt = CUDAGPT.load(self.packages["gpt"], capacity=self.capacity, use_graph=self.use_graph)
+            self.gpt = CUDAGPT.load(self.packages["gpt"], capacity=self.capacity,
+                                    use_graph=self.use_graph, precision=self.gpt_precision)
 
     def _load_sovits(self):
         if self.sovits is None:
@@ -193,7 +198,9 @@ class NVIDIAEngine:
                 "sample_rate":rate,"audio_seconds":duration,"pcm_seconds":pcm.size/rate,
                 "rtf":elapsed/duration,"fragments":fragments,
                 "timing_scope":"Original text through complete PCM, including missing model loads, transfers and sampling; file output separate",
-                "precision":"FP32; CUDA TF32 disabled; no quantization",
+                "precision":("FP32; CUDA TF32 disabled; no quantization" if self.gpt_precision == "fp32" else
+                    "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization"),
+                "gpt_precision":self.gpt_precision,"acoustic_precision":"fp32",
                 "frontend_profile":self.manifests["frontend"].get("japanese_g2p",{"implementation":"pyopenjtalk-plus"}),
                 "random_inputs":"fresh" if random_inputs is None else "explicit replay of draws and acoustic noise",
                 "quality":{"human_listening":"not_run","asr":"not_run"}}
@@ -239,7 +246,8 @@ def run_cli(args):
     if output.suffix.lower()!=".wav" or output.exists() or record.exists():
         raise ValueError("Choose a new .wav output path; neither WAV nor JSON may already exist")
     start=time.perf_counter()
-    engine=NVIDIAEngine(args.config,policy=args.model_policy,use_graph=not args.no_cuda_graph,capacity=args.capacity)
+    engine=NVIDIAEngine(args.config,policy=args.model_policy,use_graph=not args.no_cuda_graph,
+                        capacity=args.capacity,gpt_precision=args.gpt_precision)
     try:
         pcm,report=engine.synthesize(args.text,reference=args.reference,seed=args.seed,
             language=args.language,split_method=args.text_split_method,top_k=args.top_k,

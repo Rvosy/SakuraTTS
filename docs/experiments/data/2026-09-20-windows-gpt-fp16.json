@@ -1,0 +1,4850 @@
+{
+  "base_commit": "d323b50",
+  "scope": "Experimental GPT fp16, acoustic fp32; human listening and ASR not run",
+  "fixed": {
+    "fp32-final": {
+      "path": "outputs\\windows-precision\\fp32-final\\result.json",
+      "sha256": "5f0e02ccc776e9c0141dd65fb4634a87da60247ccfdbbc5c5773a43176ea2ccf",
+      "result": {
+        "status": "completed",
+        "engineering_passed": true,
+        "precision": "fp32",
+        "captures": {
+          "short": {
+            "path": "D:\\Project\\SakuraTTS\\outputs\\windows-baseline\\fp32-naive\\diagnostic-neutral-short.npz",
+            "sha256": "5b865b3ddefd029979f6a9519a2b79629049f12b9c934ea0b70c746cfbfbc5e7"
+          },
+          "long": {
+            "path": "D:\\Project\\SakuraTTS\\outputs\\windows-baseline\\fp32-capture-long\\diagnostic-neutral-long.npz",
+            "sha256": "e181ac7386205f7728fd59ca6ee79135ebed0ff9aca2f396fef1d686cf6a5202"
+          },
+          "multi": {
+            "path": "D:\\Project\\SakuraTTS\\outputs\\windows-baseline\\fp32-capture-multi\\diagnostic-neutral-multi.npz",
+            "sha256": "3c17d9e5c43a004fbd0a54f12cceab1f7f4016ab30757284974c6a7c918ece45"
+          },
+          "punctuation": {
+            "path": "D:\\Project\\SakuraTTS\\outputs\\windows-baseline\\fp32-capture-punctuation\\diagnostic-neutral-punctuation.npz",
+            "sha256": "d51bd48fcf43443e6c80fc5ce3ceeba09f3ee1d1ba2a7b68cf3d065952cffa16"
+          }
+        },
+        "gpt_manifest_sha256": "35a145bda041bbd9c29675a0b921234d32672052bc00ac3ed87ce124ae8510f7",
+        "reference_manifest_sha256": "f75a032a1b775c614770504c92fc0f87a23b69faf886b346b832a87de5d49825",
+        "reference_archive_sha256": "693abd56d4416763c7ab54c09df0eb2f50a0a02f44b07358f8869a8c04bbf90f",
+        "capacity": 2048,
+        "cases": {
+          "short": {
+            "warm": {
+              "prefill_ms": 115.04750000312924,
+              "decode_ms": 87.43240000330843,
+              "total_ms": 202.47990000643767,
+              "steps": 44
+            },
+            "runs": [
+              {
+                "prefill_ms": 11.094299996329937,
+                "decode_ms": 81.61609999660868,
+                "total_ms": 92.71039999293862,
+                "steps": 44,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 10.947499999019783,
+                "decode_ms": 81.62589999847114,
+                "total_ms": 92.57339999749092,
+                "steps": 44,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 10.992700001224875,
+                "decode_ms": 81.61260000633774,
+                "total_ms": 92.60530000756262,
+                "steps": 44,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 10.976099998515565,
+                "decode_ms": 81.66429999982938,
+                "total_ms": 92.64039999834495,
+                "steps": 44,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 11.253600001509767,
+                "decode_ms": 82.15030000428669,
+                "total_ms": 93.40390000579646,
+                "steps": 44,
+                "warm_logits_equal": true
+              }
+            ],
+            "memory": {
+              "weight_bytes": 318617608,
+              "kv_bytes": 201326592,
+              "workspace_bytes": 26628,
+              "pool_used_bytes": 519972864,
+              "pool_total_bytes": 541621248
+            },
+            "p50_ms": {
+              "prefill_ms": 10.992700001224875,
+              "decode_ms": 81.62589999847114,
+              "total_ms": 92.64039999834495
+            },
+            "official_fp32": {
+              "finite_shape_match": true,
+              "rms": 9.216999207997765e-06,
+              "max_abs": 4.1961669921875e-05,
+              "cosine": 0.999999999999768,
+              "strict_outside_count": 0,
+              "strict_passed": true,
+              "screen_passed": true,
+              "argmax_equal_steps": 44
+            },
+            "other_precision": {
+              "finite_shape_match": true,
+              "rms": 0.015378610847156955,
+              "max_abs": 0.07068252563476562,
+              "cosine": 0.9999993541676169,
+              "strict_outside_count": 44551,
+              "strict_passed": false,
+              "screen_passed": true,
+              "argmax_equal_steps": 44
+            }
+          },
+          "long": {
+            "warm": {
+              "prefill_ms": 30.834999997750856,
+              "decode_ms": 2314.779599997564,
+              "total_ms": 2345.614599995315,
+              "steps": 676
+            },
+            "runs": [
+              {
+                "prefill_ms": 29.264799995871726,
+                "decode_ms": 2308.3235999947647,
+                "total_ms": 2337.5883999906364,
+                "steps": 676,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 29.451799993694294,
+                "decode_ms": 2306.485100001737,
+                "total_ms": 2335.9368999954313,
+                "steps": 676,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 29.039700006251223,
+                "decode_ms": 2304.369900004531,
+                "total_ms": 2333.409600010782,
+                "steps": 676,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 29.561400006059557,
+                "decode_ms": 2302.7574000007007,
+                "total_ms": 2332.3188000067603,
+                "steps": 676,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 28.94209999794839,
+                "decode_ms": 2315.558599999349,
+                "total_ms": 2344.5006999972975,
+                "steps": 676,
+                "warm_logits_equal": true
+              }
+            ],
+            "memory": {
+              "weight_bytes": 318617608,
+              "kv_bytes": 201326592,
+              "workspace_bytes": 26628,
+              "pool_used_bytes": 519972864,
+              "pool_total_bytes": 613262336
+            },
+            "p50_ms": {
+              "prefill_ms": 29.264799995871726,
+              "decode_ms": 2306.485100001737,
+              "total_ms": 2335.9368999954313
+            },
+            "official_fp32": {
+              "finite_shape_match": true,
+              "rms": 1.1568738334277474e-05,
+              "max_abs": 8.7738037109375e-05,
+              "cosine": 0.9999999999996821,
+              "strict_outside_count": 0,
+              "strict_passed": true,
+              "screen_passed": true,
+              "argmax_equal_steps": 676
+            },
+            "other_precision": {
+              "finite_shape_match": true,
+              "rms": 0.01684617850253971,
+              "max_abs": 0.11224603652954102,
+              "cosine": 0.9999993219061711,
+              "strict_outside_count": 685599,
+              "strict_passed": false,
+              "screen_passed": true,
+              "argmax_equal_steps": 676
+            }
+          },
+          "multi": {
+            "warm": {
+              "prefill_ms": 17.079600002034567,
+              "decode_ms": 621.4135999980499,
+              "total_ms": 638.4932000000845,
+              "steps": 259
+            },
+            "runs": [
+              {
+                "prefill_ms": 14.581600000383332,
+                "decode_ms": 618.5019000040484,
+                "total_ms": 633.0835000044317,
+                "steps": 259,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 14.577999994799029,
+                "decode_ms": 618.102499996894,
+                "total_ms": 632.6804999916931,
+                "steps": 259,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 14.612200000556186,
+                "decode_ms": 619.5365000021411,
+                "total_ms": 634.1487000026973,
+                "steps": 259,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 15.141500000027008,
+                "decode_ms": 618.9553000003798,
+                "total_ms": 634.0968000004068,
+                "steps": 259,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 14.7757000013371,
+                "decode_ms": 618.838100002904,
+                "total_ms": 633.613800004241,
+                "steps": 259,
+                "warm_logits_equal": true
+              }
+            ],
+            "memory": {
+              "weight_bytes": 318617608,
+              "kv_bytes": 201326592,
+              "workspace_bytes": 26628,
+              "pool_used_bytes": 519972864,
+              "pool_total_bytes": 613262336
+            },
+            "p50_ms": {
+              "prefill_ms": 14.612200000556186,
+              "decode_ms": 618.838100002904,
+              "total_ms": 633.613800004241
+            },
+            "official_fp32": {
+              "finite_shape_match": true,
+              "rms": 8.37253457681903e-06,
+              "max_abs": 4.57763671875e-05,
+              "cosine": 0.9999999999998042,
+              "strict_outside_count": 0,
+              "strict_passed": true,
+              "screen_passed": true,
+              "argmax_equal_steps": 259
+            },
+            "other_precision": {
+              "finite_shape_match": true,
+              "rms": 0.01529908786449503,
+              "max_abs": 0.10087966918945312,
+              "cosine": 0.9999993372378163,
+              "strict_outside_count": 262597,
+              "strict_passed": false,
+              "screen_passed": true,
+              "argmax_equal_steps": 258
+            }
+          },
+          "punctuation": {
+            "warm": {
+              "prefill_ms": 12.88409999688156,
+              "decode_ms": 451.8566999977338,
+              "total_ms": 464.7407999946154,
+              "steps": 203
+            },
+            "runs": [
+              {
+                "prefill_ms": 12.821300006180536,
+                "decode_ms": 448.9862999980687,
+                "total_ms": 461.80760000424925,
+                "steps": 203,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 12.604899995494634,
+                "decode_ms": 450.98739999957616,
+                "total_ms": 463.5922999950708,
+                "steps": 203,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 12.739500001771376,
+                "decode_ms": 449.6357000025455,
+                "total_ms": 462.37520000431687,
+                "steps": 203,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 13.762499998847488,
+                "decode_ms": 449.96079999691574,
+                "total_ms": 463.7232999957632,
+                "steps": 203,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 12.452000002667774,
+                "decode_ms": 450.4553000006126,
+                "total_ms": 462.9073000032804,
+                "steps": 203,
+                "warm_logits_equal": true
+              }
+            ],
+            "memory": {
+              "weight_bytes": 318617608,
+              "kv_bytes": 201326592,
+              "workspace_bytes": 26628,
+              "pool_used_bytes": 519972864,
+              "pool_total_bytes": 613262336
+            },
+            "p50_ms": {
+              "prefill_ms": 12.739500001771376,
+              "decode_ms": 449.96079999691574,
+              "total_ms": 462.9073000032804
+            },
+            "official_fp32": {
+              "finite_shape_match": true,
+              "rms": 8.562886565880122e-06,
+              "max_abs": 4.57763671875e-05,
+              "cosine": 0.9999999999998542,
+              "strict_outside_count": 0,
+              "strict_passed": true,
+              "screen_passed": true,
+              "argmax_equal_steps": 203
+            },
+            "other_precision": {
+              "finite_shape_match": true,
+              "rms": 0.016169291170783695,
+              "max_abs": 0.08157634735107422,
+              "cosine": 0.999999477284493,
+              "strict_outside_count": 205737,
+              "strict_passed": false,
+              "screen_passed": true,
+              "argmax_equal_steps": 203
+            }
+          }
+        },
+        "executor_sha256": "dd5dc12cb5c0ead02cb8578a70d263cce59f9940ca8f3ebb4ba8e1527c7bf515",
+        "timing_scope": "Fixed official token histories, preloaded input arrays, GPU through FP32 CPU logits. Sampling, frontend and acoustic execution excluded.",
+        "numerical_scope": "FP32 original tolerances retained; fp16 screen is not quality acceptance.",
+        "thresholds": {
+          "strict_atol": 0.0001,
+          "strict_rtol": 1e-05,
+          "screen_rms": 0.05,
+          "screen_max_abs": 0.5,
+          "screen_cosine": 0.999
+        },
+        "load_ms": 499.57680000079563,
+        "gpu": "NVIDIA GeForce RTX 5060",
+        "cuda_runtime": 12090,
+        "driver": 13030,
+        "memory_loaded": {
+          "weight_bytes": 318617608,
+          "kv_bytes": 0,
+          "workspace_bytes": 0,
+          "pool_used_bytes": 318618624,
+          "pool_total_bytes": 318618624
+        },
+        "after_other_requests": {
+          "finite_shape_match": true,
+          "rms": 0.0,
+          "max_abs": 0.0,
+          "cosine": 1.0000000000000002,
+          "strict_outside_count": 0,
+          "strict_passed": true,
+          "screen_passed": true,
+          "argmax_equal_steps": 44
+        },
+        "memory_released": {
+          "weight_bytes": 318617608,
+          "kv_bytes": 0,
+          "workspace_bytes": 0,
+          "pool_used_bytes": 318618624,
+          "pool_total_bytes": 318618624
+        },
+        "after_recreate": {
+          "finite_shape_match": true,
+          "rms": 0.0,
+          "max_abs": 0.0,
+          "cosine": 1.0000000000000002,
+          "strict_outside_count": 0,
+          "strict_passed": true,
+          "screen_passed": true,
+          "argmax_equal_steps": 44
+        },
+        "graph_vs_eager": {
+          "finite_shape_match": true,
+          "rms": 0.0,
+          "max_abs": 0.0,
+          "cosine": 1.0000000000000002,
+          "strict_outside_count": 0,
+          "strict_passed": true,
+          "screen_passed": true,
+          "argmax_equal_steps": 44
+        },
+        "memory_closed": {
+          "weight_bytes": 0,
+          "kv_bytes": 0,
+          "workspace_bytes": 0,
+          "pool_used_bytes": 0,
+          "pool_total_bytes": 0
+        }
+      }
+    },
+    "fp16-final": {
+      "path": "outputs\\windows-precision\\fp16-final\\result.json",
+      "sha256": "de6db53e54e4e383bdc3dc662ba1de1d454fb57a59efc5db5e3dde88bc618d0c",
+      "result": {
+        "status": "completed",
+        "engineering_passed": true,
+        "precision": "fp16",
+        "captures": {
+          "short": {
+            "path": "D:\\Project\\SakuraTTS\\outputs\\windows-baseline\\fp32-naive\\diagnostic-neutral-short.npz",
+            "sha256": "5b865b3ddefd029979f6a9519a2b79629049f12b9c934ea0b70c746cfbfbc5e7"
+          },
+          "long": {
+            "path": "D:\\Project\\SakuraTTS\\outputs\\windows-baseline\\fp32-capture-long\\diagnostic-neutral-long.npz",
+            "sha256": "e181ac7386205f7728fd59ca6ee79135ebed0ff9aca2f396fef1d686cf6a5202"
+          },
+          "multi": {
+            "path": "D:\\Project\\SakuraTTS\\outputs\\windows-baseline\\fp32-capture-multi\\diagnostic-neutral-multi.npz",
+            "sha256": "3c17d9e5c43a004fbd0a54f12cceab1f7f4016ab30757284974c6a7c918ece45"
+          },
+          "punctuation": {
+            "path": "D:\\Project\\SakuraTTS\\outputs\\windows-baseline\\fp32-capture-punctuation\\diagnostic-neutral-punctuation.npz",
+            "sha256": "d51bd48fcf43443e6c80fc5ce3ceeba09f3ee1d1ba2a7b68cf3d065952cffa16"
+          }
+        },
+        "gpt_manifest_sha256": "35a145bda041bbd9c29675a0b921234d32672052bc00ac3ed87ce124ae8510f7",
+        "reference_manifest_sha256": "f75a032a1b775c614770504c92fc0f87a23b69faf886b346b832a87de5d49825",
+        "reference_archive_sha256": "693abd56d4416763c7ab54c09df0eb2f50a0a02f44b07358f8869a8c04bbf90f",
+        "capacity": 2048,
+        "cases": {
+          "short": {
+            "warm": {
+              "prefill_ms": 133.25290000648238,
+              "decode_ms": 79.01870000205236,
+              "total_ms": 212.27160000853473,
+              "steps": 44
+            },
+            "runs": [
+              {
+                "prefill_ms": 7.536999997682869,
+                "decode_ms": 71.45899999886751,
+                "total_ms": 78.99599999655038,
+                "steps": 44,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 7.8764999998384155,
+                "decode_ms": 67.1883999966667,
+                "total_ms": 75.06489999650512,
+                "steps": 44,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 7.687199999054428,
+                "decode_ms": 66.09570000000531,
+                "total_ms": 73.78289999905974,
+                "steps": 44,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 7.307799998670816,
+                "decode_ms": 65.9901999970316,
+                "total_ms": 73.29799999570241,
+                "steps": 44,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 8.718199998838827,
+                "decode_ms": 73.51460000063526,
+                "total_ms": 82.23279999947408,
+                "steps": 44,
+                "warm_logits_equal": true
+              }
+            ],
+            "memory": {
+              "weight_bytes": 159308804,
+              "kv_bytes": 100663296,
+              "workspace_bytes": 15364,
+              "pool_used_bytes": 259989504,
+              "pool_total_bytes": 277232640
+            },
+            "p50_ms": {
+              "prefill_ms": 7.687199999054428,
+              "decode_ms": 67.1883999966667,
+              "total_ms": 75.06489999650512
+            },
+            "official_fp32": {
+              "finite_shape_match": true,
+              "rms": 0.01537860625259608,
+              "max_abs": 0.07069683074951172,
+              "cosine": 0.999999354150919,
+              "strict_outside_count": 44549,
+              "strict_passed": false,
+              "screen_passed": true,
+              "argmax_equal_steps": 44
+            }
+          },
+          "long": {
+            "warm": {
+              "prefill_ms": 24.759899999480695,
+              "decode_ms": 2299.690100000589,
+              "total_ms": 2324.45000000007,
+              "steps": 676
+            },
+            "runs": [
+              {
+                "prefill_ms": 18.730199997662567,
+                "decode_ms": 2288.2446000003256,
+                "total_ms": 2306.974799997988,
+                "steps": 676,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 18.313500004296657,
+                "decode_ms": 2287.601600000926,
+                "total_ms": 2305.9151000052225,
+                "steps": 676,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 18.483300002117176,
+                "decode_ms": 2284.022300002107,
+                "total_ms": 2302.505600004224,
+                "steps": 676,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 18.53090000076918,
+                "decode_ms": 2280.595299998822,
+                "total_ms": 2299.1261999995913,
+                "steps": 676,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 18.44829999754438,
+                "decode_ms": 2285.16959999979,
+                "total_ms": 2303.6178999973345,
+                "steps": 676,
+                "warm_logits_equal": true
+              }
+            ],
+            "memory": {
+              "weight_bytes": 159308804,
+              "kv_bytes": 100663296,
+              "workspace_bytes": 15364,
+              "pool_used_bytes": 259989504,
+              "pool_total_bytes": 330963456
+            },
+            "p50_ms": {
+              "prefill_ms": 18.483300002117176,
+              "decode_ms": 2285.16959999979,
+              "total_ms": 2303.6178999973345
+            },
+            "official_fp32": {
+              "finite_shape_match": true,
+              "rms": 0.016848482218052744,
+              "max_abs": 0.11227869987487793,
+              "cosine": 0.9999993217189805,
+              "strict_outside_count": 685602,
+              "strict_passed": false,
+              "screen_passed": true,
+              "argmax_equal_steps": 676
+            }
+          },
+          "multi": {
+            "warm": {
+              "prefill_ms": 9.261300001526251,
+              "decode_ms": 574.8225999996066,
+              "total_ms": 584.0839000011329,
+              "steps": 259
+            },
+            "runs": [
+              {
+                "prefill_ms": 9.139200003119186,
+                "decode_ms": 573.1629999936558,
+                "total_ms": 582.302199996775,
+                "steps": 259,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 9.00990000081947,
+                "decode_ms": 572.283100002096,
+                "total_ms": 581.2930000029155,
+                "steps": 259,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 8.755899994866922,
+                "decode_ms": 576.9183000011253,
+                "total_ms": 585.6741999959922,
+                "steps": 259,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 8.98550000420073,
+                "decode_ms": 576.5566999980365,
+                "total_ms": 585.5422000022372,
+                "steps": 259,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 8.65969999722438,
+                "decode_ms": 574.4696999972803,
+                "total_ms": 583.1293999945046,
+                "steps": 259,
+                "warm_logits_equal": true
+              }
+            ],
+            "memory": {
+              "weight_bytes": 159308804,
+              "kv_bytes": 100663296,
+              "workspace_bytes": 15364,
+              "pool_used_bytes": 259989504,
+              "pool_total_bytes": 330963456
+            },
+            "p50_ms": {
+              "prefill_ms": 8.98550000420073,
+              "decode_ms": 574.4696999972803,
+              "total_ms": 583.1293999945046
+            },
+            "official_fp32": {
+              "finite_shape_match": true,
+              "rms": 0.0152995559995635,
+              "max_abs": 0.10088729858398438,
+              "cosine": 0.9999993371975625,
+              "strict_outside_count": 262585,
+              "strict_passed": false,
+              "screen_passed": true,
+              "argmax_equal_steps": 258
+            }
+          },
+          "punctuation": {
+            "warm": {
+              "prefill_ms": 8.689999995112885,
+              "decode_ms": 395.72149999730755,
+              "total_ms": 404.41149999242043,
+              "steps": 203
+            },
+            "runs": [
+              {
+                "prefill_ms": 8.021599998755846,
+                "decode_ms": 394.4749000002048,
+                "total_ms": 402.49649999896064,
+                "steps": 203,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 7.9336999988299794,
+                "decode_ms": 396.13660000031814,
+                "total_ms": 404.0702999991481,
+                "steps": 203,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 7.858299999497831,
+                "decode_ms": 394.7394999995595,
+                "total_ms": 402.5977999990573,
+                "steps": 203,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 7.746499999484513,
+                "decode_ms": 396.8495000008261,
+                "total_ms": 404.5960000003106,
+                "steps": 203,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 8.046499999181833,
+                "decode_ms": 398.11969999573193,
+                "total_ms": 406.16619999491377,
+                "steps": 203,
+                "warm_logits_equal": true
+              }
+            ],
+            "memory": {
+              "weight_bytes": 159308804,
+              "kv_bytes": 100663296,
+              "workspace_bytes": 15364,
+              "pool_used_bytes": 259989504,
+              "pool_total_bytes": 330963456
+            },
+            "p50_ms": {
+              "prefill_ms": 7.9336999988299794,
+              "decode_ms": 396.13660000031814,
+              "total_ms": 404.0702999991481
+            },
+            "official_fp32": {
+              "finite_shape_match": true,
+              "rms": 0.01616922711400412,
+              "max_abs": 0.08156013488769531,
+              "cosine": 0.9999994772876873,
+              "strict_outside_count": 205729,
+              "strict_passed": false,
+              "screen_passed": true,
+              "argmax_equal_steps": 203
+            }
+          }
+        },
+        "executor_sha256": "dd5dc12cb5c0ead02cb8578a70d263cce59f9940ca8f3ebb4ba8e1527c7bf515",
+        "timing_scope": "Fixed official token histories, preloaded input arrays, GPU through FP32 CPU logits. Sampling, frontend and acoustic execution excluded.",
+        "numerical_scope": "FP32 original tolerances retained; fp16 screen is not quality acceptance.",
+        "thresholds": {
+          "strict_atol": 0.0001,
+          "strict_rtol": 1e-05,
+          "screen_rms": 0.05,
+          "screen_max_abs": 0.5,
+          "screen_cosine": 0.999
+        },
+        "load_ms": 735.9915999986697,
+        "gpu": "NVIDIA GeForce RTX 5060",
+        "cuda_runtime": 12090,
+        "driver": 13030,
+        "memory_loaded": {
+          "weight_bytes": 159308804,
+          "kv_bytes": 0,
+          "workspace_bytes": 0,
+          "pool_used_bytes": 159309824,
+          "pool_total_bytes": 159309824
+        },
+        "after_other_requests": {
+          "finite_shape_match": true,
+          "rms": 0.0,
+          "max_abs": 0.0,
+          "cosine": 0.9999999999999999,
+          "strict_outside_count": 0,
+          "strict_passed": true,
+          "screen_passed": true,
+          "argmax_equal_steps": 44
+        },
+        "memory_released": {
+          "weight_bytes": 159308804,
+          "kv_bytes": 0,
+          "workspace_bytes": 0,
+          "pool_used_bytes": 159309824,
+          "pool_total_bytes": 159309824
+        },
+        "after_recreate": {
+          "finite_shape_match": true,
+          "rms": 0.0,
+          "max_abs": 0.0,
+          "cosine": 0.9999999999999999,
+          "strict_outside_count": 0,
+          "strict_passed": true,
+          "screen_passed": true,
+          "argmax_equal_steps": 44
+        },
+        "graph_vs_eager": {
+          "finite_shape_match": true,
+          "rms": 0.0,
+          "max_abs": 0.0,
+          "cosine": 0.9999999999999999,
+          "strict_outside_count": 0,
+          "strict_passed": true,
+          "screen_passed": true,
+          "argmax_equal_steps": 44
+        },
+        "memory_closed": {
+          "weight_bytes": 0,
+          "kv_bytes": 0,
+          "workspace_bytes": 0,
+          "pool_used_bytes": 0,
+          "pool_total_bytes": 0
+        }
+      }
+    },
+    "fp32-fixed": {
+      "path": "outputs\\windows-precision\\fp32-fixed\\result.json",
+      "sha256": "8cc3826eaee9e2fa14739a165e7ca6c1cd4231c4e533b60f130946ae73187f3c",
+      "result": {
+        "precision": "fp32",
+        "load_ms": 588.85900000314,
+        "capacity": 2048,
+        "captures": {
+          "short": {
+            "path": "D:\\Project\\SakuraTTS\\outputs\\windows-baseline\\fp32-naive\\diagnostic-neutral-short.npz",
+            "sha256": "5b865b3ddefd029979f6a9519a2b79629049f12b9c934ea0b70c746cfbfbc5e7"
+          },
+          "long": {
+            "path": "D:\\Project\\SakuraTTS\\outputs\\windows-baseline\\fp32-capture-long\\diagnostic-neutral-long.npz",
+            "sha256": "e181ac7386205f7728fd59ca6ee79135ebed0ff9aca2f396fef1d686cf6a5202"
+          },
+          "multi": {
+            "path": "D:\\Project\\SakuraTTS\\outputs\\windows-baseline\\fp32-capture-multi\\diagnostic-neutral-multi.npz",
+            "sha256": "3c17d9e5c43a004fbd0a54f12cceab1f7f4016ab30757284974c6a7c918ece45"
+          },
+          "punctuation": {
+            "path": "D:\\Project\\SakuraTTS\\outputs\\windows-baseline\\fp32-capture-punctuation\\diagnostic-neutral-punctuation.npz",
+            "sha256": "d51bd48fcf43443e6c80fc5ce3ceeba09f3ee1d1ba2a7b68cf3d065952cffa16"
+          }
+        },
+        "gpt_manifest_sha256": "35a145bda041bbd9c29675a0b921234d32672052bc00ac3ed87ce124ae8510f7",
+        "reference_manifest_sha256": "f75a032a1b775c614770504c92fc0f87a23b69faf886b346b832a87de5d49825",
+        "executor_sha256": "6c4f0ac441ff3931bddca2e89712a93902e8e26ec409af61ac40af380100ef08",
+        "gpu": "NVIDIA GeForce RTX 5060",
+        "cuda_runtime": 12090,
+        "driver": 13030,
+        "timing_scope": "Fixed official token histories, preloaded input arrays, GPU through FP32 CPU logits. Sampling, frontend and acoustic execution excluded.",
+        "numerical_scope": "FP32 original tolerances retained; fp16 screen is not quality acceptance.",
+        "thresholds": {
+          "strict_atol": 0.0001,
+          "strict_rtol": 1e-05,
+          "screen_rms": 0.05,
+          "screen_max_abs": 0.5,
+          "screen_cosine": 0.999
+        },
+        "memory_loaded": {
+          "weight_bytes": 318617608,
+          "kv_bytes": 0,
+          "workspace_bytes": 0,
+          "pool_used_bytes": 318618624,
+          "pool_total_bytes": 318618624
+        },
+        "cases": {
+          "short": {
+            "warm": {
+              "prefill_ms": 255.86859999748413,
+              "decode_ms": 81.86799999384675,
+              "total_ms": 337.7365999913309,
+              "steps": 44
+            },
+            "runs": [
+              {
+                "prefill_ms": 11.014000003342517,
+                "decode_ms": 80.95489999686833,
+                "total_ms": 91.96890000021085,
+                "steps": 44,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 10.984099993947893,
+                "decode_ms": 81.64129999931902,
+                "total_ms": 92.62539999326691,
+                "steps": 44,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 14.380200002051424,
+                "decode_ms": 81.3966000059736,
+                "total_ms": 95.77680000802502,
+                "steps": 44,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 11.566900000616442,
+                "decode_ms": 81.36310000554658,
+                "total_ms": 92.93000000616303,
+                "steps": 44,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 11.602499995206017,
+                "decode_ms": 81.13580000645015,
+                "total_ms": 92.73830000165617,
+                "steps": 44,
+                "warm_logits_equal": true
+              }
+            ],
+            "memory": {
+              "weight_bytes": 318617608,
+              "kv_bytes": 201326592,
+              "workspace_bytes": 26628,
+              "pool_used_bytes": 519972864,
+              "pool_total_bytes": 541301760
+            },
+            "p50_ms": {
+              "prefill_ms": 11.566900000616442,
+              "decode_ms": 81.36310000554658,
+              "total_ms": 92.73830000165617
+            },
+            "official_fp32": {
+              "finite_shape_match": true,
+              "rms": 9.216999207997765e-06,
+              "max_abs": 4.1961669921875e-05,
+              "cosine": 0.999999999999768,
+              "strict_outside_count": 0,
+              "strict_passed": true,
+              "screen_passed": true,
+              "argmax_equal_steps": 44
+            }
+          },
+          "long": {
+            "warm": {
+              "prefill_ms": 29.959300001792144,
+              "decode_ms": 2376.750900002662,
+              "total_ms": 2406.7102000044542,
+              "steps": 676
+            },
+            "runs": [
+              {
+                "prefill_ms": 30.20989999640733,
+                "decode_ms": 2296.4839999985998,
+                "total_ms": 2326.693899995007,
+                "steps": 676,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 27.956099998846184,
+                "decode_ms": 2212.324499996612,
+                "total_ms": 2240.280599995458,
+                "steps": 676,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 27.886099996976554,
+                "decode_ms": 2241.7093999974895,
+                "total_ms": 2269.595499994466,
+                "steps": 676,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 27.900799999770243,
+                "decode_ms": 2443.266100002802,
+                "total_ms": 2471.166900002572,
+                "steps": 676,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 28.070399996067863,
+                "decode_ms": 2408.4278999944218,
+                "total_ms": 2436.4982999904896,
+                "steps": 676,
+                "warm_logits_equal": true
+              }
+            ],
+            "memory": {
+              "weight_bytes": 318617608,
+              "kv_bytes": 201326592,
+              "workspace_bytes": 26628,
+              "pool_used_bytes": 519972864,
+              "pool_total_bytes": 612942848
+            },
+            "p50_ms": {
+              "prefill_ms": 27.956099998846184,
+              "decode_ms": 2296.4839999985998,
+              "total_ms": 2326.693899995007
+            },
+            "official_fp32": {
+              "finite_shape_match": true,
+              "rms": 1.1568738334277474e-05,
+              "max_abs": 8.7738037109375e-05,
+              "cosine": 0.9999999999996821,
+              "strict_outside_count": 0,
+              "strict_passed": true,
+              "screen_passed": true,
+              "argmax_equal_steps": 676
+            }
+          },
+          "multi": {
+            "warm": {
+              "prefill_ms": 14.869699996779673,
+              "decode_ms": 622.2324000045774,
+              "total_ms": 637.102100001357,
+              "steps": 259
+            },
+            "runs": [
+              {
+                "prefill_ms": 14.364700000442099,
+                "decode_ms": 622.0560000001569,
+                "total_ms": 636.420700000599,
+                "steps": 259,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 15.092600006028078,
+                "decode_ms": 654.6660000021802,
+                "total_ms": 669.7586000082083,
+                "steps": 259,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 15.964500002155546,
+                "decode_ms": 686.3159999993513,
+                "total_ms": 702.2805000015069,
+                "steps": 259,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 17.271299999265466,
+                "decode_ms": 656.7321999973501,
+                "total_ms": 674.0034999966156,
+                "steps": 259,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 15.645399995264597,
+                "decode_ms": 636.15249999566,
+                "total_ms": 651.7978999909246,
+                "steps": 259,
+                "warm_logits_equal": true
+              }
+            ],
+            "memory": {
+              "weight_bytes": 318617608,
+              "kv_bytes": 201326592,
+              "workspace_bytes": 26628,
+              "pool_used_bytes": 519972864,
+              "pool_total_bytes": 612942848
+            },
+            "p50_ms": {
+              "prefill_ms": 15.645399995264597,
+              "decode_ms": 654.6660000021802,
+              "total_ms": 669.7586000082083
+            },
+            "official_fp32": {
+              "finite_shape_match": true,
+              "rms": 8.37253457681903e-06,
+              "max_abs": 4.57763671875e-05,
+              "cosine": 0.9999999999998042,
+              "strict_outside_count": 0,
+              "strict_passed": true,
+              "screen_passed": true,
+              "argmax_equal_steps": 259
+            }
+          },
+          "punctuation": {
+            "warm": {
+              "prefill_ms": 13.62879999942379,
+              "decode_ms": 490.68060000718106,
+              "total_ms": 504.30940000660485,
+              "steps": 203
+            },
+            "runs": [
+              {
+                "prefill_ms": 15.166900004260242,
+                "decode_ms": 455.5474000007962,
+                "total_ms": 470.71430000505643,
+                "steps": 203,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 12.172099995950703,
+                "decode_ms": 516.5127000000211,
+                "total_ms": 528.6847999959718,
+                "steps": 203,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 12.904600000183564,
+                "decode_ms": 440.68939999851864,
+                "total_ms": 453.5939999987022,
+                "steps": 203,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 13.165099997422658,
+                "decode_ms": 510.8479999980773,
+                "total_ms": 524.0130999954999,
+                "steps": 203,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 12.29629999579629,
+                "decode_ms": 437.1698999966611,
+                "total_ms": 449.4661999924574,
+                "steps": 203,
+                "warm_logits_equal": true
+              }
+            ],
+            "memory": {
+              "weight_bytes": 318617608,
+              "kv_bytes": 201326592,
+              "workspace_bytes": 26628,
+              "pool_used_bytes": 519972864,
+              "pool_total_bytes": 612942848
+            },
+            "p50_ms": {
+              "prefill_ms": 12.904600000183564,
+              "decode_ms": 455.5474000007962,
+              "total_ms": 470.71430000505643
+            },
+            "official_fp32": {
+              "finite_shape_match": true,
+              "rms": 8.562886565880122e-06,
+              "max_abs": 4.57763671875e-05,
+              "cosine": 0.9999999999998542,
+              "strict_outside_count": 0,
+              "strict_passed": true,
+              "screen_passed": true,
+              "argmax_equal_steps": 203
+            }
+          }
+        },
+        "after_other_requests": {
+          "finite_shape_match": true,
+          "rms": 0.0,
+          "max_abs": 0.0,
+          "cosine": 1.0000000000000002,
+          "strict_outside_count": 0,
+          "strict_passed": true,
+          "screen_passed": true,
+          "argmax_equal_steps": 44
+        },
+        "memory_released": {
+          "weight_bytes": 318617608,
+          "kv_bytes": 0,
+          "workspace_bytes": 0,
+          "pool_used_bytes": 318618624,
+          "pool_total_bytes": 318618624
+        },
+        "after_recreate": {
+          "finite_shape_match": true,
+          "rms": 0.0,
+          "max_abs": 0.0,
+          "cosine": 1.0000000000000002,
+          "strict_outside_count": 0,
+          "strict_passed": true,
+          "screen_passed": true,
+          "argmax_equal_steps": 44
+        },
+        "graph_vs_eager": {
+          "finite_shape_match": true,
+          "rms": 0.0,
+          "max_abs": 0.0,
+          "cosine": 1.0000000000000002,
+          "strict_outside_count": 0,
+          "strict_passed": true,
+          "screen_passed": true,
+          "argmax_equal_steps": 44
+        },
+        "engineering_passed": true,
+        "memory_closed": {
+          "weight_bytes": 0,
+          "kv_bytes": 0,
+          "workspace_bytes": 0,
+          "pool_used_bytes": 0,
+          "pool_total_bytes": 0
+        }
+      }
+    },
+    "fp16-fixed-v3": {
+      "path": "outputs\\windows-precision\\fp16-fixed-v3\\result.json",
+      "sha256": "fda1a839121cfc4b57ce152e05b70b29dce79670a470d9e0f19608cd9d91db09",
+      "result": {
+        "precision": "fp16",
+        "load_ms": 696.7294000060065,
+        "capacity": 2048,
+        "captures": {
+          "short": {
+            "path": "D:\\Project\\SakuraTTS\\outputs\\windows-baseline\\fp32-naive\\diagnostic-neutral-short.npz",
+            "sha256": "5b865b3ddefd029979f6a9519a2b79629049f12b9c934ea0b70c746cfbfbc5e7"
+          },
+          "long": {
+            "path": "D:\\Project\\SakuraTTS\\outputs\\windows-baseline\\fp32-capture-long\\diagnostic-neutral-long.npz",
+            "sha256": "e181ac7386205f7728fd59ca6ee79135ebed0ff9aca2f396fef1d686cf6a5202"
+          },
+          "multi": {
+            "path": "D:\\Project\\SakuraTTS\\outputs\\windows-baseline\\fp32-capture-multi\\diagnostic-neutral-multi.npz",
+            "sha256": "3c17d9e5c43a004fbd0a54f12cceab1f7f4016ab30757284974c6a7c918ece45"
+          },
+          "punctuation": {
+            "path": "D:\\Project\\SakuraTTS\\outputs\\windows-baseline\\fp32-capture-punctuation\\diagnostic-neutral-punctuation.npz",
+            "sha256": "d51bd48fcf43443e6c80fc5ce3ceeba09f3ee1d1ba2a7b68cf3d065952cffa16"
+          }
+        },
+        "gpt_manifest_sha256": "35a145bda041bbd9c29675a0b921234d32672052bc00ac3ed87ce124ae8510f7",
+        "reference_manifest_sha256": "f75a032a1b775c614770504c92fc0f87a23b69faf886b346b832a87de5d49825",
+        "executor_sha256": "dd5dc12cb5c0ead02cb8578a70d263cce59f9940ca8f3ebb4ba8e1527c7bf515",
+        "gpu": "NVIDIA GeForce RTX 5060",
+        "cuda_runtime": 12090,
+        "driver": 13030,
+        "timing_scope": "Fixed official token histories, preloaded input arrays, GPU through FP32 CPU logits. Sampling, frontend and acoustic execution excluded.",
+        "numerical_scope": "FP32 original tolerances retained; fp16 screen is not quality acceptance.",
+        "thresholds": {
+          "strict_atol": 0.0001,
+          "strict_rtol": 1e-05,
+          "screen_rms": 0.05,
+          "screen_max_abs": 0.5,
+          "screen_cosine": 0.999
+        },
+        "memory_loaded": {
+          "weight_bytes": 159308804,
+          "kv_bytes": 0,
+          "workspace_bytes": 0,
+          "pool_used_bytes": 159309824,
+          "pool_total_bytes": 159309824
+        },
+        "cases": {
+          "short": {
+            "warm": {
+              "prefill_ms": 813.0673000050592,
+              "decode_ms": 83.78879999509081,
+              "total_ms": 896.85610000015,
+              "steps": 44
+            },
+            "runs": [
+              {
+                "prefill_ms": 7.862400001613423,
+                "decode_ms": 71.92200000281446,
+                "total_ms": 79.78440000442788,
+                "steps": 44,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 9.307100001024082,
+                "decode_ms": 80.58829999936279,
+                "total_ms": 89.89540000038687,
+                "steps": 44,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 7.8244999967864715,
+                "decode_ms": 79.57259999966482,
+                "total_ms": 87.39709999645129,
+                "steps": 44,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 8.121000006212853,
+                "decode_ms": 78.09380000253441,
+                "total_ms": 86.21480000874726,
+                "steps": 44,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 7.550000002083834,
+                "decode_ms": 78.3339000045089,
+                "total_ms": 85.88390000659274,
+                "steps": 44,
+                "warm_logits_equal": true
+              }
+            ],
+            "memory": {
+              "weight_bytes": 159308804,
+              "kv_bytes": 100663296,
+              "workspace_bytes": 15364,
+              "pool_used_bytes": 259989504,
+              "pool_total_bytes": 277232640
+            },
+            "p50_ms": {
+              "prefill_ms": 7.862400001613423,
+              "decode_ms": 78.3339000045089,
+              "total_ms": 86.21480000874726
+            },
+            "official_fp32": {
+              "finite_shape_match": true,
+              "rms": 0.01537860625259608,
+              "max_abs": 0.07069683074951172,
+              "cosine": 0.999999354150919,
+              "strict_outside_count": 44549,
+              "strict_passed": false,
+              "screen_passed": true,
+              "argmax_equal_steps": 44
+            },
+            "other_precision": {
+              "finite_shape_match": true,
+              "rms": 0.015378610847156955,
+              "max_abs": 0.07068252563476562,
+              "cosine": 0.9999993541676169,
+              "strict_outside_count": 44551,
+              "strict_passed": false,
+              "screen_passed": true,
+              "argmax_equal_steps": 44
+            }
+          },
+          "long": {
+            "warm": {
+              "prefill_ms": 21.5120999928331,
+              "decode_ms": 2360.333600001468,
+              "total_ms": 2381.845699994301,
+              "steps": 676
+            },
+            "runs": [
+              {
+                "prefill_ms": 19.79890000075102,
+                "decode_ms": 2296.8561000016052,
+                "total_ms": 2316.6550000023562,
+                "steps": 676,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 21.16820000082953,
+                "decode_ms": 2358.064000000013,
+                "total_ms": 2379.2322000008426,
+                "steps": 676,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 17.738399998052046,
+                "decode_ms": 2317.2974999979488,
+                "total_ms": 2335.035899996001,
+                "steps": 676,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 17.539899999974295,
+                "decode_ms": 2325.178399994911,
+                "total_ms": 2342.7182999948855,
+                "steps": 676,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 21.182499993301462,
+                "decode_ms": 2356.980799995654,
+                "total_ms": 2378.1632999889553,
+                "steps": 676,
+                "warm_logits_equal": true
+              }
+            ],
+            "memory": {
+              "weight_bytes": 159308804,
+              "kv_bytes": 100663296,
+              "workspace_bytes": 15364,
+              "pool_used_bytes": 259989504,
+              "pool_total_bytes": 330963456
+            },
+            "p50_ms": {
+              "prefill_ms": 19.79890000075102,
+              "decode_ms": 2325.178399994911,
+              "total_ms": 2342.7182999948855
+            },
+            "official_fp32": {
+              "finite_shape_match": true,
+              "rms": 0.016848482218052744,
+              "max_abs": 0.11227869987487793,
+              "cosine": 0.9999993217189805,
+              "strict_outside_count": 685602,
+              "strict_passed": false,
+              "screen_passed": true,
+              "argmax_equal_steps": 676
+            },
+            "other_precision": {
+              "finite_shape_match": true,
+              "rms": 0.01684617850253971,
+              "max_abs": 0.11224603652954102,
+              "cosine": 0.9999993219061711,
+              "strict_outside_count": 685599,
+              "strict_passed": false,
+              "screen_passed": true,
+              "argmax_equal_steps": 676
+            }
+          },
+          "multi": {
+            "warm": {
+              "prefill_ms": 10.319300003175158,
+              "decode_ms": 618.458400000236,
+              "total_ms": 628.7777000034112,
+              "steps": 259
+            },
+            "runs": [
+              {
+                "prefill_ms": 9.676800000306685,
+                "decode_ms": 585.9804000065196,
+                "total_ms": 595.6572000068263,
+                "steps": 259,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 8.448200002021622,
+                "decode_ms": 538.7351999961538,
+                "total_ms": 547.1833999981754,
+                "steps": 259,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 8.525700002792291,
+                "decode_ms": 540.0167999978294,
+                "total_ms": 548.5425000006217,
+                "steps": 259,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 10.204899997916073,
+                "decode_ms": 541.9368000002578,
+                "total_ms": 552.1416999981739,
+                "steps": 259,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 8.858100001816638,
+                "decode_ms": 559.0970999983256,
+                "total_ms": 567.9552000001422,
+                "steps": 259,
+                "warm_logits_equal": true
+              }
+            ],
+            "memory": {
+              "weight_bytes": 159308804,
+              "kv_bytes": 100663296,
+              "workspace_bytes": 15364,
+              "pool_used_bytes": 259989504,
+              "pool_total_bytes": 330963456
+            },
+            "p50_ms": {
+              "prefill_ms": 8.858100001816638,
+              "decode_ms": 541.9368000002578,
+              "total_ms": 552.1416999981739
+            },
+            "official_fp32": {
+              "finite_shape_match": true,
+              "rms": 0.0152995559995635,
+              "max_abs": 0.10088729858398438,
+              "cosine": 0.9999993371975625,
+              "strict_outside_count": 262585,
+              "strict_passed": false,
+              "screen_passed": true,
+              "argmax_equal_steps": 258
+            },
+            "other_precision": {
+              "finite_shape_match": true,
+              "rms": 0.01529908786449503,
+              "max_abs": 0.10087966918945312,
+              "cosine": 0.9999993372378163,
+              "strict_outside_count": 262597,
+              "strict_passed": false,
+              "screen_passed": true,
+              "argmax_equal_steps": 258
+            }
+          },
+          "punctuation": {
+            "warm": {
+              "prefill_ms": 8.955999997851904,
+              "decode_ms": 380.43839999591,
+              "total_ms": 389.3943999937619,
+              "steps": 203
+            },
+            "runs": [
+              {
+                "prefill_ms": 7.61400000192225,
+                "decode_ms": 363.07210000086343,
+                "total_ms": 370.6861000027857,
+                "steps": 203,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 8.34259999828646,
+                "decode_ms": 387.5467000034405,
+                "total_ms": 395.88930000172695,
+                "steps": 203,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 8.725499996216968,
+                "decode_ms": 371.25530000048457,
+                "total_ms": 379.98079999670153,
+                "steps": 203,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 7.859500001359265,
+                "decode_ms": 409.34619999461574,
+                "total_ms": 417.205699995975,
+                "steps": 203,
+                "warm_logits_equal": true
+              },
+              {
+                "prefill_ms": 8.057300001382828,
+                "decode_ms": 411.5495000005467,
+                "total_ms": 419.6068000019295,
+                "steps": 203,
+                "warm_logits_equal": true
+              }
+            ],
+            "memory": {
+              "weight_bytes": 159308804,
+              "kv_bytes": 100663296,
+              "workspace_bytes": 15364,
+              "pool_used_bytes": 259989504,
+              "pool_total_bytes": 330963456
+            },
+            "p50_ms": {
+              "prefill_ms": 8.057300001382828,
+              "decode_ms": 387.5467000034405,
+              "total_ms": 395.88930000172695
+            },
+            "official_fp32": {
+              "finite_shape_match": true,
+              "rms": 0.01616922711400412,
+              "max_abs": 0.08156013488769531,
+              "cosine": 0.9999994772876873,
+              "strict_outside_count": 205729,
+              "strict_passed": false,
+              "screen_passed": true,
+              "argmax_equal_steps": 203
+            },
+            "other_precision": {
+              "finite_shape_match": true,
+              "rms": 0.016169291170783695,
+              "max_abs": 0.08157634735107422,
+              "cosine": 0.999999477284493,
+              "strict_outside_count": 205737,
+              "strict_passed": false,
+              "screen_passed": true,
+              "argmax_equal_steps": 203
+            }
+          }
+        },
+        "after_other_requests": {
+          "finite_shape_match": true,
+          "rms": 0.0,
+          "max_abs": 0.0,
+          "cosine": 0.9999999999999999,
+          "strict_outside_count": 0,
+          "strict_passed": true,
+          "screen_passed": true,
+          "argmax_equal_steps": 44
+        },
+        "memory_released": {
+          "weight_bytes": 159308804,
+          "kv_bytes": 0,
+          "workspace_bytes": 0,
+          "pool_used_bytes": 159309824,
+          "pool_total_bytes": 159309824
+        },
+        "after_recreate": {
+          "finite_shape_match": true,
+          "rms": 0.0,
+          "max_abs": 0.0,
+          "cosine": 0.9999999999999999,
+          "strict_outside_count": 0,
+          "strict_passed": true,
+          "screen_passed": true,
+          "argmax_equal_steps": 44
+        },
+        "graph_vs_eager": {
+          "finite_shape_match": true,
+          "rms": 0.0,
+          "max_abs": 0.0,
+          "cosine": 0.9999999999999999,
+          "strict_outside_count": 0,
+          "strict_passed": true,
+          "screen_passed": true,
+          "argmax_equal_steps": 44
+        },
+        "engineering_passed": true,
+        "memory_closed": {
+          "weight_bytes": 0,
+          "kv_bytes": 0,
+          "workspace_bytes": 0,
+          "pool_used_bytes": 0,
+          "pool_total_bytes": 0
+        }
+      }
+    }
+  },
+  "natural": {
+    "fp32": {
+      "status": "completed",
+      "hot_summary": {
+        "short": {
+          "n": 3,
+          "p50_ms": 253.12529999791877,
+          "min_ms": 252.11400000262074,
+          "max_ms": 263.4457000021939,
+          "rtf_pcm_p50": 0.07315760115546785,
+          "audio_seconds": [
+            3.46,
+            3.46,
+            3.46
+          ],
+          "semantic_token_counts": [
+            79,
+            79,
+            79
+          ],
+          "all_completed": true
+        },
+        "long": {
+          "n": 3,
+          "p50_ms": 2874.7633999955724,
+          "min_ms": 2854.2896999933873,
+          "max_ms": 3034.266300004674,
+          "rtf_pcm_p50": 0.11099472586855492,
+          "audio_seconds": [
+            25.9,
+            25.9,
+            25.9
+          ],
+          "semantic_token_counts": [
+            640,
+            640,
+            640
+          ],
+          "all_completed": true
+        },
+        "multi": {
+          "n": 3,
+          "p50_ms": 1302.7550999977393,
+          "min_ms": 1301.0063000037917,
+          "max_ms": 1371.0994999928516,
+          "rtf_pcm_p50": 0.09034362690691673,
+          "audio_seconds": [
+            14.42,
+            14.42,
+            14.42
+          ],
+          "semantic_token_counts": [
+            353,
+            353,
+            353
+          ],
+          "all_completed": true
+        },
+        "punctuation": {
+          "n": 3,
+          "p50_ms": 636.3463999950909,
+          "min_ms": 623.3303000044543,
+          "max_ms": 659.1542000023765,
+          "rtf_pcm_p50": 0.08307394255810586,
+          "audio_seconds": [
+            7.66,
+            7.66,
+            7.66
+          ],
+          "semantic_token_counts": [
+            184,
+            184,
+            184
+          ],
+          "all_completed": true
+        }
+      },
+      "torch_imported_main": false,
+      "source_files_changed_during_run": [],
+      "import_ms": 125.76959999569226,
+      "engine_construction_ms": 863.9675000013085,
+      "load_ms": 2350.5653999964125,
+      "close_ms": 201.02829999814276,
+      "path": "outputs\\windows-precision\\fp32-natural",
+      "results_sha256": "f2900ed4b8a7950e936b96bd83c651a4f9e73711f0fc34f030bad59727c785c7",
+      "environment": {
+        "python": "3.11.15 (main, Mar 24 2026, 22:57:51) [MSC v.1944 64 bit (AMD64)]",
+        "executable": "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Scripts\\python.exe",
+        "platform": "Windows-10-10.0.22631-SP0",
+        "sources_sha256": {
+          "harness/windows_nvidia_benchmark.py": "278ff70dbd06a3fb9239fa3576b19775e7ca132a12f5223a55febe9d93effc14",
+          "scripts/windows_official_baseline.py": "e648462f9cd053fbe63d83730ab999428a865bac3f225eaef8444578c1978a27",
+          "src/sakuratts/nvidia.py": "8a7f79deb89042154458611b25974259e7705087283a9bffc833a14ca087d057",
+          "src/sakuratts/cuda_gpt.py": "dd5dc12cb5c0ead02cb8578a70d263cce59f9940ca8f3ebb4ba8e1527c7bf515",
+          "src/sakuratts/ort_sovits.py": "3daee8c3c59b99c3c44a2c62b73d3308fbf43fcc85c0995f9a2ee9975586aa41",
+          "src/sakuratts/ort_process.py": "ceb7e83c10f8356899c3233d39bdb92b594bd7a5f67594b212d1c51bf7b26916",
+          "src/sakuratts/ort_worker.py": "52c87ac07aca49b1f26be47bb7b9acb518c89dfbb6df72d6a42f759d1862c663",
+          "src/sakuratts/synthesis.py": "c3c5217e10ca234e2e4fe193c3f8b967bff290f84560400e37d990cbdc6a8e69",
+          "src/sakuratts/generation.py": "6e73ce32d56c51d48a98922ebbc9056a1d4c736f9e442423cbec87936ab8477b",
+          "src/sakuratts/sampling.py": "7df53036344bc5396f666b7c743a7a596707c4524a5a501f2866d442db14804e",
+          "src/sakuratts/text_frontend.py": "ef15a611e35020cc03830b7cecf7f2257723df6de6f0ac0b4752e6aed37f53a9",
+          "src/sakuratts/japanese.py": "5aafbda8cc06408e2344b39ae40da4e8b6daa2d9382cdc336a0b73756ef750d9",
+          "src/sakuratts/classic_japanese.py": "eb6d50a9febb17c04ca46a9ad811ffc8e93f481f88a179dc4dd4781d41318296",
+          "src/sakuratts/classic_japanese_worker.py": "669e3dc50688b61d0a8caefb0ab1a400a85d02ccf4ea3e5dd4de614bd233e0d9",
+          "src/sakuratts/cuda_runtime.py": "d9fbcfbfebeccf6b4c16570167c1712d3496806d1409542a1061672d36a1f107",
+          "src/sakuratts/array_protocol.py": "71cae8a55fecf3bf2d03a06e3646c22995951995fa29e4e6f06c41710e540eac",
+          "src/sakuratts/reference_condition.py": "672f6bafe6b23aaadc7bd9c5eb8a7ff4f4072cdfb598794a6cbcf8ad55676df6",
+          "src/sakuratts/weight_storage.py": "7ff939a4e627be161ee06baf711bf690a9e22fd4e4164a90753247a7bccd5234"
+        },
+        "distributions": {
+          "sakuratts": "0.1.0.dev0",
+          "annotated-types": "0.8.0",
+          "budoux": "0.9.2",
+          "certifi": "2026.7.22",
+          "charset-normalizer": "3.5.1",
+          "colorama": "0.4.6",
+          "colorlog": "6.12.0",
+          "cuda-pathfinder": "1.8.2",
+          "cupy-cuda12x": "14.2.0",
+          "fasttext-predict": "0.9.2.4",
+          "fast-langdetect": "1.0.1",
+          "flatbuffers": "25.12.19",
+          "idna": "3.20",
+          "numpy": "2.4.6",
+          "nvidia-cublas-cu12": "12.9.2.10",
+          "nvidia-cuda-nvrtc-cu12": "12.9.86",
+          "nvidia-cuda-runtime-cu12": "12.9.79",
+          "onnxruntime": "1.30.0",
+          "packaging": "26.3",
+          "protobuf": "7.36.2",
+          "psutil": "7.2.2",
+          "pydantic": "2.13.5",
+          "pydantic_core": "2.46.5",
+          "pyopenjtalk-plus": "0.4.1.post9",
+          "requests": "2.34.2",
+          "robust-downloader": "0.0.2",
+          "split-lang": "2.1.1",
+          "SudachiDict-core": "20260723",
+          "SudachiPy": "0.6.11",
+          "tqdm": "4.70.1",
+          "typing_extensions": "4.16.0",
+          "typing-inspection": "0.4.4",
+          "urllib3": "2.8.0"
+        },
+        "measurement": {
+          "memory_sampler_enabled": false,
+          "gpu": "Disabled for this timing-only run",
+          "cpu": "psutil parent plus current recursive descendants RSS; excludes nvidia-smi sampler. Shared pages can be counted more than once; transient child peaks can be missed.",
+          "cpu_sample_schedule": "Request/lifecycle boundaries only",
+          "cupy": "Default pool used/total bytes; excludes ORT worker, CUDA libraries and contexts. Boundary readings only.",
+          "latency": "Host original-text submission through complete PCM return, including transfers and any model reload. WAV and JSON disk writes excluded. Background memory sampling disabled.",
+          "rtf": "Complete PCM duration including configured trailing silence; speech-only duration also retained.",
+          "cold_start": "Imports, engine construction, explicit load and first request separately recorded; no clearing of OS or compiler caches.",
+          "replay_preparation": "When requested, capture arrays are loaded before monitoring/timing. Only draws and noise enter synthesis; equality checks occur after the request timer stops.",
+          "precision": {
+            "gpt": "fp32",
+            "acoustic": "fp32",
+            "tf32": false,
+            "fp16_status": "experimental, not quality accepted"
+          },
+          "quality": "Human listening and ASR are not run"
+        }
+      },
+      "requests": [
+        {
+          "name": "first-neutral-short",
+          "case": "short",
+          "kind": "first",
+          "request_ms": 905.5478000009316,
+          "pcm_seconds": 3.46,
+          "semantic_token_count": 79,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "0a79c496159a5382e092d9fb35274ea95564ff162aa1ee299e5e72defcabdf23",
+          "wav": "first-neutral-short.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 8.040000102482736e-05,
+              "semantic_seconds": 0.30852470000536414,
+              "acoustic_seconds": 0.4422351000030176,
+              "output_copy_pcm_seconds": 0.00039819999801693484,
+              "prepared_inference_seconds": 0.7512384000074235,
+              "compute_seconds": 0.7512384000074235
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-short-00",
+          "case": "short",
+          "kind": "hot",
+          "request_ms": 263.4457000021939,
+          "pcm_seconds": 3.46,
+          "semantic_token_count": 79,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "5d5c849df48b81b59c3aec911c7259b9b7973a96d7d9c77cbb40874676184f3e",
+          "wav": "hot-neutral-short-00.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 2.9199996788520366e-05,
+              "semantic_seconds": 0.1698508000044967,
+              "acoustic_seconds": 0.09238589999586111,
+              "output_copy_pcm_seconds": 0.00013530000433092937,
+              "prepared_inference_seconds": 0.26240120000147726,
+              "compute_seconds": 0.26240120000147726
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-short-01",
+          "case": "short",
+          "kind": "hot",
+          "request_ms": 253.12529999791877,
+          "pcm_seconds": 3.46,
+          "semantic_token_count": 79,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "328bb4a3137626dab3b0db8392f46661b8a477aad0b722a68dc063890611e67e",
+          "wav": "hot-neutral-short-01.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 2.769999991869554e-05,
+              "semantic_seconds": 0.17342759999883128,
+              "acoustic_seconds": 0.07852249999996275,
+              "output_copy_pcm_seconds": 0.0001616000008652918,
+              "prepared_inference_seconds": 0.252139399999578,
+              "compute_seconds": 0.252139399999578
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-short-02",
+          "case": "short",
+          "kind": "hot",
+          "request_ms": 252.11400000262074,
+          "pcm_seconds": 3.46,
+          "semantic_token_count": 79,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "7d8cdc90da9a96714afd4b7198de03667e62d7ed0d7f3be948383a3ae9e11aa3",
+          "wav": "hot-neutral-short-02.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 2.9900002118665725e-05,
+              "semantic_seconds": 0.16949079999903915,
+              "acoustic_seconds": 0.08150439999735681,
+              "output_copy_pcm_seconds": 0.00016450000111944973,
+              "prepared_inference_seconds": 0.2511895999996341,
+              "compute_seconds": 0.2511895999996341
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-long-00",
+          "case": "long",
+          "kind": "hot",
+          "request_ms": 3034.266300004674,
+          "pcm_seconds": 25.9,
+          "semantic_token_count": 640,
+          "semantic_sha256": "ef8b7414020963c234bb63a5fc0265f428d2ed52f10b7a93c0467923cda32ede",
+          "pcm_sha256": "624c2e7bc8c43ee2a64ea31d67da0791b2d2875a349aa61e257e428a8cfe1d55",
+          "wav": "hot-neutral-long-00.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 0.00025520000053802505,
+              "semantic_seconds": 2.3014666000017314,
+              "acoustic_seconds": 0.7258265999989817,
+              "output_copy_pcm_seconds": 0.002476000001479406,
+              "prepared_inference_seconds": 3.0300244000027305,
+              "compute_seconds": 3.0300244000027305
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-long-01",
+          "case": "long",
+          "kind": "hot",
+          "request_ms": 2874.7633999955724,
+          "pcm_seconds": 25.9,
+          "semantic_token_count": 640,
+          "semantic_sha256": "ef8b7414020963c234bb63a5fc0265f428d2ed52f10b7a93c0467923cda32ede",
+          "pcm_sha256": "23c3a353d8e944e43f08a1a5723100067b15fc103b4876f61048d02e92b6e8af",
+          "wav": "hot-neutral-long-01.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 0.0002514000007067807,
+              "semantic_seconds": 2.2382801999992807,
+              "acoustic_seconds": 0.6305456999980379,
+              "output_copy_pcm_seconds": 0.0024706000040168874,
+              "prepared_inference_seconds": 2.8715479000020423,
+              "compute_seconds": 2.8715479000020423
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-long-02",
+          "case": "long",
+          "kind": "hot",
+          "request_ms": 2854.2896999933873,
+          "pcm_seconds": 25.9,
+          "semantic_token_count": 640,
+          "semantic_sha256": "ef8b7414020963c234bb63a5fc0265f428d2ed52f10b7a93c0467923cda32ede",
+          "pcm_sha256": "f4551c5f5c6fe0c7b9de63402374d5d81000ff2e1f7a5327db82fd7e7ccea61f",
+          "wav": "hot-neutral-long-02.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 0.0002525000018067658,
+              "semantic_seconds": 2.232380200002808,
+              "acoustic_seconds": 0.6155557000020053,
+              "output_copy_pcm_seconds": 0.0027952000018558465,
+              "prepared_inference_seconds": 2.850983600008476,
+              "compute_seconds": 2.850983600008476
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-multi-00",
+          "case": "multi",
+          "kind": "hot",
+          "request_ms": 1371.0994999928516,
+          "pcm_seconds": 14.42,
+          "semantic_token_count": 353,
+          "semantic_sha256": "4e1f8c66b2056095312b1b872176260abd572def2e9c993672d779bcc84e644f",
+          "pcm_sha256": "98097d64b59e4f0ff26ef7594cce38345fd0e7d3298a488917ea11a42c82f509",
+          "wav": "hot-neutral-multi-00.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 4.129999433644116e-05,
+              "semantic_seconds": 0.939005600004748,
+              "acoustic_seconds": 0.42858200000046054,
+              "output_copy_pcm_seconds": 0.0014474999989033677,
+              "prepared_inference_seconds": 1.3690763999984483,
+              "compute_seconds": 1.3690763999984483
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-multi-01",
+          "case": "multi",
+          "kind": "hot",
+          "request_ms": 1302.7550999977393,
+          "pcm_seconds": 14.42,
+          "semantic_token_count": 353,
+          "semantic_sha256": "4e1f8c66b2056095312b1b872176260abd572def2e9c993672d779bcc84e644f",
+          "pcm_sha256": "9c1f8aa0e67f5e002eaa8e18a9a65cd32d217340358e58ca75ee56ed8e8afe06",
+          "wav": "hot-neutral-multi-01.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 3.989999822806567e-05,
+              "semantic_seconds": 0.9406692000047769,
+              "acoustic_seconds": 0.3589704999976675,
+              "output_copy_pcm_seconds": 0.0013209000026108697,
+              "prepared_inference_seconds": 1.3010005000032834,
+              "compute_seconds": 1.3010005000032834
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-multi-02",
+          "case": "multi",
+          "kind": "hot",
+          "request_ms": 1301.0063000037917,
+          "pcm_seconds": 14.42,
+          "semantic_token_count": 353,
+          "semantic_sha256": "4e1f8c66b2056095312b1b872176260abd572def2e9c993672d779bcc84e644f",
+          "pcm_sha256": "7fb02ad5f15c840bdd91bd1bf0e6f3da5fd7fc1404380dc9212eb01f288dd2b1",
+          "wav": "hot-neutral-multi-02.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 4.430000262800604e-05,
+              "semantic_seconds": 0.9417434999995749,
+              "acoustic_seconds": 0.3561316999985138,
+              "output_copy_pcm_seconds": 0.0013000000035390258,
+              "prepared_inference_seconds": 1.2992195000042557,
+              "compute_seconds": 1.2992195000042557
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-punctuation-00",
+          "case": "punctuation",
+          "kind": "hot",
+          "request_ms": 659.1542000023765,
+          "pcm_seconds": 7.66,
+          "semantic_token_count": 184,
+          "semantic_sha256": "948ee8a409b42c5c37eba208ab6b96fa559f96ebee048b2d00e0c0f4d8b75ed2",
+          "pcm_sha256": "207aed0dd96065c0af9eb28cce22107a0a90f43536b15ca1aedb72847cfca08f",
+          "wav": "hot-neutral-punctuation-00.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 3.7800004065502435e-05,
+              "semantic_seconds": 0.43084049999743,
+              "acoustic_seconds": 0.22598570000263862,
+              "output_copy_pcm_seconds": 0.0005724000002373941,
+              "prepared_inference_seconds": 0.6574364000043715,
+              "compute_seconds": 0.6574364000043715
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-punctuation-01",
+          "case": "punctuation",
+          "kind": "hot",
+          "request_ms": 623.3303000044543,
+          "pcm_seconds": 7.66,
+          "semantic_token_count": 184,
+          "semantic_sha256": "948ee8a409b42c5c37eba208ab6b96fa559f96ebee048b2d00e0c0f4d8b75ed2",
+          "pcm_sha256": "be6fe98c8d7499c6ab3828e0c329c98877dc2372e0f4c0d82a89ff22d073a8d6",
+          "wav": "hot-neutral-punctuation-01.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 3.789999755099416e-05,
+              "semantic_seconds": 0.43130440000095405,
+              "acoustic_seconds": 0.1904069999945932,
+              "output_copy_pcm_seconds": 0.00031650000164518133,
+              "prepared_inference_seconds": 0.6220657999947434,
+              "compute_seconds": 0.6220657999947434
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-punctuation-02",
+          "case": "punctuation",
+          "kind": "hot",
+          "request_ms": 636.3463999950909,
+          "pcm_seconds": 7.66,
+          "semantic_token_count": 184,
+          "semantic_sha256": "948ee8a409b42c5c37eba208ab6b96fa559f96ebee048b2d00e0c0f4d8b75ed2",
+          "pcm_sha256": "ff9cc08d26ff96b8401ddef8b4ec280ca376309b7da8916a068ef0bf310a44f7",
+          "wav": "hot-neutral-punctuation-02.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 3.8300000596791506e-05,
+              "semantic_seconds": 0.45031229999585776,
+              "acoustic_seconds": 0.18439280000166036,
+              "output_copy_pcm_seconds": 0.0002930999980890192,
+              "prepared_inference_seconds": 0.6350364999962039,
+              "compute_seconds": 0.6350364999962039
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "switch-reference-01",
+          "case": "short",
+          "kind": "switch",
+          "request_ms": 300.34969999542227,
+          "pcm_seconds": 3.26,
+          "semantic_token_count": 74,
+          "semantic_sha256": "9dd36215e98f7c32a4cd25491714c55da478dbf2f5dcae521c48cc619aef107d",
+          "pcm_sha256": "9c2ad0cb7af01a1c8e760c81615ceaee7be8dc7ed28f87e38996aa0a7808d975",
+          "wav": "switch-reference-01.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "bc8b37bab3302562234411bd56897ac66443b4b79e840fad876f69eec54cdb18",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "……何で君は、私のこと、 幸せにするのがそんなに上手なの",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 7.619999814778566e-05,
+              "semantic_seconds": 0.16965429999982007,
+              "acoustic_seconds": 0.12951820000307634,
+              "output_copy_pcm_seconds": 0.00013980000221636146,
+              "prepared_inference_seconds": 0.29938850000326056,
+              "compute_seconds": 0.29938850000326056
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "switch-reference-02",
+          "case": "short",
+          "kind": "switch",
+          "request_ms": 306.3188000014634,
+          "pcm_seconds": 3.38,
+          "semantic_token_count": 77,
+          "semantic_sha256": "d54c51ee40420a2953feb5e1bfeb69aaeca06943c8f880badf4256fe974eb2d8",
+          "pcm_sha256": "4634da57dcd1c302088193631847482c1a5904464e73e405b644662a64e955bf",
+          "wav": "switch-reference-02.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "9f37d7d827dd8e2c6fb022f3343a31f4a5d71b472b8aa019bfe57e94b8dff999",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "……み、皆がいるとこで、 あんまり言わないで。そういうこと",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 2.8200003725942224e-05,
+              "semantic_seconds": 0.16915940000035334,
+              "acoustic_seconds": 0.13604940000368515,
+              "output_copy_pcm_seconds": 0.00021069999638712034,
+              "prepared_inference_seconds": 0.30544770000415156,
+              "compute_seconds": 0.30544770000415156
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "switch-reference-03",
+          "case": "short",
+          "kind": "switch",
+          "request_ms": 287.4073999992106,
+          "pcm_seconds": 3.18,
+          "semantic_token_count": 72,
+          "semantic_sha256": "f933cded68ce427039597ba36f47bb3114de4859430f2f9fd0022503d0dd0908",
+          "pcm_sha256": "bc780de9ab3ba0a568e05592935352b17cb095acd303c9f7dbf94eb94e7f5560",
+          "wav": "switch-reference-03.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "79a1e249ed452e76cd6c3a27ce65cd192e83fc5e7ceaec50293d39b8814573cc",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "お願いね。私は皆の分の 生徒会の仕事を片付けておくから",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 4.020000051241368e-05,
+              "semantic_seconds": 0.17050600000220584,
+              "acoustic_seconds": 0.11582940000516828,
+              "output_copy_pcm_seconds": 0.00014059999375604093,
+              "prepared_inference_seconds": 0.2865162000016426,
+              "compute_seconds": 0.2865162000016426
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "switch-reference-04",
+          "case": "short",
+          "kind": "switch",
+          "request_ms": 262.31410000036703,
+          "pcm_seconds": 3.54,
+          "semantic_token_count": 81,
+          "semantic_sha256": "4f70c2a7a2b4e428a84e4650f2af42aeb3ce38c5dc768c63fd9b190bb5449289",
+          "pcm_sha256": "eb48c8b4bc79b1d4840ee9dc3f09e69180b5a41fd75fba21bd85ca24c6424eb9",
+          "wav": "switch-reference-04.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "41a8fdd4d9e51f3098a7f33e56e41fb74eefea9b97e7b95fc2a74fdc1396f86a",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "え、すごい。音、聞こえるの？",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 2.25000039790757e-05,
+              "semantic_seconds": 0.15634659999341238,
+              "acoustic_seconds": 0.10491289999481523,
+              "output_copy_pcm_seconds": 0.00015050000365590677,
+              "prepared_inference_seconds": 0.2614324999958626,
+              "compute_seconds": 0.2614324999958626
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "switch-back-neutral",
+          "case": "short",
+          "kind": "switch",
+          "request_ms": 254.3558999968809,
+          "pcm_seconds": 3.46,
+          "semantic_token_count": 79,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "7dc28b16dc1ced6369f8e2976623e8f59e12d353fb68023583dcab56b5dd3e2c",
+          "wav": "switch-back-neutral.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 2.7499998395796865e-05,
+              "semantic_seconds": 0.17182200000388548,
+              "acoustic_seconds": 0.08149640000192448,
+              "output_copy_pcm_seconds": 0.00014910000027157366,
+              "prepared_inference_seconds": 0.25349500000447733,
+              "compute_seconds": 0.25349500000447733
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "random-neutral-short",
+          "case": "short",
+          "kind": "random",
+          "request_ms": 309.33050000021467,
+          "pcm_seconds": 3.7,
+          "semantic_token_count": 85,
+          "semantic_sha256": "720009608317d8190497f8049b00880f498576a60915d51fc8cdd21ce90a11de",
+          "pcm_sha256": "7f347d2bafa7ce9ca1304921d8b5b670a6e5568e6d5dd4a96f934f82e20bdab7",
+          "wav": "random-neutral-short.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 4321,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "FP32; CUDA TF32 disabled; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 3.789999755099416e-05,
+              "semantic_seconds": 0.1966078999976162,
+              "acoustic_seconds": 0.11165379999874858,
+              "output_copy_pcm_seconds": 0.00015559999883407727,
+              "prepared_inference_seconds": 0.30845519999274984,
+              "compute_seconds": 0.30845519999274984
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        }
+      ]
+    },
+    "fp16": {
+      "status": "completed",
+      "hot_summary": {
+        "short": {
+          "n": 3,
+          "p50_ms": 226.33219999988796,
+          "min_ms": 226.01120000035735,
+          "max_ms": 229.8129000046174,
+          "rtf_pcm_p50": 0.06541393063580576,
+          "audio_seconds": [
+            3.46,
+            3.46,
+            3.46
+          ],
+          "semantic_token_counts": [
+            79,
+            79,
+            79
+          ],
+          "all_completed": true
+        },
+        "long": {
+          "n": 3,
+          "p50_ms": 2818.633899994893,
+          "min_ms": 2784.4378000008874,
+          "max_ms": 2985.9897999995155,
+          "rtf_pcm_p50": 0.11070832285918669,
+          "audio_seconds": [
+            25.46,
+            25.46,
+            25.46
+          ],
+          "semantic_token_counts": [
+            629,
+            629,
+            629
+          ],
+          "all_completed": true
+        },
+        "multi": {
+          "n": 3,
+          "p50_ms": 1281.9406000053277,
+          "min_ms": 1275.3318000031868,
+          "max_ms": 1335.2597000048263,
+          "rtf_pcm_p50": 0.08989765778438483,
+          "audio_seconds": [
+            14.26,
+            14.26,
+            14.26
+          ],
+          "semantic_token_counts": [
+            349,
+            349,
+            349
+          ],
+          "all_completed": true
+        },
+        "punctuation": {
+          "n": 3,
+          "p50_ms": 596.7824999970617,
+          "min_ms": 584.869999998773,
+          "max_ms": 631.250700003875,
+          "rtf_pcm_p50": 0.07790894255836314,
+          "audio_seconds": [
+            7.66,
+            7.66,
+            7.66
+          ],
+          "semantic_token_counts": [
+            184,
+            184,
+            184
+          ],
+          "all_completed": true
+        }
+      },
+      "torch_imported_main": false,
+      "source_files_changed_during_run": [],
+      "import_ms": 89.73870000045281,
+      "engine_construction_ms": 731.8405999976676,
+      "load_ms": 2401.4552000007825,
+      "close_ms": 188.53809999563964,
+      "path": "outputs\\windows-precision\\fp16-natural",
+      "results_sha256": "baec212b99c888021b33c9a296129cdc90fa18887782f685dc6bae8f15fd2d7e",
+      "environment": {
+        "python": "3.11.15 (main, Mar 24 2026, 22:57:51) [MSC v.1944 64 bit (AMD64)]",
+        "executable": "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Scripts\\python.exe",
+        "platform": "Windows-10-10.0.22631-SP0",
+        "sources_sha256": {
+          "harness/windows_nvidia_benchmark.py": "278ff70dbd06a3fb9239fa3576b19775e7ca132a12f5223a55febe9d93effc14",
+          "scripts/windows_official_baseline.py": "e648462f9cd053fbe63d83730ab999428a865bac3f225eaef8444578c1978a27",
+          "src/sakuratts/nvidia.py": "8a7f79deb89042154458611b25974259e7705087283a9bffc833a14ca087d057",
+          "src/sakuratts/cuda_gpt.py": "dd5dc12cb5c0ead02cb8578a70d263cce59f9940ca8f3ebb4ba8e1527c7bf515",
+          "src/sakuratts/ort_sovits.py": "3daee8c3c59b99c3c44a2c62b73d3308fbf43fcc85c0995f9a2ee9975586aa41",
+          "src/sakuratts/ort_process.py": "ceb7e83c10f8356899c3233d39bdb92b594bd7a5f67594b212d1c51bf7b26916",
+          "src/sakuratts/ort_worker.py": "52c87ac07aca49b1f26be47bb7b9acb518c89dfbb6df72d6a42f759d1862c663",
+          "src/sakuratts/synthesis.py": "c3c5217e10ca234e2e4fe193c3f8b967bff290f84560400e37d990cbdc6a8e69",
+          "src/sakuratts/generation.py": "6e73ce32d56c51d48a98922ebbc9056a1d4c736f9e442423cbec87936ab8477b",
+          "src/sakuratts/sampling.py": "7df53036344bc5396f666b7c743a7a596707c4524a5a501f2866d442db14804e",
+          "src/sakuratts/text_frontend.py": "ef15a611e35020cc03830b7cecf7f2257723df6de6f0ac0b4752e6aed37f53a9",
+          "src/sakuratts/japanese.py": "5aafbda8cc06408e2344b39ae40da4e8b6daa2d9382cdc336a0b73756ef750d9",
+          "src/sakuratts/classic_japanese.py": "eb6d50a9febb17c04ca46a9ad811ffc8e93f481f88a179dc4dd4781d41318296",
+          "src/sakuratts/classic_japanese_worker.py": "669e3dc50688b61d0a8caefb0ab1a400a85d02ccf4ea3e5dd4de614bd233e0d9",
+          "src/sakuratts/cuda_runtime.py": "d9fbcfbfebeccf6b4c16570167c1712d3496806d1409542a1061672d36a1f107",
+          "src/sakuratts/array_protocol.py": "71cae8a55fecf3bf2d03a06e3646c22995951995fa29e4e6f06c41710e540eac",
+          "src/sakuratts/reference_condition.py": "672f6bafe6b23aaadc7bd9c5eb8a7ff4f4072cdfb598794a6cbcf8ad55676df6",
+          "src/sakuratts/weight_storage.py": "7ff939a4e627be161ee06baf711bf690a9e22fd4e4164a90753247a7bccd5234"
+        },
+        "distributions": {
+          "sakuratts": "0.1.0.dev0",
+          "annotated-types": "0.8.0",
+          "budoux": "0.9.2",
+          "certifi": "2026.7.22",
+          "charset-normalizer": "3.5.1",
+          "colorama": "0.4.6",
+          "colorlog": "6.12.0",
+          "cuda-pathfinder": "1.8.2",
+          "cupy-cuda12x": "14.2.0",
+          "fasttext-predict": "0.9.2.4",
+          "fast-langdetect": "1.0.1",
+          "flatbuffers": "25.12.19",
+          "idna": "3.20",
+          "numpy": "2.4.6",
+          "nvidia-cublas-cu12": "12.9.2.10",
+          "nvidia-cuda-nvrtc-cu12": "12.9.86",
+          "nvidia-cuda-runtime-cu12": "12.9.79",
+          "onnxruntime": "1.30.0",
+          "packaging": "26.3",
+          "protobuf": "7.36.2",
+          "psutil": "7.2.2",
+          "pydantic": "2.13.5",
+          "pydantic_core": "2.46.5",
+          "pyopenjtalk-plus": "0.4.1.post9",
+          "requests": "2.34.2",
+          "robust-downloader": "0.0.2",
+          "split-lang": "2.1.1",
+          "SudachiDict-core": "20260723",
+          "SudachiPy": "0.6.11",
+          "tqdm": "4.70.1",
+          "typing_extensions": "4.16.0",
+          "typing-inspection": "0.4.4",
+          "urllib3": "2.8.0"
+        },
+        "measurement": {
+          "memory_sampler_enabled": false,
+          "gpu": "Disabled for this timing-only run",
+          "cpu": "psutil parent plus current recursive descendants RSS; excludes nvidia-smi sampler. Shared pages can be counted more than once; transient child peaks can be missed.",
+          "cpu_sample_schedule": "Request/lifecycle boundaries only",
+          "cupy": "Default pool used/total bytes; excludes ORT worker, CUDA libraries and contexts. Boundary readings only.",
+          "latency": "Host original-text submission through complete PCM return, including transfers and any model reload. WAV and JSON disk writes excluded. Background memory sampling disabled.",
+          "rtf": "Complete PCM duration including configured trailing silence; speech-only duration also retained.",
+          "cold_start": "Imports, engine construction, explicit load and first request separately recorded; no clearing of OS or compiler caches.",
+          "replay_preparation": "When requested, capture arrays are loaded before monitoring/timing. Only draws and noise enter synthesis; equality checks occur after the request timer stops.",
+          "precision": {
+            "gpt": "fp16",
+            "acoustic": "fp32",
+            "tf32": false,
+            "fp16_status": "experimental, not quality accepted"
+          },
+          "quality": "Human listening and ASR are not run"
+        }
+      },
+      "requests": [
+        {
+          "name": "first-neutral-short",
+          "case": "short",
+          "kind": "first",
+          "request_ms": 857.7224000036949,
+          "pcm_seconds": 3.46,
+          "semantic_token_count": 79,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "15cf0f86608ac7c1a709b188f2b9d111f71c06d317cef87a98cb915cc2151663",
+          "wav": "first-neutral-short.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 9.649999992689118e-05,
+              "semantic_seconds": 0.26810159999877214,
+              "acoustic_seconds": 0.4364586000010604,
+              "output_copy_pcm_seconds": 0.0003701999958138913,
+              "prepared_inference_seconds": 0.7050268999955733,
+              "compute_seconds": 0.7050268999955733
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-short-00",
+          "case": "short",
+          "kind": "hot",
+          "request_ms": 226.33219999988796,
+          "pcm_seconds": 3.46,
+          "semantic_token_count": 79,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "885be4a6863a8715ca6eaf5309bc9bbbe931964a7880ae0b90f957694e98b255",
+          "wav": "hot-neutral-short-00.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 2.7399997634347528e-05,
+              "semantic_seconds": 0.1454379000060726,
+              "acoustic_seconds": 0.07978010000078939,
+              "output_copy_pcm_seconds": 0.0001351000028080307,
+              "prepared_inference_seconds": 0.22538050000730436,
+              "compute_seconds": 0.22538050000730436
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-short-01",
+          "case": "short",
+          "kind": "hot",
+          "request_ms": 226.01120000035735,
+          "pcm_seconds": 3.46,
+          "semantic_token_count": 79,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "a68b13acbdaa4f9fb55f83c8ccf50e5e8b3b9c4c3cd853189ed922880f66c726",
+          "wav": "hot-neutral-short-01.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 2.78999941656366e-05,
+              "semantic_seconds": 0.14109590000589378,
+              "acoustic_seconds": 0.08380899999610847,
+              "output_copy_pcm_seconds": 0.00014670000382466242,
+              "prepared_inference_seconds": 0.22507949999999255,
+              "compute_seconds": 0.22507949999999255
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-short-02",
+          "case": "short",
+          "kind": "hot",
+          "request_ms": 229.8129000046174,
+          "pcm_seconds": 3.46,
+          "semantic_token_count": 79,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "2891123385fe192a0bc125139188faff9bb74651bc6573c913c00633217031d0",
+          "wav": "hot-neutral-short-02.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 3.139999898849055e-05,
+              "semantic_seconds": 0.14989020000211895,
+              "acoustic_seconds": 0.0788477000023704,
+              "output_copy_pcm_seconds": 0.0001444000008632429,
+              "prepared_inference_seconds": 0.22891370000434108,
+              "compute_seconds": 0.22891370000434108
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-long-00",
+          "case": "long",
+          "kind": "hot",
+          "request_ms": 2985.9897999995155,
+          "pcm_seconds": 25.46,
+          "semantic_token_count": 629,
+          "semantic_sha256": "74c5c5e7752cecbcd8bbb3bb5e061d9ada666614e9731224c276e7c3a4eb3d74",
+          "pcm_sha256": "e42113bc003a31601c581480bc2be98a4d90646c11b0efe7646a5ea96e8eacd6",
+          "wav": "hot-neutral-long-00.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 0.0002806999982567504,
+              "semantic_seconds": 2.2477280000020983,
+              "acoustic_seconds": 0.731541199995263,
+              "output_copy_pcm_seconds": 0.002502300005289726,
+              "prepared_inference_seconds": 2.9820522000009078,
+              "compute_seconds": 2.9820522000009078
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-long-01",
+          "case": "long",
+          "kind": "hot",
+          "request_ms": 2818.633899994893,
+          "pcm_seconds": 25.46,
+          "semantic_token_count": 629,
+          "semantic_sha256": "74c5c5e7752cecbcd8bbb3bb5e061d9ada666614e9731224c276e7c3a4eb3d74",
+          "pcm_sha256": "384b4d0acf9cdbdcf374488525b92e71e20427d7c08d6454e76bc867f93ef957",
+          "wav": "hot-neutral-long-01.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 0.00030930000502849,
+              "semantic_seconds": 2.204758899999433,
+              "acoustic_seconds": 0.6079774999961955,
+              "output_copy_pcm_seconds": 0.002376700002059806,
+              "prepared_inference_seconds": 2.815422400002717,
+              "compute_seconds": 2.815422400002717
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-long-02",
+          "case": "long",
+          "kind": "hot",
+          "request_ms": 2784.4378000008874,
+          "pcm_seconds": 25.46,
+          "semantic_token_count": 629,
+          "semantic_sha256": "74c5c5e7752cecbcd8bbb3bb5e061d9ada666614e9731224c276e7c3a4eb3d74",
+          "pcm_sha256": "539f3329a02b9eea48d2ae1649e1f4bf87072cd98234b769bd4b97f4db61b391",
+          "wav": "hot-neutral-long-02.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 0.0002494000000297092,
+              "semantic_seconds": 2.1746159000031184,
+              "acoustic_seconds": 0.6038422000056016,
+              "output_copy_pcm_seconds": 0.0023639999999431893,
+              "prepared_inference_seconds": 2.781071500008693,
+              "compute_seconds": 2.781071500008693
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-multi-00",
+          "case": "multi",
+          "kind": "hot",
+          "request_ms": 1335.2597000048263,
+          "pcm_seconds": 14.26,
+          "semantic_token_count": 349,
+          "semantic_sha256": "a64b7459b426bdf3b156f774422711ceb68779bd4d0bc3a6ea6845f9e9b91243",
+          "pcm_sha256": "84680d0eea30b3c6250554e203c17d94891c90961b9c6b18794f2b3c61f9d955",
+          "wav": "hot-neutral-multi-00.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 4.020000051241368e-05,
+              "semantic_seconds": 0.888595999997051,
+              "acoustic_seconds": 0.4432689000022947,
+              "output_copy_pcm_seconds": 0.0013509999989764765,
+              "prepared_inference_seconds": 1.3332560999988345,
+              "compute_seconds": 1.3332560999988345
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-multi-01",
+          "case": "multi",
+          "kind": "hot",
+          "request_ms": 1275.3318000031868,
+          "pcm_seconds": 14.26,
+          "semantic_token_count": 349,
+          "semantic_sha256": "a64b7459b426bdf3b156f774422711ceb68779bd4d0bc3a6ea6845f9e9b91243",
+          "pcm_sha256": "cc2e5fafb8a59bdb59cb5c7ac6e67a41d342cba7702b8c9c33f0e67ec50a8a0a",
+          "wav": "hot-neutral-multi-01.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 4.249999619787559e-05,
+              "semantic_seconds": 0.9093584000002011,
+              "acoustic_seconds": 0.36259500000596745,
+              "output_copy_pcm_seconds": 0.001385600000503473,
+              "prepared_inference_seconds": 1.2733815000028699,
+              "compute_seconds": 1.2733815000028699
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-multi-02",
+          "case": "multi",
+          "kind": "hot",
+          "request_ms": 1281.9406000053277,
+          "pcm_seconds": 14.26,
+          "semantic_token_count": 349,
+          "semantic_sha256": "a64b7459b426bdf3b156f774422711ceb68779bd4d0bc3a6ea6845f9e9b91243",
+          "pcm_sha256": "ffb82718fd2224dc75be7fc7444898a80532338988fd48f682dd6cc5351cd962",
+          "wav": "hot-neutral-multi-02.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 3.9999998989515007e-05,
+              "semantic_seconds": 0.9062266999972053,
+              "acoustic_seconds": 0.3724186999970698,
+              "output_copy_pcm_seconds": 0.0013337999989744276,
+              "prepared_inference_seconds": 1.280019199992239,
+              "compute_seconds": 1.280019199992239
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-punctuation-00",
+          "case": "punctuation",
+          "kind": "hot",
+          "request_ms": 631.250700003875,
+          "pcm_seconds": 7.66,
+          "semantic_token_count": 184,
+          "semantic_sha256": "b15ff4818d5b27a27c4f72c6d4213da1dc1fe2b34119492a60f0b43b40e5b636",
+          "pcm_sha256": "4ae6d323b007de68cd31b9eb4d753b4226d02c8b6f7b05f748ef41bf2a83907f",
+          "wav": "hot-neutral-punctuation-00.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 3.670000296551734e-05,
+              "semantic_seconds": 0.38786419999814825,
+              "acoustic_seconds": 0.24120330000005197,
+              "output_copy_pcm_seconds": 0.0007909999985713512,
+              "prepared_inference_seconds": 0.6298951999997371,
+              "compute_seconds": 0.6298951999997371
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-punctuation-01",
+          "case": "punctuation",
+          "kind": "hot",
+          "request_ms": 596.7824999970617,
+          "pcm_seconds": 7.66,
+          "semantic_token_count": 184,
+          "semantic_sha256": "b15ff4818d5b27a27c4f72c6d4213da1dc1fe2b34119492a60f0b43b40e5b636",
+          "pcm_sha256": "8fcc23a90b86cf48ca6ae4f8b555a171cf618d1d5b4d1c3171227e121bf929a5",
+          "wav": "hot-neutral-punctuation-01.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 3.989999822806567e-05,
+              "semantic_seconds": 0.4069004000048153,
+              "acoustic_seconds": 0.18800789999659173,
+              "output_copy_pcm_seconds": 0.0003426999974180944,
+              "prepared_inference_seconds": 0.5952908999970532,
+              "compute_seconds": 0.5952908999970532
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "hot-neutral-punctuation-02",
+          "case": "punctuation",
+          "kind": "hot",
+          "request_ms": 584.869999998773,
+          "pcm_seconds": 7.66,
+          "semantic_token_count": 184,
+          "semantic_sha256": "b15ff4818d5b27a27c4f72c6d4213da1dc1fe2b34119492a60f0b43b40e5b636",
+          "pcm_sha256": "e47e83af76a076c0f8d210683663f370fba05425c852500e61404afc1bfcc4cf",
+          "wav": "hot-neutral-punctuation-02.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 3.650000144261867e-05,
+              "semantic_seconds": 0.3916423999980907,
+              "acoustic_seconds": 0.19164309999905527,
+              "output_copy_pcm_seconds": 0.00027860000409418717,
+              "prepared_inference_seconds": 0.5836006000026828,
+              "compute_seconds": 0.5836006000026828
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "switch-reference-01",
+          "case": "short",
+          "kind": "switch",
+          "request_ms": 270.2408000041032,
+          "pcm_seconds": 3.26,
+          "semantic_token_count": 74,
+          "semantic_sha256": "9dd36215e98f7c32a4cd25491714c55da478dbf2f5dcae521c48cc619aef107d",
+          "pcm_sha256": "5bba66b0d6e9353dc32c5ab7f4f937ad76f5cef505eaca6b8fc1cfba50d44ef1",
+          "wav": "switch-reference-01.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "bc8b37bab3302562234411bd56897ac66443b4b79e840fad876f69eec54cdb18",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "……何で君は、私のこと、 幸せにするのがそんなに上手なの",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 3.0999995942693204e-05,
+              "semantic_seconds": 0.14521600000443868,
+              "acoustic_seconds": 0.12385570000333246,
+              "output_copy_pcm_seconds": 0.00014759999612579122,
+              "prepared_inference_seconds": 0.2692502999998396,
+              "compute_seconds": 0.2692502999998396
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "switch-reference-02",
+          "case": "short",
+          "kind": "switch",
+          "request_ms": 267.4306999979308,
+          "pcm_seconds": 3.38,
+          "semantic_token_count": 77,
+          "semantic_sha256": "d54c51ee40420a2953feb5e1bfeb69aaeca06943c8f880badf4256fe974eb2d8",
+          "pcm_sha256": "0d2504dc2b2556a493d21508e9f7d5b835ac5f705590ccbde9d00d865079b1b5",
+          "wav": "switch-reference-02.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "9f37d7d827dd8e2c6fb022f3343a31f4a5d71b472b8aa019bfe57e94b8dff999",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "……み、皆がいるとこで、 あんまり言わないで。そういうこと",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 2.9100003303028643e-05,
+              "semantic_seconds": 0.14076579999527894,
+              "acoustic_seconds": 0.1255578999989666,
+              "output_copy_pcm_seconds": 0.00013580000086221844,
+              "prepared_inference_seconds": 0.2664885999984108,
+              "compute_seconds": 0.2664885999984108
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "switch-reference-03",
+          "case": "short",
+          "kind": "switch",
+          "request_ms": 272.698799999489,
+          "pcm_seconds": 3.18,
+          "semantic_token_count": 72,
+          "semantic_sha256": "f933cded68ce427039597ba36f47bb3114de4859430f2f9fd0022503d0dd0908",
+          "pcm_sha256": "f08f6533ff2a74b4a2fa598df1e15e913382589999244e142b9617946cbdd278",
+          "wav": "switch-reference-03.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "79a1e249ed452e76cd6c3a27ce65cd192e83fc5e7ceaec50293d39b8814573cc",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "お願いね。私は皆の分の 生徒会の仕事を片付けておくから",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 3.4199998481199145e-05,
+              "semantic_seconds": 0.15065660000254866,
+              "acoustic_seconds": 0.12100139999529347,
+              "output_copy_pcm_seconds": 0.0001351000028080307,
+              "prepared_inference_seconds": 0.27182729999913136,
+              "compute_seconds": 0.27182729999913136
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "switch-reference-04",
+          "case": "short",
+          "kind": "switch",
+          "request_ms": 248.55920000118203,
+          "pcm_seconds": 3.54,
+          "semantic_token_count": 81,
+          "semantic_sha256": "4f70c2a7a2b4e428a84e4650f2af42aeb3ce38c5dc768c63fd9b190bb5449289",
+          "pcm_sha256": "eb433ae5ed6fa8b0d4f9163483b432d1ff68d6061e4339a75a2735015ee22297",
+          "wav": "switch-reference-04.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "41a8fdd4d9e51f3098a7f33e56e41fb74eefea9b97e7b95fc2a74fdc1396f86a",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "え、すごい。音、聞こえるの？",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 2.1599997126031667e-05,
+              "semantic_seconds": 0.14286429999629036,
+              "acoustic_seconds": 0.10445489999983693,
+              "output_copy_pcm_seconds": 0.00035370000114198774,
+              "prepared_inference_seconds": 0.2476944999943953,
+              "compute_seconds": 0.2476944999943953
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "switch-back-neutral",
+          "case": "short",
+          "kind": "switch",
+          "request_ms": 223.10750000178814,
+          "pcm_seconds": 3.46,
+          "semantic_token_count": 79,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "649ab534b986b4d8014b936276c4d20f3604521e9d884a7d0e281499078f26e7",
+          "wav": "switch-back-neutral.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 2.680000034160912e-05,
+              "semantic_seconds": 0.14279630000237375,
+              "acoustic_seconds": 0.07922649999818532,
+              "output_copy_pcm_seconds": 0.00013619999663205817,
+              "prepared_inference_seconds": 0.22218579999753274,
+              "compute_seconds": 0.22218579999753274
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        },
+        {
+          "name": "random-neutral-short",
+          "case": "short",
+          "kind": "random",
+          "request_ms": 268.3656000008341,
+          "pcm_seconds": 3.7,
+          "semantic_token_count": 85,
+          "semantic_sha256": "720009608317d8190497f8049b00880f498576a60915d51fc8cdd21ce90a11de",
+          "pcm_sha256": "4d09141e85735d9bcee9f15a3c7f8683bba862dd62069f5784c4839a4ca995e9",
+          "wav": "random-neutral-short.wav",
+          "status": "completed",
+          "parameters": {
+            "seed": 4321,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+            "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+            "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+            "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+            "reference_text": "でも私、初めて君に会った時、 思ったよ",
+            "reference_language": "ja"
+          },
+          "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+          "stages": [
+            {
+              "frontend_seconds": 0.0,
+              "condition_seconds": 2.800000220304355e-05,
+              "semantic_seconds": 0.15711200000077952,
+              "acoustic_seconds": 0.11022950000187848,
+              "output_copy_pcm_seconds": 0.00014139999984763563,
+              "prepared_inference_seconds": 0.2675109000047087,
+              "compute_seconds": 0.2675109000047087
+            }
+          ],
+          "stops": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "memory": {
+    "fp32": {
+      "path": "outputs\\windows-precision\\fp32-memory",
+      "sha256": "d0e7913e68610a2786b466951dd1a9c9ac711f0173a2b6e1a27c52ed8540a667",
+      "status": "completed",
+      "memory": {
+        "samples": 224,
+        "global_device_peak_mib": 4250.0,
+        "cpu_tree_peak_rss_bytes": 1964298240,
+        "cpu_parent_peak_rss_bytes": 762908672,
+        "cupy_observed_peak_used_bytes": 530049536,
+        "cupy_observed_peak_total_bytes": 613262336
+      },
+      "first_device_sample_mib": 2304.0,
+      "source_files_changed_during_run": [],
+      "snapshots": [
+        {
+          "label": "before_engine_construction",
+          "cpu_rss_bytes": 40792064,
+          "cpu_tree_rss_bytes": 52957184,
+          "cupy": {
+            "cupy_imported": false
+          }
+        },
+        {
+          "label": "models_loaded",
+          "cpu_rss_bytes": 387715072,
+          "cpu_tree_rss_bytes": 848314368,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 318618624,
+            "pool_total_bytes": 318618624,
+            "pool_free_bytes": 0,
+            "pinned_free_blocks": 10
+          }
+        },
+        {
+          "label": "first-neutral-short:before",
+          "cpu_rss_bytes": 387735552,
+          "cpu_tree_rss_bytes": 848334848,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 318618624,
+            "pool_total_bytes": 318618624,
+            "pool_free_bytes": 0,
+            "pinned_free_blocks": 10
+          }
+        },
+        {
+          "label": "first-neutral-short:after",
+          "cpu_rss_bytes": 752783360,
+          "cpu_tree_rss_bytes": 1910611968,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 519972864,
+            "pool_total_bytes": 541621248,
+            "pool_free_bytes": 21648384,
+            "pinned_free_blocks": 14
+          }
+        },
+        {
+          "label": "hot-neutral-short-00:before",
+          "cpu_rss_bytes": 753053696,
+          "cpu_tree_rss_bytes": 1910882304,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 519972864,
+            "pool_total_bytes": 541621248,
+            "pool_free_bytes": 21648384,
+            "pinned_free_blocks": 14
+          }
+        },
+        {
+          "label": "hot-neutral-short-00:after",
+          "cpu_rss_bytes": 753147904,
+          "cpu_tree_rss_bytes": 1911492608,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 519972864,
+            "pool_total_bytes": 541621248,
+            "pool_free_bytes": 21648384,
+            "pinned_free_blocks": 13
+          }
+        },
+        {
+          "label": "hot-neutral-long-00:before",
+          "cpu_rss_bytes": 753274880,
+          "cpu_tree_rss_bytes": 1911619584,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 519972864,
+            "pool_total_bytes": 541621248,
+            "pool_free_bytes": 21648384,
+            "pinned_free_blocks": 13
+          }
+        },
+        {
+          "label": "hot-neutral-long-00:after",
+          "cpu_rss_bytes": 755838976,
+          "cpu_tree_rss_bytes": 1958711296,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 519972864,
+            "pool_total_bytes": 613262336,
+            "pool_free_bytes": 93289472,
+            "pinned_free_blocks": 14
+          }
+        },
+        {
+          "label": "hot-neutral-multi-00:before",
+          "cpu_rss_bytes": 754601984,
+          "cpu_tree_rss_bytes": 1957474304,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 519972864,
+            "pool_total_bytes": 613262336,
+            "pool_free_bytes": 93289472,
+            "pinned_free_blocks": 14
+          }
+        },
+        {
+          "label": "hot-neutral-multi-00:after",
+          "cpu_rss_bytes": 755544064,
+          "cpu_tree_rss_bytes": 1960734720,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 519972864,
+            "pool_total_bytes": 613262336,
+            "pool_free_bytes": 93289472,
+            "pinned_free_blocks": 15
+          }
+        },
+        {
+          "label": "hot-neutral-punctuation-00:before",
+          "cpu_rss_bytes": 755757056,
+          "cpu_tree_rss_bytes": 1960947712,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 519972864,
+            "pool_total_bytes": 613262336,
+            "pool_free_bytes": 93289472,
+            "pinned_free_blocks": 15
+          }
+        },
+        {
+          "label": "hot-neutral-punctuation-00:after",
+          "cpu_rss_bytes": 758484992,
+          "cpu_tree_rss_bytes": 1964093440,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 519972864,
+            "pool_total_bytes": 613262336,
+            "pool_free_bytes": 93289472,
+            "pinned_free_blocks": 15
+          }
+        },
+        {
+          "label": "idle_before_unload",
+          "cpu_rss_bytes": 758661120,
+          "cpu_tree_rss_bytes": 1964269568,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 519972864,
+            "pool_total_bytes": 613262336,
+            "pool_free_bytes": 93289472,
+            "pinned_free_blocks": 15
+          }
+        },
+        {
+          "label": "idle_after_unload",
+          "cpu_rss_bytes": 758697984,
+          "cpu_tree_rss_bytes": 821272576,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 0,
+            "pool_total_bytes": 0,
+            "pool_free_bytes": 0,
+            "pinned_free_blocks": 15
+          }
+        },
+        {
+          "label": "after-idle-unload-first:before",
+          "cpu_rss_bytes": 758697984,
+          "cpu_tree_rss_bytes": 821272576,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 0,
+            "pool_total_bytes": 0,
+            "pool_free_bytes": 0,
+            "pinned_free_blocks": 15
+          }
+        },
+        {
+          "label": "after-idle-unload-first:after",
+          "cpu_rss_bytes": 758747136,
+          "cpu_tree_rss_bytes": 1917784064,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 519972864,
+            "pool_total_bytes": 541301760,
+            "pool_free_bytes": 21328896,
+            "pinned_free_blocks": 13
+          }
+        },
+        {
+          "label": "after-idle-unload-hot:before",
+          "cpu_rss_bytes": 759091200,
+          "cpu_tree_rss_bytes": 1918128128,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 519972864,
+            "pool_total_bytes": 541301760,
+            "pool_free_bytes": 21328896,
+            "pinned_free_blocks": 13
+          }
+        },
+        {
+          "label": "after-idle-unload-hot:after",
+          "cpu_rss_bytes": 759181312,
+          "cpu_tree_rss_bytes": 1918738432,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 519972864,
+            "pool_total_bytes": 544957952,
+            "pool_free_bytes": 24985088,
+            "pinned_free_blocks": 16
+          }
+        },
+        {
+          "label": "closed",
+          "cpu_rss_bytes": 615481344,
+          "cpu_tree_rss_bytes": 627646464,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 0,
+            "pool_total_bytes": 0,
+            "pool_free_bytes": 0,
+            "pinned_free_blocks": 16
+          }
+        }
+      ]
+    },
+    "fp16": {
+      "path": "outputs\\windows-precision\\fp16-memory",
+      "sha256": "1115364294016c39a6b1816f710142fe8c1ff16ffde804e1e5e49fd004b4dcb2",
+      "status": "completed",
+      "memory": {
+        "samples": 211,
+        "global_device_peak_mib": 3829.0,
+        "cpu_tree_peak_rss_bytes": 2171432960,
+        "cpu_parent_peak_rss_bytes": 970571776,
+        "cupy_observed_peak_used_bytes": 267299328,
+        "cupy_observed_peak_total_bytes": 330963456
+      },
+      "first_device_sample_mib": 2302.0,
+      "source_files_changed_during_run": [],
+      "snapshots": [
+        {
+          "label": "before_engine_construction",
+          "cpu_rss_bytes": 40927232,
+          "cpu_tree_rss_bytes": 53092352,
+          "cupy": {
+            "cupy_imported": false
+          }
+        },
+        {
+          "label": "models_loaded",
+          "cpu_rss_bytes": 379518976,
+          "cpu_tree_rss_bytes": 839467008,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 159309824,
+            "pool_total_bytes": 159309824,
+            "pool_free_bytes": 0,
+            "pinned_free_blocks": 7
+          }
+        },
+        {
+          "label": "first-neutral-short:before",
+          "cpu_rss_bytes": 379539456,
+          "cpu_tree_rss_bytes": 839487488,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 159309824,
+            "pool_total_bytes": 159309824,
+            "pool_free_bytes": 0,
+            "pinned_free_blocks": 7
+          }
+        },
+        {
+          "label": "first-neutral-short:after",
+          "cpu_rss_bytes": 959455232,
+          "cpu_tree_rss_bytes": 2116329472,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 259989504,
+            "pool_total_bytes": 277232640,
+            "pool_free_bytes": 17243136,
+            "pinned_free_blocks": 10
+          }
+        },
+        {
+          "label": "hot-neutral-short-00:before",
+          "cpu_rss_bytes": 959725568,
+          "cpu_tree_rss_bytes": 2116599808,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 259989504,
+            "pool_total_bytes": 277232640,
+            "pool_free_bytes": 17243136,
+            "pinned_free_blocks": 10
+          }
+        },
+        {
+          "label": "hot-neutral-short-00:after",
+          "cpu_rss_bytes": 959758336,
+          "cpu_tree_rss_bytes": 2117148672,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 259989504,
+            "pool_total_bytes": 277232640,
+            "pool_free_bytes": 17243136,
+            "pinned_free_blocks": 10
+          }
+        },
+        {
+          "label": "hot-neutral-long-00:before",
+          "cpu_rss_bytes": 959873024,
+          "cpu_tree_rss_bytes": 2117263360,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 259989504,
+            "pool_total_bytes": 277232640,
+            "pool_free_bytes": 17243136,
+            "pinned_free_blocks": 10
+          }
+        },
+        {
+          "label": "hot-neutral-long-00:after",
+          "cpu_rss_bytes": 961642496,
+          "cpu_tree_rss_bytes": 2163380224,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 259989504,
+            "pool_total_bytes": 330963456,
+            "pool_free_bytes": 70973952,
+            "pinned_free_blocks": 10
+          }
+        },
+        {
+          "label": "hot-neutral-multi-00:before",
+          "cpu_rss_bytes": 960385024,
+          "cpu_tree_rss_bytes": 2162122752,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 259989504,
+            "pool_total_bytes": 330963456,
+            "pool_free_bytes": 70973952,
+            "pinned_free_blocks": 10
+          }
+        },
+        {
+          "label": "hot-neutral-multi-00:after",
+          "cpu_rss_bytes": 961765376,
+          "cpu_tree_rss_bytes": 2165809152,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 259989504,
+            "pool_total_bytes": 330963456,
+            "pool_free_bytes": 70973952,
+            "pinned_free_blocks": 11
+          }
+        },
+        {
+          "label": "hot-neutral-punctuation-00:before",
+          "cpu_rss_bytes": 962072576,
+          "cpu_tree_rss_bytes": 2166116352,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 259989504,
+            "pool_total_bytes": 330963456,
+            "pool_free_bytes": 70973952,
+            "pinned_free_blocks": 11
+          }
+        },
+        {
+          "label": "hot-neutral-punctuation-00:after",
+          "cpu_rss_bytes": 966787072,
+          "cpu_tree_rss_bytes": 2171158528,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 259989504,
+            "pool_total_bytes": 330963456,
+            "pool_free_bytes": 70973952,
+            "pinned_free_blocks": 11
+          }
+        },
+        {
+          "label": "idle_before_unload",
+          "cpu_rss_bytes": 967032832,
+          "cpu_tree_rss_bytes": 2171404288,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 259989504,
+            "pool_total_bytes": 330963456,
+            "pool_free_bytes": 70973952,
+            "pinned_free_blocks": 11
+          }
+        },
+        {
+          "label": "idle_after_unload",
+          "cpu_rss_bytes": 967077888,
+          "cpu_tree_rss_bytes": 1029824512,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 0,
+            "pool_total_bytes": 0,
+            "pool_free_bytes": 0,
+            "pinned_free_blocks": 11
+          }
+        },
+        {
+          "label": "after-idle-unload-first:before",
+          "cpu_rss_bytes": 967077888,
+          "cpu_tree_rss_bytes": 1029824512,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 0,
+            "pool_total_bytes": 0,
+            "pool_free_bytes": 0,
+            "pinned_free_blocks": 11
+          }
+        },
+        {
+          "label": "after-idle-unload-first:after",
+          "cpu_rss_bytes": 967409664,
+          "cpu_tree_rss_bytes": 2127216640,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 259989504,
+            "pool_total_bytes": 277232640,
+            "pool_free_bytes": 17243136,
+            "pinned_free_blocks": 9
+          }
+        },
+        {
+          "label": "after-idle-unload-hot:before",
+          "cpu_rss_bytes": 967757824,
+          "cpu_tree_rss_bytes": 2127564800,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 259989504,
+            "pool_total_bytes": 277232640,
+            "pool_free_bytes": 17243136,
+            "pinned_free_blocks": 9
+          }
+        },
+        {
+          "label": "after-idle-unload-hot:after",
+          "cpu_rss_bytes": 967757824,
+          "cpu_tree_rss_bytes": 2128236544,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 259989504,
+            "pool_total_bytes": 277232640,
+            "pool_free_bytes": 17243136,
+            "pinned_free_blocks": 12
+          }
+        },
+        {
+          "label": "closed",
+          "cpu_rss_bytes": 834416640,
+          "cpu_tree_rss_bytes": 846581760,
+          "cupy": {
+            "cupy_imported": true,
+            "pool_used_bytes": 0,
+            "pool_total_bytes": 0,
+            "pool_free_bytes": 0,
+            "pinned_free_blocks": 12
+          }
+        }
+      ]
+    }
+  },
+  "source_hashes": {
+    "src/sakuratts/cuda_gpt.py": "dd5dc12cb5c0ead02cb8578a70d263cce59f9940ca8f3ebb4ba8e1527c7bf515",
+    "src/sakuratts/nvidia.py": "8a7f79deb89042154458611b25974259e7705087283a9bffc833a14ca087d057",
+    "src/sakuratts/cli.py": "19b972dc86e07aecb87047a4f7795342419fea414f6369f0c8e58c28c1c2fcdb",
+    "harness/windows_gpt_precision.py": "58f9598c99034a75ed75c888a56e7c145fa989e2703aaafd022306204e3e4171",
+    "harness/windows_nvidia_benchmark.py": "278ff70dbd06a3fb9239fa3576b19775e7ca132a12f5223a55febe9d93effc14",
+    "harness/windows_failure_lifecycle.py": "1fff9a481079b7b51ce4104f3a6ad162708c2327ad8c12fd000a5f9b652a50f9"
+  },
+  "natural_pcm_comparison": [
+    {
+      "name": "first-neutral-short",
+      "semantic_tokens_equal": true,
+      "length_equal": true,
+      "max_lsb": 1.0,
+      "within_original_fp32_tolerance": true
+    },
+    {
+      "name": "hot-neutral-short-00",
+      "semantic_tokens_equal": true,
+      "length_equal": true,
+      "max_lsb": 1.0,
+      "within_original_fp32_tolerance": true
+    },
+    {
+      "name": "hot-neutral-short-01",
+      "semantic_tokens_equal": true,
+      "length_equal": true,
+      "max_lsb": 1.0,
+      "within_original_fp32_tolerance": true
+    },
+    {
+      "name": "hot-neutral-short-02",
+      "semantic_tokens_equal": true,
+      "length_equal": true,
+      "max_lsb": 1.0,
+      "within_original_fp32_tolerance": true
+    },
+    {
+      "name": "hot-neutral-long-00",
+      "semantic_tokens_equal": false,
+      "length_equal": false
+    },
+    {
+      "name": "hot-neutral-long-01",
+      "semantic_tokens_equal": false,
+      "length_equal": false
+    },
+    {
+      "name": "hot-neutral-long-02",
+      "semantic_tokens_equal": false,
+      "length_equal": false
+    },
+    {
+      "name": "hot-neutral-multi-00",
+      "semantic_tokens_equal": false,
+      "length_equal": false
+    },
+    {
+      "name": "hot-neutral-multi-01",
+      "semantic_tokens_equal": false,
+      "length_equal": false
+    },
+    {
+      "name": "hot-neutral-multi-02",
+      "semantic_tokens_equal": false,
+      "length_equal": false
+    },
+    {
+      "name": "hot-neutral-punctuation-00",
+      "semantic_tokens_equal": false,
+      "length_equal": true
+    },
+    {
+      "name": "hot-neutral-punctuation-01",
+      "semantic_tokens_equal": false,
+      "length_equal": true
+    },
+    {
+      "name": "hot-neutral-punctuation-02",
+      "semantic_tokens_equal": false,
+      "length_equal": true
+    },
+    {
+      "name": "switch-reference-01",
+      "semantic_tokens_equal": true,
+      "length_equal": true,
+      "max_lsb": 1.0,
+      "within_original_fp32_tolerance": true
+    },
+    {
+      "name": "switch-reference-02",
+      "semantic_tokens_equal": true,
+      "length_equal": true,
+      "max_lsb": 1.0,
+      "within_original_fp32_tolerance": true
+    },
+    {
+      "name": "switch-reference-03",
+      "semantic_tokens_equal": true,
+      "length_equal": true,
+      "max_lsb": 1.0,
+      "within_original_fp32_tolerance": true
+    },
+    {
+      "name": "switch-reference-04",
+      "semantic_tokens_equal": true,
+      "length_equal": true,
+      "max_lsb": 1.0,
+      "within_original_fp32_tolerance": true
+    },
+    {
+      "name": "switch-back-neutral",
+      "semantic_tokens_equal": true,
+      "length_equal": true,
+      "max_lsb": 1.0,
+      "within_original_fp32_tolerance": true
+    },
+    {
+      "name": "random-neutral-short",
+      "semantic_tokens_equal": true,
+      "length_equal": true,
+      "max_lsb": 1.0,
+      "within_original_fp32_tolerance": true
+    }
+  ],
+  "lifecycle": {
+    "passed": false,
+    "cases": [
+      {
+        "case": "resident_worker_killed_then_retry",
+        "checks": {
+          "raised": true,
+          "busy_cleared": true,
+          "worker_retired": true,
+          "gpt_weights_preserved": true,
+          "request_state_released": true,
+          "pcm_exact": false,
+          "phones_equal": true,
+          "sampled_tokens_equal": true,
+          "stop_reasons_equal": true,
+          "completed": true,
+          "new_worker_pid": true
+        },
+        "pcm_comparison": {
+          "length_equal": true,
+          "max_abs_lsb": 1,
+          "different_samples": 19,
+          "existing_fp32_atol": 0.0001,
+          "existing_fp32_rtol": 1e-05,
+          "within_existing_fp32_tolerance": true
+        },
+        "error": "OSError(22, 'Invalid argument')",
+        "killed_pid": 45324,
+        "recovered_pid": 44524
+      },
+      {
+        "case": "staged_semantic_cancellation_then_retry",
+        "checks": {
+          "cancelled_at_expected_stage": true,
+          "busy_cleared": true,
+          "gpt_unloaded": true,
+          "sovits_unloaded": true,
+          "pcm_exact": false,
+          "phones_equal": true,
+          "sampled_tokens_equal": true,
+          "stop_reasons_equal": true,
+          "completed": true,
+          "retry_unloaded_all_models": true
+        },
+        "pcm_comparison": {
+          "length_equal": true,
+          "max_abs_lsb": 1,
+          "different_samples": 17,
+          "existing_fp32_atol": 0.0001,
+          "existing_fp32_rtol": 1e-05,
+          "within_existing_fp32_tolerance": true
+        },
+        "cancellation_stage": "after_prefill"
+      },
+      {
+        "case": "staged_acoustic_cancellation_then_retry",
+        "checks": {
+          "cancelled_at_expected_stage": true,
+          "busy_cleared": true,
+          "gpt_unloaded": true,
+          "sovits_unloaded": true,
+          "pcm_exact": false,
+          "phones_equal": true,
+          "sampled_tokens_equal": true,
+          "stop_reasons_equal": true,
+          "completed": true,
+          "retry_unloaded_all_models": true
+        },
+        "pcm_comparison": {
+          "length_equal": true,
+          "max_abs_lsb": 1,
+          "different_samples": 15,
+          "existing_fp32_atol": 0.0001,
+          "existing_fp32_rtol": 1e-05,
+          "within_existing_fp32_tolerance": true
+        },
+        "cancellation_stage": "before_acoustic"
+      }
+    ],
+    "text": "おはよう。今日もよろしくね。",
+    "lifecycle_passed": true,
+    "numerical_within_existing_tolerance": true,
+    "bitwise_equal": false,
+    "seed": 1234,
+    "rng": "numpy.default_rng; same backend retries",
+    "gpt_precision": "fp16",
+    "acoustic_precision": "fp32",
+    "model_config_sha256": "9ab16715d46cea5e4a389c30c0f1ac0202d4211b7ec72bca5cc32d046d0a0c42",
+    "source_sha256": {
+      "nvidia.py": "8a7f79deb89042154458611b25974259e7705087283a9bffc833a14ca087d057",
+      "cuda_gpt.py": "dd5dc12cb5c0ead02cb8578a70d263cce59f9940ca8f3ebb4ba8e1527c7bf515",
+      "ort_process.py": "ceb7e83c10f8356899c3233d39bdb92b594bd7a5f67594b212d1c51bf7b26916",
+      "ort_sovits.py": "3daee8c3c59b99c3c44a2c62b73d3308fbf43fcc85c0995f9a2ee9975586aa41"
+    },
+    "wall_seconds": 15.293786900001578,
+    "torch_imported": false,
+    "scope": "Real GPU models; one neutral short text; no quality/performance claim"
+  },
+  "cli": {
+    "status": "completed",
+    "text": "おはよう。今日もよろしくね。",
+    "reference": "中性",
+    "reference_identity": {
+      "gpt_checkpoint_sha256": "dc0960f365affd723e096f03dc5d0fc37857e68ba30862754ff31caa9645fea4",
+      "sovits_checkpoint_sha256": "47f8d5d2c6d1a6e83d6225f0f83c3bc018b5910d7aa2d76aac3d6faaacce992d",
+      "audio_sha256": "8378bdfcc8fe429d66f054c0cfd55b43beb9a140c279b2bdbf8fed5935b26f32",
+      "official_commit": "source-sha256:83a849f2d0accc8a9d51e7ad1cb7475fa135eb7952de8dfae377ea95e5d85c09",
+      "reference_text": "でも私、初めて君に会った時、 思ったよ",
+      "reference_language": "ja"
+    },
+    "parameters": {
+      "seed": 1234,
+      "rng": "numpy.default_rng (not Torch seed-equivalent)",
+      "language": "ja",
+      "split_method": "cut0",
+      "top_k": 15,
+      "top_p": 1.0,
+      "temperature": 1.0,
+      "repetition_penalty": 1.35,
+      "early_stop_num": 2700,
+      "noise_scale": 0.5,
+      "speed": 1.0,
+      "fragment_interval": 0.3
+    },
+    "policy": "resident",
+    "cuda_graph": true,
+    "capacity": 2048,
+    "request_ms": 3428.999299998395,
+    "frontend_ms": 190.7664999962435,
+    "sample_rate": 32000,
+    "audio_seconds": 3.16,
+    "pcm_seconds": 3.46,
+    "rtf": 1.0851263607589858,
+    "fragments": [
+      {
+        "index": 0,
+        "normalized_text": "おはよう。今日もよろしくね。",
+        "phones": [
+          229,
+          322,
+          158,
+          96,
+          318,
+          229,
+          229,
+          3,
+          223,
+          229,
+          323,
+          229,
+          225,
+          229,
+          86,
+          318,
+          229,
+          322,
+          248,
+          229,
+          251,
+          160,
+          222,
+          254,
+          227,
+          129,
+          3
+        ],
+        "sampled_tokens": [
+          53,
+          98,
+          969,
+          966,
+          417,
+          715,
+          339,
+          188,
+          219,
+          317,
+          751,
+          308,
+          275,
+          370,
+          100,
+          549,
+          837,
+          3,
+          944,
+          953,
+          365,
+          360,
+          170,
+          53,
+          105,
+          280,
+          280,
+          280,
+          280,
+          280,
+          280,
+          280,
+          280,
+          280,
+          105,
+          146,
+          545,
+          771,
+          455,
+          611,
+          392,
+          125,
+          35,
+          698,
+          222,
+          352,
+          488,
+          525,
+          337,
+          91,
+          741,
+          86,
+          11,
+          52,
+          745,
+          166,
+          227,
+          609,
+          117,
+          202,
+          533,
+          935,
+          595,
+          589,
+          15,
+          50,
+          177,
+          28,
+          8,
+          162,
+          53,
+          105,
+          280,
+          280,
+          280,
+          280,
+          280,
+          280,
+          280,
+          1024
+        ],
+        "semantic_tokens": [
+          53,
+          98,
+          969,
+          966,
+          417,
+          715,
+          339,
+          188,
+          219,
+          317,
+          751,
+          308,
+          275,
+          370,
+          100,
+          549,
+          837,
+          3,
+          944,
+          953,
+          365,
+          360,
+          170,
+          53,
+          105,
+          280,
+          280,
+          280,
+          280,
+          280,
+          280,
+          280,
+          280,
+          280,
+          105,
+          146,
+          545,
+          771,
+          455,
+          611,
+          392,
+          125,
+          35,
+          698,
+          222,
+          352,
+          488,
+          525,
+          337,
+          91,
+          741,
+          86,
+          11,
+          52,
+          745,
+          166,
+          227,
+          609,
+          117,
+          202,
+          533,
+          935,
+          595,
+          589,
+          15,
+          50,
+          177,
+          28,
+          8,
+          162,
+          53,
+          105,
+          280,
+          280,
+          280,
+          280,
+          280,
+          280,
+          280
+        ],
+        "stop_reasons": [
+          "argmax_eos",
+          "sample_eos"
+        ],
+        "returned_index": 79,
+        "waveform_samples": 101120,
+        "pcm_samples": 110720,
+        "timings": {
+          "frontend_seconds": 0.0,
+          "condition_seconds": 8.059999527176842e-05,
+          "semantic_seconds": 0.2744410000013886,
+          "acoustic_seconds": 0.5339088999971864,
+          "output_copy_pcm_seconds": 0.00039929999911691993,
+          "prepared_inference_seconds": 0.8088297999929637,
+          "compute_seconds": 0.8088297999929637
+        },
+        "acoustic_transport": {
+          "roundtrip_ms": 533.7033999967389,
+          "worker_compute_ms": 533.1510000000002,
+          "transport_and_scheduling_ms": 0.5523999967386999,
+          "upload_bytes": 128336,
+          "download_bytes": 404480
+        }
+      }
+    ],
+    "timing_scope": "Original text through complete PCM, including missing model loads, transfers and sampling; file output separate",
+    "precision": "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization",
+    "gpt_precision": "fp16",
+    "acoustic_precision": "fp32",
+    "frontend_profile": {
+      "implementation": "pyopenjtalk-classic",
+      "version": "0.3.4",
+      "module_directory": "classic-python",
+      "main_dictionary": "classic-python/pyopenjtalk/open_jtalk_dic_utf_8-1.11"
+    },
+    "random_inputs": "fresh",
+    "quality": {
+      "human_listening": "not_run",
+      "asr": "not_run"
+    },
+    "startup_to_wav_ms": 4180.910600000061,
+    "startup_timing_scope": "run_cli entry through WAV write; excludes Python startup, module imports, JSON write and shutdown",
+    "config_sha256": "9ab16715d46cea5e4a389c30c0f1ac0202d4211b7ec72bca5cc32d046d0a0c42",
+    "wav_sha256": "aee01459c5c2ca3997ec7226e31916fde0f52143dfdbff9030774465ee127368",
+    "torch_imported": false
+  },
+  "early_failures": [
+    {
+      "directory": "fp16-fixed",
+      "error": "Non-contiguous transposed BERT input rejected by GEMM",
+      "resolution": "Explicit C-order upload"
+    },
+    {
+      "directory": "fp16-fixed-v2",
+      "error": "CuPy ascontiguousarray rejects NumPy input",
+      "resolution": "cp.asarray(..., order=C) and CPU regression"
+    }
+  ]
+}

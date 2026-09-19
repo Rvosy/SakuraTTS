@@ -215,6 +215,7 @@ def main():
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--no-cuda-graph", action="store_true")
     parser.add_argument("--capacity", type=int, default=2048)
+    parser.add_argument("--gpt-precision", choices=("fp32", "fp16"), default="fp32")
     parser.add_argument("--no-memory-sampler", action="store_true",
                         help="Disable nvidia-smi and background RSS/CuPy polling; retain boundary readings")
     parser.add_argument("--skip-reference-switch", action="store_true")
@@ -251,7 +252,8 @@ def main():
                            "value": json.loads(path.read_text(encoding="utf-8"))}
     preparation = {"config_path": str(config_path), "config_sha256": digest(config_path), "config": config,
         "manifests": manifests, "policy": args.policy, "cuda_graph": not args.no_cuda_graph,
-        "capacity": args.capacity, "repeats": args.repeats, "cases": {name: TEXT_CASES[name] for name in selected},
+        "capacity": args.capacity, "gpt_precision": args.gpt_precision,
+        "repeats": args.repeats, "cases": {name: TEXT_CASES[name] for name in selected},
         "reference": args.reference, "seed": args.seed,
         "reference_switch_enabled": not args.skip_reference_switch, "idle_unload_enabled": not args.skip_idle_unload}
     replays = None
@@ -293,7 +295,9 @@ def main():
             "rtf": "Complete PCM duration including configured trailing silence; speech-only duration also retained.",
             "cold_start": "Imports, engine construction, explicit load and first request separately recorded; no clearing of OS or compiler caches.",
             "replay_preparation": "When requested, capture arrays are loaded before monitoring/timing. Only draws and noise enter synthesis; equality checks occur after the request timer stops.",
-            "precision": "FP32 with TF32 disabled; no quantization", "quality": "Human listening and ASR are not run"}})
+            "precision": {"gpt": args.gpt_precision, "acoustic": "fp32", "tf32": False,
+                          "fp16_status": "experimental, not quality accepted"},
+            "quality": "Human listening and ASR are not run"}})
     result = {"status": "running", "policy": args.policy, "requests": [], "snapshots": [], "load_events": [], "errors": []}
     engine = None
     monitor = Monitor(output, process_tree=True, extra_sample=cupy_memory, enabled=not args.no_memory_sampler)
@@ -324,7 +328,8 @@ def main():
         snapshot("before_engine_construction")
         monitor.phase = "constructing_engine"
         t0 = time.perf_counter()
-        engine = NVIDIAEngine(config_path, policy=args.policy, use_graph=not args.no_cuda_graph, capacity=args.capacity)
+        engine = NVIDIAEngine(config_path, policy=args.policy, use_graph=not args.no_cuda_graph,
+                              capacity=args.capacity, gpt_precision=args.gpt_precision)
         result["engine_construction_ms"] = (time.perf_counter() - t0) * 1000
 
         def wrap_loader(name, attribute):

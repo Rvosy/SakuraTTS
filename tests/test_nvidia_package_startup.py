@@ -37,6 +37,23 @@ def fixture(root):
 
 
 class NvidiaPackageStartupTests(unittest.TestCase):
+    def test_unknown_precision_is_rejected_before_loading_resources(self):
+        with self.assertRaisesRegex(ValueError, "precision"):
+            NVIDIAEngine("does-not-exist.json", gpt_precision="int8")
+
+    def test_selected_precision_reaches_gpt_loader(self):
+        from types import ModuleType
+        backend = ModuleType("sakuratts.cuda_gpt")
+        backend.CUDAGPT = Mock()
+        model = object.__new__(NVIDIAEngine)
+        model.gpt = None
+        model.packages = {"gpt": Path("model")}
+        model.capacity, model.use_graph, model.gpt_precision = 2048, True, "fp16"
+        with patch.dict(sys.modules, {"sakuratts.cuda_gpt": backend}):
+            model._load_gpt()
+        backend.CUDAGPT.load.assert_called_once_with(
+            Path("model"), capacity=2048, use_graph=True, precision="fp16")
+
     def test_classic_profile_cannot_load_module_or_dictionary_outside_package(self):
         with tempfile.TemporaryDirectory() as directory:
             config, path, manifest = fixture(Path(directory))

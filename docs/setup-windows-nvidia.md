@@ -128,6 +128,8 @@ uv --offline pip check --python .venv-windows-runtime\Scripts\python.exe
 
 默认 `--model-policy resident` 在当前进程内保留模型。`release-state` 和 `staged` 是可选生命周期策略，`--no-cuda-graph` 可关闭 GPT 图执行用于对照；是否值得使用以完整请求测量为准。每次 CLI 命令都会启动新进程，不能把多次 CLI 调用称作同进程热请求。
 
+`--gpt-precision fp16` 可试用 GPT 混合精度：权重和 KV 使用半精度，主要累积与采样输入保留 FP32，声学仍为 FP32。模型包无需重新转换。默认 `fp32` 保留原数值对照；半精度会改变 logits，内容和听感尚待验收。资源与耗时见 [GPT 混合精度实验](experiments/2026-09-20-windows-gpt-fp16.md)。
+
 声学默认使用 `HEURISTIC` 卷积算法搜索并关闭最大 cuDNN 工作区。较大工作区的候选在实测中可以更快，但会超过这张 8 GB 显卡的可用显存预算；默认限制有速度代价，不能称为免费优化。工作区、加载策略和完整请求的具体取舍见实测记录，不根据单个算子的计时改变默认配置。
 
 ## 已核对的安装成本与边界
@@ -135,6 +137,8 @@ uv --offline pip check --python .venv-windows-runtime\Scripts\python.exe
 本机从缓存新建 `.venv-windows-runtime`，运行包依赖检查、CLI 帮助和日文前端检查均通过。Torch、torchaudio、Transformers、ONNX 导出器与 MLX 均不可导入，CUDA DLL 发现路径全部位于新的日常环境。移除重复 cuDNN 后、安装测量用 psutil 前，主环境逻辑文件大小为 1,560,256,402 字节，约 1.45 GiB。
 
 独立 ORT 组件的复制清单为 3,069,259,906 字节，约 2.86 GiB。以上安装阶段两项合计约 4.31 GiB，尚未包含模型、参考包、共享基础 Python、编译缓存和保留的开发环境；当前目录还包含随后离线安装的测量依赖。双进程带来的 CPU 内存与传输成本也要计量，不能仅报告较小的主环境体积。
+
+后续[逐文件清点](experiments/2026-09-20-windows-runtime-inventory.md)把共享 Python、选中资源与缓存分开计量，并确认两环境有 828.58 MiB 的相同 CUDA DLL。当前加载路径仍各自依赖这些文件，尚未实际删减，也未把潜在收益从安装量中扣除。
 
 完整进程 CPU 内存测量使用 `psutil==7.2.2`，已声明在开发依赖中，普通合成无需安装。若在日常环境执行测量 Harness，可从已有缓存离线安装该包，并将增加的文件计入测量环境体积；本轮没有为它联网下载。
 
