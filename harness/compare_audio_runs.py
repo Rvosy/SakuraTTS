@@ -36,14 +36,16 @@ def main():
     pairs = {}
     for path, baseline in zip(inputs[:-1], manifests[:-1]):
         for item in baseline["runs"]:
-            key = (item["case_id"], item["repeat"])
+            # Early saved runs predate stable case IDs; original text remains
+            # the identity, so no old manifest needs to be rewritten.
+            key = (item["language"], item["text"], item["repeat"])
             if key in pairs:
                 raise ValueError(f"Ambiguous baseline: {key}")
             pairs[key] = (path, item)
     results = []
     seen = set()
     for item in candidate["runs"]:
-        key = (item["case_id"], item["repeat"])
+        key = (item["language"], item["text"], item["repeat"])
         if key in seen:
             raise ValueError(f"Duplicate candidate: {key}")
         seen.add(key)
@@ -54,7 +56,8 @@ def main():
         actual_hashes = [digest(record["audio_file"]) for record in (baseline, item)]
         if actual_hashes != [baseline["sha256"], item["sha256"]]:
             raise ValueError(f"{key}: saved WAV hash differs from result manifest")
-        results.append({"case_id": key[0], "repeat": key[1],
+        results.append({"case_id": item.get("case_id", baseline.get("case_id")),
+                        "language": key[0], "text": key[1], "repeat": key[2],
                         "baseline_run": str(baseline_path),
                         "baseline_audio": baseline["audio_file"], "candidate_audio": item["audio_file"],
                         "baseline_sha256": actual_hashes[0], "candidate_sha256": actual_hashes[1],

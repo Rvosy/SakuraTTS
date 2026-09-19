@@ -17,9 +17,12 @@ import torch
 
 
 class ReferenceTrace:
-    def __init__(self, engine, backend, synchronize):
+    def __init__(self, engine, backend, synchronize, capture_sampling_noise=False):
         self.backend = backend
         self.synchronize = synchronize
+        self.capture_sampling_noise = capture_sampling_noise
+        if capture_sampling_noise and backend != "official":
+            raise ValueError("Sampling noise capture currently covers the official path only")
         self.events = []
         self.arrays = {}
         self.logits = []
@@ -61,6 +64,8 @@ class ReferenceTrace:
             if not self.samples:
                 self.snapshot(previous_tokens, "initial_history")
             result = original(logits, previous_tokens, *args, **kwargs)
+            if self.capture_sampling_noise:
+                self.snapshot(result[1], f"sampling_probabilities.{len(self.samples)}")
             self.samples.append({"token": int(result[0][0, 0].item()), "argmax_before_sampling": argmax,
                                  "argmax_after_sampling": int(logits.argmax(dim=-1)[0].item()),
                                  "vocabulary_size": logits.shape[-1]})
@@ -68,6 +73,18 @@ class ReferenceTrace:
 
         self.restore.append((sample_module, "sample", original))
         sample_module.sample = sample
+        if capture_sampling_noise:
+            utils = importlib.import_module("AR.models.utils")
+            self.restore.append((utils, "multinomial_sample_one_no_sync", utils.multinomial_sample_one_no_sync))
+
+            def draw(probs):
+                # Same expressions and RNG draw as the pinned official helper.
+                noise = torch.empty_like(probs).exponential_(1)
+                token = torch.argmax(probs / noise, dim=-1, keepdim=True).to(dtype=torch.int)
+                self.snapshot(noise, f"sampling_noise.{len(self.samples)}")
+                return token
+
+            utils.multinomial_sample_one_no_sync = draw
 
     def capture_logits(self, module, args, output):
         self.logits.append(output.detach().cpu().numpy().copy())
@@ -145,6 +162,7 @@ class ReferenceTrace:
             "final_argmax_is_eos": final.get("argmax_after_sampling") == self.eos,
             "stop_reason": self.stop_reason(final),
             "arrays_file": str(data_file),
+            "sampling_noise": "captured_real_official_exponential_draws" if self.capture_sampling_noise else "not_captured",
             "timing_scope": "diagnostic; synchronized stages, CPU copies and nested hooks; not normal E2E",
             "quality": {"asr": "not_run", "human_listening": "not_run"},
         }

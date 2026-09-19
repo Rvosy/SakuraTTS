@@ -32,6 +32,7 @@ def main() -> None:
     parser.add_argument("--repeat", type=int, default=2)
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--diagnostic", action="store_true", help="Save intermediate values; timings include diagnostic overhead")
+    parser.add_argument("--capture-sampling-noise", action="store_true", help="Official diagnosis: save actual exponential sampling draws for independent generation")
     parser.add_argument("--prepare-reference", action="store_true", help="Official V2Pro: prepare once, save conditions and release auxiliary models")
     parser.add_argument("--prune-bert", action="store_true", help="Official reference: compute only the required BERT feature layer")
     parser.add_argument("--prepare-acoustic", action="store_true", help="Prepared V2Pro reference: cache acoustic conditions and release preparation-only modules")
@@ -39,6 +40,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.repeat < 1:
         parser.error("--repeat must be positive")
+    if args.capture_sampling_noise and (not args.diagnostic or args.backend != "official"):
+        parser.error("--capture-sampling-noise requires --diagnostic --backend official")
     if args.prepare_reference and args.backend != "official":
         parser.error("--prepare-reference requires --backend official")
     if args.prune_bert and args.backend != "official":
@@ -262,7 +265,7 @@ def main() -> None:
         if args.diagnostic:
             from trace_reference import ReferenceTrace
 
-            trace = ReferenceTrace(engine, args.backend, synchronize)
+            trace = ReferenceTrace(engine, args.backend, synchronize, args.capture_sampling_noise)
         write_json(output / "result.json", report)
         for case in selected_cases:
             language = case["language"]
