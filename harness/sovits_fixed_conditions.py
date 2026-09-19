@@ -69,6 +69,48 @@ def load_inputs(path):
     return data
 
 
+def load_trace_cases(trace_runs, case_ids):
+    """Select completed individual traces, including those in a partial run."""
+    manifests = {}
+    for directory in trace_runs:
+        manifest = json.loads((directory / "result.json").read_text())
+        if (manifest["backend"] != "official" or manifest["source_commit"] != COMMITS["official"]
+                or manifest["model_version"] != "v2Pro"):
+            raise ValueError("Expected pinned official V2Pro source traces")
+        manifests[directory] = manifest
+    first = next(iter(manifests.values()))
+    for manifest in manifests.values():
+        if (manifest["input_sha256"] != first["input_sha256"] or manifest["reference"] != first["reference"]
+                or manifest["sampling"] != first["sampling"]):
+            raise ValueError("Trace runs must use identical model/reference identities and sampling parameters")
+    if len(set(case_ids)) != len(case_ids):
+        raise ValueError("Case IDs must be unique")
+    traces = {}
+    for case_id in case_ids:
+        matches = [directory for directory in trace_runs if (directory / f"{case_id}-1-trace.json").is_file()]
+        if len(matches) != 1:
+            raise ValueError(f"Expected exactly one source trace for {case_id}, found {len(matches)}")
+        directory = matches[0]
+        manifest = manifests[directory]
+        completed = [row for row in manifest["runs"] if row.get("case_id", row["language"]) == case_id and row["repeat"] == 1]
+        if len(completed) != 1 or "trace" not in completed[0]:
+            raise ValueError(f"Case {case_id} has no unique completed trace row")
+        data = load_inputs(directory / f"{case_id}-1-trace.json")
+        if completed[0]["trace"]["arrays_file"] != data["source"]["arrays"]:
+            raise ValueError(f"Trace array path differs from the completed source row: {case_id}")
+        data["case"] = {"id": case_id, "language": completed[0]["language"], "text": completed[0]["text"],
+                        "trace_run": str(directory), "trace_run_manifest_sha256": sha256(directory / "result.json"),
+                        "trace_run_status": manifest["status"]}
+        traces[case_id] = data
+    first_data = next(iter(traces.values()))
+    for data in traces.values():
+        for name in ("references", "speaker_embeddings"):
+            if len(data[name]) != len(first_data[name]) or any(
+                    not np.array_equal(value, expected) for value, expected in zip(data[name], first_data[name])):
+                raise ValueError(f"Prepared reference arrays differ between cases: {name}")
+    return traces, manifests
+
+
 def source_inventory(repository, backend):
     commit = subprocess.check_output(["git", "-C", str(repository), "rev-parse", "HEAD"], text=True).strip()
     if commit != COMMITS[backend]:
@@ -273,20 +315,23 @@ def compare(actual, expected):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--references", type=Path, required=True)
-    parser.add_argument("--official-trace-run", type=Path, required=True)
+    parser.add_argument("--official-trace-run", type=Path, action="append", required=True,
+                        help="May be repeated to select cases from multiple saved official runs")
     parser.add_argument("--backend", choices=["official", "lite"], required=True)
     parser.add_argument("--official-conditions", type=Path)
-    parser.add_argument("--languages", nargs="+", default=["ja", "zh"])
+    parser.add_argument("--cases", "--languages", dest="cases", nargs="+", default=["ja", "zh"],
+                        help="Source case IDs, resolved as <case>-1-trace.json across the supplied runs")
     parser.add_argument("--device", choices=["cpu", "mps"], default="cpu")
     parser.add_argument("--threads", type=int, default=4)
     parser.add_argument("--check-inputs", action="store_true")
     parser.add_argument("--check-model", action="store_true", help="CPU only: load/audit acoustic weights without inference")
     args = parser.parse_args()
-    references, trace_run = args.references.resolve(), args.official_trace_run.resolve()
-    traces = {language: load_inputs(trace_run / f"{language}-1-trace.json") for language in args.languages}
+    references = args.references.resolve()
+    trace_runs = [directory.resolve() for directory in args.official_trace_run]
+    traces, trace_manifests = load_trace_cases(trace_runs, args.cases)
     if args.check_inputs:
         print(json.dumps({"status": "schema_validated_no_models_loaded", "cases": {language: {
-            "semantic_shape": list(data["semantic"].shape), "phones_shape": list(data["phones"].shape),
+            "case": data["case"], "semantic_shape": list(data["semantic"].shape), "phones_shape": list(data["phones"].shape),
             "reference_shapes": [list(item.shape) for item in data["references"]],
             "speaker_shapes": [list(item.shape) for item in data["speaker_embeddings"]],
             "original_waveform_shape": list(data["original_trace_waveform"].shape)} for language, data in traces.items()}}, indent=2))
@@ -296,9 +341,7 @@ def main():
     if args.backend == "lite" and not args.check_model and args.official_conditions is None:
         parser.error("Lite requires --official-conditions from the official backend run")
     source = source_inventory(references / REPOSITORIES[args.backend], args.backend)
-    trace_manifest = json.loads((trace_run / "result.json").read_text())
-    if trace_manifest["source_commit"] != COMMITS["official"] or trace_manifest["model_version"] != "v2Pro":
-        raise ValueError("Expected pinned official V2Pro trace")
+    trace_manifest = next(iter(trace_manifests.values()))
     weights = [Path(path) for path in trace_manifest["input_sha256"] if Path(path).suffix == ".pth"]
     if len(weights) != 1 or sha256(weights[0]) != trace_manifest["input_sha256"][str(weights[0])]:
         raise ValueError("Acoustic checkpoint identity differs from the official trace")
@@ -317,7 +360,12 @@ def main():
               "checkpoint": str(checkpoint), "checkpoint_sha256": sha256(checkpoint), "upstream_source": source,
               "snapshot_root": str(run / "source"), "harness_sha256": sha256(snapshot),
               "command_argv": [sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]],
-              "noise_scale": 0.5, "speed": 1.0, "cases": {},
+              "source_trace_runs": [{"directory": str(directory), "manifest_sha256": sha256(directory / "result.json"),
+                                     "status": manifest["status"]} for directory, manifest in trace_manifests.items()],
+              "noise_scale": 0.5, "speed": 1.0, "noise_seed": 20260919,
+              "noise_source": ("Private torch CPU FP32 generator, restarted with the recorded seed for each latent shape"
+                               if args.backend == "official" else "Saved explicit noise arrays from the official fixed-condition run"),
+              "prepared_reference_arrays_identical_across_cases": True, "cases": {},
               "scope": "Only acoustic graph with fixed official semantic/phone/reference inputs and explicit noise; no audio quality acceptance",
               "timing_scope": "diagnostic; hooks and CPU copies included, not normal synthesis latency",
               "original_trace_waveform_note": "Saved for provenance; its original random noise was not captured, so it is not the numerical comparator",
@@ -349,7 +397,7 @@ def main():
                 arrays_file, wave_file = run / f"{language}-intermediates.npz", run / f"{language}-full-float32.wav"
                 np.savez(arrays_file, **arrays)
                 sf.write(wave_file, arrays["waveform"][0, 0], sample_rate, subtype="FLOAT")
-                case = {"source": data["source"], "arrays_file": str(arrays_file), "arrays_sha256": sha256(arrays_file),
+                case = {"case": data["case"], "source": data["source"], "arrays_file": str(arrays_file), "arrays_sha256": sha256(arrays_file),
                         "wave_file": str(wave_file), "wave_sha256": sha256(wave_file),
                         "samples": arrays["waveform"].shape[-1], "audio_seconds": arrays["waveform"].shape[-1] / sample_rate,
                         "diagnostic_seconds": seconds, "all_arrays_finite": all(np.isfinite(item).all() for item in arrays.values())}
