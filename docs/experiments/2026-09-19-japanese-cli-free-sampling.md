@@ -4,7 +4,7 @@
 
 `scripts/synthesize_japanese.py` 已用原始日文、独立模型包和新准备的参考条件完成三次生成。seed 0、seed 1 各运行一个独立进程，再用第三个进程重复 seed 0；三次均退出 0，并由 EOS 停止。运行过程没有读取历史目标特征、目标 token、随机噪声或对照 trace。
 
-这轮验证普通入口能否独立发声。新音频尚未经过 ASR 或人工试听，不能据此宣布内容完整、发音和音色通过。当前实际验收仍限于这套红叶 V2Pro 权重；CLI 能接收其他目录不表示那些模型已经兼容。
+这轮验证普通入口能否独立发声。生成时没有执行 ASR 或人工试听，后续另做的本地 ASR 见文末；目前不能宣布发音和音色通过。当前实际验收仍限于这套红叶 V2Pro 权重；CLI 能接收其他目录不表示那些模型已经兼容。
 
 ## 输入与执行范围
 
@@ -71,3 +71,44 @@ tts_source="$tts_refs/runs/20260919T143508.441566Z-japanese-cli-free-sampling/so
 ```
 
 后续需要试听这两条新随机样音，分别确认开头、助词和三句完整性。此前对另一条固定噪声 WAV 的反馈不能直接移用于本轮新音频。
+
+## 新样音的独立本地 ASR
+
+随后对 `seed0-first/speech.wav` 和 `seed1-first/speech.wav` 执行了本地离线转写。只读取已有 WAV，没有重新生成 TTS 音频，也没有修改原 CLI JSON 中的 `quality` 状态。转写前后，两条 WAV 与两份原 CLI JSON 的 SHA-256 均保持不变。
+
+识别仍用固定的 `mlx-community/whisper-small-mlx`，提交 `45f3915923c7a79a5a5b5a7d909d39aeb0e5630e`，权重 SHA-256 为 `55b6674c9b339702d486e2b1573839a66f8ec8f821ed2886993ef717a86b09f5`。已有缓存完整，命令启用 `--offline`，没有下载新文件或上传音频。实际环境为独立的 `.venv-asr-macos`，使用 `mlx-whisper 0.4.3` 与 `mlx 0.32.2`，不属于 TTS 运行依赖。
+
+识别语言显式设为 `ja`，`temperature=0`、`initial_prompt=None`、`condition_on_previous_text=False`。没有给识别器目标原句。下面保留 ASR 原文，没有按目标文本修改用字或补标点：
+
+| 样音 | ASR 原文 |
+|---|---|
+| seed 0 | こんにちは。今日は良い天気ですね。よろしくお願いします。 |
+| seed 1 | こんにちは今日はいい天気ですねよろしくお願いします |
+
+两条转写都包含开头“こんにちは”及后两句，为新样音的内容检查补充了自动证据。Whisper 会按上下文恢复常见拼写，转写中的“今日は”不能证明实际读音是 wa；音色、自然度与逐字准确性仍需人工试听。本轮没有据转写给音频作质量排名。
+
+每条得到一个 ASR segment，原始 JSON 保存了 token、时间戳、log probability 和无语音概率。seed 0、seed 1 的 segment 结束时间分别为 5.00、6.12 秒，超过实际 PCM 时长 4.86、4.66 秒；时间戳原样保留，不能用于判断准确的词边界。
+
+ASR 子进程实际退出码为 0，父进程墙钟为 2.190 秒。逐文件识别时间为 0.432、0.232 秒，其中首个文件含模型加载。这些只记录 ASR 执行过程，不加入 TTS 性能或资源数据。
+
+证据分为两个独立目录：
+
+```text
+SakuraTTS-References/runs/20260919T144738.003222Z-japanese-cli-asr-dispatch/
+SakuraTTS-References/runs/20260919T145447.141713Z-asr-review/
+```
+
+前者保存父进程的实际命令、退出码、完整 stdout/stderr、源文件与模型哈希，以及转写前后的输入核对；后者保存 Harness 快照、依赖列表、参数和两份原始转写。seed 0 的原始 ASR JSON 哈希为 `7fb0e9dd4e48fd210f685ae314033e7a3f0e379fdd0ab1c5ecc14650d6af6e7c`，seed 1 为 `39656a40d37387e1b0389d7cfb407dc76be78cd02fc0853c3cd0746f927c246c`。
+
+复现只读取这两份样音，每次创建新的 ASR 结果目录：
+
+```bash
+tts_refs=/Users/beyondpower/Documents/Projects/SakuraTTS-References
+"$tts_refs/.venv-asr-macos/bin/python" -u \
+  "$tts_refs/runs/20260919T144738.003222Z-japanese-cli-asr-dispatch/transcribe_regressions.py" \
+  --references "$tts_refs" --offline \
+  --model mlx-community/whisper-small-mlx \
+  --revision 45f3915923c7a79a5a5b5a7d909d39aeb0e5630e \
+  --audio ja "$tts_refs/runs/20260919T143508.441566Z-japanese-cli-free-sampling/seed0-first/speech.wav" \
+  --audio ja "$tts_refs/runs/20260919T143508.441566Z-japanese-cli-free-sampling/seed1-first/speech.wav"
+```

@@ -62,7 +62,7 @@
 | 其他参考语言、无参考文本、多参考条件 | 未验证 | 逐项核对官方支持范围和条件语义 |
 | 自有 NumPy 采样与非流式停止 | 十条 Top-p 1 请求的 1805 步 token、停止和语义切片与官方相同；logits 通过，2 例 3 个概率值超差，整轮仍失败 | GPT 误差传播、其他 seed、独立 RNG、Top-p 小于 1 及 GPU 采样；见 [十例生成](../experiments/2026-09-19-expanded-native-generation.md) |
 | 日文原始目标文本与独立环境 | 四例目标 phones / BERT、生成 token / 停止 / 语义切片相同，波形通过；正常 32 请求通过；日文原报告 WAV 与已试听文件逐字节相同；见 [原文到 PCM](../experiments/2026-09-19-native-japanese-text-speech.md) | 独立 RNG 质量、其余三例人工试听与 Windows 待验；现阶段限单个 cut0 片段和 top_p=1 |
-| 普通日文独立随机生成 | 新参考包、原始三句、NumPy seed 0 / 1 / 0 三个独立进程正常 EOS；重复 seed WAV 字节相同；见 [CLI 验证](../experiments/2026-09-19-japanese-cli-free-sampling.md) | 未做这两条新 WAV 的 ASR / 人工试听，不继承旧随机回放的音质结论 |
+| 普通日文独立随机生成 | 新参考包、原始三句、NumPy seed 0 / 1 / 0 三个独立进程正常 EOS；重复 seed WAV 字节相同；两条新 WAV 的离线 ASR 均识别到三句和开头；见 [CLI 验证](../experiments/2026-09-19-japanese-cli-free-sampling.md) | 新 WAV 未经人工试听；ASR 不判断 wa、音色或自然度，不继承旧随机回放的音质结论 |
 | 日文原始参考准备 | 固定官方 MPS / FP32 重算同一参考，五数组逐字相同；独立 reader 无 Torch 读取通过；见 [准备工具](../experiments/2026-09-19-japanese-reference-preparation.md) | 开发准备依赖 Torch；实际更换参考、多参考、CPU 准备及 Windows 未验，新包连同来源元数据约 2.3 MiB |
 | 准备好条件的自有语音链 | 十例自有 GPT → 语义 → 声学 → PCM 的 token、停止和最终波形通过；原始两例 WAV 与用户确认的四样音逐字节相同 | 既有概率及 MRTE 超差仍保留；原始文本和参考准备、独立 RNG、扩展质量及完整延迟；见 [十例整链](../experiments/2026-09-19-expanded-prepared-speech.md) |
 | 自有完整声学链 | 650 张量解码包严格重载通过；CPU encoder + GPU flow/decoder 的十例波形通过，119/120 阶段通过 | 日文标点 MRTE 单元素超差；全 GPU 两例仍有中文波形超差；见 [扩展声学](../experiments/2026-09-19-expanded-acoustic.md) |
