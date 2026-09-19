@@ -1,15 +1,18 @@
 """Request-boundary checks without inference models or historical fixtures."""
 
 from pathlib import Path
+import gc
 import sys
 from types import SimpleNamespace
 import unittest
+import weakref
 
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from sakuratts.reference_condition import PreparedReference
-from sakuratts.synthesis import prepare_text, synthesize, synthesize_prepared
+from sakuratts.synthesis import (generate_prepared_semantic, prepare_text, synthesize,
+                                 synthesize_acoustic, synthesize_prepared)
 
 
 class Frontend:
@@ -139,6 +142,59 @@ class SynthesisTests(unittest.TestCase):
     def test_default_does_not_change_caller_owned_gpt_state_lifetime(self):
         self.request()
         self.assertFalse(hasattr(self.gpt, "released"))
+
+    def test_staged_request_does_not_retain_gpt_and_preserves_rng_consumption(self):
+        prepared = prepare_text("こんにちは。", "ja", self.frontend)
+        composed_rng = np.random.default_rng(12)
+        composed = synthesize_prepared(prepared, self.reference, gpt=self.gpt, sovits=self.sovits,
+                                       early_stop_num=2700, rng=composed_rng)
+        expected_noise = self.sovits.inputs["noise"].copy()
+        staged_rng = np.random.default_rng(12)
+        pending = generate_prepared_semantic(prepared, self.reference, gpt=self.gpt,
+                                             early_stop_num=2700, rng=staged_rng)
+        model_reference = weakref.ref(self.gpt)
+        self.gpt = None
+        gc.collect()
+        self.assertIsNone(model_reference())
+        actual = synthesize_acoustic(pending, sovits=self.sovits)
+        np.testing.assert_array_equal(composed.generation.sampled_tokens, actual.generation.sampled_tokens)
+        np.testing.assert_array_equal(expected_noise, self.sovits.inputs["noise"])
+        self.assertEqual(composed_rng.bit_generator.state, staged_rng.bit_generator.state)
+        np.testing.assert_array_equal(composed.pcm, actual.pcm)
+
+    def test_acoustic_identity_mismatch_is_rejected_before_rng_or_decode(self):
+        prepared = prepare_text("こんにちは。", "ja", self.frontend)
+        rng = np.random.default_rng(8)
+        pending = generate_prepared_semantic(prepared, self.reference, gpt=self.gpt,
+                                             early_stop_num=2700, rng=rng)
+        state = rng.bit_generator.state
+        other = SoVITS()
+        other.encoder = SimpleNamespace(manifest={
+            "source": {"checkpoint_sha256": "other", "official_commit": "commit"},
+        })
+        with self.assertRaisesRegex(ValueError, "Loaded sovits"):
+            synthesize_acoustic(pending, sovits=other)
+        self.assertEqual(state, rng.bit_generator.state)
+        self.assertFalse(hasattr(other, "inputs"))
+
+    def test_explicit_replay_does_not_consume_shared_rng(self):
+        rng = np.random.default_rng(42)
+        state = rng.bit_generator.state
+        result = self.request(rng=rng, acoustic_noise=np.zeros((1, 192, 22), dtype=np.float32))
+        self.assertEqual(state, rng.bit_generator.state)
+        self.assertEqual(result.generation.semantic.shape[-1], 11)
+
+    def test_semantic_stage_binds_reference_identity_and_target_phones(self):
+        prepared = prepare_text("こんにちは。", "ja", self.frontend)
+        pending = generate_prepared_semantic(prepared, self.reference, gpt=self.gpt,
+                                             early_stop_num=2700)
+        prepared.target["phones"][0] = 99
+        result = synthesize_acoustic(pending, sovits=self.sovits)
+        np.testing.assert_array_equal(self.sovits.inputs["phones"], [[4, 5]])
+        np.testing.assert_array_equal(result.target["phones"], self.sovits.inputs["phones"][0])
+        self.reference.manifest["identity"]["audio_sha256"] = "changed-reference"
+        with self.assertRaisesRegex(ValueError, "Reference identity changed"):
+            synthesize_acoustic(pending, sovits=self.sovits)
 
 
 if __name__ == "__main__":

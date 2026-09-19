@@ -46,7 +46,7 @@ def run(args, report):
     from sakuratts.reference_condition import PreparedReference, sha256_file
     from sakuratts.mlx_gpt import MLXGPT
     from sakuratts.mlx_sovits import MLXSoVITS
-    from sakuratts.synthesis import prepare_text, synthesize_prepared
+    from sakuratts.synthesis import generate_prepared_semantic, prepare_text, synthesize_acoustic
     mx.set_default_device(mx.gpu)
     report["timings"]["module_import_seconds"] = time.perf_counter() - start
 
@@ -121,19 +121,50 @@ def run(args, report):
                       "phones": prepared.target["phones"], "segments": prepared.target["segments"]}
 
     gpt = sovits = None
-    try:
-        report["stage"] = "synthesis_model_load"
+    report["timings"]["synthesis_load_seconds"] = 0.0
+    report["timings"]["synthesis_release_seconds"] = 0.0
+
+    def load_acoustic():
         start = time.perf_counter()
-        gpt = MLXGPT.load(packages["gpt"], capacity=args.capacity, prefill_precision="fp64")
-        sovits = MLXSoVITS.load(packages["sovits"], encoder_device="cpu", encoder_softmax="fp32",
+        model = MLXSoVITS.load(packages["sovits"], encoder_device="cpu", encoder_softmax="fp32",
                                fold_weight_norm=False)
         mx.synchronize()
-        report["timings"]["synthesis_load_seconds"] = time.perf_counter() - start
-        report["stage"] = "synthesis"
-        actual = synthesize_prepared(
-            prepared, reference, gpt=gpt, sovits=sovits, rng=np.random.default_rng(args.seed),
-            release_gpt_state=True, **report["parameters"],
+        elapsed = time.perf_counter() - start
+        report["timings"]["sovits_load_seconds"] = elapsed
+        report["timings"]["synthesis_load_seconds"] += elapsed
+        return model
+
+    try:
+        report["stage"] = "gpt_load"
+        start = time.perf_counter()
+        gpt = MLXGPT.load(packages["gpt"], capacity=args.capacity, prefill_precision="fp64")
+        mx.synchronize()
+        elapsed = time.perf_counter() - start
+        report["timings"]["gpt_load_seconds"] = elapsed
+        report["timings"]["synthesis_load_seconds"] += elapsed
+        if args.model_policy == "simultaneous":
+            report["stage"] = "sovits_load"
+            sovits = load_acoustic()
+        report["stage"] = "semantic"
+        semantic = generate_prepared_semantic(
+            prepared, reference, gpt=gpt, rng=np.random.default_rng(args.seed),
+            release_gpt_state=True, early_stop_num=args.early_stop_num, top_k=args.top_k,
+            temperature=args.temperature, repetition_penalty=args.repetition_penalty,
         )
+        if args.model_policy == "staged":
+            report["stage"] = "gpt_release"
+            start = time.perf_counter()
+            gpt = None
+            gc.collect()
+            mx.clear_cache()
+            mx.synchronize()
+            elapsed = time.perf_counter() - start
+            report["timings"]["gpt_release_before_acoustic_seconds"] = elapsed
+            report["timings"]["synthesis_release_seconds"] += elapsed
+            report["stage"] = "sovits_load"
+            sovits = load_acoustic()
+        report["stage"] = "acoustic"
+        actual = synthesize_acoustic(semantic, sovits=sovits)
         report["timings"].update(actual.timings)
     finally:
         start = time.perf_counter()
@@ -141,7 +172,7 @@ def run(args, report):
         gc.collect()
         mx.clear_cache()
         mx.synchronize()
-        report["timings"]["synthesis_release_seconds"] = time.perf_counter() - start
+        report["timings"]["synthesis_release_seconds"] += time.perf_counter() - start
     report["timings"]["complete_request_seconds"] = time.perf_counter() - request_start
 
     report["stage"] = "output"
@@ -187,6 +218,8 @@ def main():
     parser.add_argument("--early-stop-num", type=int, default=2700,
                         help="Explicit token-count threshold (validated request: 2700; not derived from the model package; -1 disables)")
     parser.add_argument("--capacity", type=int, default=1024, help="GPT KV capacity; overflow is an explicit error")
+    parser.add_argument("--model-policy", choices=("simultaneous", "staged"), default="staged",
+                        help="Unload GPT before loading SoVITS (default), or load both models together")
     args = parser.parse_args()
     if (not args.text.strip() or args.seed < 0 or args.top_k < 1 or args.capacity < 1
             or args.early_stop_num < -1
@@ -211,8 +244,8 @@ def main():
         "validation_scope": "Only Suzakuin Momiji V2Pro has been validated; accepting another package is not a compatibility claim. The early-stop threshold is an explicit request parameter, not derived from package metadata.",
         "precision": {"gpt_prefill": "CPU FP64", "gpt_decode": "GPU FP32", "acoustic_encoder": "CPU FP32",
                       "flow_decoder": "GPU FP32", "fold_weight_norm": False},
-        "runtime_policy": {"release_gpt_state_before_acoustic": True},
-        "lifecycle": "Release Japanese frontend before synthesis model load; discard GPT request KV after semantic generation; release synthesis models after waveform generation. Shared Nani/Sudachi caches may remain until process exit.",
+        "runtime_policy": {"release_gpt_state_before_acoustic": True, "model_policy": args.model_policy},
+        "lifecycle": "Release frontend before synthesis models; discard GPT request KV after semantics. Staged policy unloads GPT before loading SoVITS; simultaneous policy unloads both after waveform generation. Shared Nani/Sudachi caches may remain until process exit.",
         "timing_scope": "Complete request includes frontend/model load, computation and release. Package validation, initial module imports and file output are separate. No diagnostic boundary sampling. Not a whole-process cold-start or streaming first-packet measurement.",
         "quality": {"asr": "not_run", "human_listening": "not_run"}, "timings": {},
     }

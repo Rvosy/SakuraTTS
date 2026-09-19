@@ -22,6 +22,23 @@ class PreparedText:
     seconds: float
 
 
+@dataclass(frozen=True)
+class PreparedSemantic:
+    """One request between semantic and acoustic execution, without models.
+
+    The reference and RNG stay bound to the request, so acoustic execution
+    cannot accidentally substitute another reference or restart sampling.
+    Do not mutate the prepared inputs or advance this RNG between phases.
+    """
+    prepared: PreparedText
+    reference: PreparedReference
+    reference_identity: dict
+    target_phones: np.ndarray
+    generation: SemanticGeneration
+    rng: np.random.Generator
+    timings: dict
+
+
 @dataclass
 class SpeechResult:
     sample_rate: int
@@ -44,18 +61,21 @@ def single_fragment_pcm(waveform, sample_rate, fragment_interval=0.3):
     return (np.concatenate((audio, silence)) * 32768).astype(np.int16)
 
 
-def _validate_models(reference, gpt, sovits):
-    gpt_manifest, acoustic_manifest = gpt.weight_manifest, sovits.encoder.manifest
+def _validate_model(reference, name, manifest):
     identity = reference.manifest["identity"]
     if identity["reference_language"] != "ja":
         raise ValueError("Only a prepared Japanese reference is currently supported")
-    for name, manifest in (("gpt", gpt_manifest), ("sovits", acoustic_manifest)):
-        if (manifest["source"]["checkpoint_sha256"] != identity[name + "_checkpoint_sha256"]
-                or manifest["source"]["official_commit"] != identity["official_commit"]):
-            raise ValueError(f"Loaded {name} model differs from the prepared reference")
-    config = acoustic_manifest["config"]
-    if config["model"]["version"] != "v2Pro" or reference.manifest["model_family"] != "v2Pro":
+    if (manifest["source"]["checkpoint_sha256"] != identity[name + "_checkpoint_sha256"]
+            or manifest["source"]["official_commit"] != identity["official_commit"]):
+        raise ValueError(f"Loaded {name} model differs from the prepared reference")
+    if (reference.manifest["model_family"] != "v2Pro"
+            or name == "sovits" and manifest["config"]["model"]["version"] != "v2Pro"):
         raise ValueError("Only the validated V2Pro architecture is supported")
+
+
+def _validate_models(reference, gpt, sovits):
+    _validate_model(reference, "gpt", gpt.weight_manifest)
+    _validate_model(reference, "sovits", sovits.encoder.manifest)
 
 
 def prepare_text(text, language, frontend):
@@ -78,30 +98,27 @@ def prepare_text(text, language, frontend):
     return PreparedText(text, language, target, time.perf_counter() - start)
 
 
-def synthesize_prepared(prepared: PreparedText, reference: PreparedReference, *, gpt, sovits,
-                        early_stop_num, top_k=15, top_p=1.0, temperature=1.0,
-                        repetition_penalty=1.35, speed=1.0, noise_scale=0.5,
-                        fragment_interval=0.3, rng=None, semantic_random_draw=None, acoustic_noise=None,
-                        release_gpt_state=False):
-    """Generate from this request's independently prepared target features.
+def generate_prepared_semantic(prepared: PreparedText, reference: PreparedReference, *, gpt,
+                               early_stop_num, top_k=15, top_p=1.0, temperature=1.0,
+                               repetition_penalty=1.35, rng=None, semantic_random_draw=None,
+                               release_gpt_state=False):
+    """Generate semantics without loading an acoustic model.
 
-    The caller owns model loading and precision. NumPy's RNG is not seed-
-    equivalent to Torch; controlled replay supplies semantic_random_draw and
-    an acoustic_noise array. No reference encoder is loaded by either entry.
     release_gpt_state discards GPT request KV after semantic generation, also
     on semantic failure, while retaining weights. The supplied GPT must expose
-    release_request_state(); subsequent decode requires a new prefill.
+    release_request_state(); subsequent decode requires a new prefill. After
+    return the caller may unload GPT entirely before loading SoVITS.
     """
     if prepared.language not in ("ja", "all_ja"):
         raise ValueError("Only Japanese ja/all_ja requests are currently supported")
-    if speed != 1.0 or top_p != 1.0 or fragment_interval < 0:
-        raise ValueError("Require speed=1, top_p=1 and a nonnegative fragment interval")
-    _validate_models(reference, gpt, sovits)
-    config = sovits.encoder.manifest["config"]
+    _validate_model(reference, "gpt", gpt.weight_manifest)
     rng = np.random.default_rng() if rng is None else rng
     start = time.perf_counter()
     target = prepared.target
-    target_phones = np.asarray(target["phones"], dtype=np.int64)
+    target_phones = np.array(target["phones"], dtype=np.int64, copy=True)
+    target_phones.setflags(write=False)
+    prepared = PreparedText(prepared.text, prepared.language,
+                            dict(target, phones=target_phones.tolist()), prepared.seconds)
     target_bert = np.asarray(target["bert_features"])
     phones = np.concatenate((reference.reference_phones, target_phones))[None, :]
     bert = np.concatenate((reference.reference_bert, target_bert), axis=1).T[None, :, :]
@@ -117,11 +134,36 @@ def synthesize_prepared(prepared: PreparedText, reference: PreparedReference, *,
         if release_gpt_state:
             gpt.release_request_state()
     semantic_done = time.perf_counter()
-    semantic = generated.semantic
+    return PreparedSemantic(prepared, reference, dict(reference.manifest["identity"]),
+                            target_phones, generated, rng, {
+        "frontend_seconds": prepared.seconds,
+        "condition_seconds": frontend_done - start,
+        "semantic_seconds": semantic_done - frontend_done,
+    })
+
+
+def synthesize_acoustic(request: PreparedSemantic, *, sovits, speed=1.0, noise_scale=0.5,
+                        fragment_interval=0.3, acoustic_noise=None):
+    """Decode this request with its bound reference and remaining RNG state.
+
+    Model loading/unloading and caller time between phases are excluded from
+    the returned compute timings. The caller measures complete request time.
+    """
+    if speed != 1.0 or fragment_interval < 0:
+        raise ValueError("Require speed=1 and a nonnegative fragment interval")
+    reference = request.reference
+    if reference.manifest["identity"] != request.reference_identity:
+        raise ValueError("Reference identity changed between semantic and acoustic execution")
+    _validate_model(reference, "sovits", sovits.encoder.manifest)
+    config = sovits.encoder.manifest["config"]
+    start = time.perf_counter()
+    semantic = request.generation.semantic
+    target = request.prepared.target
+    target_phones = request.target_phones
     noise_shape = (1, config["model"]["inter_channels"],
                    semantic.shape[-1] * config["semantic_upsample_factor"])
     if acoustic_noise is None:
-        acoustic_noise = rng.standard_normal(noise_shape, dtype=np.float32)
+        acoustic_noise = request.rng.standard_normal(noise_shape, dtype=np.float32)
     else:
         acoustic_noise = np.asarray(acoustic_noise)
     if (acoustic_noise.dtype != np.float32 or acoustic_noise.shape != noise_shape
@@ -133,15 +175,37 @@ def synthesize_prepared(prepared: PreparedText, reference: PreparedReference, *,
     waveform = np.asarray(waveform).copy()
     pcm = single_fragment_pcm(waveform, sovits.sample_rate, fragment_interval)
     finished = time.perf_counter()
-    return SpeechResult(sovits.sample_rate, pcm, waveform, target, generated, {
-        "frontend_seconds": prepared.seconds,
-        "condition_seconds": frontend_done - start,
-        "semantic_seconds": semantic_done - frontend_done,
-        "acoustic_seconds": acoustic_done - semantic_done,
+    inference_seconds = (request.timings["condition_seconds"] + request.timings["semantic_seconds"]
+                         + finished - start)
+    return SpeechResult(sovits.sample_rate, pcm, waveform, target, request.generation, {
+        **request.timings,
+        "acoustic_seconds": acoustic_done - start,
         "output_copy_pcm_seconds": finished - acoustic_done,
-        "prepared_inference_seconds": finished - start,
-        "compute_seconds": prepared.seconds + finished - start,
+        "prepared_inference_seconds": inference_seconds,
+        "compute_seconds": request.prepared.seconds + inference_seconds,
     })
+
+
+def synthesize_prepared(prepared: PreparedText, reference: PreparedReference, *, gpt, sovits,
+                        early_stop_num, top_k=15, top_p=1.0, temperature=1.0,
+                        repetition_penalty=1.35, speed=1.0, noise_scale=0.5,
+                        fragment_interval=0.3, rng=None, semantic_random_draw=None, acoustic_noise=None,
+                        release_gpt_state=False):
+    """Compose both phases when the caller owns both loaded models.
+
+    NumPy's RNG is not seed-equivalent to Torch. Explicit draws/noise support
+    controlled replay. No reference encoder is loaded by either phase.
+    """
+    if speed != 1.0 or top_p != 1.0 or fragment_interval < 0:
+        raise ValueError("Require speed=1, top_p=1 and a nonnegative fragment interval")
+    _validate_models(reference, gpt, sovits)
+    request = generate_prepared_semantic(
+        prepared, reference, gpt=gpt, early_stop_num=early_stop_num, top_k=top_k, top_p=top_p,
+        temperature=temperature, repetition_penalty=repetition_penalty, rng=rng,
+        semantic_random_draw=semantic_random_draw, release_gpt_state=release_gpt_state,
+    )
+    return synthesize_acoustic(request, sovits=sovits, speed=speed, noise_scale=noise_scale,
+                               fragment_interval=fragment_interval, acoustic_noise=acoustic_noise)
 
 
 def synthesize(text, language, reference: PreparedReference, *, frontend, gpt, sovits, **parameters):

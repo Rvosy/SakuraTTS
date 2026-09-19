@@ -85,6 +85,7 @@
 | GPT 按阶段释放 | 两条 prepared 请求的 GPT/KV 可在声学生成前释放，输出逐位保持；结合 pair 调度与缓存设置，本轮 allocator peak 为 622.05 MiB | 每次重载增加延迟；不含文本/参考准备、不推广到长句与其他模型；见 [生命周期](../experiments/2026-09-19-gpt-lifecycle.md) 与 [工作区](../experiments/2026-09-19-decoder-workspace.md) |
 | 日文模型复用与请求状态释放 | 四例三策略共 240 成功请求及 12 预期失败通过；公开 API 另有 16 成功 / 4 失败恢复，WAV 字节相同；空闲 active 少 96 MiB，复用比每次重载省约 0.41–0.44 s；见 [对照](../experiments/2026-09-19-native-model-lifecycle.md) | MLX 统一内存数据；本轮生成峰值与 RSS 未下降，长期泄漏、其他模型和 Windows 待验；声学前释放另轮记录 |
 | 日文声学前释放请求状态 | 四例两策略 112 成功请求及 8 预期失败恢复通过；token / 波形 / PCM 相同，请求分配器峰值少约 96 MiB；见 [提前释放](../experiments/2026-09-19-gpt-state-before-acoustic.md) | 耗时本轮增加 2–16 ms；释放块可能仍在 cache，RSS 峰值未降，Windows 与其他模型未验 |
+| 日文按阶段加载权重 | 两策略 112 成功请求及 8 预期失败通过；四例 WAV 相同；长句请求分配器峰值少约 304 MiB，正常耗时多约 51 ms；见 [分阶段对照](../experiments/2026-09-19-native-staged-loading.md) | Mac 统一内存与当前四例，不能替代 Windows 显存或权重常驻策略测量；未新增试听 |
 | 当前单参考声学条件预计算 | ge/ge512 与官方实际条件相同；10 条 WAV 逐字节保持；请求后 allocated 少 148.99 MiB | RSS 峰值未降、通用持久化与多参考；仅显式实验选项 |
 | 模型卸载 | 官方单进程卸载后 MPS allocated / driver 边界已记录 | 多轮泄漏、空闲恢复与角色切换 |
 | 流式、取消与切换 | 未验证 | 输出顺序、资源释放及后续请求正确性 |

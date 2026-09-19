@@ -29,6 +29,10 @@ SAKURA_REFS=../SakuraTTS-References
 
 退出码 `0` 表示正常结束，`2` 表示达到生成次数限制，`1` 表示运行异常。后两类的 JSON 保留停止原因或异常，不算质量验收通过。语言范围为 `ja/all_ja`，一次只处理一个 `cut0` 片段；识别到尚未实现的英文段或拆成多个片段时明确报错。
 
+CLI 默认 `--model-policy staged`：完成语义生成后卸载 GPT，再加载 SoVITS。`--model-policy simultaneous` 保留两模型一起加载的对照方式。两者生成规则相同；[同条件实测](experiments/2026-09-19-native-staged-loading.md)中四例 WAV 保持相同，长句请求内 MLX 分配器峰值约少 304 MiB、耗时增加约 51 ms。这是 Mac 数据，不能推作 NVIDIA 显存结论。
+
+Python 调用方可用 `generate_prepared_semantic` 与 `synthesize_acoustic` 分开安排加载；阶段结果绑定目标音素、参考条件和同一个 RNG，不持有 GPT 模型。调用方负责完成在途工作并卸载模型，阶段计算时间不含中间加载和卸载。既有 `synthesize_prepared` 与权重常驻方式继续可用。
+
 ## 导出日文前端资源
 
 已有固定官方源码、编译好的日文用户词典和完整语言识别模型时，可以直接导出资源，无需先运行历史 Harness：
