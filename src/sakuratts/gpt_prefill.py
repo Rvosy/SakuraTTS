@@ -31,7 +31,7 @@ FP64 cache is retained. This path never reads a package file after load.
     weight_seconds = 0.0
     if weights is None and manifest is None:
         manifest_file = Path(weights_file).parent / "manifest.json"
-        manifest = json.loads(manifest_file.read_text()) if manifest_file.exists() else {"weights": {}}
+        manifest = json.loads(manifest_file.read_text(encoding="utf-8")) if manifest_file.exists() else {"weights": {}}
     context = np.load(weights_file, allow_pickle=False) if weights is None else nullcontext(weights)
     with context as archive:
         if weights is None:

@@ -55,7 +55,7 @@ class MLXGPT:
     def load(cls, package: Path, capacity: int = 1024, prefill_precision: str = "fp32"):
         if prefill_precision not in ("fp32", "fp64"):
             raise ValueError("Prefill precision must be fp32 or fp64")
-        manifest = json.loads((package / "manifest.json").read_text())
+        manifest = json.loads((package / "manifest.json").read_text(encoding="utf-8"))
         if manifest["format"] != "sakuratts-gpt-fp32-v1" or manifest["architecture"] != "gpt-sovits-ar-postnorm-relu":
             raise ValueError("Unsupported model package format or architecture")
         path = package / manifest["weights"]["file"]

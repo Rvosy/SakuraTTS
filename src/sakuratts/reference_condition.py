@@ -75,7 +75,7 @@ class PreparedReference:
         manifest_path = package / "manifest.json"
         if manifest_sha256 is not None and sha256_file(manifest_path) != manifest_sha256:
             raise ValueError("Reference manifest SHA-256 mismatch")
-        manifest = json.loads(manifest_path.read_text())
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         if manifest["format"] != FORMAT or manifest["model_family"] != "v2Pro":
             raise ValueError("Unsupported reference condition format or model family")
         identity = manifest["identity"]

@@ -27,7 +27,7 @@ class SoVITSPackage:
     @contextmanager
     def open(cls, directory):
         directory = Path(directory)
-        manifest = json.loads((directory / "manifest.json").read_text())
+        manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
         if (manifest["format"] != "sakuratts-sovits-decode-fp32-v1"
                 or manifest["config"]["model"]["version"] != "v2Pro"
                 or manifest["dtype"] != "float32"):

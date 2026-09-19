@@ -47,11 +47,11 @@ DISTRIBUTIONS = ("torch", "torchaudio", "transformers", "numpy", "librosa", "sou
 
 
 def read_json(path):
-    return json.loads(Path(path).read_text())
+    return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
 def write_json(path, value):
-    Path(path).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+    Path(path).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def file_identity(path):
@@ -92,7 +92,7 @@ def preflight(options):
         raise ValueError("The fixed official language router requires lid.176.bin")
     sources = validate_official_sources(paths["official_source"])
     user = paths["official_source"] / "GPT_SoVITS/text/ja_userdic"
-    if hashlib.md5((user / "userdict.csv").read_bytes()).hexdigest() != (user / "userdict.md5").read_text():
+    if hashlib.md5((user / "userdict.csv").read_bytes()).hexdigest() != (user / "userdict.md5").read_text(encoding="utf-8"):
         raise ValueError("Official user dictionary needs rebuilding; preparation will not modify the source checkout")
     if sha256_file(paths["user_dictionary"]) != sha256_file(user / "user.dict"):
         raise ValueError("This preparation scope requires the existing fixed official user dictionary")

@@ -25,6 +25,8 @@ SAKURA_REFS=../SakuraTTS-References
 
 脚本输出 `speech.wav` 和 `speech.json`。JSON 保存原文、规范化文本、音素、模型与参考身份、采样参数、实际停止原因和分段耗时。音频有效或正常 EOS 只说明生成完成，内容与音色仍需独立检查。当前 seed 使用 NumPy RNG，不等同于官方 Torch 的同值 seed。
 
+日文运行链和相关开发工具的 JSON 读写统一使用 UTF-8。[默认编码回归](experiments/2026-09-20-utf8-package-portability.md)已在 Mac 模拟 CP932 / CP936 下完成真实入口验证；Windows 依赖与 CUDA 执行仍待实机验证。
+
 默认配置为 CPU FP64 GPT Prefill、GPU FP32 Decode、CPU FP32 声学 encoder 和 GPU FP32 flow / decoder。`top_p=1`、`speed=1`，WeightNorm 折叠候选默认关闭。`--early-stop-num 2700` 是已验证请求的显式参数，并非从所有模型包推导出的默认上限。KV 容量默认 1024，超过容量会报错，不会截掉原文。
 
 退出码 `0` 表示正常结束，`2` 表示达到生成次数限制，`1` 表示运行异常。后两类的 JSON 保留停止原因或异常，不算质量验收通过。语言范围为 `ja/all_ja`，一次只处理一个 `cut0` 片段；识别到尚未实现的英文段或拆成多个片段时明确报错。

@@ -48,7 +48,7 @@ def repack(package, destination):
     package, destination = Path(package).resolve(), Path(destination).resolve()
     parent_manifest_file = package / "manifest.json"
     parent_hash = sha256(parent_manifest_file)
-    original = json.loads(parent_manifest_file.read_text())
+    original = json.loads(parent_manifest_file.read_text(encoding="utf-8"))
     if original["format"] not in FORMATS or original["weights"].get("storage") is not None:
         raise ValueError("Repacking requires an original supported FP32 package")
     source_file = package / original["weights"]["file"]
@@ -149,7 +149,7 @@ def repack(package, destination):
         if sha256(parent_manifest_file) != parent_hash or sha256(source_file) != original["weights"]["sha256"]:
             raise ValueError("Original package changed during repacking")
         # Publish the new manifest only after the complete archive passes.
-        (destination / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
+        (destination / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         result.update(status="completed", output_archive_bytes=output_file.stat().st_size,
                       output_archive_sha256=manifest["weights"]["sha256"], expanded_raw_tensor_bytes=expanded_bytes,
                       stored_raw_tensor_bytes=storage_bytes, raw_tensor_bytes_saved=expanded_bytes - storage_bytes,
@@ -164,7 +164,7 @@ def repack(package, destination):
         result["elapsed_seconds"] = time.perf_counter() - started
         result["process_lifetime_peak_rss_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024)
         result["peak_scope"] = "OS process lifetime RSS; includes Python/NumPy, current tensor candidates and second-pass verification, not GPU memory"
-        (destination / "repack_result.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+        (destination / "repack_result.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return result
 
 
@@ -178,11 +178,11 @@ def self_test(references):
     original = {"format": "sakuratts-gpt-fp32-v1", "dtype": "float32", "source": {"original": "unchanged"},
                 "tensor_sources": {name: {"shape": list(value.shape), "source_dtype": "test_fp32"} for name, value in arrays.items()},
                 "weights": {"file": "weights.npz", "sha256": sha256(source / "weights.npz")}}
-    (source / "manifest.json").write_text(json.dumps(original))
-    (source / "LICENSE").write_text("Synthetic test license\n")
-    (source / "convert.py").write_text("# Original conversion snapshot\n")
+    (source / "manifest.json").write_text(json.dumps(original), encoding="utf-8")
+    (source / "LICENSE").write_text("Synthetic test license\n", encoding="utf-8")
+    (source / "convert.py").write_text("# Original conversion snapshot\n", encoding="utf-8")
     result = repack(source, run / "packed")
-    manifest = json.loads((run / "packed/manifest.json").read_text())
+    manifest = json.loads((run / "packed/manifest.json").read_text(encoding="utf-8"))
     checks = {"source_metadata_unchanged": manifest["source"] == original["source"],
               "tensor_sources_unchanged": manifest["tensor_sources"] == original["tensor_sources"],
               "nonexact_position_encoding_stays_fp32": manifest["weights"]["storage"]["tensors"]["position_encoding"]["storage_dtype"] == "float32",
@@ -216,7 +216,7 @@ def self_test(references):
     summary = {"status": "completed", "run_directory": str(run), "checks": checks,
                "check_count": len(checks), "torch_imported": "torch" in sys.modules,
                "packed_archive_sha256": result["output_archive_sha256"]}
-    (run / "result.json").write_text(json.dumps(summary, indent=2) + "\n")
+    (run / "result.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     return summary
 
 
