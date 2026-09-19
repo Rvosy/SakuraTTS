@@ -4,7 +4,7 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 
 现有 GPT / SoVITS 权重通过转换工具生成推理模型包，再由自己的运行时生成音频。转换与验证可以使用 PyTorch；日常推理运行包以不依赖完整 PyTorch 环境为目标。桌宠现有 CPU TTS 方案继续沿用。
 
-2026-09-19 在 Apple M4 上，使用“朱雀院红叶”V2Pro 完成了官方与 Lite 对照，并保存用户语音问题的消融与复听证据。自有运行时已有 GPT、中文 BERT、声学编码器原型和 GPT / SoVITS 转换器；高精度 GPT 的 10 条固定历史及两条共享噪声的自有历史生成已通过。完整自有语音链路尚未完成，各模块的数值差异、速度和资源代价分别记录，现有结果不代表正式音质或全模型兼容验收。
+2026-09-19 在 Apple M4 上，使用“朱雀院红叶”V2Pro 完成了官方与 Lite 对照，并保存用户语音问题的消融与复听证据。自有运行时已有 GPT、中文 BERT 和完整声学计算原型；高精度 GPT 的 10 条固定历史及两条共享噪声的自有历史生成已通过。完整声学链的十条波形通过数值检查，但仍有一个 MRTE 中间值超差。文本与参考准备尚未接通，现有结果不代表正式音质或全模型兼容验收。
 
 ## 文档
 
@@ -26,9 +26,16 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 | [固定条件声学对照](docs/experiments/2026-09-19-sovits-fixed-conditions.md) | 同语义、音素、音色与显式噪声的 SoVITS 对照 |
 | [自有 MLX GPT](docs/experiments/2026-09-19-mlx-gpt.md) | 独立转换、无 PyTorch 的语义计算与 Metal 数值对照 |
 | [自有历史生成](docs/experiments/2026-09-19-native-gpt-generation.md) | 共享实采噪声下的自行采样、停止与语义切片 |
+| [自有生成接声学](docs/experiments/2026-09-19-native-prepared-speech.md) | 准备好条件后的完整计算链、无插桩请求时间和资源 |
 | [独立中文 BERT](docs/experiments/2026-09-19-mlx-bert.md) | CPU 数值与正常成本、GPU 未解决误差 |
 | [声学解码包](docs/experiments/2026-09-19-sovits-package.md) | 权重转换、参考条件边界与严格重载 |
 | [自有声学编码器](docs/experiments/2026-09-19-mlx-sovits-encoder.md) | 码本、相对注意力、MRTE 和分布参数的独立实现 |
+| [完整声学计算](docs/experiments/2026-09-19-mlx-sovits-complete.md) | reverse flow、声码器、设备选择、正常速度和缓存代价 |
+| [扩展声学回归](docs/experiments/2026-09-19-expanded-acoustic.md) | 十例波形通过与保留的 MRTE 中间值失败 |
+| [无损权重存储](docs/experiments/2026-09-19-lossless-weight-storage.md) | 归档体积、恢复后的逐位一致性及读取代价 |
+| [文本前端依赖](docs/experiments/2026-09-19-text-frontend-dependencies.md) | 中文 G2PW、日文词典与混合语言能力边界 |
+| [独立 tokenizer](docs/experiments/2026-09-19-tokenizer-runtime.md) | 移除 Transformers 后的词元与输入数组对照 |
+| [G2PW 输入迁移](docs/experiments/2026-09-19-g2pw-inputs.md) | 查询截断、字符映射和输入准备的官方对照 |
 | [兼容矩阵](docs/specs/compatibility-matrix.md) | 各模型、语言和功能的实测范围与待验证项 |
 | [Mac 首轮验证](docs/experiments/2026-09-19-macos-reference-smoke.md) | 实际环境、运行命令、样音、耗时、资源记录和已知限制 |
 
