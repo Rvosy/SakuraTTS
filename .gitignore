@@ -1,0 +1,25 @@
+.DS_Store
+Thumbs.db
+
+# Local configuration
+.env
+.env.*
+!.env.example
+
+# Generated files
+__pycache__/
+*.py[cod]
+.venv/
+.venv-*/
+.pytest_cache/
+*.log
+/logs/
+/tmp/
+/build/
+/dist/
+/coverage/
+
+# Local runtime resources
+/data/
+/models/
+/outputs/
