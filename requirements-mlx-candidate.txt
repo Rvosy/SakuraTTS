@@ -1,5 +1,6 @@
-# Experimental GPT-only Apple GPU candidate; not the final TTS distribution.
+# Experimental Apple inference candidate; not the final TTS distribution.
 # Checkpoint conversion uses the separate PyTorch development environment.
 mlx==0.32.2
 mlx-metal==0.32.2
 numpy==2.4.6
+tokenizers==0.21.4
