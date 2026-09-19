@@ -34,8 +34,12 @@
 - `runs/20260919T114420.173465Z-audio-run-comparison/`：捕获插桩前后两份官方 WAV 相同。
 - `runs/20260919T115124.217760Z-native-gpt-generation/`：首次自有历史生成结果。
 - `runs/20260919T115555.145914Z-native-gpt-generation/`：补齐 EOS 条件比较和分歧后跳过统计后的复跑，全部检查通过。
+- `runs/20260919T121654.122637Z-native-gpt-generation/`：将生成循环移入 `src/sakuratts/generation.py` 后复跑，全部检查通过。
+- `runs/20260919T122138.464428Z-native-source-migration-check/`：移植前后的全部 logits、token、history 和 semantic 逐位相同。
 
 各目录保留实际命令、输入哈希、源码快照和每步 logits、完整 token 历史、语义切片。音频比较器通过原始语言、文本和重复序号匹配早期没有 `case_id` 的记录，没有改写旧清单。
+
+源代码入口 `generate_semantic()` 只接收参考前缀和模型输入，不接收目标 token；正常调用使用自身 NumPy RNG。共享噪声与逐步 observer 为诊断选项，普通调用不保留每步 logits。容量不足仍由模型明确报错，不通过提前停止来隐藏未完成的文本。当前入口明确拒绝尚有兼容缺口的 Top-p 小于 1。
 
 ```sh
 REF=/Users/beyondpower/Documents/Projects/SakuraTTS-References

@@ -23,7 +23,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from sakuratts.mlx_gpt import MLXGPT
-from sakuratts.sampling import exclude_initial_eos, finish_nonstream_step, sample
+from sakuratts.generation import generate_semantic
 
 
 def sha256(path):
@@ -52,24 +52,26 @@ def generate(model, trace_path, output, name):
         expected_tokens = reference["sampled_tokens"]
         if prompt.shape[0] != 1 or not prompt.shape[1]:
             raise ValueError("This candidate requires one nonempty reference prefix")
-        history = prompt[0].copy()
-        logits = np.asarray(model.prefill(phones, prompt, bert)).copy()
         tokens, steps, captured = [], [], {}
         first_divergence = None
         stop = None
-        termination = None
-        for index in range(1500):
+
+        class SavedNoiseExhausted(Exception):
+            pass
+
+        def draw(index, shape):
             noise_key = f"sampling_noise.{index}"
             if noise_key not in reference:
-                termination = "saved_official_noise_exhausted"
-                break
+                raise SavedNoiseExhausted
+            noise = reference[noise_key]
+            if noise.shape != shape:
+                raise ValueError("Official and native probability shapes differ")
+            return noise
+
+        def observe(index, logits, actual_token, probabilities, transition):
+            nonlocal first_divergence, stop
+            stop = transition
             captured[f"raw_logits.{index}"] = logits.copy()
-            active_logits = exclude_initial_eos(logits.copy(), index, eos)
-            token, probabilities = sample(
-                active_logits, history[None, :], exponential_noise=reference[noise_key],
-                top_k=top_k, top_p=top_p, temperature=temperature, repetition_penalty=penalty,
-            )
-            actual_token = int(token[0, 0])
             # This comparison uses the context before this step's sampled token.
             aligned = first_divergence is None
             step = {"index": index, "own_token": actual_token,
@@ -85,16 +87,21 @@ def generate(model, trace_path, output, name):
                 first_divergence = index
             tokens.append(actual_token)
             steps.append(step)
-            stop = finish_nonstream_step(history, actual_token, active_logits[0], eos=eos,
-                                        step_index=index, prefix_length=prompt.shape[1], early_stop_num=early_stop)
-            history = stop.history
-            if stop.stopped:
-                termination = "native_stop"
-                break
-            # Feed back the native sampled token, never the recorded token.
-            logits = np.asarray(model.decode(actual_token)).copy()
+
+        try:
+            generated = generate_semantic(
+                model, phones, prompt, bert, eos=eos, top_k=top_k, top_p=top_p,
+                temperature=temperature, repetition_penalty=penalty, early_stop_num=early_stop,
+                random_draw=draw, observer=observe,
+            )
+            if not np.array_equal(generated.sampled_tokens, tokens):
+                raise AssertionError("Observer token sequence differs from the returned generation")
+            termination = "native_stop"
+        except SavedNoiseExhausted:
+            termination = "saved_official_noise_exhausted"
         if stop is None:
             raise ValueError("Official source did not contain even one usable sampling draw")
+        history = stop.history
         semantic = stop.official_suffix()[None, None, :]
         expected_history = reference[event["result"][0]["array"]][0]
         expected_semantic = reference[acoustics[0]["args"][0]["array"]]
@@ -138,7 +145,8 @@ def main():
     output.mkdir(parents=True, exist_ok=False)
     root = Path(__file__).resolve().parents[1]
     for relative in ("harness/native_gpt_generation.py", "src/sakuratts/mlx_gpt.py",
-                     "src/sakuratts/gpt_prefill.py", "src/sakuratts/sampling.py"):
+                     "src/sakuratts/gpt_prefill.py", "src/sakuratts/sampling.py",
+                     "src/sakuratts/generation.py"):
         target = output / "source" / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(root / relative, target)
