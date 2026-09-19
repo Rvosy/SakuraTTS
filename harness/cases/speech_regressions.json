@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "description": "固定输入与用户报告。每次运行的自动指标、ASR、试听和中间结果另存到对应运行目录；本文件不把生成成功当作内容通过。",
+  "cases": [
+    {
+      "id": "ja-reported-intro",
+      "language": "ja",
+      "text": "こんにちは。今日はいい天気ですね。よろしくお願いします。",
+      "coverage": ["japanese", "multiple_sentences", "opening", "particle_wa"],
+      "status": "user_reported_failure",
+      "user_reports": [
+        {
+          "id": "ja-missing-opening",
+          "status": "user_reported_failure",
+          "source": "用户试听反馈，2026-09-19",
+          "backend": "lite",
+          "expected": "完整读出开头的「こんにちは。」。",
+          "observed": "用户听到的音频缺少开头的「こんにちは。」。"
+        },
+        {
+          "id": "ja-particle-ha",
+          "status": "user_reported_failure",
+          "source": "用户试听反馈，2026-09-19",
+          "backend": "lite",
+          "expected": "「今日はいい天気ですね。」中的助词「は」读作 wa。",
+          "observed": "用户听到该助词读成 ha。"
+        }
+      ],
+      "checks": {
+        "automatic": "pending_aligned_official_comparison",
+        "asr": "not_run",
+        "listening": "user_reported_failure_pending_official_comparison_and_relistening"
+      }
+    },
+    {
+      "id": "zh-reported-greeting",
+      "language": "zh",
+      "text": "你好，欢迎使用樱花语音。现在正在测试苹果电脑上的语音合成。",
+      "coverage": ["chinese", "multiple_sentences", "opening", "bert_alignment"],
+      "status": "user_reported_failure",
+      "user_reports": [
+        {
+          "id": "zh-greeting-hengheng",
+          "status": "user_reported_failure",
+          "source": "用户试听反馈，2026-09-19",
+          "backend": "lite",
+          "expected": "完整、清楚地读出开头的「你好」。",
+          "observed": "用户把开头的「你好」听成了「哼哼」。"
+        }
+      ],
+      "checks": {
+        "automatic": "pending_aligned_official_comparison",
+        "asr": "not_run",
+        "listening": "user_reported_failure_pending_official_comparison_and_relistening"
+      }
+    },
+    {
+      "id": "ja-short",
+      "language": "ja",
+      "text": "こんにちは。",
+      "coverage": ["japanese", "short", "opening"],
+      "status": "exploratory",
+      "user_reports": [],
+      "checks": {"automatic": "not_run", "asr": "not_run", "listening": "not_run"}
+    },
+    {
+      "id": "zh-short",
+      "language": "zh",
+      "text": "你好。",
+      "coverage": ["chinese", "short", "opening"],
+      "status": "exploratory",
+      "user_reports": [],
+      "checks": {"automatic": "not_run", "asr": "not_run", "listening": "not_run"}
+    },
+    {
+      "id": "ja-long",
+      "language": "ja",
+      "text": "今日は駅前の図書館へ行って、前から読みたかった本を借りてから、川沿いの道をゆっくり歩いて帰るつもりですが、午後は雨が降るかもしれないので、出かける前に天気予報を確認して、かばんに折り畳み傘を入れておこうと思います。",
+      "coverage": ["japanese", "long", "particle_wa", "commas", "stop_condition"],
+      "status": "exploratory",
+      "user_reports": [],
+      "checks": {"automatic": "not_run", "asr": "not_run", "listening": "not_run"}
+    },
+    {
+      "id": "zh-long",
+      "language": "zh",
+      "text": "今天下午，我打算先把桌上的资料整理好，再去楼下的书店取回上周订的书，如果回来的时候没有下雨，就沿着河边慢慢走一会儿，顺便看看那家刚开门的面包店还有没有热面包，最后赶在天黑之前回家，把明天需要用的东西放进背包。",
+      "coverage": ["chinese", "long", "commas", "bert_alignment", "stop_condition"],
+      "status": "exploratory",
+      "user_reports": [],
+      "checks": {"automatic": "not_run", "asr": "not_run", "listening": "not_run"}
+    },
+    {
+      "id": "ja-punctuation",
+      "language": "ja",
+      "text": "「本当ですか？」と聞くと、彼女は少し考えて……「はい、大丈夫です！」と答えました。では、また明日。",
+      "coverage": ["japanese", "multiple_sentences", "quotes", "ellipsis", "question", "exclamation"],
+      "status": "exploratory",
+      "user_reports": [],
+      "checks": {"automatic": "not_run", "asr": "not_run", "listening": "not_run"}
+    },
+    {
+      "id": "zh-punctuation",
+      "language": "zh",
+      "text": "“现在出发吗？”她停了一下……又说：“好，走吧！”请带上钥匙、手机和雨伞。",
+      "coverage": ["chinese", "multiple_sentences", "quotes", "ellipsis", "question", "exclamation"],
+      "status": "exploratory",
+      "user_reports": [],
+      "checks": {"automatic": "not_run", "asr": "not_run", "listening": "not_run"}
+    },
+    {
+      "id": "mixed-zh-en",
+      "language": "auto",
+      "text": "你好，欢迎使用 Sakura TTS。Please check the audio. 现在继续播放中文。",
+      "coverage": ["chinese", "english", "mixed", "multiple_sentences", "language_switch"],
+      "status": "exploratory",
+      "user_reports": [],
+      "checks": {"automatic": "not_run", "asr": "not_run", "listening": "not_run"}
+    },
+    {
+      "id": "mixed-ja-en",
+      "language": "auto",
+      "text": "こんにちは。Welcome to Sakura TTS. 今日は音声を確認します。",
+      "coverage": ["japanese", "english", "mixed", "multiple_sentences", "language_switch"],
+      "status": "exploratory",
+      "user_reports": [],
+      "checks": {"automatic": "not_run", "asr": "not_run", "listening": "not_run"}
+    }
+  ]
+}

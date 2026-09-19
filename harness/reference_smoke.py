@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import gc
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -10,6 +11,7 @@ import os
 from pathlib import Path
 import platform
 import random
+import shutil
 import subprocess
 import sys
 import time
@@ -26,23 +28,46 @@ def main() -> None:
     parser.add_argument("--backend", choices=("lite", "official"), required=True)
     parser.add_argument("--device", choices=("cpu", "mps", "cuda"), required=True)
     parser.add_argument("--languages", nargs="+", choices=("ja", "zh"), default=["ja", "zh"])
+    parser.add_argument("--case-ids", nargs="+", help="IDs from harness/cases/speech_regressions.json; overrides --languages")
     parser.add_argument("--repeat", type=int, default=2)
     parser.add_argument("--seed", type=int, default=1234)
+    parser.add_argument("--diagnostic", action="store_true", help="Save intermediate values; timings include diagnostic overhead")
+    parser.add_argument("--prepare-reference", action="store_true", help="Official V2Pro: prepare once, save conditions and release auxiliary models")
     args = parser.parse_args()
     if args.repeat < 1:
         parser.error("--repeat must be positive")
+    if args.prepare_reference and args.backend != "official":
+        parser.error("--prepare-reference requires --backend official")
 
     root = args.references.resolve()
+    cases_path = Path(__file__).resolve().parent / "cases" / "speech_regressions.json"
+    cases = json.loads(cases_path.read_text(encoding="utf-8"))["cases"]
+    if args.case_ids:
+        by_id = {case["id"]: case for case in cases}
+        if any(case_id not in by_id for case_id in args.case_ids):
+            parser.error("Unknown case ID")
+        selected_cases = [by_id[case_id] for case_id in args.case_ids]
+    else:
+        selected_cases = [next(case for case in cases if case["language"] == lang and
+                               case["status"] == "user_reported_failure") for lang in args.languages]
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     output = root / "runs" / f"{run_id}-{args.backend}-{args.device}"
     output.mkdir(parents=True)
+    harness_dir = Path(__file__).resolve().parent
+    evidence_code = output / "harness-source"
+    evidence_code.mkdir()
+    shutil.copy2(cases_path, evidence_code / cases_path.name)
+    for path in harness_dir.glob("*.py"):
+        shutil.copy2(path, evidence_code / path.name)
     os.environ.setdefault("HF_HOME", str(root / ".cache" / "huggingface"))
     os.environ.setdefault("NLTK_DATA", str(root / "models" / "nltk_data"))
     os.environ.setdefault("language", "en_US")
     os.environ.setdefault("version", "v2")
     report = {
         "status": "running",
-        "purpose": "functional_smoke_not_performance_acceptance",
+        "purpose": "instrumented_diagnosis" if args.diagnostic else "functional_smoke_not_performance_acceptance",
+        "command": [sys.executable, *sys.argv],
+        "prepared_reference_experiment": args.prepare_reference,
         "backend": args.backend,
         "device": args.device,
         "dtype": "float32",
@@ -85,6 +110,8 @@ def main() -> None:
                 import resource
 
                 values["process_peak_rss_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+                values["process_rss_bytes_at_boundary"] = int(subprocess.check_output(
+                    ["ps", "-o", "rss=", "-p", str(os.getpid())], text=True).strip()) * 1024
             if args.device == "mps":
                 values["mps_allocated_bytes_at_boundary"] = torch.mps.current_allocated_memory()
                 values["mps_driver_bytes_at_boundary"] = torch.mps.driver_allocated_memory()
@@ -110,6 +137,8 @@ def main() -> None:
             if not path.is_file():
                 raise FileNotFoundError(path)
         report["reference"] = reference
+        report["input_sha256"] = {str(p): hashlib.sha256(p.read_bytes()).hexdigest()
+                                  for p in (gpt, sovits, Path(reference["path"]))}
         report["sampling"] = {"top_k": 15, "top_p": 1.0, "temperature": 1.0, "repetition_penalty": 1.35, "speed": 1.0}
         shared = root / "models" / "shared"
         os.environ.setdefault("bert_path", str(shared / "chinese-roberta-wwm-ext-large"))
@@ -170,20 +199,36 @@ def main() -> None:
         synchronize()
         report["load_seconds_including_missing_resource_downloads"] = time.perf_counter() - start
         report["memory_after_load"] = memory_snapshot()
+        if args.prepare_reference:
+            from prepared_reference import prepare_reference
+
+            started = time.perf_counter()
+            report["reference_preparation"] = prepare_reference(
+                engine, reference, output,
+                {"inputs": report["input_sha256"], "source_commit": report["source_commit"],
+                 "source_status": report["source_status"], "precision": report["dtype"]}, synchronize,
+            )
+            report["reference_preparation"]["seconds_including_artifact_save"] = time.perf_counter() - started
+            report["memory_after_reference_release"] = memory_snapshot()
+        trace = None
+        if args.diagnostic:
+            from trace_reference import ReferenceTrace
+
+            trace = ReferenceTrace(engine, args.backend, synchronize)
         write_json(output / "result.json", report)
-        texts = {
-            "ja": "こんにちは。今日はいい天気ですね。よろしくお願いします。",
-            "zh": "你好，欢迎使用樱花语音。现在正在测试苹果电脑上的语音合成。",
-        }
-        for language in args.languages:
+        for case in selected_cases:
+            language = case["language"]
+            stem = case["id"] if args.case_ids else language
             for index in range(args.repeat):
                 print(f"PHASE=infer language={language} repeat={index + 1}", flush=True)
                 random.seed(args.seed)
                 np.random.seed(args.seed)
                 torch.manual_seed(args.seed)
+                if trace:
+                    trace.reset()
                 synchronize()
                 started = time.perf_counter()
-                sample_rate, data = generate(texts[language], language)
+                sample_rate, data = generate(case["text"], language)
                 synchronize()
                 elapsed = time.perf_counter() - started
                 data = np.asarray(data)
@@ -192,11 +237,11 @@ def main() -> None:
                     normalized /= max(abs(np.iinfo(data.dtype).min), np.iinfo(data.dtype).max)
                 if data.size == 0 or not np.isfinite(normalized).all() or not np.any(normalized):
                     raise RuntimeError("Generated empty, non-finite or silent audio")
-                audio_file = output / f"{language}-{index + 1}.wav"
+                audio_file = output / f"{stem}-{index + 1}.wav"
                 sf.write(audio_file, data, sample_rate, subtype="PCM_16")
                 duration = len(data) / sample_rate
                 result = {
-                    "language": language, "text": texts[language], "repeat": index + 1,
+                    "case_id": case["id"], "language": language, "text": case["text"], "repeat": index + 1,
                     "seconds": elapsed, "audio_seconds": duration, "rtf": elapsed / duration,
                     "sample_rate": sample_rate, "sample_count": len(data),
                     "rms": float(np.sqrt(np.mean(normalized ** 2))),
@@ -204,9 +249,24 @@ def main() -> None:
                     "sha256": hashlib.sha256(audio_file.read_bytes()).hexdigest(),
                     "memory_after_infer": memory_snapshot(),
                 }
+                if trace:
+                    result["trace"] = trace.save(output, f"{stem}-{index + 1}")
                 report["runs"].append(result)
                 write_json(output / "result.json", report)
                 print(json.dumps(result, ensure_ascii=False), flush=True)
+        if trace:
+            trace.close()
+            trace = None
+        synchronize()
+        report["memory_before_unload"] = memory_snapshot()
+        engine = None
+        gc.collect()
+        if args.device == "mps":
+            torch.mps.empty_cache()
+        elif args.device == "cuda":
+            torch.cuda.empty_cache()
+        synchronize()
+        report["memory_after_unload"] = memory_snapshot()
         report["status"] = "completed"
         report["validation"] = "finite_nonzero_pcm; listening_and_content_quality_not_yet_reviewed"
         write_json(output / "result.json", report)
