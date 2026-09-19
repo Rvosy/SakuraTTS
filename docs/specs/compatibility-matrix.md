@@ -55,7 +55,7 @@
 | 标点、引号、问句和省略号 | 官方生成并保存 trace；两条 MLX 固定历史通过预设容差 | 内容、规范化、分句和停顿的质量验收 |
 | 中英、日英混合 | 首次缺英文资源失败已保留；补齐后官方两条已生成并保存 trace | 高精度 Prefill 候选固定历史通过；语言切换、逐段内容与音色待验 |
 | 纯英文及其他官方语言 | 未建立样例，未验证 | 先核对模型家族和官方语言前端 |
-| 当前日文参考条件 | 两端已用于生成；官方准备后释放辅助模型和复用 embedding 保持固定样例 WAV | 通用持久化缓存、其他参考与音色验证 |
+| 当前日文参考条件 | 两端已用于生成；官方准备后释放辅助模型和复用 embedding 保持固定样例 WAV | 单参考持久包已独立重载；其他参考与音色验证 |
 | 中文 BERT 第 22 层 | CPU/MPS 裁剪后特征完全一致；独立 MLX CPU 的 5 段、120 项对照通过，正常计时和卸载已测 | MLX GPU 仍有 1 个中间元素超差；独立路径接入音频、其他语料与分发待验 |
 | 其他参考语言、无参考文本、多参考条件 | 未验证 | 逐项核对官方支持范围和条件语义 |
 | 自有 NumPy 采样与非流式停止 | 十条 Top-p 1 请求的 1805 步 token、停止和语义切片与官方相同；logits 通过，2 例 3 个概率值超差，整轮仍失败 | GPT 误差传播、其他 seed、独立 RNG、Top-p 小于 1 及 GPU 采样；见 [十例生成](../experiments/2026-09-19-expanded-native-generation.md) |
@@ -68,7 +68,11 @@
 | G2PW 输入准备 | 自有纯 NumPy 实现的 18 映射、366 组输入与官方一致；保留官方请求内分词与实例静态表复用 | 同源 ONNX 概率已另行对照；正在连接多音字前后处理，>510 异质长文本的官方去重边界保留；见 [G2PW 输入实验](../experiments/2026-09-19-g2pw-inputs.md) |
 | G2PW 文本准备 | 25 组与固定官方函数对照一致，含 23 组完整输出和 2 组相同域外异常；保留 OpenCC / PyPinyin / 上下文 | 完整拼音与音素链尚未验收；见 [文本准备](../experiments/2026-09-19-g2pw-text.md) |
 | G2PW CPU 模型推理 | 自有 ORT 接口 8 组输入、16 组概率及标签/置信度与官方逐位一致，无 Torch/Transformers | 文本接口仍在组合；>510 异质词元的官方去重边界保留；三轮关闭后 RSS 约 380 MiB 趋稳，长期情况未验；见 [ONNX](../experiments/2026-09-19-g2pw-onnx.md) 与 [生命周期](../experiments/2026-09-19-g2pw-lifecycle.md) |
-| G2PW 完整拼音接口 | 规范化中文片段经 Text → Inputs → Session → 拼音填回，27 组输出 / 异常一致，353 数组逐位相同，无 Torch/Transformers；原边界保留 | 中文分词、修正词典、变调、儿化和最终音素尚未接入；见 [拼音闭环](../experiments/2026-09-19-g2pw-pinyin.md) |
+| G2PW 完整拼音接口 | 规范化中文片段经 Text → Inputs → Session → 拼音填回，27 组输出 / 异常一致，353 数组逐位相同，无 Torch/Transformers；原边界保留 | 中文段规则已另行接通，完整请求待验；见 [拼音闭环](../experiments/2026-09-19-g2pw-pinyin.md) |
+| 中文 V2 语言段 | 10 组真实 G2PW 后规范化、音素、ID、word2ph 全同；27 组规范化和 45,050 词典检查一致；五组 MLX CPU BERT 通过原阈值 | 上层语言路由与原始文本到音频仍待接入；见 [中文前端](../experiments/2026-09-19-chinese-phones.md) |
+| 日文语言段 | 26 组完整 NJD、labels、韵律和音素 ID 与官方一致，实际覆盖 Nani、Sudachi 与用户词典，无 Torch | 上层路由、全链和新试听待验；见 [日文前端](../experiments/2026-09-19-japanese-g2p.md) |
+| G2PW 映射 ORT 包 | 实际接口 27 组 / 353 数组逐位一致；同条件 OS 最高 RSS 约 1357→851 MiB | Mac CPU 数据；Windows 需重建包，完整 TTS 资源未测；见 [映射实验](../experiments/2026-09-19-g2pw-mapped-ort.md) |
+| 单参考持久包 | 五数组新进程逐字节相同，12 项身份 / 损坏拒绝检查通过；完整包约 203 KiB | 不含无 Torch 的新参考准备，历史缺失身份已明列；见 [参考包](../experiments/2026-09-19-reference-condition-package.md) |
 | 权重无损存储 | 三归档少 801.37 MiB；加载恢复的 1,303 张量逐位相同；复用已加载权重收回 Prefill 重复读取代价 | 加载成本和最终分发仍需衡量；不代表运行权重减少，见 [存储实验](../experiments/2026-09-19-lossless-weight-storage.md) |
 | GPT 按阶段释放 | 两条 prepared 请求的 GPT/KV 可在声学生成前释放，输出逐位保持；结合 pair 调度与缓存设置，本轮 allocator peak 为 622.05 MiB | 每次重载增加延迟；不含文本/参考准备、不推广到长句与其他模型；见 [生命周期](../experiments/2026-09-19-gpt-lifecycle.md) 与 [工作区](../experiments/2026-09-19-decoder-workspace.md) |
 | 当前单参考声学条件预计算 | ge/ge512 与官方实际条件相同；10 条 WAV 逐字节保持；请求后 allocated 少 148.99 MiB | RSS 峰值未降、通用持久化与多参考；仅显式实验选项 |
