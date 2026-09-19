@@ -11,9 +11,10 @@
 - 已在独立目录固定三个上游仓库、两个 Python 环境和模型来源，新增参考 Harness。
 - 使用用户选定的“朱雀院红叶”V2Pro，在 Apple M4 的 MPS / FP32 路径完成官方与 Lite 的中、日文合成，保存 8 个 WAV 及原始结果。详见 [Mac 首轮验证](experiments/2026-09-19-macos-reference-smoke.md)。
 - 已建立 10 条回归语料，追踪官方与 Lite 前端、参考、采样与切片差异；相同官方历史下，日文 121 步、中文 147 步 GPT logits 完全一致。参考辅助模型释放实验保持既有 WAV 哈希。见 [调用链与资源实验](experiments/2026-09-19-parity-and-lifecycle.md)。
-- Mac 内容质量仍待验收，Windows 验证暂缓。尚未固定产品目标 NVIDIA GPU、首发系统、性能预算和质量门槛。
-- 参考资源释放与 BERT 无依赖层裁剪已通过固定两条样例的逐文件波形回归，请求结束 allocated 边界少约 698 MiB；独立内存采样仍显示较高瞬态 driver 占用。见 [资源实验](experiments/2026-09-19-bert-and-reference-memory.md)。
+- 用户已确认指定官方与 official_text 候选的开头和助词正常；全文、音色及其他样例仍待验收。Windows 验证暂缓。尚未固定产品目标 NVIDIA GPU、首发系统、性能预算和质量门槛。
+- 参考资源释放与 BERT 无依赖层裁剪已通过 10 条中日文及混合输入的逐文件波形回归，请求结束 allocated 边界少约 698 MiB；独立内存采样仍显示较高瞬态 driver 占用。见 [资源实验](experiments/2026-09-19-bert-and-reference-memory.md)。
 - 已实现 GPT FP32 模型包转换和独立 MLX / Metal Prefill、Decode，固定两条历史的全部 logits 在预设容差内，运行环境未安装 PyTorch。见 [MLX 实验](experiments/2026-09-19-mlx-gpt.md)。
+- 扩展固定历史暴露日文长句第 329 步 MLX 数值超差，未放宽容差；GPT 正常计时与 KV 容量成本已单独记录。见 [GPT 实验](experiments/2026-09-19-gpt-capacity.md)。
 - 自有轻量运行时仍在研发，没有完整语音链路、正式音质、流式或干净部署验收结果。
 
 ## M0：固定范围并建立基线
@@ -95,7 +96,7 @@
 |---|---|---|
 | 首发 OS、GPU、最低显存和驱动 | Mac M4 功能验证已完成；产品 NVIDIA CUDA 设备未定，Windows 暂缓 | M0 |
 | 首个 GPT / SoVITS 权重及参考资源 | 已选“朱雀院红叶”V2Pro 与“开心”日文参考，哈希已保存 | M0 |
-| 语言与代表性文本 | 已验证中日文各一条短句；正式测试集及混合文本仍待补齐 | M0 |
+| 语言与代表性文本 | 已有 10 条中日文、长短句、标点及混合输入；扩展内容质量待验证 | M0 |
 | 完整安装体积、显存、延迟预算与质量门槛 | 尚未确定；不采用社区宣传值代填 | M0 |
 | 文本前端实现与分发依赖 | 需核对原生可用性、体积和许可 | M1 |
 | 生产计算后端、包格式及支持矩阵 | 依据真实模型实验选择 | M2 |

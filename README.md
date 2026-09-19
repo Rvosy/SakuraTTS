@@ -17,6 +17,9 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 | [实施路线](docs/roadmap.md) | 分阶段交付物、完成条件、首轮实验和待确定事项 |
 | [调用链与资源实验](docs/experiments/2026-09-19-parity-and-lifecycle.md) | 用户语音问题、固定历史数值对照、参考条件释放与证据 |
 | [参考资源与 BERT 裁剪](docs/experiments/2026-09-19-bert-and-reference-memory.md) | 输出保持、常驻边界、独立内存采样与测量限制 |
+| [文本条件与试听](docs/experiments/2026-09-19-asr-review.md) | 消融、离线 ASR、用户对指定样音的复听结果 |
+| [扩展回归](docs/experiments/2026-09-19-expanded-regression.md) | 10 条输入的波形保持和英文资源修复 |
+| [GPT 缓存与速度](docs/experiments/2026-09-19-gpt-capacity.md) | 正常固定历史测量、容量成本和长句数值失败 |
 | [自有 MLX GPT](docs/experiments/2026-09-19-mlx-gpt.md) | 独立转换、无 PyTorch 的语义计算与 Metal 数值对照 |
 | [兼容矩阵](docs/specs/compatibility-matrix.md) | 各模型、语言和功能的实测范围与待验证项 |
 | [Mac 首轮验证](docs/experiments/2026-09-19-macos-reference-smoke.md) | 实际环境、运行命令、样音、耗时、资源记录和已知限制 |

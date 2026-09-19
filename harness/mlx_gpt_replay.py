@@ -233,7 +233,9 @@ def main():
         result["torch_imported"] = "torch" in sys.modules
         if result["torch_imported"]:
             raise RuntimeError("The MLX runtime process unexpectedly imported PyTorch")
-        result["status"] = "completed"
+        result["status"] = "completed" if all(
+            item["within_fp32_tolerance"] for item in result["comparisons"].values()
+        ) else "numerical_mismatch"
     except Exception:
         result["status"] = "error"
         result["traceback"] = traceback.format_exc()
