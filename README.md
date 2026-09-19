@@ -4,7 +4,7 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 
 现有 GPT / SoVITS 权重通过转换工具生成推理模型包，再由自己的运行时生成音频。转换与验证可以使用 PyTorch；日常推理运行包以不依赖完整 PyTorch 环境为目标。桌宠现有 CPU TTS 方案继续沿用。
 
-仓库已有设计文档和上游参考验证脚本。2026-09-19 在 Apple M4 上，使用“朱雀院红叶”V2Pro 模型完成了官方与 GSV-TTS-Lite 的 MPS / FP32 中、日文合成。自有原生推理引擎和模型转换器尚未实现；这次验证也不代表已达到性能或音质验收标准。
+仓库已有设计文档和上游参考验证脚本。2026-09-19 在 Apple M4 上，使用“朱雀院红叶”V2Pro 模型完成了官方与 GSV-TTS-Lite 的 MPS / FP32 中、日文合成。随后已实现自有 GPT 转换器与 MLX / Metal 固定历史计算原型，并验证参考资源释放和 BERT 裁剪。完整自有语音链路尚未完成，现有结果不代表性能或音质正式验收。
 
 ## 文档
 
@@ -17,6 +17,7 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 | [实施路线](docs/roadmap.md) | 分阶段交付物、完成条件、首轮实验和待确定事项 |
 | [调用链与资源实验](docs/experiments/2026-09-19-parity-and-lifecycle.md) | 用户语音问题、固定历史数值对照、参考条件释放与证据 |
 | [参考资源与 BERT 裁剪](docs/experiments/2026-09-19-bert-and-reference-memory.md) | 输出保持、常驻边界、独立内存采样与测量限制 |
+| [自有 MLX GPT](docs/experiments/2026-09-19-mlx-gpt.md) | 独立转换、无 PyTorch 的语义计算与 Metal 数值对照 |
 | [兼容矩阵](docs/specs/compatibility-matrix.md) | 各模型、语言和功能的实测范围与待验证项 |
 | [Mac 首轮验证](docs/experiments/2026-09-19-macos-reference-smoke.md) | 实际环境、运行命令、样音、耗时、资源记录和已知限制 |
 

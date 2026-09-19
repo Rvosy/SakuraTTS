@@ -1,6 +1,6 @@
 # 实施路线
 
-状态：已完成 Mac 上游功能验证，M0 仍在进行，自有原生运行时尚未实现。更新日期：2026-09-19。
+状态：已完成 Mac 上游功能验证，M0 仍在进行，已有自有 GPT 转换与 Apple GPU 单模块原型，完整语音运行时尚未完成。更新日期：2026-09-19。
 
 目标与行为约束见 [推理契约](specs/inference-contract.md)，架构选择见 [ADR 0001](adr/0001-native-gpu-runtime.md)，测量规则见 [基准协议](specs/benchmark-protocol.md)。各阶段按证据推进，不按预估加速倍数或日历日期宣布完成。
 
@@ -13,6 +13,7 @@
 - 已建立 10 条回归语料，追踪官方与 Lite 前端、参考、采样与切片差异；相同官方历史下，日文 121 步、中文 147 步 GPT logits 完全一致。参考辅助模型释放实验保持既有 WAV 哈希。见 [调用链与资源实验](experiments/2026-09-19-parity-and-lifecycle.md)。
 - Mac 内容质量仍待验收，Windows 验证暂缓。尚未固定产品目标 NVIDIA GPU、首发系统、性能预算和质量门槛。
 - 参考资源释放与 BERT 无依赖层裁剪已通过固定两条样例的逐文件波形回归，请求结束 allocated 边界少约 698 MiB；独立内存采样仍显示较高瞬态 driver 占用。见 [资源实验](experiments/2026-09-19-bert-and-reference-memory.md)。
+- 已实现 GPT FP32 模型包转换和独立 MLX / Metal Prefill、Decode，固定两条历史的全部 logits 在预设容差内，运行环境未安装 PyTorch。见 [MLX 实验](experiments/2026-09-19-mlx-gpt.md)。
 - 自有轻量运行时仍在研发，没有完整语音链路、正式音质、流式或干净部署验收结果。
 
 ## M0：固定范围并建立基线
