@@ -29,6 +29,8 @@ PACKAGE_FORMATS = {
     "sovits": "sakuratts-sovits-decode-fp32-v1",
 }
 IGNORED = {"__pycache__", ".DS_Store"}
+INSTALL_TOOL_ENTRIES = {"pip", "setuptools", "pkg_resources", "_distutils_hack",
+                        "distutils-precedence.pth"}
 PROBE = """
 import json, sys, sysconfig
 print(json.dumps({
@@ -81,11 +83,22 @@ def check_distributions(site_packages):
     return installed
 
 
-def copy_tree(source, target, origins, *, output):
+def install_tool_entries(site_packages):
+    """Only omit named installers; keep runtime distribution metadata intact."""
+    entries = {name for name in INSTALL_TOOL_ENTRIES if (site_packages / name).exists()}
+    for pattern in ("pip-*.dist-info", "setuptools-*.dist-info"):
+        entries.update(path.name for path in site_packages.glob(pattern))
+    return entries
+
+
+def copy_tree(source, target, origins, *, output, exclude=()):
     """Preserve in-tree links; reject links that would retain an old dependency."""
     source_root, target_root = source, target
+    excluded = set(exclude)
 
     def copy_entry(old, new):
+        if old.relative_to(source_root).as_posix() in excluded:
+            return
         if old.name in IGNORED or old.suffix in {".pyc", ".pyo"}:
             return
         relative = new.relative_to(output).as_posix()
@@ -159,6 +172,12 @@ def export(args):
         raise ValueError("Base interpreter executable is outside its base prefix")
     site_packages = venv / "lib/python3.11/site-packages"
     installed = check_distributions(site_packages)
+    site_exclusions = set() if args.include_install_tools else install_tool_entries(site_packages)
+    base_exclusions = set()
+    if not args.include_install_tools:
+        base_exclusions = {"lib/python3.11/ensurepip", "bin/pip", "bin/pip3", "bin/pip3.11"}
+        base_exclusions.update("lib/python3.11/site-packages/" + name
+                               for name in install_tool_entries(base / "lib/python3.11/site-packages"))
     packages = {name: getattr(args, name + "_package").resolve(strict=True) for name in PACKAGE_FORMATS}
     manifests = {name: read_json(path / "manifest.json") for name, path in packages.items()}
     for name, expected in PACKAGE_FORMATS.items():
@@ -182,7 +201,7 @@ def export(args):
     for name, path in packages.items():
         copy_tree(path, output / "resources" / name, origins, output=output)
     if args.python_mode == "bundled":
-        copy_tree(base, output / "python", origins, output=output)
+        copy_tree(base, output / "python", origins, output=output, exclude=base_exclusions)
         base_python = output / "python" / base_python.relative_to(base)
         copied_probe = probe(base_python, no_site=True)
         for key in ("prefix", "base_prefix", "exec_prefix", "base_exec_prefix"):
@@ -200,7 +219,8 @@ def export(args):
     if any(new_site.iterdir()):
         raise ValueError("New venv unexpectedly contains packages")
     new_site.rmdir()
-    copy_tree(site_packages, new_site, origins, output=output)
+    copy_tree(site_packages, new_site, origins, output=output, exclude=site_exclusions)
+    exported_distributions = check_distributions(new_site)
     runtime_probe = probe(output / "venv/bin/python")
     if Path(runtime_probe["prefix"]).resolve() != output / "venv":
         raise ValueError("New interpreter did not activate its virtual environment")
@@ -218,7 +238,12 @@ def export(args):
         "python_mode": args.python_mode, "base_python_bundled": args.python_mode == "bundled",
         "python": {"source_probe": original_python, "copied_base_probe": copied_probe,
                    "runtime_probe": runtime_probe, "venv_creation_argv": command},
-        "distributions": installed,
+        "distributions": exported_distributions, "source_distributions": installed,
+        "include_install_tools": args.include_install_tools,
+        "omitted_install_tool_entries": {
+            "site_packages": sorted(site_exclusions),
+            "bundled_python": sorted(base_exclusions) if args.python_mode == "bundled" else [],
+        },
         "packages": {name: {"path": f"resources/{name}", "format": data["format"],
                             "manifest_sha256": sha256(output / "resources" / name / "manifest.json")}
                      for name, data in manifests.items()},
@@ -229,6 +254,7 @@ def export(args):
             "Apple arm64/macOS 26 MLX wheels and macOS system libraries remain platform dependencies.",
             "CPython build_paths can retain the build prefix; runtime prefixes are reported separately.",
             "Source paths and copied provenance are evidence only; no historical run or original checkpoint is copied.",
+            "Install tools are optional; the default inference bundle omits pip/setuptools and bundled ensurepip. Re-export to change dependencies.",
             "Logical sizes exclude this manifest, filesystem allocation, system libraries and future output/cache files; symlink target bytes are not added twice.",
             ("Base CPython is copied; independent operation still requires denied-old-path synthesis verification."
              if args.python_mode == "bundled" else "Base CPython remains external and its files are excluded from bundle size."),
@@ -247,6 +273,8 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--python-mode", choices=("bundled", "external"), default="bundled",
                         help="Copy base CPython, or explicitly keep it as an external dependency")
+    parser.add_argument("--include-install-tools", action="store_true",
+                        help="Keep pip/setuptools and bundled ensurepip for the full-environment comparison")
     args = parser.parse_args()
     result = export(args)
     print(json.dumps({"output": result["output"], "status": result["status"], "totals": result["totals"]}))

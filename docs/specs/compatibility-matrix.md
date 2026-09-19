@@ -57,7 +57,7 @@
 | 声学参考绑定与条件权重省载 | 独立 Harness 的 A→B→A 四例阶段 / PCM 位一致，空闲 active 少 26.023 MiB；真实 GPT 四例历史与音频保持，见[绑定实验](../experiments/2026-09-20-bound-reference-projection.md) | 该数值只属于独立 Harness，产品结果见下行；B 为声学探针，原有 MRTE 超差保留；不代表安装体积或 CUDA 显存改善 |
 | 日文参考绑定产品选项 | `--bind-reference` 的四例 112 次完整请求、8 次失败恢复及 4 次 CLI 通过；24 组绑定阶段 / PCM 位一致，参考错配、取消、半加载失败恢复通过；见[产品对照](../experiments/2026-09-20-bound-reference-runtime.md) | 三例整请求 MLX peak 少 25.992 MiB、短句不变；RSS 与安装体积未改善。默认完整权重保留，B 仍为声学探针，CUDA 待验 |
 | 日文前端进程隔离实验 | 112 次成功请求、8 次失败恢复、60 个前端子进程保持条件与音频；见[隔离实验](../experiments/2026-09-20-frontend-process-isolation.md) | RSS 采样最大值少约 230 MiB，但请求慢 158–172 ms、MLX 峰值不变；未接入产品默认路径，Windows 启动代价和 CUDA 未验 |
-| Mac 日文运行目录独立部署 | 捆绑 Python 后四例基线与两轮隔离共 12 CLI 通过；拒绝旧代码 / 环境 / 模型 / 历史记录、用户缓存与网络后 WAV 相同，见[部署验证](../experiments/2026-09-20-runtime-relocation.md) | 含解释器和清单为 1.070 GiB；需 macOS 系统库与 Metal，venv 再搬迁须重建；首轮启动较慢，性能、系统服务缓存、Windows 与新试听未验 |
+| Mac 日文运行目录独立部署 | 捆绑 Python 后四例基线与两轮隔离共 12 CLI 通过；[分离安装工具](../experiments/2026-09-20-runtime-install-tools.md)后的另四例也保持 WAV；拒绝旧代码 / 环境 / 模型 / 历史记录、用户缓存与网络，见[部署验证](../experiments/2026-09-20-runtime-relocation.md) | 含解释器和清单从 1.070 降到 1.047 GiB；需 macOS 系统库与 Metal，venv 再搬迁须重建；首轮启动较慢，性能、系统服务缓存、Windows 与新试听未验 |
 | 日文多句 | 官方和 Lite 均生成文件；Lite 有漏句和助词读音反馈 | 固定历史 121 步 Lite logits 完全一致；指定官方 / official_text 的开头和助词经确认；后续官方 / 自有整链两条对应日文样音的全文和音色也获确认，扩展样例待验 |
 | 中文多句，BERT 启用 | 官方和 Lite 均生成文件；Lite 有开头发音反馈 | 固定历史 147 步 Lite logits 完全一致；BERT 输入差异已定位；指定官方 / official_text 的“你好”经确认；后续官方 / 自有整链两条对应中文样音的全文和音色也获确认，扩展样例待验 |
 | 中、日文单独短句与长句 | 官方均已生成并保存 trace；纯 FP32 MLX 日文长句第 329 步超差，高精度 Prefill 通过原容差 | prepared 整链最终波形已通过；采样概率 / 声学中间量的已知失败保留，扩展语音质量待验 |

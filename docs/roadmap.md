@@ -36,6 +36,7 @@
 - [参考绑定产品入口](experiments/2026-09-20-bound-reference-runtime.md)已提供可选 `--bind-reference`。调用方清理投影加载缓存后，声学入口 active 少 25.992 MiB；三条较长日文的整请求峰值下降同样大小，短句峰值不变。112 次成功请求、8 次失败恢复、4 次 CLI 及逐层 / 参考切换 / 取消补验通过；RSS 峰值与安装体积未改善，默认仍保留完整权重。
 - [日文前端进程隔离](experiments/2026-09-20-frontend-process-isolation.md)完成 112 次成功请求和 8 次失败恢复，音频保持。进程树 RSS 采样最大值约少 230 MiB，但每请求慢 158–172 ms、短句 RTF 升至 1.015，MLX 峰值不变；只保留实验，未改产品默认路径。
 - [完整运行目录隔离](experiments/2026-09-20-runtime-relocation.md)已通过四例基线和两轮隔离共 12 个 CLI 进程。旧源码、模型、环境、历史实验、用户缓存 / 临时目录及网络被拒后，WAV 仍逐字节相同；含 Python 与清单为 1.070 GiB。初次隔离启动较慢，性能和系统服务缓存另验；Windows 包尚未实现。
+- [分离安装工具](experiments/2026-09-20-runtime-install-tools.md)后，默认推理目录为 1.047 GiB，含清单净少 23.865 MiB；另四个严格隔离 CLI 保持日文 WAV。pip / setuptools 和捆绑 ensurepip 不再随推理包复制，模型及语言资源不变，未宣称运行内存或速度改善。
 - 自有轻量运行时仍在研发，流式、宿主取消接入、同时多参考 / 新模型和 Windows 干净部署未验收。
 
 ## 当前实施顺序：先完成可迁移的运行链
