@@ -45,7 +45,9 @@ Harness 为 `harness/native_prepared_speech.py`。加载时检查 GPT、SoVITS �
 
 ## 质量与复现
 
-本轮数值检查不等于试听通过。新生成的两条 native 与两条 official-fixed 样音已另行请求用户对照，人工结果待反馈；这批音频的 ASR 也单独保存，未运行前不记为通过。
+用户对本轮两条 native 与两条 official-fixed 样音回复：“四条都正常，未听出明显差异”。提问明确包含日文开头和 wa、中文“你好”、全文和音色；这四份文件的对应检查记为用户通过。原回复和文件 SHA-256 保存于 `runs/20260919T124243.798790Z-native-user-listening-review/`。这不是 MOS 评分，其他样例与模型不继承结果。
+
+随后使用固定的本地 Whisper small 对四条文件进行无文本提示转写，官方与自有版本在每种语言上得到相同文字。日文完整识别出开头；中文均识别为“您好,歡迎使用音樂語音。現在就在測試蘋果電腦上的語音合成。”，与目标文本仍有差异。保留 ASR 原文，不用用户反馈改写自动识别结果。证据为 `runs/20260919T124306.646465Z-asr-review/`，详见 [ASR 记录](2026-09-19-asr-review.md)。
 
 路径均相对于 `/Users/beyondpower/Documents/Projects/SakuraTTS-References/`。运行目录保存完整源码副本、来源和模型包哈希、每次耗时、生成 token/semantic/波形数组、PCM WAV 及退出状态。
 
@@ -59,4 +61,20 @@ REF=/Users/beyondpower/Documents/Projects/SakuraTTS-References
   --sovits-package "$REF/models/converted/20260919T115416.309917Z-f8bd92196175-sovits-decode-fp32"
 ```
 
-默认热身 2 次、计时 5 次，可显式配置 MLX cache limit。下一轮在保持输出一致的条件下，接入紧凑包与 Prefill 权重复用，检查安装体积收益能否保留且不增加日常请求成本。
+默认热身 2 次、计时 5 次，可显式配置 MLX cache limit。
+
+## 紧凑包、权重复用与缓存限制
+
+后续把两个模型改为无损紧凑包，并使用已验证的 [Prefill 权重复用](2026-09-19-gpt-prefill-weight-reuse.md)。运行 `20260919T124134.295402Z-native-prepared-speech` 的 token、history、semantic、完整浮点波形和两条 WAV 均与原 FP32 包路径逐位相同，核验保存在该目录的 `source-and-storage-equivalence.json`。新包中附件和原始权重来源均保留。
+
+再显式设置 `--mlx-cache-limit-mib 256`，运行 `20260919T124221.025101Z-native-prepared-speech`；同样的十项数组/文件比较全部通过，见 `cache-policy-equivalence.json`。三轮输出的实际文件一致，因此对应的是用户刚确认过的同一份音频字节；没有把不同输出推断为已试听。
+
+| 配置 | 日文请求中位 | 中文请求中位 | 中文结束后 active / cache | MLX allocator peak | 进程生命周期 RSS 最大值 |
+|---|---:|---:|---:|---:|---:|
+| 原 FP32 包，旧 Prefill 读取 | 1.039 秒 | 1.229 秒 | 565.05 / 2674.44 MiB | 1452.41 MiB | 767.94 MiB |
+| 紧凑包，复用已加载权重 | 1.053 秒 | 1.288 秒 | 565.05 / 2674.54 MiB | 1452.41 MiB | 760.78 MiB |
+| 同上，cache limit 256 MiB | 1.100 秒 | 1.329 秒 | 565.05 / 258.26 MiB | 1452.34 MiB | 707.31 MiB |
+
+缓存限制把中文结束后的 cache 减少约 90.3%，两条完整准备条件请求分别慢约 4.5% 和 3.2%；active 和 allocator peak 基本不变。观察到的 cache 仍大于 256 MiB，配置不是严格峰值上限。三个进程释放后 active/cache 均为零。
+
+GPT 子模块的重复读盘优化已经单独测得收益，但这两次整链测量没有看到相对原 FP32 包的总耗时改善。这里不把子模块约 17% 的收益扩大到完整请求，也不把更低 RSS 解释为活动声学工作区缩小。下一项是测量语义结束后提前释放 GPT/KV 能否降低声学期间的峰值，以及每次重载所需的延迟。

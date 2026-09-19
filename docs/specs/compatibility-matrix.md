@@ -57,7 +57,7 @@
 | 中文 BERT 第 22 层 | CPU/MPS 裁剪后特征完全一致；独立 MLX CPU 的 5 段、120 项对照通过，正常计时和卸载已测 | MLX GPU 仍有 1 个中间元素超差；独立路径接入音频、其他语料与分发待验 |
 | 其他参考语言、无参考文本、多参考条件 | 未验证 | 逐项核对官方支持范围和条件语义 |
 | 自有 NumPy 采样与非流式停止 | 两条 Top-p 1 请求沿自有历史生成，共享官方实采噪声时 token、停止和语义切片相同 | 其他 seed、独立 RNG、Top-p 3 个合成边界及 GPU 采样；详见 [生成对照](../experiments/2026-09-19-native-gpt-generation.md) |
-| 准备好条件的自有语音链 | 两条原始样例的自有 GPT → 语义 → 声学 → PCM 接通；无 observer/capture，token、停止与完整波形数值通过，5 次热运行已测 | 原始文本和参考准备、独立 RNG、人工试听及完整延迟；见 [整链实验](../experiments/2026-09-19-native-prepared-speech.md) |
+| 准备好条件的自有语音链 | 两条原始样例的自有 GPT → 语义 → 声学 → PCM 接通；token、停止与波形数值通过；用户确认对应四样音正常且无明显差异；独立 ASR 已保存 | 原始文本和参考准备、独立 RNG、更多语料及完整延迟；见 [整链实验](../experiments/2026-09-19-native-prepared-speech.md) |
 | 自有完整声学链 | 650 张量解码包严格重载通过；CPU encoder + GPU flow/decoder 的十例波形通过，119/120 阶段通过 | 日文标点 MRTE 单元素超差；全 GPU 两例仍有中文波形超差；见 [扩展声学](../experiments/2026-09-19-expanded-acoustic.md) |
 | 声学速度与缓存 | 两条正常声学请求比官方慢约 29%–41%；缓存上限实验使空闲缓存少约 90%，再慢约 18%–24% | 活跃工作区仍约 1.05 GiB，计数仅适用于 MLX 统一内存；见 [完整声学实验](../experiments/2026-09-19-mlx-sovits-complete.md) |
 | 中文 tokenizer | 自有接口与官方词元及 G2PW 所需基础数组一致，600 字 BERT 输入保持 602 tokens | 完整中文规范化、G2PW 推理和音素/BERT 对齐；见 [tokenizer 实验](../experiments/2026-09-19-tokenizer-runtime.md) |

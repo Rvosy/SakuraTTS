@@ -39,13 +39,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--references", type=Path, required=True)
     parser.add_argument("--input-dir", type=Path, action="append", default=[])
+    parser.add_argument("--audio", nargs=2, action="append", default=[], metavar=("LANGUAGE", "PATH"),
+                        help="Explicit ja/zh WAV independent of filename; may be repeated")
     parser.add_argument("--model", default="mlx-community/whisper-small-mlx")
     parser.add_argument("--revision", default="45f3915923c7a79a5a5b5a7d909d39aeb0e5630e")
     parser.add_argument("--prepare-only", action="store_true", help="Download and hash model without loading MLX or using GPU")
     parser.add_argument("--offline", action="store_true", help="Require an already cached model")
     args = parser.parse_args()
-    if not args.prepare_only and not args.input_dir:
-        parser.error("At least one --input-dir is required for transcription")
+    if not args.prepare_only and not (args.input_dir or args.audio):
+        parser.error("At least one --input-dir or --audio is required for transcription")
+    if any(language not in ("ja", "zh") for language, _ in args.audio):
+        parser.error("Explicit audio language must be ja or zh")
     root = args.references.resolve()
     cache = root / ".cache/huggingface"
     os.environ["HF_HOME"] = str(cache)
@@ -66,7 +70,7 @@ def main():
         "command": [sys.executable, *sys.argv], "platform": platform.platform(),
         "python": sys.version, "model_repo": args.model, "model_revision": args.revision,
         "cache_directory": str(cache), "decoding": decoding,
-        "language_policy": "ja or zh explicitly selected from each saved filename",
+        "language_policy": "ja or zh from saved filename, or explicitly supplied with --audio",
         "audio_uploaded": False, "listening_status": "not_performed",
         "pronunciation_and_speaker_quality": "not_assessed_by_asr",
         "timing_scope": "ASR diagnostics only; includes model loading on first file; not TTS timing",
@@ -100,22 +104,27 @@ def main():
             print(f"PREPARED={output}", flush=True)
             return
 
-        seen = set()
+        selected = [(Path(path).resolve(), language) for language, path in args.audio]
         for input_dir in args.input_dir:
             for audio_path in sorted(input_dir.resolve().glob("*-1.wav")):
-                if audio_path in seen:
-                    continue
-                seen.add(audio_path)
                 match = re.search(r"(?:^|-)(ja|zh)-1\.wav$", audio_path.name)
                 if match is None:
                     raise ValueError(f"Cannot determine a forced language for {audio_path}")
-                with wave.open(str(audio_path), "rb") as audio:
-                    details = {"sample_rate": audio.getframerate(), "channels": audio.getnchannels(),
-                               "sample_width_bytes": audio.getsampwidth(), "frames": audio.getnframes(),
-                               "audio_seconds": audio.getnframes() / audio.getframerate()}
-                report["inputs"].append({"id": f"{audio_path.parent.name}__{audio_path.stem}",
-                                         "path": str(audio_path), "sha256": sha256(audio_path),
-                                         "language": match.group(1), **details})
+                selected.append((audio_path, match.group(1)))
+        seen = {}
+        for audio_path, language in selected:
+            if audio_path in seen:
+                if seen[audio_path] != language:
+                    raise ValueError(f"Conflicting forced languages for {audio_path}")
+                continue
+            seen[audio_path] = language
+            with wave.open(str(audio_path), "rb") as audio:
+                details = {"sample_rate": audio.getframerate(), "channels": audio.getnchannels(),
+                           "sample_width_bytes": audio.getsampwidth(), "frames": audio.getnframes(),
+                           "audio_seconds": audio.getnframes() / audio.getframerate()}
+            report["inputs"].append({"id": f"{audio_path.parent.name}__{audio_path.stem}",
+                                     "path": str(audio_path), "sha256": sha256(audio_path),
+                                     "language": language, **details})
         if not report["inputs"]:
             raise ValueError("No matching ja/zh first-run WAV files found")
         report["ffmpeg_version"] = subprocess.check_output(["ffmpeg", "-version"], text=True).splitlines()[0]
