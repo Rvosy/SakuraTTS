@@ -41,6 +41,7 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 | [声码器工作区](docs/experiments/2026-09-19-decoder-workspace.md) | 调整求值时机、波形保持和峰值 / 延迟取舍 |
 | [GPT 生命周期](docs/experiments/2026-09-19-gpt-lifecycle.md) | 按请求释放语义模型和重新加载的成本 |
 | [声学数值定位](docs/experiments/2026-09-19-attention-softmax-numerics.md) | 首层 softmax 舍入及后续验证方向 |
+| [声学精度与成本](docs/experiments/2026-09-19-softmax-candidates.md) | 保留 FP32、显式 CPU 累积选项与十例 120 阶段通过 |
 | [文本前端依赖](docs/experiments/2026-09-19-text-frontend-dependencies.md) | 中文 G2PW、日文词典与混合语言能力边界 |
 | [独立 tokenizer](docs/experiments/2026-09-19-tokenizer-runtime.md) | 移除 Transformers 后的词元与输入数组对照 |
 | [G2PW 输入迁移](docs/experiments/2026-09-19-g2pw-inputs.md) | 查询截断、字符映射和输入准备的官方对照 |

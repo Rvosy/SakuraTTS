@@ -24,14 +24,23 @@ class MLXSoVITS:
         self.sample_rate = encoder.manifest["config"]["sample_rate"]
 
     @classmethod
-    def load(cls, package, *, encoder_device=None):
+    def load(cls, package, *, encoder_device=None, encoder_softmax="fp32"):
+        """Load acoustic modules; FP64 softmax accumulation is CPU-only.
+
+        This mode retains MLX's FP32 SIMD exponential approximation; it does
+        not turn the encoder or its entire softmax calculation into FP64.
+        """
         package = Path(package)
         if encoder_device not in (None, "cpu", "gpu"):
             raise ValueError("Encoder device must be cpu, gpu, or the current default")
         device = mx.default_device()
         encoder_device = device if encoder_device is None else (mx.cpu if encoder_device == "cpu" else mx.gpu)
+        if encoder_softmax not in ("fp32", "fp64-accumulation"):
+            raise ValueError("Encoder softmax must be fp32 or fp64-accumulation")
+        if encoder_softmax == "fp64-accumulation" and encoder_device != mx.cpu:
+            raise ValueError("FP64 acoustic softmax accumulation is only covered for the CPU encoder")
         with mx.stream(encoder_device):
-            encoder = MLXSoVITSEncoder.load(package)
+            encoder = MLXSoVITSEncoder.load(package, softmax=encoder_softmax)
         return cls(encoder, MLXSoVITSFlow.load(package), MLXSoVITSDecoder.load(package),
                    device, encoder_device)
 

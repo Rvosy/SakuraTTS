@@ -17,6 +17,7 @@
 - 扩展固定历史暴露日文长句第 329 步 MLX 数值超差，未放宽容差；CPU FP64 Prefill + MLX FP32 Decode 的 10 条、1805 步 logits 全部通过。正常测量中 8 条更快、两条短句更慢，详见 [数值与成本](experiments/2026-09-19-mlx-numerics.md)。[十例自有历史生成](experiments/2026-09-19-expanded-native-generation.md)的 token、停止和切片相同，但两例三个采样概率值超差，整体仍按失败记录。
 - 独立 MLX 中文 BERT 的 CPU 路径通过 5 段逐层对照，空闲 RSS 少约 109 MiB；短句慢约 2%–7%，GPU 仍有一个中间元素超差。见 [BERT 实验](experiments/2026-09-19-mlx-bert.md)。
 - 自有 MLX 码本、声学编码器、reverse flow 和声码器已接通。CPU encoder + GPU flow/decoder 下，十例最终波形通过；日文标点的一个 MRTE 中间元素超差。已将首层差异追到 [softmax 舍入](experiments/2026-09-19-attention-softmax-numerics.md)；统一 FP64 LayerNorm 因长句波形退化被否决。此前正常声学生成比官方慢约 29%–41%，后续调度结果单独记录，不混用实验条件。
+- 进一步的 [MLX FP64 softmax 累积](experiments/2026-09-19-softmax-candidates.md)已通过十例 120 阶段并迁入显式 CPU 选项，默认 FP32 保留。编码器慢约 2.5%–10.9%、工作区略增，完整声学峰值基本不变；这是正确性改动，尚未补该路径的整链试听。NumPy 全 FP64 softmax 因两条波形退化被否决。
 - 单参考声学条件预计算保持 10 条 WAV，请求后 allocated 再减少 148.99 MiB；独立采样复测的生命周期 RSS 峰值基本不变，原先的大幅上升未重现。请求区间观察到的 allocated 最大值少约 143 MiB，driver 下降有限。见 [声学生命周期](experiments/2026-09-19-acoustic-lifecycle.md)。
 - 三个权重包采用逐张量无损存储后，归档少 801.37 MiB，运行时恢复原 FP32 权重。[复用已加载权重](experiments/2026-09-19-gpt-prefill-weight-reuse.md)去掉高精度 Prefill 重复读取与校验，在相同紧凑包的两条请求中快约 17%；十条固定历史 logits 逐位保持。不把磁盘收益算成运行内存收益。
 - 中文 tokenizer 已移除 Transformers；G2PW 文本、输入打包和 CPU ONNX Session 已接成[完整拼音接口](experiments/2026-09-19-g2pw-pinyin.md)，27 组输出对照和 353 数组逐位通过。三轮单独 Session 创建、关闭后的 RSS 在约 380 MiB 趋稳，尚不能据此判断长期泄漏。完整前端仍需中文变调、日文 prosody 和混合语言处理。

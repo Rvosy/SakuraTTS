@@ -61,6 +61,7 @@
 | 自有 NumPy 采样与非流式停止 | 十条 Top-p 1 请求的 1805 步 token、停止和语义切片与官方相同；logits 通过，2 例 3 个概率值超差，整轮仍失败 | GPT 误差传播、其他 seed、独立 RNG、Top-p 小于 1 及 GPU 采样；见 [十例生成](../experiments/2026-09-19-expanded-native-generation.md) |
 | 准备好条件的自有语音链 | 十例自有 GPT → 语义 → 声学 → PCM 的 token、停止和最终波形通过；原始两例 WAV 与用户确认的四样音逐字节相同 | 既有概率及 MRTE 超差仍保留；原始文本和参考准备、独立 RNG、扩展质量及完整延迟；见 [十例整链](../experiments/2026-09-19-expanded-prepared-speech.md) |
 | 自有完整声学链 | 650 张量解码包严格重载通过；CPU encoder + GPU flow/decoder 的十例波形通过，119/120 阶段通过 | 日文标点 MRTE 单元素超差；全 GPU 两例仍有中文波形超差；见 [扩展声学](../experiments/2026-09-19-expanded-acoustic.md) |
+| 声学 CPU softmax 高精度累积 | 显式 `encoder_softmax=fp64-accumulation` 的十例 120 阶段通过原容差；源码输出逐位复现候选；默认 FP32 保留原行为 | 编码器时间与工作区增加；新输出的整链、试听待验，其他模型与 GPU 不覆盖；见 [精度与成本](../experiments/2026-09-19-softmax-candidates.md) |
 | 声学速度与缓存 | 调度优化前两条正常声学请求比官方慢约 29%–41%；后续缓存、工作区和整链取舍单列 | 各条件的数据不可混用；MLX 统计仅适用于 Apple 统一内存，见 [原声学实验](../experiments/2026-09-19-mlx-sovits-complete.md) 与 [工作区实验](../experiments/2026-09-19-decoder-workspace.md) |
 | 声码器工作区 | 新 pair 求值方式的十例波形逐位保持；两条 decoder-only 峰值少约 45%，慢约 10%–14%；整链已复核 | 长句降幅较小；完整文本路径的峰值与部署成本；见 [工作区实验](../experiments/2026-09-19-decoder-workspace.md) |
 | 中文 tokenizer | 自有接口与官方词元及 G2PW 所需基础数组一致，600 字 BERT 输入保持 602 tokens | 完整中文规范化、G2PW 推理和音素/BERT 对齐；见 [tokenizer 实验](../experiments/2026-09-19-tokenizer-runtime.md) |

@@ -135,6 +135,7 @@ def main():
     parser.add_argument("--sovits-package", type=Path, required=True)
     parser.add_argument("--cases", nargs="+", default=["ja", "zh"])
     parser.add_argument("--gpt-lifecycle", choices=("resident", "request"), default="resident")
+    parser.add_argument("--encoder-softmax", choices=("fp32", "fp64-accumulation"), default="fp32")
     parser.add_argument("--warmup", type=int, default=2)
     parser.add_argument("--repeat", type=int, default=5)
     parser.add_argument("--mlx-cache-limit-mib", type=int)
@@ -159,7 +160,8 @@ def main():
               "scope": "Saved official text/reference conditions -> own semantic history -> native waveform -> PCM; not independent original-text TTS",
               "timing_scope": "No observers/captures; includes shared-draw lookup, output CPU copy/PCM and request-scoped GPT load/release when selected; excludes frontend, reference preparation, audio file IO, validation and resident model loading",
               "rng_scope": "Official real semantic draws, separate fixed acoustic noise; no independent RNG claim",
-              "configuration": "CPU FP64 GPT prefill, GPU FP32 decode; CPU acoustic encoder, GPU flow/decoder; top_p=1, speed=1, noise_scale=0.5",
+              "configuration": f"CPU FP64 GPT prefill, GPU FP32 decode; CPU acoustic encoder with {args.encoder_softmax} softmax, GPU flow/decoder; top_p=1, speed=1, noise_scale=0.5",
+              "encoder_softmax": args.encoder_softmax,
               "warmup": args.warmup, "repeat": args.repeat, "mlx_cache_limit_mib": args.mlx_cache_limit_mib,
               "gpt_lifecycle": args.gpt_lifecycle,
               "dependencies": {name: importlib.metadata.version(name) for name in ("mlx", "mlx-metal", "numpy")},
@@ -189,7 +191,7 @@ def main():
         load_start = time.perf_counter()
         if args.gpt_lifecycle == "resident":
             gpt = MLXGPT.load(args.gpt_package, capacity=1024, prefill_precision="fp64")
-        sovits = MLXSoVITS.load(args.sovits_package, encoder_device="cpu")
+        sovits = MLXSoVITS.load(args.sovits_package, encoder_device="cpu", encoder_softmax=args.encoder_softmax)
         mx.synchronize()
         report["model_load_seconds"] = time.perf_counter() - load_start
         report["memory_after_load"] = memory_snapshot()

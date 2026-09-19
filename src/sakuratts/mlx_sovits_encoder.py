@@ -53,7 +53,7 @@ def relative_embeddings(embedding, length, window):
     return embedding[:, start:start + 2 * length - 1]
 
 
-def attention(query, key, value, mask, relative_key=None, relative_value=None, window=None):
+def attention(query, key, value, mask, relative_key=None, relative_value=None, window=None, *, softmax="fp32"):
     """Attention on [batch, heads, time, head_features], with official order."""
     scaled_query = query / math.sqrt(query.shape[-1])
     scores = scaled_query @ key.swapaxes(-1, -2)
@@ -64,7 +64,14 @@ def attention(query, key, value, mask, relative_key=None, relative_value=None, w
         scores = scores + relative_to_absolute(scaled_query @ embeddings[None].swapaxes(-1, -2))
     if mask is not None:
         scores = mx.where(mask != 0, scores, mx.array(-1e4, dtype=mx.float32))
-    probability = mx.softmax(scores, axis=-1, precise=True)
+    if softmax == "fp64-accumulation":
+        # CPU-only mode: FP64 scores/reduction, then restore FP32 probabilities.
+        # MLX 0.32.2 SIMD exp still uses its FP32 polynomial approximation.
+        probability = mx.softmax(scores.astype(mx.float64), axis=-1, precise=True).astype(mx.float32)
+    elif softmax == "fp32":
+        probability = mx.softmax(scores, axis=-1, precise=True)
+    else:
+        raise ValueError("Acoustic softmax must be fp32 or fp64-accumulation")
     output = probability @ value
     if window is not None:
         embeddings = relative_embeddings(relative_value, key.shape[-2], window)
@@ -73,7 +80,10 @@ def attention(query, key, value, mask, relative_key=None, relative_value=None, w
 
 
 class MLXSoVITSEncoder:
-    def __init__(self, manifest, weights):
+    def __init__(self, manifest, weights, *, softmax="fp32"):
+        if softmax not in ("fp32", "fp64-accumulation"):
+            raise ValueError("Acoustic softmax must be fp32 or fp64-accumulation")
+        self.softmax_mode = softmax
         self.manifest = manifest
         self.config = manifest["config"]
         self.model_config = self.config["model"]
@@ -88,7 +98,7 @@ class MLXSoVITSEncoder:
                 raise ValueError("This candidate does not cover block/proximal attention")
 
     @classmethod
-    def load(cls, package: Path):
+    def load(cls, package: Path, *, softmax="fp32"):
         manifest = json.loads((package / "manifest.json").read_text())
         if manifest["format"] != "sakuratts-sovits-decode-fp32-v1":
             raise ValueError("Expected the V2Pro FP32 decode package")
@@ -107,7 +117,7 @@ class MLXSoVITSEncoder:
                     raise ValueError(f"Unexpected dtype/shape for {key}")
                 weights[key] = mx.array(array)
         mx.eval(*weights.values())
-        return cls(manifest, weights)
+        return cls(manifest, weights, softmax=softmax)
 
     def conv(self, x, prefix, same_padding=False):
         """NTC activations; original OIK checkpoint weights remain unchanged."""
@@ -133,7 +143,8 @@ class MLXSoVITSEncoder:
                              for item, suffix in ((x, "q"), (context, "k"), (context, "v")))
         window = spec["window_size"]
         output, _ = attention(query, key, value, mask,
-                              self.weights.get(prefix + ".emb_rel_k"), self.weights.get(prefix + ".emb_rel_v"), window)
+                              self.weights.get(prefix + ".emb_rel_k"), self.weights.get(prefix + ".emb_rel_v"), window,
+                              softmax=self.softmax_mode)
         output = output.transpose(0, 2, 1, 3).reshape(1, x.shape[1], spec["channels"])
         return self.conv(output, prefix + ".conv_o")
 
