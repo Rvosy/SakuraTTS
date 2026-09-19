@@ -10,28 +10,41 @@ from __future__ import annotations
 import time
 import json
 from pathlib import Path
+from contextlib import nullcontext
 
 import numpy as np
 
 from .weight_storage import read_fp32, validate_storage
 
 
-def prefill_fp64(weights_file, config, phones, prompt, bert, measure=False, *, manifest=None):
-    """Return rounded FP32 KV/logits after full CPU float64 arithmetic."""
+def prefill_fp64(weights_file, config, phones, prompt, bert, measure=False, *, manifest=None, weights=None):
+    """Return rounded FP32 KV/logits using a package or loaded FP32 mapping.
+
+The optional mapping is the caller's existing, validated runtime weights.
+Only the current operation's weights are cast to FP64; no full CPU copy or
+FP64 cache is retained. This path never reads a package file after load.
+"""
     width, heads = config["hidden_dim"], config["heads"]
     head_dim = width // heads
     t, p = phones.shape[1], prompt.shape[1]
     started = time.perf_counter() if measure else None
     weight_seconds = 0.0
-    if manifest is None:
+    if weights is None and manifest is None:
         manifest_file = Path(weights_file).parent / "manifest.json"
         manifest = json.loads(manifest_file.read_text()) if manifest_file.exists() else {"weights": {}}
-    with np.load(weights_file, allow_pickle=False) as archive:
-        validate_storage(manifest, archive.files)
+    context = np.load(weights_file, allow_pickle=False) if weights is None else nullcontext(weights)
+    with context as archive:
+        if weights is None:
+            validate_storage(manifest, archive.files)
         def weight(name):
             nonlocal weight_seconds
             start = time.perf_counter() if measure else None
-            value = read_fp32(archive, manifest, name).astype(np.float64)
+            value = read_fp32(archive, manifest, name) if weights is None else np.asarray(archive[name])
+            if value.dtype != np.float32:
+                raise ValueError(f"FP64 prefill requires expanded FP32 runtime weights: {name}")
+            # Copy immediately into FP64: NumPy may expose a writable shared
+            # view of an MLX array, which this computation must not modify.
+            value = value.astype(np.float64)
             if measure:
                 weight_seconds += time.perf_counter() - start
             return value
@@ -81,5 +94,6 @@ def prefill_fp64(weights_file, config, phones, prompt, bert, measure=False, *, m
         "cpu_compute_and_housekeeping_seconds": total - weight_seconds if measure else None,
         "cpu_retained_fp32_kv_bytes": sum(value.nbytes for value in keys + values),
         "precision": "All prefill arithmetic float64; completed KV and logits rounded once to float32",
-        "weights": "Read or losslessly expand original FP32 tensors per layer, then cast to float64; no persistent float64 weight copy",
+        "weights": ("Read or losslessly expand original FP32 tensors per layer, then cast to float64; no persistent float64 weight copy"
+                    if weights is None else "Read already loaded FP32 arrays per operation, then cast to float64; no disk reads, repeated hashes or persistent FP64 copy"),
     }

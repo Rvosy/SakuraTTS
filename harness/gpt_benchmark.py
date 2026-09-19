@@ -328,7 +328,7 @@ def main():
                        "converted_weights_bytes": (package / "weights.npz").stat().st_size if package else None},
         "timing_scope": "CPU input preparation, GPT prefill and fixed-history decode projections; boundary sync; no sampling, per-step CPU logits copies, or audio",
         "backend_evaluation_policy": "MLX candidate explicitly evaluates each step to bound its lazy graph; Lite runs eager PyTorch operators",
-        "fp64_prefill_timing": "Includes per-request layerwise weight reads/casts, full CPU prefill and completed FP32 KV transfer; per-weight diagnostic timers disabled inside normal timings" if args.backend == "mlx-fp64-prefill" else None,
+        "fp64_prefill_timing": "Includes per-request exports of already loaded FP32 arrays, temporary FP64 casts, full CPU prefill and completed FP32 KV transfer; no package rereads or repeated hashes after load; per-weight diagnostic timers disabled inside normal timings" if args.backend == "mlx-fp64-prefill" else None,
         "repeat": args.repeat, "warmup": args.warmup, "cases": {},
     }
     backend = None

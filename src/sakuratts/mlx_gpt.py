@@ -156,7 +156,8 @@ class MLXGPT:
         self.length = 0
         self.text_length = phones.shape[1]
         first, keys, values, stages = prefill_fp64(
-            self.weights_file, self.config, phones, prompt, bert, measure=profile, manifest=self.weight_manifest)
+            self.weights_file, self.config, phones, prompt, bert, measure=profile,
+            manifest=self.weight_manifest, weights=self.weights)
         started = time.perf_counter() if profile else None
         self.length = phones.shape[1] + prompt.shape[1]
         padding = ((0, 0), (0, 0), (0, self.capacity - self.length), (0, 0))

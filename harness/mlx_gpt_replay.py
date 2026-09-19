@@ -162,8 +162,21 @@ def cpu_self_test():
                     "config": config, "weights": {"file": "weights.npz", "sha256": sha256(package / "weights.npz")}}
         (package / "manifest.json").write_text(json.dumps(manifest))
         high_precision = MLXGPT.load(package, capacity=32, prefill_precision="fp64")
+        from sakuratts.gpt_prefill import prefill_fp64
+
+        file_logits, file_keys, file_values, _ = prefill_fp64(
+            package / "weights.npz", config, phones, prompt, bert, manifest=manifest)
+        # Only this owned temporary test file changes. A validated loaded
+        # model must use its existing weights without rereading this path.
+        (package / "weights.npz").write_bytes(b"changed after validated model load")
         fp64_actual, _ = replay(high_precision, phones, prompt, bert, tokens)
         np.testing.assert_allclose(fp64_actual, expected, atol=2e-6, rtol=2e-5)
+        np.testing.assert_array_equal(fp64_actual[0], file_logits[0])
+        length = phones.shape[1] + prompt.shape[1]
+        for observed, wanted in zip(high_precision.keys + high_precision.values, file_keys + file_values):
+            np.testing.assert_array_equal(np.asarray(observed[:, :, :length]), wanted)
+        for name, value in high_precision.weights.items():
+            np.testing.assert_array_equal(np.asarray(value), weights[name])
         fp32_override = np.asarray(high_precision.prefill(phones, prompt, bert, precision="fp32"))
         np.testing.assert_array_equal(fp32_override[0], actual[0])
         np.testing.assert_array_equal(np.asarray(high_precision.prefill(phones, prompt, bert))[0], fp64_actual[0])
@@ -172,7 +185,8 @@ def cpu_self_test():
     return {"status": "passed", "device": "cpu", "test": "tiny cached MLX graph versus NumPy float64 full-prefix oracle",
             "torch_imported": "torch" in sys.modules, "comparison": compare(actual, expected, atol=2e-6, rtol=2e-5),
             "fp64_prefill_comparison": compare(fp64_actual, expected, atol=2e-6, rtol=2e-5),
-            "per_request_precision_override": "passed"}
+            "per_request_precision_override": "passed", "loaded_model_ignores_later_file_changes": "passed",
+            "loaded_vs_file_prefill_logits_and_kv": "bit_exact", "original_runtime_weights_unchanged": "passed"}
 
 
 def main():
