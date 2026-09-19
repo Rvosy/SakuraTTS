@@ -10,7 +10,7 @@ import time
 
 import numpy as np
 
-from .generation import SemanticGeneration, generate_semantic
+from .generation import SemanticGeneration, check_cancelled, generate_semantic
 from .reference_condition import PreparedReference
 
 
@@ -101,13 +101,15 @@ def prepare_text(text, language, frontend):
 def generate_prepared_semantic(prepared: PreparedText, reference: PreparedReference, *, gpt,
                                early_stop_num, top_k=15, top_p=1.0, temperature=1.0,
                                repetition_penalty=1.35, rng=None, semantic_random_draw=None,
-                               release_gpt_state=False):
+                               release_gpt_state=False, cancel_requested=None):
     """Generate semantics without loading an acoustic model.
 
     release_gpt_state discards GPT request KV after semantic generation, also
     on semantic failure, while retaining weights. The supplied GPT must expose
     release_request_state(); subsequent decode requires a new prefill. After
     return the caller may unload GPT entirely before loading SoVITS.
+    The cancellation predicate is not retained in the returned request. Pass it
+    explicitly to synthesize_acoustic to keep cancellation enabled in that phase.
     """
     if prepared.language not in ("ja", "all_ja"):
         raise ValueError("Only Japanese ja/all_ja requests are currently supported")
@@ -128,7 +130,7 @@ def generate_prepared_semantic(prepared: PreparedText, reference: PreparedRefere
             gpt, phones, reference.prompt_semantic[None, :], bert, eos=gpt.config["eos"],
             top_k=top_k, top_p=top_p, temperature=temperature,
             repetition_penalty=repetition_penalty, early_stop_num=early_stop_num,
-            rng=rng, random_draw=semantic_random_draw,
+            rng=rng, random_draw=semantic_random_draw, cancel_requested=cancel_requested,
         )
     finally:
         if release_gpt_state:
@@ -143,11 +145,13 @@ def generate_prepared_semantic(prepared: PreparedText, reference: PreparedRefere
 
 
 def synthesize_acoustic(request: PreparedSemantic, *, sovits, speed=1.0, noise_scale=0.5,
-                        fragment_interval=0.3, acoustic_noise=None):
+                        fragment_interval=0.3, acoustic_noise=None, cancel_requested=None):
     """Decode this request with its bound reference and remaining RNG state.
 
     Model loading/unloading and caller time between phases are excluded from
     the returned compute timings. The caller measures complete request time.
+    Cancellation is checked before noise generation and after decode returns its
+    evaluated waveform; a cancelled request never returns PCM, including partial PCM.
     """
     if speed != 1.0 or fragment_interval < 0:
         raise ValueError("Require speed=1 and a nonnegative fragment interval")
@@ -155,6 +159,7 @@ def synthesize_acoustic(request: PreparedSemantic, *, sovits, speed=1.0, noise_s
     if reference.manifest["identity"] != request.reference_identity:
         raise ValueError("Reference identity changed between semantic and acoustic execution")
     _validate_model(reference, "sovits", sovits.encoder.manifest)
+    check_cancelled(cancel_requested, "before_acoustic")
     config = sovits.encoder.manifest["config"]
     start = time.perf_counter()
     semantic = request.generation.semantic
@@ -171,6 +176,7 @@ def synthesize_acoustic(request: PreparedSemantic, *, sovits, speed=1.0, noise_s
         raise ValueError(f"Acoustic noise must be finite FP32 with generated-history shape {noise_shape}")
     waveform = sovits.decode(semantic, target_phones[None, :], reference.ge, reference.ge512,
                              acoustic_noise, noise_scale=noise_scale, speed=speed)
+    check_cancelled(cancel_requested, "after_acoustic")
     acoustic_done = time.perf_counter()
     waveform = np.asarray(waveform).copy()
     pcm = single_fragment_pcm(waveform, sovits.sample_rate, fragment_interval)
@@ -190,7 +196,7 @@ def synthesize_prepared(prepared: PreparedText, reference: PreparedReference, *,
                         early_stop_num, top_k=15, top_p=1.0, temperature=1.0,
                         repetition_penalty=1.35, speed=1.0, noise_scale=0.5,
                         fragment_interval=0.3, rng=None, semantic_random_draw=None, acoustic_noise=None,
-                        release_gpt_state=False):
+                        release_gpt_state=False, cancel_requested=None):
     """Compose both phases when the caller owns both loaded models.
 
     NumPy's RNG is not seed-equivalent to Torch. Explicit draws/noise support
@@ -203,9 +209,11 @@ def synthesize_prepared(prepared: PreparedText, reference: PreparedReference, *,
         prepared, reference, gpt=gpt, early_stop_num=early_stop_num, top_k=top_k, top_p=top_p,
         temperature=temperature, repetition_penalty=repetition_penalty, rng=rng,
         semantic_random_draw=semantic_random_draw, release_gpt_state=release_gpt_state,
+        cancel_requested=cancel_requested,
     )
     return synthesize_acoustic(request, sovits=sovits, speed=speed, noise_scale=noise_scale,
-                               fragment_interval=fragment_interval, acoustic_noise=acoustic_noise)
+                               fragment_interval=fragment_interval, acoustic_noise=acoustic_noise,
+                               cancel_requested=cancel_requested)
 
 
 def synthesize(text, language, reference: PreparedReference, *, frontend, gpt, sovits, **parameters):

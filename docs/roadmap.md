@@ -28,16 +28,17 @@
 - 随后的[声学前释放](experiments/2026-09-19-gpt-state-before-acoustic.md)保持四例 WAV，逐请求 MLX allocator peak 少约 96 MiB；长句从 1721.21 降至 1625.21 MiB，正常请求本轮增加 2–16 ms。RSS 峰值没有改善，不能当作 NVIDIA 或系统峰值结论。
 - [日文分阶段加载](experiments/2026-09-19-native-staged-loading.md)保持四例 WAV，完整请求内长句 MLX allocator peak 从 1625.21 降到 1321.32 MiB；正常长句多约 51 ms。CLI 默认先完成并卸载 GPT，再加载 SoVITS；保留同时加载和 Python 权重常驻方式，未增加后端框架。
 - [实际参考切换](experiments/2026-09-19-japanese-reference-switch.md)已验证第二条原始日文录音，A→B→A 与隔离运行的 57 项结果相同；独立官方 B 的五参考数组、生成历史和最终波形通过。新两条自由样音 ASR 识别完整，新的官方 / 自有 B 对照仍待试听。
-- 自有轻量运行时仍在研发，流式、取消、多参考 / 新模型和 Windows 干净部署未验收。
+- [非流式 Python 取消](experiments/2026-09-19-native-cancellation.md)已验证 16 次成功 / 恢复和 8 次取消，无取消音频输出、同模型后续请求恢复；另 40 次正常请求保持输出，默认路径未见耗时退化。
+- 自有轻量运行时仍在研发，流式、宿主取消接入、同时多参考 / 新模型和 Windows 干净部署未验收。
 
 ## 当前实施顺序：先完成可迁移的运行链
 
 2026-09-19 根据用户最新确认，先支持日文；中文待日文运行链、通用优化和目标平台基础完成后再单独恢复。Windows / NVIDIA CUDA 是生产重点；Mac 用来验证模型语义和可迁移的运行时结构。已有 MLX 路径继续作为可执行对照，不再把深挖 Metal 特性当作主线。严格数值失败仍保存并区分阶段；没有新证据时，不为消除个别舍入差异反复扩展 Mac 专用诊断。
 
 1. 原始日文、真实语言路由、独立参考包到自有 GPT / SoVITS / PCM 已接通，继续补齐新随机样音质量和运行边界。日文按官方规则提供零 BERT，不导入中文 BERT / G2PW；遇到尚未实现的语言段明确报告不支持，不删掉文本。
-2. [离线参考准备工具](experiments/2026-09-19-japanese-reference-preparation.md)已验证同一参考重算。已补两个真实日文参考的切换、身份绑定和独立官方对照；继续验证取消及后续请求恢复。开发工具依赖 Torch，普通请求不常驻辅助模型。
+2. [离线参考准备工具](experiments/2026-09-19-japanese-reference-preparation.md)已验证同一参考重算。已补两个真实日文参考的切换、身份绑定和独立官方对照；取消及后续请求恢复已有模型验证。开发工具依赖 Torch，普通请求不常驻辅助模型。
 3. [共享声学加载](experiments/2026-09-19-sovits-shared-loading.md)已减少重复校验，WeightNorm 折叠因完整收益不稳定保留为显式选项。权重常驻与请求状态释放已实测并提供公开接口，保留原模型及高精度对照。
-4. 声学前释放 GPT 状态与按阶段加载 / 卸载权重已通过，参考更换已完成两参考对照，接下来验证请求取消，继续处理可在 Mac 证明的运行边界。依赖和模型的实际文件体积见[日文运行入口](japanese-runtime.md)。[G2PW 映射权重](experiments/2026-09-19-g2pw-mapped-ort.md)的成果保留，新增中文工作继续暂缓。
+4. 声学前释放 GPT 状态与按阶段加载 / 卸载权重已通过，参考切换与计算边界取消已验证，接下来导出不依赖 Mac 绝对路径或 MLX 导入的日文验收数据包，为 Windows 固定输入重放准备。依赖和模型的实际文件体积见[日文运行入口](japanese-runtime.md)。[G2PW 映射权重](experiments/2026-09-19-g2pw-mapped-ort.md)的成果保留，新增中文工作继续暂缓。
 5. 基础链路可靠后，再独立评估精度变化与量化。CUDA Graph、Tensor Core 布局、TensorRT tactic、专用 CUDA kernel 和独显峰值均留待 Windows 实机。
 
 当剩余收益只能由 CUDA 硬件或 Metal 专用实现验证时，收尾当前证据并列出 Windows 接续事项；不为维持 Mac 工作而搭建多后端框架。最终兼容、速度、质量、常驻与峰值结论仍按同能力实验判断。

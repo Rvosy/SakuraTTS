@@ -3,14 +3,17 @@
 from pathlib import Path
 import gc
 import sys
+from threading import Event
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 import weakref
 
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from sakuratts.reference_condition import PreparedReference
+from sakuratts.generation import SynthesisCancelled
 from sakuratts.synthesis import (generate_prepared_semantic, prepare_text, synthesize,
                                  synthesize_acoustic, synthesize_prepared)
 
@@ -195,6 +198,145 @@ class SynthesisTests(unittest.TestCase):
         self.reference.manifest["identity"]["audio_sha256"] = "changed-reference"
         with self.assertRaisesRegex(ValueError, "Reference identity changed"):
             synthesize_acoustic(pending, sovits=self.sovits)
+
+    def test_cancel_before_prefill_releases_state_without_computation_or_rng_use(self):
+        rng = np.random.default_rng(12)
+        state = rng.bit_generator.state
+        with self.assertRaises(SynthesisCancelled) as caught:
+            self.request(cancel_requested=lambda: True, release_gpt_state=True, rng=rng)
+        self.assertEqual(caught.exception.stage, "before_prefill")
+        self.assertTrue(self.gpt.released)
+        self.assertFalse(hasattr(self.gpt, "inputs"))
+        self.assertFalse(hasattr(self.sovits, "inputs"))
+        self.assertEqual(state, rng.bit_generator.state)
+
+    def test_cancel_during_semantics_releases_state_and_same_models_can_retry(self):
+        expected = self.request(rng=np.random.default_rng(12))
+        expected_noise = self.sovits.inputs["noise"].copy()
+        for boundary, expected_step in (("after_prefill", 0), ("after_decode", 3), ("semantic_step", 11)):
+            with self.subTest(boundary=boundary):
+                cancelled = Event()
+                original_prefill, original_decode = self.gpt.prefill, self.gpt.decode
+
+                def prefill(*args):
+                    result = original_prefill(*args)
+                    if boundary == "after_prefill":
+                        cancelled.set()
+                    return result
+
+                def decode(token):
+                    result = original_decode(token)
+                    if boundary == "after_decode" and self.gpt.step == 3:
+                        cancelled.set()
+                    return result
+
+                def draw(index, shape):
+                    if boundary == "semantic_step" and index == 11:
+                        cancelled.set()
+                    return np.ones(shape, dtype=np.float32)
+
+                self.gpt.prefill, self.gpt.decode = prefill, decode
+                self.gpt.released = False
+                del self.sovits.inputs
+                try:
+                    with self.assertRaises(SynthesisCancelled) as caught:
+                        self.request(cancel_requested=cancelled.is_set, semantic_random_draw=draw,
+                                     release_gpt_state=True, rng=np.random.default_rng(12))
+                    self.assertEqual(caught.exception.stage, boundary)
+                    self.assertEqual(self.gpt.step, expected_step)
+                    self.assertTrue(self.gpt.released)
+                    self.assertFalse(hasattr(self.sovits, "inputs"))
+                finally:
+                    self.gpt.prefill, self.gpt.decode = original_prefill, original_decode
+                cancelled.clear()
+                actual = self.request(cancel_requested=cancelled.is_set, release_gpt_state=True,
+                                      rng=np.random.default_rng(12))
+                np.testing.assert_array_equal(expected.generation.sampled_tokens, actual.generation.sampled_tokens)
+                np.testing.assert_array_equal(expected_noise, self.sovits.inputs["noise"])
+                np.testing.assert_array_equal(expected.pcm, actual.pcm)
+
+    def test_cancel_between_phases_preserves_rng_and_does_not_decode_audio(self):
+        prepared = prepare_text("こんにちは。", "ja", self.frontend)
+        rng = np.random.default_rng(12)
+        pending = generate_prepared_semantic(prepared, self.reference, gpt=self.gpt,
+                                             early_stop_num=2700, rng=rng)
+        state = rng.bit_generator.state
+        with self.assertRaises(SynthesisCancelled) as caught:
+            synthesize_acoustic(pending, sovits=self.sovits, cancel_requested=lambda: True)
+        self.assertEqual(caught.exception.stage, "before_acoustic")
+        self.assertEqual(state, rng.bit_generator.state)
+        self.assertFalse(hasattr(self.sovits, "inputs"))
+
+    def test_cancel_during_acoustic_discards_waveform_before_pcm_and_allows_retry(self):
+        expected = self.request(rng=np.random.default_rng(12))
+        cancelled = Event()
+        original_decode = self.sovits.decode
+
+        def decode(*args, **kwargs):
+            result = original_decode(*args, **kwargs)
+            cancelled.set()
+            return result
+
+        self.sovits.decode = decode
+        with patch("sakuratts.synthesis.single_fragment_pcm") as make_pcm:
+            with self.assertRaises(SynthesisCancelled) as caught:
+                self.request(cancel_requested=cancelled.is_set, release_gpt_state=True,
+                             rng=np.random.default_rng(12))
+            self.assertEqual(caught.exception.stage, "after_acoustic")
+            self.assertTrue(self.gpt.released)
+            make_pcm.assert_not_called()
+        self.sovits.decode = original_decode
+        cancelled.clear()
+        actual = self.request(cancel_requested=cancelled.is_set, release_gpt_state=True,
+                              rng=np.random.default_rng(12))
+        np.testing.assert_array_equal(expected.generation.sampled_tokens, actual.generation.sampled_tokens)
+        np.testing.assert_array_equal(expected.pcm, actual.pcm)
+
+    def test_false_cancellation_predicate_preserves_default_output_and_rng(self):
+        default_rng, checked_rng = np.random.default_rng(12), np.random.default_rng(12)
+        expected = self.request(semantic_random_draw=None, rng=default_rng)
+        expected_noise = self.sovits.inputs["noise"].copy()
+        actual = self.request(semantic_random_draw=None, rng=checked_rng, cancel_requested=lambda: False)
+        np.testing.assert_array_equal(expected.generation.sampled_tokens, actual.generation.sampled_tokens)
+        np.testing.assert_array_equal(expected_noise, self.sovits.inputs["noise"])
+        np.testing.assert_array_equal(expected.pcm, actual.pcm)
+        self.assertEqual(default_rng.bit_generator.state, checked_rng.bit_generator.state)
+
+    def test_cancellation_does_not_replace_predicate_or_model_errors(self):
+        original_error = ValueError("original failure")
+
+        def fail():
+            raise original_error
+
+        with self.assertRaises(ValueError) as caught:
+            self.request(cancel_requested=fail, release_gpt_state=True)
+        self.assertIs(caught.exception, original_error)
+        self.assertTrue(self.gpt.released)
+        cancelled = Event()
+
+        def decode(token):
+            cancelled.set()
+            raise original_error
+
+        self.gpt.decode = decode
+        self.gpt.released = False
+        with self.assertRaises(ValueError) as caught:
+            self.request(cancel_requested=cancelled.is_set, release_gpt_state=True)
+        self.assertIs(caught.exception, original_error)
+        self.assertTrue(self.gpt.released)
+        self.assertFalse(hasattr(self.sovits, "inputs"))
+
+    def test_phase_result_does_not_retain_cancellation_closure_or_its_model(self):
+        prepared = prepare_text("こんにちは。", "ja", self.frontend)
+        predicate = lambda model=self.gpt: model is None
+        predicate_reference, model_reference = weakref.ref(predicate), weakref.ref(self.gpt)
+        pending = generate_prepared_semantic(prepared, self.reference, gpt=self.gpt,
+                                             early_stop_num=2700, cancel_requested=predicate)
+        predicate = self.gpt = None
+        gc.collect()
+        self.assertIsNone(predicate_reference())
+        self.assertIsNone(model_reference())
+        self.assertIsNotNone(synthesize_acoustic(pending, sovits=self.sovits).pcm)
 
 
 if __name__ == "__main__":
