@@ -79,6 +79,16 @@ python3 scripts/prepare_japanese_resources.py \
 
 这约 1.04 GiB 是当前文件的逻辑字节总和，未计基础 Python 解释器、引擎源码、未登记缓存、系统共享库和下载缓存；模型目录也含转换证据文件。它不是最终安装包大小或文件系统实际占用，没有用它宣称相对完整开发环境的缩减比例。ASR 和参考准备环境不计入日常合成范围。原始逐文件清单、统计脚本及退出码 0 保存在 `SakuraTTS-References/runs/20260919T145332.842142Z-japanese-runtime-footprint/`。
 
+## 在新目录组装运行环境
+
+`harness/export_japanese_runtime.py` 用于 Mac 部署实验。传入 `--venv`、上述四个 `--*-package` 和不存在的 `--output` 目录，它复制运行源码、完整资源包、依赖及默认捆绑的基础 Python，然后在最终路径创建新虚拟环境。它不下载资源、不执行模型，也不修改输入目录。
+
+导出保留 distribution 元数据和词典 / Nani 等包内资源，排除 Python 字节码缓存；不裁剪模型功能。`manifest.json` 逐文件记录来源、哈希、符号链接与逻辑字节数。默认 `--python-mode bundled` 包含解释器；显式选择 `external` 时，解释器仍是外部依赖，大小不计入目录。
+
+运行入口位于新目录的 `venv/bin/python` 和 `scripts/synthesize_japanese.py`，四个包位于 `resources/{frontend,reference,gpt,sovits}`。虚拟环境绑定创建时的绝对路径；以后再移动目录，需要重建虚拟环境。导出成功本身不等于隔离运行已通过，也不证明 Windows 部署或任意平台可搬迁。
+
+[实际隔离验证](experiments/2026-09-20-runtime-relocation.md)已完成：禁用旧源码、环境、模型、历史实验、用户缓存 / 临时目录及网络后，四条日文与原环境 WAV 逐字节相同。包含解释器与清单的安装目录为 1.070 GiB，系统库、驱动服务和生成输出另计；首轮隔离启动明显更慢，未作性能达标声明。
+
 ## 证据边界
 
 四条原始日文在固定官方随机输入下，已完成 [原文到 PCM 对照](experiments/2026-09-19-native-japanese-text-speech.md)。原报告句的 WAV 与用户此前确认正常的文件逐字节相同；这个听感结论只适用于同一文件。
