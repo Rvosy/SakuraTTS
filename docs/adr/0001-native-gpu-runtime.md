@@ -76,7 +76,7 @@ SoVITS 单独安排工作区和阶段复用。文本编码与参考投影仅在�
 
 ## 后端选择实验
 
-Mac 研发阶段已有 [MLX / Metal GPT 实验](../experiments/2026-09-19-mlx-gpt.md)、[自有历史采样](../experiments/2026-09-19-native-gpt-generation.md)和[完整声学计算](../experiments/2026-09-19-mlx-sovits-complete.md)，用于验证独立模型包、非 PyTorch 运行依赖和算子语义。原始文本与参考准备尚未接通，扩展中间结果仍有数值失败。这些实验证明部分模块可独立执行，生产后端继续依据 Windows 实测选择。
+Mac 研发阶段已有 [MLX / Metal GPT 实验](../experiments/2026-09-19-mlx-gpt.md)、[自有历史采样](../experiments/2026-09-19-native-gpt-generation.md)和[完整声学计算](../experiments/2026-09-19-mlx-sovits-complete.md)，用于验证独立模型包、非 PyTorch 运行依赖和算子语义。随后已接通[原始日文到 PCM](../experiments/2026-09-19-native-japanese-text-speech.md)，并将原始参考准备放入独立开发工具；扩展中间结果仍有数值失败。生产后端继续依据 Windows 实测选择。
 
 | 候选 | 选择理由 | 首轮必须回答的问题 |
 |---|---|---|

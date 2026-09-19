@@ -23,16 +23,16 @@
 - 中文 tokenizer 已移除 Transformers；G2PW 文本、输入打包和 CPU ONNX Session 已接成[完整拼音接口](experiments/2026-09-19-g2pw-pinyin.md)，27 组输出对照和 353 数组逐位通过。三轮单独 Session 创建、关闭后的 RSS 在约 380 MiB 趋稳，尚不能据此判断长期泄漏。[中文音素与 BERT](experiments/2026-09-19-chinese-phones.md)、[日文韵律与词典](experiments/2026-09-19-japanese-g2p.md)已完成独立语言段对照；中文成果保留，新增整链接入暂缓。
 - 准备好官方文本和参考条件后的自有 GPT → 声学 → PCM 已扩展到十例，token、停止和最终波形对照通过；仍保留独立概率和 MRTE 超差。见 [十例整链](experiments/2026-09-19-expanded-prepared-speech.md)。该路径不包含原始文本和参考准备，也不等于独立 RNG 验收。
 - [声码器逐残差对求值](experiments/2026-09-19-decoder-workspace.md)保持十例波形逐位不变，两条短句的 decoder 分配器峰值约降 45%，decoder 耗时增加约 10%–14%。结合可选 GPT 按请求释放，两条准备条件的短请求测到 622.05 MiB MLX 高水位；十例常驻策略轮则为 1,989.12 MiB。这些数据含义和条件不同，不代表完整 TTS 或统一的模型显存指标。
-- [日文原始目标文本 + 独立参考包](experiments/2026-09-19-native-japanese-text-speech.md)已接入自有生成，四例 32 次正常请求对照通过。新日文环境未安装 Torch、Transformers 或中文前端包；原始日文 WAV 与已获用户确认的样音逐字节相同。其他日文样例、独立随机生成、参考准备工具与 Windows 交付继续验收。
+- [日文原始目标文本 + 独立参考包](experiments/2026-09-19-native-japanese-text-speech.md)已接入自有生成，四例 32 次正常请求对照通过。新日文环境未安装 Torch、Transformers 或中文前端包；原始日文 WAV 与已获用户确认的样音逐字节相同。[新参考准备](experiments/2026-09-19-japanese-reference-preparation.md)已从原始音频重算出相同的五组条件，[普通日文入口](experiments/2026-09-19-japanese-cli-free-sampling.md)的两个新 seed 均正常生成。其他日文样例、新随机样音质量、更换参考和 Windows 交付继续验收。
 - 自有轻量运行时仍在研发，流式、取消、多参考 / 新模型和 Windows 干净部署未验收。
 
 ## 当前实施顺序：先完成可迁移的运行链
 
 2026-09-19 根据用户最新确认，先支持日文；中文待日文运行链、通用优化和目标平台基础完成后再单独恢复。Windows / NVIDIA CUDA 是生产重点；Mac 用来验证模型语义和可迁移的运行时结构。已有 MLX 路径继续作为可执行对照，不再把深挖 Metal 特性当作主线。严格数值失败仍保存并区分阶段；没有新证据时，不为消除个别舍入差异反复扩展 Mac 专用诊断。
 
-1. 接通原始日文文本、官方真实语言路由和日文参考包，再进入自有 GPT、SoVITS 和 PCM。日文路径按官方规则提供零 BERT 特征，不导入或加载中文 BERT / G2PW；遇到尚未实现的语言段明确报告不支持，不删掉文本。中文与混合语言暂不列入近期交付范围。
-2. 将参考准备从日常请求中移出。已完成[最小参考包](experiments/2026-09-19-reference-condition-package.md)与独立重载；新增参考可以先由依赖 Torch 的离线工具准备并退出，普通请求不常驻辅助模型。
-3. 消除重复加载、归档校验和权重静态计算。共享声学包先测量，再单独验证加载时 WeightNorm 折叠，保留原模型和高精度对照。
+1. 原始日文、真实语言路由、独立参考包到自有 GPT / SoVITS / PCM 已接通，继续补齐新随机样音质量和运行边界。日文按官方规则提供零 BERT，不导入中文 BERT / G2PW；遇到尚未实现的语言段明确报告不支持，不删掉文本。
+2. [离线参考准备工具](experiments/2026-09-19-japanese-reference-preparation.md)已验证同一参考重算。下一步验证实际更换参考、失败恢复和身份绑定；开发工具依赖 Torch，普通请求不常驻辅助模型。
+3. [共享声学加载](experiments/2026-09-19-sovits-shared-loading.md)已减少重复校验，WeightNorm 折叠因完整收益不稳定保留为显式选项。接着比较权重常驻、每次重载和请求状态释放，保留原模型及高精度对照。
 4. 按实测完善单请求 KV、阶段释放、参考特征复用与工作区，整理模型、语言资源和运行依赖的实际体积。[G2PW 映射权重](experiments/2026-09-19-g2pw-mapped-ort.md)已在 Mac CPU 降低 RSS；策略可迁移，优化文件须在目标运行库重新生成并验证。
 5. 基础链路可靠后，再独立评估精度变化与量化。CUDA Graph、Tensor Core 布局、TensorRT tactic、专用 CUDA kernel 和独显峰值均留待 Windows 实机。
 
