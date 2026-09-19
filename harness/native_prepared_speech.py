@@ -76,7 +76,7 @@ def load_case(name, official_run, acoustic):
     return data
 
 
-def request(gpt, sovits, data):
+def request(gpt, sovits, data, *, gpt_package=None):
     def draw(index, shape):
         if index >= len(data["draws"]):
             raise ValueError("Own generation exceeded the saved official draws")
@@ -86,9 +86,20 @@ def request(gpt, sovits, data):
         return noise
 
     start = time.perf_counter()
+    if gpt_package is not None:
+        gpt = MLXGPT.load(gpt_package, capacity=1024, prefill_precision="fp64")
+        mx.synchronize()
+    load_done = time.perf_counter() if gpt_package is not None else start
     generated = generate_semantic(gpt, data["phones"], data["prompt"], data["bert"],
                                   eos=data["eos"], **data["sampling"], random_draw=draw)
     semantic_done = time.perf_counter()
+    if gpt_package is not None:
+        mx.synchronize()
+        gpt = None
+        gc.collect()
+        mx.clear_cache()
+        mx.synchronize()
+    release_done = time.perf_counter() if gpt_package is not None else semantic_done
     # Use this request's output, never data['expected_semantic'].
     waveform = sovits.decode(generated.semantic, data["acoustic_phones"], data["ge"],
                              data["ge512"], data["noise"])
@@ -97,7 +108,8 @@ def request(gpt, sovits, data):
     pcm = single_fragment_pcm(waveform, sovits.sample_rate)
     finished = time.perf_counter()
     return generated, waveform, pcm, {
-        "semantic_seconds": semantic_done - start, "acoustic_seconds": acoustic_done - semantic_done,
+        "gpt_load_seconds": load_done - start, "gpt_release_seconds": release_done - semantic_done,
+        "semantic_seconds": semantic_done - load_done, "acoustic_seconds": acoustic_done - release_done,
         "output_copy_pcm_seconds": finished - acoustic_done, "prepared_request_seconds": finished - start}
 
 
@@ -120,6 +132,8 @@ def main():
     parser.add_argument("--official-conditions", type=Path, required=True)
     parser.add_argument("--gpt-package", type=Path, required=True)
     parser.add_argument("--sovits-package", type=Path, required=True)
+    parser.add_argument("--cases", nargs="+", default=["ja", "zh"])
+    parser.add_argument("--gpt-lifecycle", choices=("resident", "request"), default="resident")
     parser.add_argument("--warmup", type=int, default=2)
     parser.add_argument("--repeat", type=int, default=5)
     parser.add_argument("--mlx-cache-limit-mib", type=int)
@@ -142,10 +156,11 @@ def main():
         shutil.copy2(project / name, target)
     report = {"status": "running", "command": [sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]],
               "scope": "Saved official text/reference conditions -> own semantic history -> native waveform -> PCM; not independent original-text TTS",
-              "timing_scope": "No observers/captures, includes shared-draw lookup and output CPU copy/PCM; excludes frontend, reference preparation, file IO, validation and model loading",
+              "timing_scope": "No observers/captures; includes shared-draw lookup, output CPU copy/PCM and request-scoped GPT load/release when selected; excludes frontend, reference preparation, audio file IO, validation and resident model loading",
               "rng_scope": "Official real semantic draws, separate fixed acoustic noise; no independent RNG claim",
               "configuration": "CPU FP64 GPT prefill, GPU FP32 decode; CPU acoustic encoder, GPU flow/decoder; top_p=1, speed=1, noise_scale=0.5",
               "warmup": args.warmup, "repeat": args.repeat, "mlx_cache_limit_mib": args.mlx_cache_limit_mib,
+              "gpt_lifecycle": args.gpt_lifecycle,
               "dependencies": {name: importlib.metadata.version(name) for name in ("mlx", "mlx-metal", "numpy")},
               "source_sha256": {name: sha256(run / "source" / name) for name in files},
               "quality": {"asr": "not_run", "human_listening": "not_run"}, "cases": {}}
@@ -168,10 +183,11 @@ def main():
                                 (args.official_run, args.official_conditions)}
         report["packages"] = {str(path): sha256(path / "manifest.json") for path in
                               (args.gpt_package, args.sovits_package)}
-        inputs = {name: load_case(name, args.official_run, acoustic) for name in ("ja", "zh")}
+        inputs = {name: load_case(name, args.official_run, acoustic) for name in args.cases}
         mx.reset_peak_memory()
         load_start = time.perf_counter()
-        gpt = MLXGPT.load(args.gpt_package, capacity=1024, prefill_precision="fp64")
+        if args.gpt_lifecycle == "resident":
+            gpt = MLXGPT.load(args.gpt_package, capacity=1024, prefill_precision="fp64")
         sovits = MLXSoVITS.load(args.sovits_package, encoder_device="cpu")
         mx.synchronize()
         report["model_load_seconds"] = time.perf_counter() - load_start
@@ -180,7 +196,9 @@ def main():
             rows, all_checks = [], []
             first_waveform = None
             for iteration in range(1 + args.warmup + args.repeat):
-                generated, waveform, pcm, timings = request(gpt, sovits, data)
+                generated, waveform, pcm, timings = request(
+                    gpt, sovits, data,
+                    gpt_package=args.gpt_package if args.gpt_lifecycle == "request" else None)
                 validation = checks(generated, waveform, data)
                 if first_waveform is None:
                     first_waveform = waveform.copy()
