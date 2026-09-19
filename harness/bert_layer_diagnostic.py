@@ -136,6 +136,7 @@ def validate(args):
               "scope": "single layer and independent operations from fixed official inputs; diagnostic only"}
     shutil.copy2(__file__, run / f"validation-{args.device}-harness.py")
     shutil.copy2(PROJECT / "src/sakuratts/mlx_bert.py", run / f"validation-{args.device}-runtime.py")
+    shutil.copy2(PROJECT / "src/sakuratts/weight_storage.py", run / f"validation-{args.device}-weight_storage.py")
     for case in prepared["cases"]:
         name = case["id"]
         x = mx.array(np.load(run / f"{name}-input.npy"))

@@ -65,6 +65,7 @@ def main():
     files = ["harness/mlx_sovits_replay.py", "harness/mlx_sovits_encoder_replay.py",
              *[f"src/sakuratts/{name}.py" for name in
                ("mlx_sovits", "mlx_sovits_encoder", "mlx_sovits_flow", "mlx_sovits_decoder")]]
+    files.append("src/sakuratts/weight_storage.py")
     for name in files:
         target = run / "source" / name
         target.parent.mkdir(parents=True, exist_ok=True)

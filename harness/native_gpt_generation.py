@@ -146,7 +146,7 @@ def main():
     root = Path(__file__).resolve().parents[1]
     for relative in ("harness/native_gpt_generation.py", "src/sakuratts/mlx_gpt.py",
                      "src/sakuratts/gpt_prefill.py", "src/sakuratts/sampling.py",
-                     "src/sakuratts/generation.py"):
+                     "src/sakuratts/generation.py", "src/sakuratts/weight_storage.py"):
         target = output / "source" / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(root / relative, target)

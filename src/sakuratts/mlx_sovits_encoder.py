@@ -17,6 +17,8 @@ from pathlib import Path
 import mlx.core as mx
 import numpy as np
 
+from .weight_storage import read_fp32, validate_storage
+
 
 CODEBOOK = "quantizer.vq.layers.0._codebook.embed"
 
@@ -98,8 +100,9 @@ class MLXSoVITSEncoder:
         selected = [key for key in manifest["tensor_sources"] if key.startswith("enc_p.") or key == CODEBOOK]
         weights = {}
         with np.load(path, allow_pickle=False) as archive:
+            validate_storage(manifest, archive.files)
             for key in selected:
-                array = archive[key]
+                array = read_fp32(archive, manifest, key)
                 if array.dtype != np.float32 or list(array.shape) != manifest["tensor_sources"][key]["shape"]:
                     raise ValueError(f"Unexpected dtype/shape for {key}")
                 weights[key] = mx.array(array)

@@ -15,6 +15,8 @@ from pathlib import Path
 import mlx.core as mx
 import numpy as np
 
+from .weight_storage import read_fp32, validate_storage
+
 
 def sha256(path):
     digest = hashlib.sha256()
@@ -58,10 +60,11 @@ class MLXSoVITSDecoder:
             raise ValueError("Decoder weights checksum mismatch")
         weights = {}
         with np.load(path, allow_pickle=False) as archive:
+            validate_storage(manifest, archive.files)
             for key, spec in manifest["tensor_sources"].items():
                 if not key.startswith("dec."):
                     continue
-                value = archive[key]
+                value = read_fp32(archive, manifest, key)
                 if value.dtype != np.float32 or list(value.shape) != spec["shape"]:
                     raise ValueError(f"Unexpected decoder dtype/shape: {key}")
                 weights[key] = mx.array(value)

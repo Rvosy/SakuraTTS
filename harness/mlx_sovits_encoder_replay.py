@@ -157,7 +157,7 @@ def main():
     run = args.references.resolve() / "runs" / f"{timestamp}-mlx-sovits-encoder-{'self-test-cpu' if args.self_test else args.device}"
     source_root = run / "source"
     project = Path(__file__).resolve().parents[1]
-    files = ("harness/mlx_sovits_encoder_replay.py", "src/sakuratts/mlx_sovits_encoder.py", "requirements-mlx-candidate.txt")
+    files = ("harness/mlx_sovits_encoder_replay.py", "src/sakuratts/mlx_sovits_encoder.py", "src/sakuratts/weight_storage.py", "requirements-mlx-candidate.txt")
     for name in files:
         target = source_root / name
         target.parent.mkdir(parents=True, exist_ok=True)

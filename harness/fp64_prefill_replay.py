@@ -84,7 +84,7 @@ def main():
     run = args.references / "runs" / f"{timestamp}-fp64-prefill-{'cpu-only' if args.cpu_prefill_only else 'mlx-decode'}"
     run.mkdir(parents=True, exist_ok=False)
     root = Path(__file__).resolve().parents[1]
-    for name in ("harness/fp64_prefill_replay.py", "harness/mlx_gpt_replay.py", "src/sakuratts/mlx_gpt.py", "src/sakuratts/gpt_prefill.py"):
+    for name in ("harness/fp64_prefill_replay.py", "harness/mlx_gpt_replay.py", "src/sakuratts/mlx_gpt.py", "src/sakuratts/gpt_prefill.py", "src/sakuratts/weight_storage.py"):
         destination = run / "source" / name
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(root / name, destination)

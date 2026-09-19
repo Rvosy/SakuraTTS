@@ -190,7 +190,7 @@ def main():
     run = args.references.resolve() / "runs" / f"{timestamp}-mlx-sovits-flow-{'self-test-cpu' if args.self_test else args.device}"
     project = Path(__file__).resolve().parents[1]
     source_root = run / "source"
-    files = ("harness/mlx_sovits_flow_replay.py", "src/sakuratts/mlx_sovits_flow.py", "requirements-mlx-candidate.txt")
+    files = ("harness/mlx_sovits_flow_replay.py", "src/sakuratts/mlx_sovits_flow.py", "src/sakuratts/weight_storage.py", "requirements-mlx-candidate.txt")
     for name in files:
         target = source_root / name
         target.parent.mkdir(parents=True, exist_ok=True)

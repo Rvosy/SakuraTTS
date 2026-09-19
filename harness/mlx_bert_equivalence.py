@@ -185,7 +185,7 @@ def prepare(args):
         "conversion_python": sys.version, "torch": torch.__version__, "transformers": metadata.version("transformers"),
     }
     write_json(package / "manifest.json", manifest)
-    for source_file in (Path(__file__), PROJECT / "src/sakuratts/mlx_bert.py", PROJECT / "src/sakuratts/bert_features.py"):
+    for source_file in (Path(__file__), PROJECT / "src/sakuratts/mlx_bert.py", PROJECT / "src/sakuratts/bert_features.py", PROJECT / "src/sakuratts/weight_storage.py"):
         shutil.copy2(source_file, run / source_file.name)
     write_json(run / "prepared.json", report)
     print(f"PREPARED={run}", flush=True)
@@ -202,6 +202,7 @@ def validate(args):
         raise FileExistsError("Validation artifacts already exist; prepare a new run to preserve them")
     shutil.copy2(Path(__file__), run / f"validation-{args.device}-harness.py")
     shutil.copy2(PROJECT / "src/sakuratts/mlx_bert.py", run / f"validation-{args.device}-runtime.py")
+    shutil.copy2(PROJECT / "src/sakuratts/weight_storage.py", run / f"validation-{args.device}-weight_storage.py")
     prepared = json.loads((run / "prepared.json").read_text())
     model = MLXBertFeatures.load(run / "package")
     report = {"status": "running", "device": str(mx.default_device()), "mlx": metadata.version("mlx"),

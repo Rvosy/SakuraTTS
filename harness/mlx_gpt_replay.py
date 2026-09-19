@@ -198,6 +198,7 @@ def main():
         "harness/mlx_gpt_replay.py": Path(__file__).resolve(),
         "src/sakuratts/mlx_gpt.py": project_root / "src/sakuratts/mlx_gpt.py",
         "src/sakuratts/gpt_prefill.py": project_root / "src/sakuratts/gpt_prefill.py",
+        "src/sakuratts/weight_storage.py": project_root / "src/sakuratts/weight_storage.py",
         "requirements-mlx-candidate.txt": project_root / "requirements-mlx-candidate.txt",
     }
     for name, original in snapshot_files.items():

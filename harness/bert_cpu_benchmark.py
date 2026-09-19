@@ -84,6 +84,10 @@ def benchmark(args):
     runtime_file = PROJECT / "src/sakuratts" / ("bert_features.py" if args.backend == "torch" else "mlx_bert.py")
     shutil.copy2(runtime_file, output / runtime_file.name)
     report["runtime_sha256"] = sha256(runtime_file)
+    if args.backend != "torch":
+        storage_helper = PROJECT / "src/sakuratts/weight_storage.py"
+        shutil.copy2(storage_helper, output / storage_helper.name)
+        report["weight_storage_sha256"] = sha256(storage_helper)
     write_json(output / "result.json", report)
     try:
         import_started = time.perf_counter()

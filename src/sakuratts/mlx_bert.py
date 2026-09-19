@@ -12,6 +12,8 @@ from pathlib import Path
 import mlx.core as mx
 import numpy as np
 
+from .weight_storage import read_fp32, validate_storage
+
 
 def sha256(path):
     digest = hashlib.sha256()
@@ -45,7 +47,12 @@ class MLXBertFeatures:
         weights_file = package / manifest["weights"]["file"]
         if sha256(weights_file) != manifest["weights"]["sha256"]:
             raise ValueError("BERT feature weights do not match the manifest")
-        weights = mx.load(weights_file)
+        with np.load(weights_file, allow_pickle=False) as archive:
+            validate_storage(manifest, archive.files)
+            if manifest["weights"].get("storage") is None:
+                weights = mx.load(weights_file)
+            else:
+                weights = {name: mx.array(read_fp32(archive, manifest, name)) for name in archive.files}
         mx.eval(*weights.values())
         return cls(manifest["config"], weights)
 

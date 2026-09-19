@@ -8,22 +8,30 @@ FP32 once for the GPU decoder. No persistent FP64 weight copy is retained.
 from __future__ import annotations
 
 import time
+import json
+from pathlib import Path
 
 import numpy as np
 
+from .weight_storage import read_fp32, validate_storage
 
-def prefill_fp64(weights_file, config, phones, prompt, bert, measure=False):
+
+def prefill_fp64(weights_file, config, phones, prompt, bert, measure=False, *, manifest=None):
     """Return rounded FP32 KV/logits after full CPU float64 arithmetic."""
     width, heads = config["hidden_dim"], config["heads"]
     head_dim = width // heads
     t, p = phones.shape[1], prompt.shape[1]
     started = time.perf_counter() if measure else None
     weight_seconds = 0.0
+    if manifest is None:
+        manifest_file = Path(weights_file).parent / "manifest.json"
+        manifest = json.loads(manifest_file.read_text()) if manifest_file.exists() else {"weights": {}}
     with np.load(weights_file, allow_pickle=False) as archive:
+        validate_storage(manifest, archive.files)
         def weight(name):
             nonlocal weight_seconds
             start = time.perf_counter() if measure else None
-            value = archive[name].astype(np.float64)
+            value = read_fp32(archive, manifest, name).astype(np.float64)
             if measure:
                 weight_seconds += time.perf_counter() - start
             return value
@@ -73,6 +81,5 @@ def prefill_fp64(weights_file, config, phones, prompt, bert, measure=False):
         "cpu_compute_and_housekeeping_seconds": total - weight_seconds if measure else None,
         "cpu_retained_fp32_kv_bytes": sum(value.nbytes for value in keys + values),
         "precision": "All prefill arithmetic float64; completed KV and logits rounded once to float32",
-        "weights": "Read original converted FP32 tensors per layer; no persistent float64 weight copy",
+        "weights": "Read or losslessly expand original FP32 tensors per layer, then cast to float64; no persistent float64 weight copy",
     }
-

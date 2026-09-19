@@ -308,7 +308,7 @@ def main():
     source_files = ["harness/sovits_benchmark.py"]
     if args.backend == "mlx":
         source_files += ["src/sakuratts/mlx_sovits.py", "src/sakuratts/mlx_sovits_encoder.py",
-                         "src/sakuratts/mlx_sovits_flow.py", "src/sakuratts/mlx_sovits_decoder.py", "requirements-mlx-candidate.txt"]
+                         "src/sakuratts/mlx_sovits_flow.py", "src/sakuratts/mlx_sovits_decoder.py", "src/sakuratts/weight_storage.py", "requirements-mlx-candidate.txt"]
     for name in source_files:
         destination = snapshot_root / name
         destination.parent.mkdir(parents=True, exist_ok=True)

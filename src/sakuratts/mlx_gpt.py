@@ -20,6 +20,8 @@ import time
 import mlx.core as mx
 import numpy as np
 
+from .weight_storage import read_fp32, validate_storage
+
 
 def sha256(path):
     digest = hashlib.sha256()
@@ -44,6 +46,7 @@ class MLXGPT:
         if any(value.dtype != mx.float32 for value in weights.values()):
             raise ValueError("This candidate runtime accepts only FP32 packages")
         self.weights_file = None
+        self.weight_manifest = None
         self.prefill_precision = "fp32"
         self.prefill_profile = None
         self.reset()
@@ -58,10 +61,16 @@ class MLXGPT:
         path = package / manifest["weights"]["file"]
         if sha256(path) != manifest["weights"]["sha256"]:
             raise ValueError("Converted weight archive hash mismatch")
-        weights = mx.load(path)
+        with np.load(path, allow_pickle=False) as archive:
+            validate_storage(manifest, archive.files)
+            if manifest["weights"].get("storage") is None:
+                weights = mx.load(path)
+            else:
+                weights = {name: mx.array(read_fp32(archive, manifest, name)) for name in archive.files}
         mx.eval(*weights.values())
         model = cls(manifest["config"], weights, capacity)
         model.weights_file = path
+        model.weight_manifest = manifest
         model.prefill_precision = prefill_precision
         return model
 
@@ -147,7 +156,7 @@ class MLXGPT:
         self.length = 0
         self.text_length = phones.shape[1]
         first, keys, values, stages = prefill_fp64(
-            self.weights_file, self.config, phones, prompt, bert, measure=profile)
+            self.weights_file, self.config, phones, prompt, bert, measure=profile, manifest=self.weight_manifest)
         started = time.perf_counter() if profile else None
         self.length = phones.shape[1] + prompt.shape[1]
         padding = ((0, 0), (0, 0), (0, self.capacity - self.length), (0, 0))

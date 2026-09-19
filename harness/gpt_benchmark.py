@@ -309,7 +309,7 @@ def main():
     snapshot_root = run / "source"
     source_files = ["harness/gpt_benchmark.py"]
     if args.backend.startswith("mlx"):
-        source_files += ["src/sakuratts/mlx_gpt.py", "requirements-mlx-candidate.txt"]
+        source_files += ["src/sakuratts/mlx_gpt.py", "src/sakuratts/weight_storage.py", "requirements-mlx-candidate.txt"]
     if args.backend == "mlx-fp64-prefill":
         source_files += ["src/sakuratts/gpt_prefill.py"]
     for name in source_files:
