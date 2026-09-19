@@ -33,6 +33,10 @@ SAKURA_REFS=../SakuraTTS-References
 
 CLI 默认 `--model-policy staged`：完成语义生成后卸载 GPT，再加载 SoVITS。`--model-policy simultaneous` 保留两模型一起加载的对照方式。两者生成规则相同；[同条件实测](experiments/2026-09-19-native-staged-loading.md)中四例 WAV 保持相同，长句请求内 MLX 分配器峰值约少 304 MiB、耗时增加约 51 ms。这是 Mac 数据，不能推作 NVIDIA 显存结论。
 
+`--bind-reference` 是另一个可选项，默认关闭。它在加载 SoVITS 时先算出当前参考的五项声学投影，再跳过对应的 14 个常驻权重。JSON 的 `runtime_policy.bind_reference` 记录选择，`reference_projection_seconds` 是 `sovits_load_seconds` 的子项，不重复累加。Python 对应 `MLXSoVITS.load(..., reference=reference)`；绑定后换参考须新建实例，错用参考会报错。原模型包和完整权重对照路径保留，安装体积不会因此缩小。
+
+绑定加载会产生临时工作区。CLI 在加载完成并同步后清理空闲分配器缓存，这段耗时也包含在 `sovits_load_seconds` 内；Python 模型加载器本身不清理调用方的全局缓存。需要保留模型的宿主应分别测活跃内存和缓存，不能仅凭前者下降判断总占用。
+
 Python 调用方可用 `generate_prepared_semantic` 与 `synthesize_acoustic` 分开安排加载；阶段结果绑定目标音素、参考条件和同一个 RNG，不持有 GPT 模型。调用方负责完成在途工作并卸载模型，阶段计算时间不含中间加载和卸载。既有 `synthesize_prepared` 与权重常驻方式继续可用。
 
 Python 接口可通过 `cancel_requested=event.is_set` 请求取消，并捕获 `sakuratts.generation.SynthesisCancelled` 查看取消阶段。它在语义步和完整声学计算的边界检查；声学已经开始时，要等该次计算返回，结果会被丢弃。取消不会返回部分 PCM，也不会自动卸载调用方持有的模型。分阶段调用时须向两个接口分别传入谓词。CLI 当前没有新增取消协议，宿主播放队列与 Windows 的打断延迟仍待集成验证。
@@ -79,7 +83,7 @@ python3 scripts/prepare_japanese_resources.py \
 
 四条原始日文在固定官方随机输入下，已完成 [原文到 PCM 对照](experiments/2026-09-19-native-japanese-text-speech.md)。原报告句的 WAV 与用户此前确认正常的文件逐字节相同；这个听感结论只适用于同一文件。
 
-独立随机生成另行记录，不继承固定回放的音质结论。当前完整请求计时包含前端、模型加载和释放；导入、初始包校验与输出写盘另列。完整 WAV 生成时间不等于流式首包时间，Apple 统一内存计数不等于 NVIDIA 显存。阶段释放、两参考切换和 Python 计算边界取消已有各自实验；下一步整理便携验收数据，再在 Windows 实机验证后端和 GPU 执行优化。
+独立随机生成另行记录，不继承固定回放的音质结论。当前完整请求计时包含前端、模型加载和释放；导入、初始包校验与输出写盘另列。完整 WAV 生成时间不等于流式首包时间，Apple 统一内存计数不等于 NVIDIA 显存。阶段释放、两参考切换、Python 计算边界取消及[便携验收包](windows-validation.md)已有各自记录；Windows 后端和 GPU 执行优化仍待实机验证。
 
 Python 调用方已经可以在多条请求之间复用 `MLXGPT` / `MLXSoVITS`，每条调用 `prepare_text` 和 `synthesize_prepared`。生成完成或请求失败后，可显式调用 `gpt.release_request_state()` 丢弃本条 KV、位置和诊断状态，保留权重；下一次 Decode 必须先重新 Prefill。方法不替调用方清空分配器缓存或卸载模型。[三策略实测](experiments/2026-09-19-native-model-lifecycle.md)保存了连续请求的速度、空闲占用和失败恢复结果。
 

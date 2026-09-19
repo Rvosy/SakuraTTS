@@ -106,3 +106,60 @@ class PreparedReference:
                 raise ValueError(f"Reference array metadata or SHA-256 mismatch: {name}")
             array.setflags(write=False)
         return cls(manifest=manifest, **arrays)
+
+
+@dataclass(frozen=True)
+class BoundAcousticReference:
+    """Immutable reference identity and CPU conditions for one acoustic model.
+
+    The byte-backed arrays cannot be made writable. This object never owns a
+    model or the caller's mutable manifest, and switching requires a new model.
+    """
+    identity_json: str
+    ge: np.ndarray
+    ge512: np.ndarray
+    ge_sha256: str
+    ge512_sha256: str
+
+    @staticmethod
+    def _condition(value, name, shape):
+        value = np.asarray(value)
+        if value.dtype != np.float32 or value.shape != shape or not np.isfinite(value).all():
+            raise ValueError(f"Expected finite FP32 {name} with shape {shape}")
+        return value
+
+    @classmethod
+    def from_reference(cls, reference, model_manifest):
+        if not isinstance(reference, PreparedReference):
+            raise TypeError("Binding requires a PreparedReference")
+        identity = reference.manifest["identity"]
+        if (reference.manifest["model_family"] != "v2Pro"
+                or model_manifest["config"]["model"]["version"] != "v2Pro"
+                or identity["reference_language"] != "ja"):
+            raise ValueError("Binding requires the validated V2Pro Japanese reference")
+        source = model_manifest["source"]
+        if (identity["sovits_checkpoint_sha256"] != source["checkpoint_sha256"]
+                or identity["official_commit"] != source["official_commit"]):
+            raise ValueError("Loaded sovits model differs from the prepared reference")
+        snapshots = {}
+        for name, shape in (("ge", (1, 1024, 1)), ("ge512", (1, 512, 1))):
+            value = cls._condition(getattr(reference, name), name, shape)
+            snapshots[name] = np.frombuffer(value.tobytes(order="C"), dtype=np.float32).reshape(shape)
+        return cls(json.dumps(identity, sort_keys=True, ensure_ascii=False),
+                   snapshots["ge"], snapshots["ge512"],
+                   sha256_array(snapshots["ge"]), sha256_array(snapshots["ge512"]))
+
+    def validate_conditions(self, ge, ge512):
+        for name, value in (("ge", ge), ("ge512", ge512)):
+            expected = getattr(self, name)
+            value = self._condition(value, name, expected.shape)
+            if sha256_array(value) != getattr(self, name + "_sha256"):
+                raise ValueError(f"Bound acoustic reference {name} differs; load a new model for this reference")
+
+    def validate_reference(self, reference):
+        if not isinstance(reference, PreparedReference):
+            raise TypeError("Binding requires a PreparedReference")
+        if (reference.manifest["model_family"] != "v2Pro"
+                or json.dumps(reference.manifest["identity"], sort_keys=True, ensure_ascii=False) != self.identity_json):
+            raise ValueError("Bound acoustic reference identity differs; load a new model for this reference")
+        self.validate_conditions(reference.ge, reference.ge512)

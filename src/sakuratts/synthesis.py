@@ -159,6 +159,7 @@ def synthesize_acoustic(request: PreparedSemantic, *, sovits, speed=1.0, noise_s
     if reference.manifest["identity"] != request.reference_identity:
         raise ValueError("Reference identity changed between semantic and acoustic execution")
     _validate_model(reference, "sovits", sovits.encoder.manifest)
+    sovits.validate_reference(reference)
     check_cancelled(cancel_requested, "before_acoustic")
     config = sovits.encoder.manifest["config"]
     start = time.perf_counter()

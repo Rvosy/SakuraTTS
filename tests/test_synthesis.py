@@ -48,6 +48,9 @@ class SoVITS:
         "config": {"model": {"version": "v2Pro", "inter_channels": 192}, "semantic_upsample_factor": 2},
     })
 
+    def validate_reference(self, reference):
+        pass
+
     def decode(self, semantic, phones, ge, ge512, noise, **parameters):
         self.inputs = dict(semantic=semantic.copy(), phones=phones.copy(), noise=noise.copy(), parameters=parameters)
         return np.asarray([[[0, .5, -.5, 0]]], dtype=np.float32)
@@ -179,6 +182,23 @@ class SynthesisTests(unittest.TestCase):
             synthesize_acoustic(pending, sovits=other)
         self.assertEqual(state, rng.bit_generator.state)
         self.assertFalse(hasattr(other, "inputs"))
+
+    def test_bound_acoustic_reference_mismatch_precedes_rng_and_decode(self):
+        prepared = prepare_text("こんにちは。", "ja", self.frontend)
+        rng = np.random.default_rng(8)
+        pending = generate_prepared_semantic(prepared, self.reference, gpt=self.gpt,
+                                             early_stop_num=2700, rng=rng)
+        state = rng.bit_generator.state
+
+        def reject(reference):
+            self.assertIs(reference, pending.reference)
+            raise ValueError("Acoustic reference binding mismatch")
+
+        self.sovits.validate_reference = reject
+        with self.assertRaisesRegex(ValueError, "binding mismatch"):
+            synthesize_acoustic(pending, sovits=self.sovits)
+        self.assertEqual(state, rng.bit_generator.state)
+        self.assertFalse(hasattr(self.sovits, "inputs"))
 
     def test_explicit_replay_does_not_consume_shared_rng(self):
         rng = np.random.default_rng(42)

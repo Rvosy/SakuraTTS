@@ -41,12 +41,12 @@ class SoVITSPackage:
             validate_storage(manifest, archive.files)
             yield cls(manifest, archive)
 
-    def tensors(self, *prefixes, names=()):
+    def tensors(self, *prefixes, names=(), exclude=()):
         """Yield selected exact FP32 arrays; the caller owns backend placement.
 
         Each component consumes a disjoint prefix. Arrays are streamed rather
         than retained as a second full CPU copy of the acoustic weights.
         """
         for name in self.manifest["tensor_sources"]:
-            if name in names or name.startswith(prefixes):
+            if name not in exclude and (name in names or name.startswith(prefixes)):
                 yield name, read_fp32(self._archive, self.manifest, name)

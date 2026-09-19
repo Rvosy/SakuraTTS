@@ -127,10 +127,15 @@ def run(args, report):
     def load_acoustic():
         start = time.perf_counter()
         model = MLXSoVITS.load(packages["sovits"], encoder_device="cpu", encoder_softmax="fp32",
-                               fold_weight_norm=False)
+                               fold_weight_norm=False, reference=reference if args.bind_reference else None)
         mx.synchronize()
+        cache_release_start = time.perf_counter()
+        if args.bind_reference:
+            mx.clear_cache()
+        report["timings"]["acoustic_load_cache_release_seconds"] = time.perf_counter() - cache_release_start
         elapsed = time.perf_counter() - start
         report["timings"]["sovits_load_seconds"] = elapsed
+        report["timings"]["reference_projection_seconds"] = model.reference_projection_seconds
         report["timings"]["synthesis_load_seconds"] += elapsed
         return model
 
@@ -220,6 +225,8 @@ def main():
     parser.add_argument("--capacity", type=int, default=1024, help="GPT KV capacity; overflow is an explicit error")
     parser.add_argument("--model-policy", choices=("simultaneous", "staged"), default="staged",
                         help="Unload GPT before loading SoVITS (default), or load both models together")
+    parser.add_argument("--bind-reference", action="store_true",
+                        help="Bind acoustic reference projections and omit their weights; requires reloading to change reference")
     args = parser.parse_args()
     if (not args.text.strip() or args.seed < 0 or args.top_k < 1 or args.capacity < 1
             or args.early_stop_num < -1
@@ -244,7 +251,9 @@ def main():
         "validation_scope": "Only Suzakuin Momiji V2Pro has been validated; accepting another package is not a compatibility claim. The early-stop threshold is an explicit request parameter, not derived from package metadata.",
         "precision": {"gpt_prefill": "CPU FP64", "gpt_decode": "GPU FP32", "acoustic_encoder": "CPU FP32",
                       "flow_decoder": "GPU FP32", "fold_weight_norm": False},
-        "runtime_policy": {"release_gpt_state_before_acoustic": True, "model_policy": args.model_policy},
+        "runtime_policy": {"release_gpt_state_before_acoustic": True, "model_policy": args.model_policy,
+                           "bind_reference": args.bind_reference,
+                           "clear_acoustic_load_cache": args.bind_reference},
         "lifecycle": "Release frontend before synthesis models; discard GPT request KV after semantics. Staged policy unloads GPT before loading SoVITS; simultaneous policy unloads both after waveform generation. Shared Nani/Sudachi caches may remain until process exit.",
         "timing_scope": "Complete request includes frontend/model load, computation and release. Package validation, initial module imports and file output are separate. No diagnostic boundary sampling. Not a whole-process cold-start or streaming first-packet measurement.",
         "quality": {"asr": "not_run", "human_listening": "not_run"}, "timings": {},

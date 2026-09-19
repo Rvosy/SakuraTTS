@@ -52,7 +52,8 @@ def prepare(args):
     if any(metadata.version(name) != version for name, version in source["dependencies"].items()):
         raise ValueError("Use the same dependency versions as the baseline")
     config = dict(source["config"], baseline_run=str(baseline), policy=args.policy,
-                  mode=args.mode, epochs=args.epochs, warmup=args.warmup, repeat=args.repeat)
+                  mode=args.mode, epochs=args.epochs, warmup=args.warmup, repeat=args.repeat,
+                  bind_reference=args.bind_reference)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     run = args.references.resolve() / "runs" / (stamp + "-native-staged-lifecycle-" + args.policy + "-" + args.mode)
     run.mkdir(parents=True, exist_ok=False)
@@ -83,7 +84,7 @@ def prepare(args):
         source_sha256={name: sha256_file(run / "source" / name) for name in files},
         resource_sha256=resources, cases_sha256=sha256_file(run / "cases.json"),
         reference_identity=source["reference_identity"], dependencies=source["dependencies"],
-        scope="Four unchanged raw Japanese requests, original prepared reference, shared official draws/noise; per-request simultaneous versus staged model loading"))
+        scope="Four unchanged raw Japanese requests, original prepared reference, shared official draws/noise; per-request model loading with explicit stage and reference-binding policies"))
     print(json.dumps(dict(run=str(run), status="prepared")))
 
 
@@ -179,11 +180,13 @@ def worker(args):
         started = time.perf_counter()
         model = (DiagnosticSoVITS if diagnostic else MLXSoVITS).load(
             paths["sovits_package"], encoder_device="cpu", encoder_softmax=config["encoder_softmax"],
-            fold_weight_norm=False)
+            fold_weight_norm=False, reference=reference if config["bind_reference"] else None)
         if diagnostic:
             model.decode_entered = False
             model.decode_entry_memory = None
         mx.synchronize()
+        if config["bind_reference"]:
+            mx.clear_cache()
         return model, time.perf_counter() - started
 
     def text_phase(case):
@@ -443,6 +446,8 @@ def main():
     preparation.add_argument("--baseline-run", type=Path, required=True)
     preparation.add_argument("--policy", choices=POLICIES, required=True)
     preparation.add_argument("--mode", choices=("normal", "diagnostic"), required=True)
+    preparation.add_argument("--bind-reference", action="store_true",
+                             help="Bind SoVITS projections to the reference before loading remaining weights")
     preparation.add_argument("--epochs", type=int, default=2)
     preparation.add_argument("--warmup", type=int, default=1)
     preparation.add_argument("--repeat", type=int, default=3)

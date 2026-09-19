@@ -4,12 +4,13 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 from sakuratts.sovits_package import SoVITSPackage, sha256
-from sakuratts.weight_storage import LOSSLESS_STORAGE, array_sha256
+from sakuratts.weight_storage import LOSSLESS_STORAGE, array_sha256, read_fp32
 
 
 class SoVITSPackageTests(unittest.TestCase):
@@ -54,6 +55,17 @@ class SoVITSPackageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'checksum'):
             with SoVITSPackage.open(self.path):
                 self.fail('corrupt package was opened')
+
+    def test_excluded_weights_are_not_read_even_when_named_and_prefix_selected(self):
+        self.package({'flow.condition': np.array([1], dtype=np.float32),
+                      'flow.other': np.array([2], dtype=np.float32),
+                      'dec.condition': np.array([3], dtype=np.float32)})
+        with SoVITSPackage.open(self.path) as source:
+            with patch('sakuratts.sovits_package.read_fp32', wraps=read_fp32) as read:
+                selected = dict(source.tensors('flow.', names=('flow.condition', 'dec.condition'),
+                                               exclude=('flow.condition', 'dec.condition')))
+        self.assertEqual(set(selected), {'flow.other'})
+        self.assertEqual([call.args[-1] for call in read.call_args_list], ['flow.other'])
 
     def test_undeclared_tensor_rejected(self):
         manifest = self.package({'flow.a': np.array([1], dtype=np.float32)})

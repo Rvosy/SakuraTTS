@@ -54,7 +54,8 @@
 | 可搬迁的日文后端验收 | 四例 NumPy 包改名搬迁后通过校验，731 步历史与四条最终波形通过；概率与默认 MRTE 失败保留，见[验收包](../experiments/2026-09-20-portable-validation.md) | Windows / CUDA 执行、完整前端、参考准备与质量验收；离线格式通过不等于后端兼容 |
 | 日文包的 UTF-8 元数据 | 模拟 CP932 / CP936 默认编码下四个真实包内容一致，真实日文 CLI 均退出 0；见[编码回归](../experiments/2026-09-20-utf8-package-portability.md) | 测试仍在 Mac；Windows 文件系统、依赖与 CUDA 待验 |
 | 声学参考投影复用实验 | 四例固定 semantic 的 A/B 参考探针，48 次诊断 / 264 次正常调用的阶段与 PCM 位一致；见[热缓存](../experiments/2026-09-20-reference-projection-cache.md) | 小幅声学速度收益，切换有代价、常驻增加；未加入产品，未覆盖 B 自然整链、其他模型或 CUDA |
-| 声学参考绑定与条件权重省载 | 独立 Harness 的 A→B→A 四例阶段 / PCM 位一致，空闲 active 少 26.023 MiB；真实 GPT 四例历史与音频保持，见[绑定实验](../experiments/2026-09-20-bound-reference-projection.md) | 产品完整请求另验；只覆盖当前 FP32 V2Pro，B 为声学探针，原有 MRTE 超差保留；不代表安装体积或 CUDA 显存改善 |
+| 声学参考绑定与条件权重省载 | 独立 Harness 的 A→B→A 四例阶段 / PCM 位一致，空闲 active 少 26.023 MiB；真实 GPT 四例历史与音频保持，见[绑定实验](../experiments/2026-09-20-bound-reference-projection.md) | 该数值只属于独立 Harness，产品结果见下行；B 为声学探针，原有 MRTE 超差保留；不代表安装体积或 CUDA 显存改善 |
+| 日文参考绑定产品选项 | `--bind-reference` 的四例 112 次完整请求、8 次失败恢复及 4 次 CLI 通过；24 组绑定阶段 / PCM 位一致，参考错配、取消、半加载失败恢复通过；见[产品对照](../experiments/2026-09-20-bound-reference-runtime.md) | 三例整请求 MLX peak 少 25.992 MiB、短句不变；RSS 与安装体积未改善。默认完整权重保留，B 仍为声学探针，CUDA 待验 |
 | 日文多句 | 官方和 Lite 均生成文件；Lite 有漏句和助词读音反馈 | 固定历史 121 步 Lite logits 完全一致；指定官方 / official_text 的开头和助词经确认；后续官方 / 自有整链两条对应日文样音的全文和音色也获确认，扩展样例待验 |
 | 中文多句，BERT 启用 | 官方和 Lite 均生成文件；Lite 有开头发音反馈 | 固定历史 147 步 Lite logits 完全一致；BERT 输入差异已定位；指定官方 / official_text 的“你好”经确认；后续官方 / 自有整链两条对应中文样音的全文和音色也获确认，扩展样例待验 |
 | 中、日文单独短句与长句 | 官方均已生成并保存 trace；纯 FP32 MLX 日文长句第 329 步超差，高精度 Prefill 通过原容差 | prepared 整链最终波形已通过；采样概率 / 声学中间量的已知失败保留，扩展语音质量待验 |

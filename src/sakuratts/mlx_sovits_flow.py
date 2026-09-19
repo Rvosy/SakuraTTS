@@ -31,6 +31,7 @@ class MLXSoVITSFlow:
         self.weights = weights
         self.modules = manifest["modules"]
         self.weight_norm = manifest["weight_norm"]
+        self._reference_projections = {}
         self.channels = int(manifest["config"]["model"]["inter_channels"])
         self.gin_channels = int(manifest["config"]["model"]["gin_channels"])
         self.couplings = sorted(int(key.split(".")[2]) for key in self.modules
@@ -54,13 +55,17 @@ class MLXSoVITSFlow:
             return cls.from_package(source, fold_weight_norm=fold_weight_norm)
 
     @classmethod
-    def from_package(cls, source, *, fold_weight_norm=False):
-        weights = {name: mx.array(array) for name, array in source.tensors("flow.")}
+    def from_package(cls, source, *, fold_weight_norm=False, reference_projections=None):
+        projections = {} if reference_projections is None else reference_projections
+        excluded = {name for name in source.manifest["tensor_sources"]
+                    if any(name.startswith(prefix + ".") for prefix in projections)}
+        weights = {name: mx.array(array) for name, array in source.tensors("flow.", exclude=excluded)}
         mx.eval(*weights.values())
         model = cls(source.manifest, weights)
+        model._reference_projections = dict(projections)
         if fold_weight_norm:
             for prefix, spec in model.weight_norm.items():
-                if not prefix.startswith("flow."):
+                if not prefix.startswith("flow.") or prefix in projections:
                     continue
                 weight = weight_normalize(weights[spec["g"]], weights[spec["v"]], spec["dim"])
                 # Use the current execution stream and original FP32 order.
@@ -73,6 +78,8 @@ class MLXSoVITSFlow:
 
     def conv(self, x, prefix):
         """NTC activations, with checkpoint OIK weights."""
+        if prefix in self._reference_projections:
+            return self._reference_projections[prefix]
         spec = self.modules[prefix]
         if prefix in self.weight_norm:
             norm = self.weight_norm[prefix]

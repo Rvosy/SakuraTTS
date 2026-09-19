@@ -33,6 +33,7 @@ class MLXSoVITSDecoder:
         self.modules = manifest["modules"]
         self.norms = manifest["weight_norm"]
         self.weights = weights
+        self._reference_projections = {}
         self.upsamples = len(self.config["upsample_rates"])
         self.kernels = len(self.config["resblock_kernel_sizes"])
         if self.config["resblock"] != "1" or any(len(values) != 3 for values in self.config["resblock_dilation_sizes"]):
@@ -46,13 +47,17 @@ class MLXSoVITSDecoder:
             return cls.from_package(source, fold_weight_norm=fold_weight_norm)
 
     @classmethod
-    def from_package(cls, source, *, fold_weight_norm=False):
-        weights = {name: mx.array(array) for name, array in source.tensors("dec.")}
+    def from_package(cls, source, *, fold_weight_norm=False, reference_projections=None):
+        projections = {} if reference_projections is None else reference_projections
+        excluded = {name for name in source.manifest["tensor_sources"]
+                    if any(name.startswith(prefix + ".") for prefix in projections)}
+        weights = {name: mx.array(array) for name, array in source.tensors("dec.", exclude=excluded)}
         mx.eval(*weights.values())
         model = cls(source.manifest, weights)
+        model._reference_projections = dict(projections)
         if fold_weight_norm:
             for prefix, spec in model.norms.items():
-                if not prefix.startswith("dec."):
+                if not prefix.startswith("dec.") or prefix in projections:
                     continue
                 # Normalize checkpoint OIK/IOK axes before layout conversion.
                 weight = normalized_weight(weights[spec["v"]], weights[spec["g"]], spec["dim"])
@@ -69,6 +74,8 @@ class MLXSoVITSDecoder:
         return self.weights[prefix + ".weight"]
 
     def conv(self, x, prefix):
+        if prefix in self._reference_projections:
+            return self._reference_projections[prefix]
         spec, weight = self.modules[prefix], self.weight(prefix)
         if spec["type"] == "ConvTranspose1d":
             # Original [input, output, kernel] -> MLX [output, kernel, input].
