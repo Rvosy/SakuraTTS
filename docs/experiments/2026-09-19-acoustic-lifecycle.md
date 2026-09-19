@@ -40,6 +40,26 @@
 
 RSS 边界与生命周期峰值在本组上升，需要继续区分 CPU 内存、GPU 统一内存驻留和声学临时空间。参数字节下降不能替代实际资源指标。以上 MPS 值均是执行边界，不是真实峰值，也不是 NVIDIA 独立显存。
 
+## 独立资源采样复查
+
+随后各启动一个新进程，以相同的两条输入、每条 4 次请求运行控制和候选。此轮启用 10 ms 轮询，没有诊断 trace，也没有其他项目重 CPU/GPU 推理并行。8 份 WAV 仍全部逐字节相同，两进程实际退出码均为 0。采样时间不用于速度结论。
+
+| 资源口径 | 控制 | 候选 |
+|---|---:|---:|
+| 全程采样 allocated 最大值 | 2548.34 MiB | 2519.09 MiB |
+| 请求阶段采样 allocated 最大值 | 2028.22 MiB | 1885.64 MiB |
+| 全程采样 driver 最大值 | 6451.33 MiB | 6435.34 MiB |
+| 全程采样 RSS 最大值 | 3004.53 MiB | 3046.23 MiB |
+| OS 进程全生命周期 peak RSS | 3071.12 MiB | 3070.61 MiB |
+| 最后请求后 allocated 边界 | 1953.19 MiB | 1804.20 MiB |
+| 卸载后 allocated / driver 边界 | 9.01 / 107.33 MiB | 9.01 / 115.33 MiB |
+
+常驻 allocated 的 148.99 MiB 改善再次出现，请求阶段观察到的 allocated 最大值少 142.58 MiB。但全程 allocated 最大值都发生在更早的参考准备阶段，driver 最大值都发生在第一条中文请求。此轮 driver 观察最大值只少约 16 MiB，尚无整体高水位明显改善的证据。
+
+OS 的 RSS 高水位本轮几乎相同，上一轮候选上升约 792 MiB 没有复现。轮询到的 RSS 最大值均在模型加载阶段；该阶段两边执行相同代码，发生在声学预计算之前。不能将这部分差异归因于新增预计算。首个中文请求的 RSS 采样最大值仍从 2574.17 增至 2801.28 MiB，需保留这种阶段差异，不能只引用卸载或最终请求边界。
+
+两次实际最大采样间隔为 0.310 / 0.315 秒，远大于请求的 10 ms，可能遗漏瞬态峰值。表中的采样最大值只是所观察到的下界；它与 OS 的全生命周期 peak RSS 有不同口径。当前保留这项显式优化用于降低请求后的常驻分配，不宣称它解决了声学临时空间或全程峰值。
+
 ## 退出问题与证据
 
 前两次控制进程在完成 WAV 和卸载记录后，以退出码 134 中止。相关栈指向 ORT 遥测退出竞争，处理经过见 [退出诊断](2026-09-19-ort-teardown.md)。本表取随后设置相同遥测 opt-out 的控制与候选，两者都由标准库父进程记录到真实退出码 0。历史崩溃记录未覆盖。
@@ -55,6 +75,9 @@ RSS 边界与生命周期峰值在本组上升，需要继续区分 CPU 内存�
 | 10 条候选输出 | `runs/20260919T112741.072548Z-official-mps/` |
 | 10 条 WAV 对照 | `runs/20260919T113242.232788Z-audio-run-comparison/` |
 | 先前退出异常的原始观察 | `runs/20260919T112420.880704Z-acoustic-lifetime-observation/` |
+| 独立内存采样控制组 | `runs/20260919T115622.251165Z-official-mps/` |
+| 独立内存采样候选组 | `runs/20260919T115750.404363Z-official-mps/` |
+| CSV、波形哈希与采样极值复核 | `runs/20260919T120017.952252Z-sampled-memory-comparison/` |
 
 复现正常请求，去掉最后的 `--prepare-acoustic` 即为控制条件：
 
@@ -65,4 +88,15 @@ REF=/Users/beyondpower/Documents/Projects/SakuraTTS-References
   --prepare-reference --prune-bert --prepare-acoustic
 ```
 
-父进程保存完整 stdout/stderr 与 `process-result.json`，其中记录实际退出码和子进程报告的状态，不强制退出、不重试。测量脚本的源代码快照和实际命令随每个新运行保存。下一步单独采样资源曲线，确认常驻下降是否伴随临时空间或 CPU RSS 代价。
+父进程保存完整 stdout/stderr 与 `process-result.json`，其中记录实际退出码和子进程报告的状态，不强制退出、不重试。测量脚本的源代码快照和实际命令随每个新运行保存。
+
+复现内存采样时，在控制和候选命令末尾分别加 `--sample-memory`，两个进程串行运行；随后离线比较：
+
+```sh
+"$REF/.venv-mlx-macos/bin/python" harness/compare_memory_runs.py \
+  --references "$REF" \
+  --baseline "$REF/runs/20260919T115622.251165Z-official-mps" \
+  --candidate "$REF/runs/20260919T115750.404363Z-official-mps"
+```
+
+该入口核对请求身份、正常退出、CSV 与清单极值以及所有 WAV 哈希，并保留最大值出现的阶段。下一项是通过独立声学算子对照继续调查临时分配，保留此处的官方资源基线。
