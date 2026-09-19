@@ -1,21 +1,19 @@
-# Experimental Apple inference candidate; not the final TTS distribution.
-# Checkpoint conversion uses the separate PyTorch development environment.
+# Apple experimental Japanese runtime only; no Chinese frontend or training stack.
+# macOS / Python 3.11 pins verified against the current reference environment.
 mlx==0.32.2
 mlx-metal==0.32.2
 numpy==2.4.6
-tokenizers==0.21.4
 onnxruntime==1.30.0
 flatbuffers==25.12.19
 protobuf==7.36.2
-opencc-python-reimplemented==0.1.7
-pypinyin==0.55.0
-jieba-fast==0.53
+packaging==26.3
 pyopenjtalk-plus==0.4.1.post9
 SudachiPy==0.6.11
 SudachiDict-core==20260723
 pydantic==2.13.5
 pydantic-core==2.46.5
 annotated-types==0.8.0
+typing-extensions==4.16.0
 typing-inspection==0.4.4
 split-lang==2.1.1
 fast-langdetect==1.0.1
@@ -23,3 +21,9 @@ fasttext-predict==0.9.2.4
 budoux==0.9.2
 robust-downloader==0.0.2
 colorlog==6.12.0
+tqdm==4.70.1
+requests==2.34.2
+certifi==2026.7.22
+charset-normalizer==3.5.1
+idna==3.20
+urllib3==2.8.0
