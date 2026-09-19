@@ -10,3 +10,10 @@ protobuf==7.36.2
 opencc-python-reimplemented==0.1.7
 pypinyin==0.55.0
 jieba-fast==0.53
+pyopenjtalk-plus==0.4.1.post9
+SudachiPy==0.6.11
+SudachiDict-core==20260723
+pydantic==2.13.5
+pydantic-core==2.46.5
+annotated-types==0.8.0
+typing-inspection==0.4.4
