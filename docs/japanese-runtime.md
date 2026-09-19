@@ -73,4 +73,6 @@ python3 scripts/prepare_japanese_resources.py \
 
 独立随机生成另行记录，不继承固定回放的音质结论。当前完整请求计时包含前端、模型加载和释放；导入、初始包校验与输出写盘另列。完整 WAV 生成时间不等于流式首包时间，Apple 统一内存计数不等于 NVIDIA 显存。后续继续验证阶段释放、参考更换和取消，再在 Windows 实机验证后端和 GPU 执行优化。
 
-Python 调用方已经可以在多条请求之间复用 `MLXGPT` / `MLXSoVITS`，每条调用 `prepare_text` 和 `synthesize_prepared`。生成完成或请求失败后，可显式调用 `gpt.release_request_state()` 丢弃本条 KV、位置和诊断状态，保留权重；下一次 Decode 必须先重新 Prefill。方法不替调用方清空分配器缓存或卸载模型。当前普通 CLI 仍按单次进程使用，结束后释放全部模型。[三策略实测](experiments/2026-09-19-native-model-lifecycle.md)保存了连续请求的速度、空闲占用和失败恢复结果。
+Python 调用方已经可以在多条请求之间复用 `MLXGPT` / `MLXSoVITS`，每条调用 `prepare_text` 和 `synthesize_prepared`。生成完成或请求失败后，可显式调用 `gpt.release_request_state()` 丢弃本条 KV、位置和诊断状态，保留权重；下一次 Decode 必须先重新 Prefill。方法不替调用方清空分配器缓存或卸载模型。[三策略实测](experiments/2026-09-19-native-model-lifecycle.md)保存了连续请求的速度、空闲占用和失败恢复结果。
+
+需要减少 GPT 状态与声学工作区的重叠时，调用 `synthesize_prepared(..., release_gpt_state=True)`；默认 `False` 保留调用方对状态寿命的控制。进入语义生成后，该选项在成功或异常时通过 `finally` 清空 KV，声学阶段开始前已完成释放，耗时计入 `semantic_seconds`。普通单次 CLI 已显式启用此选项，并在最后释放全部模型；输出 JSON 的 `runtime_policy` 记录选择。四条日文的[提前释放对照](experiments/2026-09-19-gpt-state-before-acoustic.md)中波形保持，MLX 请求峰值少约 96 MiB，耗时增加 2–16 毫秒；缓存和 RSS 未因此等量下降。普通 CLI 的[同 seed 回归](experiments/2026-09-19-japanese-cli-early-release.md)也已确认整份 WAV 不变。

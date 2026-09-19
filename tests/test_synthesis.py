@@ -31,6 +31,9 @@ class GPT:
         self.step += 1
         return np.asarray([[0, -20, 20] if self.step == 11 else [0, 20, -20]], dtype=np.float32)
 
+    def release_request_state(self):
+        self.released = True
+
 
 class SoVITS:
     sample_rate = 32000
@@ -111,6 +114,31 @@ class SynthesisTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Japanese reference"):
             self.request()
         self.assertFalse(hasattr(self.frontend, "request"))
+
+    def test_optional_gpt_state_release_precedes_acoustic_and_preserves_semantic(self):
+        decode = self.sovits.decode
+
+        def observe_release(*args, **kwargs):
+            self.assertTrue(self.gpt.released)
+            return decode(*args, **kwargs)
+
+        self.sovits.decode = observe_release
+        result = self.request(release_gpt_state=True)
+        np.testing.assert_array_equal(self.sovits.inputs["semantic"], result.generation.semantic)
+
+    def test_semantic_failure_releases_state_without_creating_audio(self):
+        def fail(token):
+            raise ValueError("semantic capacity exhausted")
+
+        self.gpt.decode = fail
+        with self.assertRaisesRegex(ValueError, "semantic capacity exhausted"):
+            self.request(release_gpt_state=True)
+        self.assertTrue(self.gpt.released)
+        self.assertFalse(hasattr(self.sovits, "inputs"))
+
+    def test_default_does_not_change_caller_owned_gpt_state_lifetime(self):
+        self.request()
+        self.assertFalse(hasattr(self.gpt, "released"))
 
 
 if __name__ == "__main__":

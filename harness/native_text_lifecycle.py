@@ -26,7 +26,7 @@ import numpy as np
 from native_text_speech import CASES, PATHS, PROJECT, read_json, write_json
 from sakuratts.reference_condition import PreparedReference, sha256_file
 
-POLICIES = ("request", "resident", "resident-release-state")
+POLICIES = ("request", "resident", "resident-release-state", "resident-release-before-acoustic")
 
 
 def prepare(args):
@@ -106,6 +106,8 @@ def worker(args):
     mx.set_default_device(mx.gpu)
     diagnostic = config["mode"] == "diagnostic"
     policy = config["policy"]
+    release_before_acoustic = policy == "resident-release-before-acoustic"
+    release_after_request = policy in ("resident-release-state", "resident-release-before-acoustic")
     paths = {name: Path(config[name]) for name in PATHS}
     cases = read_json(run / "cases.json")
     symbols = read_json(paths["symbols_json"])
@@ -149,12 +151,27 @@ def worker(args):
                 expected_length=phones.shape[1] + prompt.shape[1], expected_text_length=phones.shape[1])
             return logits
 
+        def release_request_state(self):
+            before = state(self)
+            super().release_request_state()
+            self.release_events.append(dict(before=before, after=state(self)))
+
+    class DiagnosticSoVITS(MLXSoVITS):
+        def decode(self, *args, **kwargs):
+            self.last_decode_entry = dict(gpt_state=state(self.audit_gpt), memory=boundary())
+            return super().decode(*args, **kwargs)
+
     def load_models():
         start = time.perf_counter()
         gpt = (DiagnosticGPT if diagnostic else MLXGPT).load(
             paths["gpt_package"], capacity=1024, prefill_precision=config["gpt_prefill_precision"])
-        sovits = MLXSoVITS.load(paths["sovits_package"], encoder_device="cpu",
-                              encoder_softmax=config["encoder_softmax"], fold_weight_norm=False)
+        sovits = (DiagnosticSoVITS if diagnostic else MLXSoVITS).load(
+            paths["sovits_package"], encoder_device="cpu",
+            encoder_softmax=config["encoder_softmax"], fold_weight_norm=False)
+        if diagnostic:
+            gpt.release_events = []
+            sovits.audit_gpt = gpt
+            sovits.last_decode_entry = None
         mx.synchronize()
         return gpt, sovits, time.perf_counter() - start
 
@@ -179,8 +196,9 @@ def worker(args):
         requests=[], epochs=[], expected_errors=[], cases={}, quality=dict(asr="not_run", human_listening="not_run"),
         timing_scope=("Diagnostic synchronized resource samples and prefill observation included; not speed evidence" if diagnostic else
             "Per-request frontend load/prepare/close, public synthesis, CPU output/PCM, scalar GPT position/KV-size checks and policy cleanup included. Resident epoch model load/unload is separately recorded and included in amortized totals. Initial imports, hashes before worker setup, reference/gold loading, validation and file writes excluded."),
-        lifecycle="Frontend reconstructed/closed per request. Resident policies retain GPT/SoVITS through a bounded epoch; request policy loads/unloads both each request. All policies collect garbage and clear unused MLX cache after frontend and request completion. The release-state candidate runs after successful waveform completion or injected failure.",
-        reset_scope="No extra pre-request reset; public generate_semantic calls prefill, which replaces request history/KV. Diagnostic subclass records scalar prefill state only; normal calls use unmodified MLXGPT.",
+        lifecycle="Frontend reconstructed/closed per request. Resident policies retain GPT/SoVITS through a bounded epoch; request policy loads/unloads both each request. All policies collect garbage and clear unused MLX cache after frontend and request completion. The release-before-acoustic policy also asks public synthesis to release GPT state immediately after semantic success/failure, before acoustic preparation.",
+        reset_scope="No extra pre-request reset; public generate_semantic calls prefill, which replaces request history/KV. Diagnostic subclasses record scalar prefill/release state and the acoustic entry boundary; normal calls use unmodified models.",
+        peak_scope="Diagnostic MLX allocator peak resets immediately before each request, includes its frontend and inference/cleanup, and starts with resident weights still allocated. It excludes resident epoch loading. Per-request maxima are aggregated separately; boundary RSS is not a request RSS peak. Normal mode does not reset or sample request peaks.",
         resource_scope="Synchronized execution boundaries, not phase peaks. MLX allocator uses Apple unified memory, not NVIDIA VRAM. RSS includes Harness/gold/baseline arrays and returned CPU audio. Nani/Sudachi package caches may remain.",
         cold_start_scope="Epoch loads occur in an existing worker; first requests are not complete application cold starts.")
     first_outputs = {}
@@ -205,6 +223,8 @@ def worker(args):
                     failure_trial = diagnostic and round_index == 0 and name == "ja-short"
                     trials = ("acoustic_noise", "decode_capacity", None) if failure_trial else (None,)
                     for error_kind in trials:
+                        if diagnostic:
+                            mx.reset_peak_memory()
                         memory = {"before_request": boundary()}
                         start = time.perf_counter()
                         target, frontend_load = text_phase(case)
@@ -217,6 +237,9 @@ def worker(args):
                             gpt, sovits, model_load = load_models()
                             model_serial += 1
                         before_state = state(gpt)
+                        if diagnostic:
+                            gpt.release_events = []
+                            sovits.last_decode_entry = None
 
                         def draw(index, shape):
                             if index >= len(data["draws"]) or data["draws"][index].shape != shape:
@@ -232,6 +255,7 @@ def worker(args):
                         try:
                             actual = synthesize_prepared(target, reference, gpt=gpt, sovits=sovits,
                                 **data["sampling"], semantic_random_draw=draw,
+                                release_gpt_state=release_before_acoustic,
                                 acoustic_noise=data["noise"][:, :, :1] if error_kind == "acoustic_noise" else data["noise"])
                         except ValueError as error:
                             expected_prefix = {"acoustic_noise": "Acoustic noise must be finite FP32",
@@ -247,10 +271,22 @@ def worker(args):
                             raise AssertionError("Invalid request unexpectedly produced output")
                         finished_state = state(gpt)
                         prefill = gpt.last_prefill if diagnostic else None
+                        product_releases = list(gpt.release_events) if diagnostic else None
+                        acoustic_entry = sovits.last_decode_entry if diagnostic else None
+                        empty_state = dict(length=0, text_length=0, key_count=0, value_count=0, kv_logical_bytes=0)
+                        if release_before_acoustic and finished_state != empty_state:
+                            raise AssertionError("Public synthesis retained GPT request state after generation or error")
+                        if diagnostic and release_before_acoustic:
+                            if len(product_releases) != 1 or product_releases[0]["after"] != empty_state:
+                                raise AssertionError("Expected one public release after semantic generation")
+                            if acoustic_entry is not None and acoustic_entry["gpt_state"] != empty_state:
+                                raise AssertionError("Acoustic decode started before GPT state release")
+                        if diagnostic and error_kind and acoustic_entry is not None:
+                            raise AssertionError("Failed semantic/noise preparation entered acoustic decode")
                         memory["finished_before_cleanup"] = boundary()
                         cleanup_start = time.perf_counter()
                         released_decode_check = None
-                        if policy == "resident-release-state":
+                        if release_after_request:
                             release_candidate(gpt)
                             if diagnostic:
                                 once = state(gpt)
@@ -283,6 +319,8 @@ def worker(args):
                                 ("warmup" if round_index <= config["warmup"] else "measured"),
                             before_state=before_state, finished_state=finished_state, idle_state=idle_state,
                             prefill=prefill, released_decode_check=released_decode_check,
+                            product_releases=product_releases, acoustic_entry=acoustic_entry,
+                            request_allocator_peak_bytes=(memory["idle_after_cache_clear"]["mlx_allocator_peak_bytes"] if diagnostic else None),
                             boundaries=memory if diagnostic else None)
                         if diagnostic:
                             if prefill["after"]["length"] != prefill["expected_length"] or prefill["after"]["text_length"] != prefill["expected_text_length"]:
@@ -306,14 +344,18 @@ def worker(args):
                             target_phones_equal=bool(np.array_equal(actual.target["phones"], data["acoustic_phones"][0])),
                             gpt_phones_equal=bool(np.array_equal(phones, data["phones"])),
                             gpt_bert_equal=bool(np.array_equal(bert, data["bert"])),
-                            gpt_final_length_correct=finished_state["length"] == phones.shape[1] + reference.prompt_semantic.size + actual.generation.sampled_tokens.size - 1,
-                            gpt_text_length_correct=finished_state["text_length"] == phones.shape[1],
                             repeated_output_bit_exact=all(np.array_equal(a, b) for a, b in zip(first_outputs[name], repeated)),
                             baseline_tokens_bit_exact=bool(np.array_equal(actual.generation.sampled_tokens, baseline_arrays[name]["sampled_tokens"])),
                             baseline_waveform_bit_exact=bool(np.array_equal(actual.waveform, baseline_arrays[name]["waveform"])),
                             baseline_pcm_bit_exact=bool(np.array_equal(actual.pcm, baseline_arrays[name]["pcm"])))
-                        if policy == "resident-release-state":
-                            validation["idle_request_state_empty"] = idle_state == dict(length=0, text_length=0, key_count=0, value_count=0, kv_logical_bytes=0)
+                        if release_before_acoustic:
+                            validation["finished_request_state_empty"] = finished_state == empty_state
+                        generation_state = product_releases[0]["before"] if diagnostic and release_before_acoustic else finished_state
+                        if not release_before_acoustic or diagnostic:
+                            validation["gpt_final_length_correct"] = generation_state["length"] == phones.shape[1] + reference.prompt_semantic.size + actual.generation.sampled_tokens.size - 1
+                            validation["gpt_text_length_correct"] = generation_state["text_length"] == phones.shape[1]
+                        if release_after_request:
+                            validation["idle_request_state_empty"] = idle_state == empty_state
                         record.update(checks=validation, frontend_load_seconds=frontend_load,
                             synthesis_load_seconds=model_load, policy_cleanup_seconds=cleanup_seconds,
                             complete_request_seconds=done - start, **actual.timings)
@@ -368,6 +410,9 @@ def worker(args):
         mx.clear_cache()
         mx.synchronize()
         report["final_memory"] = boundary()
+        report["max_request_allocator_peak_bytes"] = max(
+            (row["request_allocator_peak_bytes"] for row in report["requests"] + report["expected_errors"]),
+            default=0) if diagnostic else None
         report["process_lifetime_maxrss_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         forbidden = ("torch", "transformers", "sakuratts.chinese", "sakuratts.g2pw", "sakuratts.mlx_bert")
         report["forbidden_imports"] = {name: name in sys.modules for name in forbidden}

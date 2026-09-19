@@ -132,7 +132,7 @@ def run(args, report):
         report["stage"] = "synthesis"
         actual = synthesize_prepared(
             prepared, reference, gpt=gpt, sovits=sovits, rng=np.random.default_rng(args.seed),
-            **report["parameters"],
+            release_gpt_state=True, **report["parameters"],
         )
         report["timings"].update(actual.timings)
     finally:
@@ -211,7 +211,8 @@ def main():
         "validation_scope": "Only Suzakuin Momiji V2Pro has been validated; accepting another package is not a compatibility claim. The early-stop threshold is an explicit request parameter, not derived from package metadata.",
         "precision": {"gpt_prefill": "CPU FP64", "gpt_decode": "GPU FP32", "acoustic_encoder": "CPU FP32",
                       "flow_decoder": "GPU FP32", "fold_weight_norm": False},
-        "lifecycle": "Release Japanese frontend before synthesis model load; release synthesis models after generation. Shared Nani/Sudachi caches may remain until process exit.",
+        "runtime_policy": {"release_gpt_state_before_acoustic": True},
+        "lifecycle": "Release Japanese frontend before synthesis model load; discard GPT request KV after semantic generation; release synthesis models after waveform generation. Shared Nani/Sudachi caches may remain until process exit.",
         "timing_scope": "Complete request includes frontend/model load, computation and release. Package validation, initial module imports and file output are separate. No diagnostic boundary sampling. Not a whole-process cold-start or streaming first-packet measurement.",
         "quality": {"asr": "not_run", "human_listening": "not_run"}, "timings": {},
     }

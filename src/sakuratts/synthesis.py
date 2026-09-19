@@ -81,12 +81,16 @@ def prepare_text(text, language, frontend):
 def synthesize_prepared(prepared: PreparedText, reference: PreparedReference, *, gpt, sovits,
                         early_stop_num, top_k=15, top_p=1.0, temperature=1.0,
                         repetition_penalty=1.35, speed=1.0, noise_scale=0.5,
-                        fragment_interval=0.3, rng=None, semantic_random_draw=None, acoustic_noise=None):
+                        fragment_interval=0.3, rng=None, semantic_random_draw=None, acoustic_noise=None,
+                        release_gpt_state=False):
     """Generate from this request's independently prepared target features.
 
     The caller owns model loading and precision. NumPy's RNG is not seed-
     equivalent to Torch; controlled replay supplies semantic_random_draw and
     an acoustic_noise array. No reference encoder is loaded by either entry.
+    release_gpt_state discards GPT request KV after semantic generation, also
+    on semantic failure, while retaining weights. The supplied GPT must expose
+    release_request_state(); subsequent decode requires a new prefill.
     """
     if prepared.language not in ("ja", "all_ja"):
         raise ValueError("Only Japanese ja/all_ja requests are currently supported")
@@ -102,12 +106,16 @@ def synthesize_prepared(prepared: PreparedText, reference: PreparedReference, *,
     phones = np.concatenate((reference.reference_phones, target_phones))[None, :]
     bert = np.concatenate((reference.reference_bert, target_bert), axis=1).T[None, :, :]
     frontend_done = time.perf_counter()
-    generated = generate_semantic(
-        gpt, phones, reference.prompt_semantic[None, :], bert, eos=gpt.config["eos"],
-        top_k=top_k, top_p=top_p, temperature=temperature,
-        repetition_penalty=repetition_penalty, early_stop_num=early_stop_num,
-        rng=rng, random_draw=semantic_random_draw,
-    )
+    try:
+        generated = generate_semantic(
+            gpt, phones, reference.prompt_semantic[None, :], bert, eos=gpt.config["eos"],
+            top_k=top_k, top_p=top_p, temperature=temperature,
+            repetition_penalty=repetition_penalty, early_stop_num=early_stop_num,
+            rng=rng, random_draw=semantic_random_draw,
+        )
+    finally:
+        if release_gpt_state:
+            gpt.release_request_state()
     semantic_done = time.perf_counter()
     semantic = generated.semantic
     noise_shape = (1, config["model"]["inter_channels"],
