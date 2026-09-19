@@ -46,7 +46,7 @@ def run(args, report):
     from sakuratts.reference_condition import PreparedReference, sha256_file
     from sakuratts.mlx_gpt import MLXGPT
     from sakuratts.mlx_sovits import MLXSoVITS
-    from sakuratts.synthesis import generate_prepared_semantic, prepare_text, synthesize_acoustic
+    from sakuratts.synthesis import generate_prepared_semantic, prepare_text_request, synthesize_acoustic
     mx.set_default_device(mx.gpu)
     report["timings"]["module_import_seconds"] = time.perf_counter() - start
 
@@ -107,7 +107,7 @@ def run(args, report):
         segmenter = LanguageSegmenter(packages["frontend"])
         frontend = TextFrontend(japanese=japanese, symbols=symbols, segmenter=segmenter)
         report["timings"]["frontend_load_seconds"] = time.perf_counter() - start
-        prepared = prepare_text(args.text, args.language, frontend)
+        prepared_request = prepare_text_request(args.text, args.language, frontend)
     finally:
         start = time.perf_counter()
         if japanese is not None:
@@ -119,9 +119,13 @@ def run(args, report):
         mx.clear_cache()
         mx.synchronize()
         report["timings"]["frontend_release_seconds"] = time.perf_counter() - start
+    targets = [{"normalized": prepared.target["norm_text"],
+                "phones": prepared.target["phones"], "segments": prepared.target["segments"]}
+               for prepared in prepared_request.fragments]
     report["text"] = {"original": args.text, "language": args.language,
-                      "normalized": prepared.target["norm_text"],
-                      "phones": prepared.target["phones"], "segments": prepared.target["segments"]}
+                      **(targets[0] if len(targets) == 1 else {"fragments": targets})}
+    report["fragments"] = []
+    report["loads"] = {"gpt": 0, "sovits": 0}
 
     gpt = sovits = None
     report["timings"]["synthesis_load_seconds"] = 0.0
@@ -135,52 +139,94 @@ def run(args, report):
         cache_release_start = time.perf_counter()
         if args.bind_reference:
             mx.clear_cache()
-        report["timings"]["acoustic_load_cache_release_seconds"] = time.perf_counter() - cache_release_start
+        report["timings"]["acoustic_load_cache_release_seconds"] = (
+            report["timings"].get("acoustic_load_cache_release_seconds", 0.0)
+            + time.perf_counter() - cache_release_start)
         elapsed = time.perf_counter() - start
-        report["timings"]["sovits_load_seconds"] = elapsed
-        report["timings"]["reference_projection_seconds"] = model.reference_projection_seconds
+        report["timings"]["sovits_load_seconds"] = report["timings"].get("sovits_load_seconds", 0.0) + elapsed
+        report["timings"]["reference_projection_seconds"] = (
+            report["timings"].get("reference_projection_seconds", 0.0) + model.reference_projection_seconds)
         report["timings"]["synthesis_load_seconds"] += elapsed
+        report["loads"]["sovits"] += 1
         return model
 
-    try:
-        report["stage"] = "gpt_load"
-        start = time.perf_counter()
-        gpt = MLXGPT.load(packages["gpt"], capacity=args.capacity, prefill_precision="fp64")
-        mx.synchronize()
-        elapsed = time.perf_counter() - start
-        report["timings"]["gpt_load_seconds"] = elapsed
-        report["timings"]["synthesis_load_seconds"] += elapsed
-        if args.model_policy == "simultaneous":
-            report["stage"] = "sovits_load"
-            sovits = load_acoustic()
-        report["stage"] = "semantic"
-        semantic = generate_prepared_semantic(
-            prepared, reference, gpt=gpt, rng=np.random.default_rng(args.seed),
-            release_gpt_state=True, early_stop_num=args.early_stop_num, top_k=args.top_k,
-            temperature=args.temperature, repetition_penalty=args.repetition_penalty,
-        )
-        if args.model_policy == "staged":
-            report["stage"] = "gpt_release"
-            start = time.perf_counter()
-            gpt = None
-            gc.collect()
-            mx.clear_cache()
-            mx.synchronize()
-            elapsed = time.perf_counter() - start
-            report["timings"]["gpt_release_before_acoustic_seconds"] = elapsed
-            report["timings"]["synthesis_release_seconds"] += elapsed
-            report["stage"] = "sovits_load"
-            sovits = load_acoustic()
-        report["stage"] = "acoustic"
-        actual = synthesize_acoustic(semantic, sovits=sovits)
-        report["timings"].update(actual.timings)
-    finally:
+    def release_models():
+        nonlocal gpt, sovits
         start = time.perf_counter()
         gpt = sovits = None
         gc.collect()
         mx.clear_cache()
         mx.synchronize()
         report["timings"]["synthesis_release_seconds"] += time.perf_counter() - start
+
+    rng = np.random.default_rng(args.seed)
+    pcm_parts = []
+    waveform_samples = pcm_samples = 0
+    sample_rate = None
+    limited = False
+    try:
+        for index, prepared in enumerate(prepared_request.fragments):
+            report["fragment_index"] = index
+            if gpt is None:
+                report["stage"] = "gpt_load"
+                start = time.perf_counter()
+                gpt = MLXGPT.load(packages["gpt"], capacity=args.capacity, prefill_precision="fp64")
+                mx.synchronize()
+                elapsed = time.perf_counter() - start
+                report["timings"]["gpt_load_seconds"] = report["timings"].get("gpt_load_seconds", 0.0) + elapsed
+                report["timings"]["synthesis_load_seconds"] += elapsed
+                report["loads"]["gpt"] += 1
+            if args.model_policy == "simultaneous" and sovits is None:
+                report["stage"] = "sovits_load"
+                sovits = load_acoustic()
+            report["stage"] = "semantic"
+            semantic = generate_prepared_semantic(
+                prepared, reference, gpt=gpt, rng=rng,
+                release_gpt_state=True, early_stop_num=args.early_stop_num, top_k=args.top_k,
+                temperature=args.temperature, repetition_penalty=args.repetition_penalty,
+            )
+            if args.model_policy == "staged":
+                report["stage"] = "gpt_release"
+                start = time.perf_counter()
+                gpt = None
+                gc.collect()
+                mx.clear_cache()
+                mx.synchronize()
+                elapsed = time.perf_counter() - start
+                report["timings"]["gpt_release_before_acoustic_seconds"] = (
+                    report["timings"].get("gpt_release_before_acoustic_seconds", 0.0) + elapsed)
+                report["timings"]["synthesis_release_seconds"] += elapsed
+                report["stage"] = "sovits_load"
+                sovits = load_acoustic()
+            report["stage"] = "acoustic"
+            actual = synthesize_acoustic(semantic, sovits=sovits)
+            if sample_rate is not None and sample_rate != actual.sample_rate:
+                raise ValueError("Fragment sample rates differ")
+            sample_rate = actual.sample_rate
+            generation = {"sampled_tokens": actual.generation.sampled_tokens.size,
+                          "semantic_tokens": actual.generation.semantic.shape[-1],
+                          "stop_reasons": list(actual.generation.stop.reasons),
+                          "returned_index": actual.generation.stop.returned_index}
+            limited |= bool(set(generation["stop_reasons"]) & {"early_stop_num", "iteration_limit"})
+            report["fragments"].append({"index": index, "text": targets[index], "generation": generation,
+                "pcm_offset": pcm_samples, "pcm_samples": actual.pcm.size,
+                "waveform_samples": actual.waveform.size, "timings": actual.timings})
+            for key, value in actual.timings.items():
+                report["timings"][key] = report["timings"].get(key, 0.0) + value
+            pcm_parts.append(actual.pcm)
+            waveform_samples += actual.waveform.size
+            pcm_samples += actual.pcm.size
+            del actual, semantic
+            if args.model_policy == "staged" and index + 1 < len(prepared_request.fragments):
+                release_models()
+    finally:
+        release_models()
+    report["timings"]["frontend_seconds"] = prepared_request.seconds
+    report["timings"]["compute_seconds"] += prepared_request.seconds
+    join_start = time.perf_counter()
+    pcm = pcm_parts[0] if len(pcm_parts) == 1 else np.concatenate(pcm_parts)
+    pcm_parts.clear()
+    report["timings"]["fragment_join_seconds"] = time.perf_counter() - join_start
     report["timings"]["complete_request_seconds"] = time.perf_counter() - request_start
 
     report["stage"] = "output"
@@ -189,23 +235,22 @@ def run(args, report):
         with wave.open(stream, "wb") as wav:
             wav.setnchannels(1)
             wav.setsampwidth(2)
-            wav.setframerate(actual.sample_rate)
-            wav.writeframes(actual.pcm.astype("<i2", copy=False).tobytes())
-    waveform_seconds = actual.waveform.size / actual.sample_rate
-    pcm_seconds = actual.pcm.size / actual.sample_rate
+            wav.setframerate(sample_rate)
+            wav.writeframes(pcm.astype("<i2", copy=False).tobytes())
+    waveform_seconds = waveform_samples / sample_rate
+    pcm_seconds = pcm_samples / sample_rate
     report["audio"] = {"path": str(args.output), "sha256": sha256_file(args.output),
-                       "sample_rate": actual.sample_rate, "channels": 1, "format": "PCM16",
-                       "waveform_samples": actual.waveform.size, "waveform_seconds": waveform_seconds,
-                       "pcm_samples": actual.pcm.size, "pcm_seconds_with_trailing_silence": pcm_seconds,
+                       "sample_rate": sample_rate, "channels": 1, "format": "PCM16",
+                       "waveform_samples": waveform_samples, "waveform_seconds": waveform_seconds,
+                       "pcm_samples": pcm_samples, "pcm_seconds_with_trailing_silence": pcm_seconds,
                        "rtf": report["timings"]["complete_request_seconds"] / waveform_seconds,
                        "rtf_with_trailing_silence": report["timings"]["complete_request_seconds"] / pcm_seconds,
                        "rtf_scope": "Complete request / waveform duration before appended trailing silence"}
-    report["generation"] = {"sampled_tokens": actual.generation.sampled_tokens.size,
-                            "semantic_tokens": actual.generation.semantic.shape[-1],
-                            "stop_reasons": list(actual.generation.stop.reasons),
-                            "returned_index": actual.generation.stop.returned_index}
+    generations = [fragment["generation"] for fragment in report["fragments"]]
+    report["generation"] = generations[0] if len(generations) == 1 else {
+        "fragment_count": len(generations), "sampled_tokens": sum(g["sampled_tokens"] for g in generations),
+        "semantic_tokens": sum(g["semantic_tokens"] for g in generations), "fragments": generations}
     report["timings"]["output_seconds"] = time.perf_counter() - start
-    limited = bool(set(actual.generation.stop.reasons) & {"early_stop_num", "iteration_limit"})
     report.update(status="stopped_at_limit" if limited else "completed", stage="finished")
     return 2 if limited else 0
 
@@ -227,7 +272,7 @@ def main():
                         help="Explicit token-count threshold (validated request: 2700; not derived from the model package; -1 disables)")
     parser.add_argument("--capacity", type=int, default=1024, help="GPT KV capacity; overflow is an explicit error")
     parser.add_argument("--model-policy", choices=("simultaneous", "staged"), default="staged",
-                        help="Unload GPT before loading SoVITS (default), or load both models together")
+                        help="Load GPT then SoVITS for each fragment (default), or reuse both across all fragments")
     parser.add_argument("--bind-reference", action="store_true",
                         help="Bind acoustic reference projections and omit their weights; requires reloading to change reference")
     args = parser.parse_args()
@@ -250,14 +295,14 @@ def main():
         "parameters": {"top_k": args.top_k, "top_p": 1.0, "temperature": args.temperature,
                        "repetition_penalty": args.repetition_penalty, "early_stop_num": args.early_stop_num,
                        "speed": 1.0, "noise_scale": 0.5, "fragment_interval": 0.3},
-        "scope": "V2Pro Japanese ja/all_ja, one cut0 fragment, one offline prepared Japanese reference, no streaming",
+        "scope": "V2Pro Japanese ja/all_ja, ordered cut0 fragments, one offline prepared Japanese reference, complete WAV only",
         "validation_scope": "Only Suzakuin Momiji V2Pro has been validated; accepting another package is not a compatibility claim. The early-stop threshold is an explicit request parameter, not derived from package metadata.",
         "precision": {"gpt_prefill": "CPU FP64", "gpt_decode": "GPU FP32", "acoustic_encoder": "CPU FP32",
                       "flow_decoder": "GPU FP32", "fold_weight_norm": False},
         "runtime_policy": {"release_gpt_state_before_acoustic": True, "model_policy": args.model_policy,
                            "bind_reference": args.bind_reference,
                            "clear_acoustic_load_cache": args.bind_reference},
-        "lifecycle": "Release frontend before synthesis models; discard GPT request KV after semantics. Staged policy unloads GPT before loading SoVITS; simultaneous policy unloads both after waveform generation. Shared Nani/Sudachi caches may remain until process exit.",
+        "lifecycle": "Prepare all text and release frontend before synthesis models; discard GPT KV after each fragment's semantics. Staged policy loads and releases each model for every fragment; simultaneous policy reuses both across fragments and releases after the last. Shared Nani/Sudachi caches may remain until process exit.",
         "timing_scope": "Complete request includes frontend/model load, computation and release. Package validation, initial module imports and file output are separate. No diagnostic boundary sampling. Not a whole-process cold-start or streaming first-packet measurement.",
         "quality": {"asr": "not_run", "human_listening": "not_run"}, "timings": {},
     }

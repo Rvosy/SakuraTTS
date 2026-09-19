@@ -22,6 +22,20 @@ class PreparedText:
     seconds: float
 
 
+@dataclass
+class PreparedTextRequest:
+    """All cut0 fragments, prepared before any synthesis model is needed.
+
+    Each fragment retains the original request text; its target contains the
+    actual normalized text and language segments. Frontend time belongs to the
+    request, so fragment.seconds is zero and must not be summed as frontend time.
+    """
+    text: str
+    language: str
+    fragments: tuple[PreparedText, ...]
+    seconds: float
+
+
 @dataclass(frozen=True)
 class PreparedSemantic:
     """One request between semantic and acoustic execution, without models.
@@ -78,24 +92,42 @@ def _validate_models(reference, gpt, sovits):
     _validate_model(reference, "sovits", sovits.encoder.manifest)
 
 
-def prepare_text(text, language, frontend):
-    """Prepare target features before loading GPT/acoustic models, if desired.
+def prepare_text_request(text, language, frontend):
+    """Prepare every official cut0 fragment in order, without synthesis models.
 
-    After this returns, the caller may release its Japanese frontend components. The result
-    contains only target data and does not retain the frontend or its models.
+    Complete preparation precedes generation, including validation of later
+    fragments. Do not re-normalize each fragment as a new standalone request.
+    The caller processes each fragment's semantic and acoustic phases in order,
+    using one RNG for the whole request, and concatenates the resulting PCM.
     """
     if language not in ("ja", "all_ja"):
         raise ValueError("Only Japanese ja/all_ja requests are currently supported")
     start = time.perf_counter()
     targets = frontend.prepare_target(text, language, split_method="cut0")
-    if len(targets) != 1:
-        raise NotImplementedError("The current synthesis entry requires exactly one cut0 fragment")
-    target = targets[0]
-    target_phones = np.asarray(target["phones"], dtype=np.int64)
-    target_bert = np.asarray(target["bert_features"])
-    if target_bert.dtype != np.float32 or target_bert.shape != (1024, target_phones.size):
-        raise ValueError("Target BERT must be FP32 and aligned to every target phone")
-    return PreparedText(text, language, target, time.perf_counter() - start)
+    if not targets:
+        raise ValueError("The request has no Japanese text fragments")
+    fragments = []
+    for target in targets:
+        target_phones = np.asarray(target["phones"], dtype=np.int64)
+        target_bert = np.asarray(target["bert_features"])
+        if target_bert.dtype != np.float32 or target_bert.shape != (1024, target_phones.size):
+            raise ValueError("Target BERT must be FP32 and aligned to every target phone")
+        fragments.append(PreparedText(text, language, target, 0.0))
+    return PreparedTextRequest(text, language, tuple(fragments), time.perf_counter() - start)
+
+
+def prepare_text(text, language, frontend):
+    """Prepare exactly one fragment for the existing single-fragment API.
+
+    Use prepare_text_request for complete requests that may contain multiple
+    fragments. Neither result retains frontend components or synthesis models.
+    """
+    request = prepare_text_request(text, language, frontend)
+    if len(request.fragments) != 1:
+        raise NotImplementedError("The single-fragment synthesis API requires exactly one cut0 fragment")
+    fragment = request.fragments[0]
+    fragment.seconds = request.seconds
+    return fragment
 
 
 def generate_prepared_semantic(prepared: PreparedText, reference: PreparedReference, *, gpt,

@@ -29,15 +29,19 @@ SAKURA_REFS=../SakuraTTS-References
 
 默认配置为 CPU FP64 GPT Prefill、GPU FP32 Decode、CPU FP32 声学 encoder 和 GPU FP32 flow / decoder。`top_p=1`、`speed=1`，WeightNorm 折叠候选默认关闭。`--early-stop-num 2700` 是已验证请求的显式参数，并非从所有模型包推导出的默认上限。KV 容量默认 1024，超过容量会报错，不会截掉原文。
 
-退出码 `0` 表示正常结束，`2` 表示达到生成次数限制，`1` 表示运行异常。后两类的 JSON 保留停止原因或异常，不算质量验收通过。语言范围为 `ja/all_ja`，一次只处理一个 `cut0` 片段；识别到尚未实现的英文段或拆成多个片段时明确报错。
+退出码 `0` 表示正常结束，`2` 表示至少一片达到生成次数限制，`1` 表示运行异常。后两类的 JSON 保留停止原因或异常，不算质量验收通过。语言范围为 `ja/all_ja`；识别到尚未实现的英文段时明确报错。
 
-CLI 默认 `--model-policy staged`：完成语义生成后卸载 GPT，再加载 SoVITS。`--model-policy simultaneous` 保留两模型一起加载的对照方式。两者生成规则相同；[同条件实测](experiments/2026-09-19-native-staged-loading.md)中四例 WAV 保持相同，长句请求内 MLX 分配器峰值约少 304 MiB、耗时增加约 51 ms。这是 Mac 数据，不能推作 NVIDIA 显存结论。
+CLI 会一次准备原文的所有 `cut0` 片段，再顺序合成完整 WAV。换行可能被官方短片合并规则合并；超过 510 字符时按官方标点规则继续拆分，不擅自硬切或丢弃原文。每片使用新的 GPT 历史和同一参考，整条请求共用一个 RNG；某片遇到 EOS 或次数限制后仍处理后续片段。JSON 的 `fragments` 保存每片文本、停止原因、PCM 偏移和长度；全部合成成功后才写 WAV，后片异常不会留下只含前片的音频。字符切分不保证 KV 容量足够，长输入仍可能需要显式调整 `--capacity`。
+
+CLI 默认 `--model-policy staged`：每片完成语义生成后卸载 GPT，再加载 SoVITS，片尾卸载后处理下一片。`--model-policy simultaneous` 在所有片段间复用两模型，GPT 请求状态仍逐片释放。两者生成规则相同；此前[单片同条件实测](experiments/2026-09-19-native-staged-loading.md)中四例 WAV 保持相同，长句请求内 MLX 分配器峰值约少 304 MiB、耗时增加约 51 ms。多片段需要重复加载，代价另见[多片段验证](experiments/2026-09-20-japanese-multifragment.md)。这些是 Mac 数据，不能推作 NVIDIA 显存结论。
 
 `--bind-reference` 是另一个可选项，默认关闭。它在加载 SoVITS 时先算出当前参考的五项声学投影，再跳过对应的 14 个常驻权重。JSON 的 `runtime_policy.bind_reference` 记录选择，`reference_projection_seconds` 是 `sovits_load_seconds` 的子项，不重复累加。Python 对应 `MLXSoVITS.load(..., reference=reference)`；绑定后换参考须新建实例，错用参考会报错。原模型包和完整权重对照路径保留，安装体积不会因此缩小。
 
 绑定加载会产生临时工作区。CLI 在加载完成并同步后清理空闲分配器缓存，这段耗时也包含在 `sovits_load_seconds` 内；Python 模型加载器本身不清理调用方的全局缓存。需要保留模型的宿主应分别测活跃内存和缓存，不能仅凭前者下降判断总占用。
 
 Python 调用方可用 `generate_prepared_semantic` 与 `synthesize_acoustic` 分开安排加载；阶段结果绑定目标音素、参考条件和同一个 RNG，不持有 GPT 模型。调用方负责完成在途工作并卸载模型，阶段计算时间不含中间加载和卸载。既有 `synthesize_prepared` 与权重常驻方式继续可用。
+
+多片段调用方用 `prepare_text_request(...).fragments` 取得完整准备结果，再逐片调用上述接口；所有片共用同一个 RNG，并在进入下一片前完成本片声学计算。前端耗时只保存在请求级 `seconds`，每片 `seconds` 为零，汇总时只加一次。原 `prepare_text` / `synthesize_prepared` 仍限定单片，不会默认取第一片。
 
 Python 接口可通过 `cancel_requested=event.is_set` 请求取消，并捕获 `sakuratts.generation.SynthesisCancelled` 查看取消阶段。它在语义步和完整声学计算的边界检查；声学已经开始时，要等该次计算返回，结果会被丢弃。取消不会返回部分 PCM，也不会自动卸载调用方持有的模型。分阶段调用时须向两个接口分别传入谓词。CLI 当前没有新增取消协议，宿主播放队列与 Windows 的打断延迟仍待集成验证。
 

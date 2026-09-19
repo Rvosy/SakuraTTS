@@ -14,7 +14,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from sakuratts.reference_condition import PreparedReference
 from sakuratts.generation import SynthesisCancelled
-from sakuratts.synthesis import (generate_prepared_semantic, prepare_text, synthesize,
+from sakuratts.synthesis import (generate_prepared_semantic, prepare_text, prepare_text_request, synthesize,
                                  synthesize_acoustic, synthesize_prepared)
 
 
@@ -102,6 +102,36 @@ class SynthesisTests(unittest.TestCase):
         self.frontend.prepare_target = lambda *args, **kwargs: original(*args, **kwargs) * 2
         with self.assertRaisesRegex(NotImplementedError, "exactly one"):
             self.request()
+        self.assertFalse(hasattr(self.gpt, "inputs"))
+
+    def test_complete_text_preparation_keeps_order_and_does_not_restart_frontend(self):
+        original = self.frontend.prepare_target
+        calls = []
+
+        def fragments(text, language, split_method):
+            calls.append((text, language, split_method))
+            first = original(text, language, split_method)[0]
+            return [dict(first, norm_text="first"), dict(first, norm_text="second")]
+
+        self.frontend.prepare_target = fragments
+        text = "こんにちは。\n今日はいい天気ですね。"
+        request = prepare_text_request(text, "ja", self.frontend)
+        self.assertEqual(calls, [(text, "ja", "cut0")])
+        self.assertEqual([p.target["norm_text"] for p in request.fragments], ["first", "second"])
+        self.assertTrue(all(p.text == text and p.seconds == 0 for p in request.fragments))
+        self.assertGreaterEqual(request.seconds, 0)
+        self.assertFalse(hasattr(self.gpt, "inputs"))
+
+    def test_later_invalid_fragment_fails_before_any_synthesis(self):
+        original = self.frontend.prepare_target
+
+        def fragments(*args, **kwargs):
+            first = original(*args, **kwargs)[0]
+            return [first, dict(first, bert_features=np.zeros((1024, 1), dtype=np.float32))]
+
+        self.frontend.prepare_target = fragments
+        with self.assertRaisesRegex(ValueError, "aligned"):
+            prepare_text_request("こんにちは。\n今日はいい天気ですね。", "ja", self.frontend)
         self.assertFalse(hasattr(self.gpt, "inputs"))
 
     def test_text_preparation_does_not_need_or_retain_synthesis_models(self):
