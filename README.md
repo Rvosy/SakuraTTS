@@ -16,6 +16,7 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 | [基准与验收协议](docs/specs/benchmark-protocol.md) | 如何公平比较体积、显存、速度、质量与稳定性 |
 | [实施路线](docs/roadmap.md) | 分阶段交付物、完成条件、首轮实验和待确定事项 |
 | [调用链与资源实验](docs/experiments/2026-09-19-parity-and-lifecycle.md) | 用户语音问题、固定历史数值对照、参考条件释放与证据 |
+| [参考资源与 BERT 裁剪](docs/experiments/2026-09-19-bert-and-reference-memory.md) | 输出保持、常驻边界、独立内存采样与测量限制 |
 | [兼容矩阵](docs/specs/compatibility-matrix.md) | 各模型、语言和功能的实测范围与待验证项 |
 | [Mac 首轮验证](docs/experiments/2026-09-19-macos-reference-smoke.md) | 实际环境、运行命令、样音、耗时、资源记录和已知限制 |
 

@@ -12,7 +12,8 @@
 - 使用用户选定的“朱雀院红叶”V2Pro，在 Apple M4 的 MPS / FP32 路径完成官方与 Lite 的中、日文合成，保存 8 个 WAV 及原始结果。详见 [Mac 首轮验证](experiments/2026-09-19-macos-reference-smoke.md)。
 - 已建立 10 条回归语料，追踪官方与 Lite 前端、参考、采样与切片差异；相同官方历史下，日文 121 步、中文 147 步 GPT logits 完全一致。参考辅助模型释放实验保持既有 WAV 哈希。见 [调用链与资源实验](experiments/2026-09-19-parity-and-lifecycle.md)。
 - Mac 内容质量仍待验收，Windows 验证暂缓。尚未固定产品目标 NVIDIA GPU、首发系统、性能预算和质量门槛。
-- 尚无自有转换器或原生推理实现，也没有正式性能、音质、流式或干净部署验收结果。
+- 参考资源释放与 BERT 无依赖层裁剪已通过固定两条样例的逐文件波形回归，请求结束 allocated 边界少约 698 MiB；独立内存采样仍显示较高瞬态 driver 占用。见 [资源实验](experiments/2026-09-19-bert-and-reference-memory.md)。
+- 自有轻量运行时仍在研发，没有完整语音链路、正式音质、流式或干净部署验收结果。
 
 ## M0：固定范围并建立基线
 

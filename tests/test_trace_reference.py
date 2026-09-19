@@ -1,0 +1,48 @@
+import sys
+from pathlib import Path
+from types import SimpleNamespace, ModuleType
+import unittest
+from unittest.mock import patch
+
+import torch
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "harness"))
+from trace_reference import ReferenceTrace
+
+
+class TraceReferenceTests(unittest.TestCase):
+    def test_stop_checks_logits_after_inplace_repetition_penalty(self):
+        module = ModuleType("AR.models.t2s_model")
+
+        def sample(logits, previous_tokens, **kwargs):
+            logits[0, previous_tokens[0]] /= 1.35
+            return torch.tensor([[0]]), None
+
+        module.sample = sample
+        noop = lambda *a, **kw: None
+        gpt = SimpleNamespace(
+            EOS=1, infer_panel_naive=noop, ar_predict_layer=torch.nn.Identity(),
+            t2s_transformer=SimpleNamespace(process_prompt=noop, decode_next_token=noop),
+        )
+        engine = SimpleNamespace(
+            text_preprocessor=SimpleNamespace(pre_seg_text=noop, clean_text_inf=noop,
+                                              segment_and_extract_feature_for_text=noop),
+            _set_prompt_semantic=noop, _get_ref_spec=noop, audio_postprocess=noop,
+            t2s_model=SimpleNamespace(model=gpt), vits_model=SimpleNamespace(decode=noop),
+        )
+        with patch.dict(sys.modules, {module.__name__: module}):
+            trace = ReferenceTrace(engine, "official", noop)
+            try:
+                module.sample(torch.tensor([[10.0, 9.0]]), torch.tensor([[0]]))
+                recorded = trace.samples[-1]
+                self.assertEqual(recorded["token"], 0)
+                self.assertEqual(recorded["argmax_before_sampling"], 0)
+                self.assertEqual(recorded["argmax_after_sampling"], 1)
+                self.assertEqual(trace.stop_reason(recorded), "argmax_eos")
+            finally:
+                trace.close()
+            self.assertIs(module.sample, sample)
+
+
+if __name__ == "__main__":
+    unittest.main()

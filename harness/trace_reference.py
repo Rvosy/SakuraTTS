@@ -62,6 +62,7 @@ class ReferenceTrace:
                 self.snapshot(previous_tokens, "initial_history")
             result = original(logits, previous_tokens, *args, **kwargs)
             self.samples.append({"token": int(result[0][0, 0].item()), "argmax_before_sampling": argmax,
+                                 "argmax_after_sampling": int(logits.argmax(dim=-1)[0].item()),
                                  "vocabulary_size": logits.shape[-1]})
             return result
 
@@ -141,7 +142,7 @@ class ReferenceTrace:
             "sampled_steps": len(self.samples), "samples": self.samples,
             "first_sampled_eos_step": next((i for i, s in enumerate(self.samples) if s["token"] == self.eos), None),
             "final_sample_is_eos": final.get("token") == self.eos,
-            "final_argmax_is_eos": final.get("argmax_before_sampling") == self.eos,
+            "final_argmax_is_eos": final.get("argmax_after_sampling") == self.eos,
             "stop_reason": self.stop_reason(final),
             "arrays_file": str(data_file),
             "timing_scope": "diagnostic; synchronized stages, CPU copies and nested hooks; not normal E2E",
@@ -152,11 +153,11 @@ class ReferenceTrace:
 
     def stop_reason(self, final):
         if self.backend == "official":
-            if final.get("token") == self.eos and final.get("argmax_before_sampling") == self.eos:
+            if final.get("token") == self.eos and final.get("argmax_after_sampling") == self.eos:
                 return "sample_and_argmax_eos"
             if final.get("token") == self.eos:
                 return "sample_eos"
-            if final.get("argmax_before_sampling") == self.eos:
+            if final.get("argmax_after_sampling") == self.eos:
                 return "argmax_eos"
             return "limit_or_other; inspect_saved_arguments_and_steps"
         if final.get("token") == self.eos:

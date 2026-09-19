@@ -33,11 +33,17 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--diagnostic", action="store_true", help="Save intermediate values; timings include diagnostic overhead")
     parser.add_argument("--prepare-reference", action="store_true", help="Official V2Pro: prepare once, save conditions and release auxiliary models")
+    parser.add_argument("--prune-bert", action="store_true", help="Official reference: compute only the required BERT feature layer")
+    parser.add_argument("--sample-memory", action="store_true", help="Poll MPS and RSS at 10 ms; use a separate run from timing")
     args = parser.parse_args()
     if args.repeat < 1:
         parser.error("--repeat must be positive")
     if args.prepare_reference and args.backend != "official":
         parser.error("--prepare-reference requires --backend official")
+    if args.prune_bert and args.backend != "official":
+        parser.error("--prune-bert requires --backend official")
+    if args.sample_memory and args.device != "mps":
+        parser.error("--sample-memory currently measures MPS only")
 
     root = args.references.resolve()
     cases_path = Path(__file__).resolve().parent / "cases" / "speech_regressions.json"
@@ -54,20 +60,27 @@ def main() -> None:
     output = root / "runs" / f"{run_id}-{args.backend}-{args.device}"
     output.mkdir(parents=True)
     harness_dir = Path(__file__).resolve().parent
-    evidence_code = output / "harness-source"
-    evidence_code.mkdir()
-    shutil.copy2(cases_path, evidence_code / cases_path.name)
+    evidence_code = output / "source" / "harness"
+    (evidence_code / "cases").mkdir(parents=True)
+    shutil.copy2(cases_path, evidence_code / "cases" / cases_path.name)
     for path in harness_dir.glob("*.py"):
         shutil.copy2(path, evidence_code / path.name)
+    if args.prune_bert:
+        evidence_src = output / "source" / "src" / "sakuratts"
+        evidence_src.mkdir(parents=True)
+        shutil.copy2(harness_dir.parent / "src/sakuratts/bert_features.py", evidence_src / "bert_features.py")
     os.environ.setdefault("HF_HOME", str(root / ".cache" / "huggingface"))
     os.environ.setdefault("NLTK_DATA", str(root / "models" / "nltk_data"))
     os.environ.setdefault("language", "en_US")
     os.environ.setdefault("version", "v2")
     report = {
         "status": "running",
-        "purpose": "instrumented_diagnosis" if args.diagnostic else "functional_smoke_not_performance_acceptance",
+        "purpose": "instrumented_diagnosis" if args.diagnostic else (
+            "sampled_memory_not_timing" if args.sample_memory else "functional_smoke_not_performance_acceptance"),
         "command": [sys.executable, *sys.argv],
+        "source_snapshot": str(output / "source"),
         "prepared_reference_experiment": args.prepare_reference,
+        "pruned_bert_experiment": args.prune_bert,
         "backend": args.backend,
         "device": args.device,
         "dtype": "float32",
@@ -82,6 +95,7 @@ def main() -> None:
     }
     write_json(output / "result.json", report)
     print(f"RUN_DIRECTORY={output}", flush=True)
+    sampler = None
 
     try:
         import numpy as np
@@ -97,6 +111,11 @@ def main() -> None:
             raise RuntimeError("MPS was requested but is not available")
         if args.device == "cuda" and not report["cuda_available"]:
             raise RuntimeError("CUDA was requested but is not available")
+        if args.sample_memory:
+            from memory_sampler import MemorySampler
+
+            sampler = MemorySampler()
+            sampler.start()
 
         def synchronize() -> None:
             if args.device == "mps":
@@ -176,7 +195,17 @@ def main() -> None:
                 "cnhuhbert_base_path": str(shared / "chinese-hubert-base"),
             }})
             config.configs_path = str(output / "tts-infer.yaml")
-            engine = TTS(config)
+            if args.prune_bert:
+                from pruned_bert import install_pruned_bert_loader, bind_pruned_bert_features
+
+                original_loader = install_pruned_bert_loader(TTS)
+                try:
+                    engine = TTS(config)
+                finally:
+                    TTS.init_bert_weights = original_loader
+                bind_pruned_bert_features(engine)
+            else:
+                engine = TTS(config)
             report["model_version"] = engine.configs.version
             report["actual_device"] = str(engine.configs.device)
             if report["actual_device"] != args.device:
@@ -203,6 +232,8 @@ def main() -> None:
             from prepared_reference import prepare_reference
 
             started = time.perf_counter()
+            if sampler:
+                sampler.phase = "reference_preparation"
             report["reference_preparation"] = prepare_reference(
                 engine, reference, output,
                 {"inputs": report["input_sha256"], "source_commit": report["source_commit"],
@@ -227,6 +258,8 @@ def main() -> None:
                 if trace:
                     trace.reset()
                 synchronize()
+                if sampler:
+                    sampler.phase = f"infer:{stem}:{index + 1}"
                 started = time.perf_counter()
                 sample_rate, data = generate(case["text"], language)
                 synchronize()
@@ -259,6 +292,8 @@ def main() -> None:
             trace = None
         synchronize()
         report["memory_before_unload"] = memory_snapshot()
+        if sampler:
+            sampler.phase = "unload"
         engine = None
         gc.collect()
         if args.device == "mps":
@@ -267,6 +302,9 @@ def main() -> None:
             torch.cuda.empty_cache()
         synchronize()
         report["memory_after_unload"] = memory_snapshot()
+        if sampler:
+            report["sampled_memory"] = sampler.finish(output)
+            sampler = None
         report["status"] = "completed"
         report["validation"] = "finite_nonzero_pcm; listening_and_content_quality_not_yet_reviewed"
         write_json(output / "result.json", report)
@@ -274,6 +312,11 @@ def main() -> None:
     except Exception as exc:
         report["status"] = "failed"
         report["error"] = {"type": type(exc).__name__, "message": str(exc), "traceback": traceback.format_exc()}
+        if sampler:
+            try:
+                report["sampled_memory"] = sampler.finish(output)
+            except Exception:
+                report["memory_sampler_error"] = traceback.format_exc()
         write_json(output / "result.json", report)
         raise
 
