@@ -35,7 +35,8 @@
         "automatic": "official_lite_fixed_history_logits_exact; frontend_and_reference_differences_confirmed; prepared_reference_pruned_bert_wav_bytes_equal",
         "asr": "original_lite_opening_failures_corroborated; official_and_official_text_openings_recognized",
         "listening": "user_pass_for_official_and_official_text_candidates_2026-09-19; original_failure_preserved",
-        "mlx_fixed_history": "within_preset_fp32_tolerance"
+        "mlx_fixed_history": "within_preset_fp32_tolerance",
+        "mlx_fp64_prefill_history": "within_preset_fp32_tolerance; diagnostic_candidate_only"
       }
     },
     {
@@ -63,7 +64,8 @@
         "automatic": "official_lite_fixed_history_logits_exact; frontend_and_reference_differences_confirmed; prepared_reference_pruned_bert_wav_bytes_equal",
         "asr": "original_lite_opening_failures_corroborated; official_and_official_text_openings_recognized",
         "listening": "user_pass_for_official_and_official_text_candidates_2026-09-19; original_failure_preserved",
-        "mlx_fixed_history": "within_preset_fp32_tolerance"
+        "mlx_fixed_history": "within_preset_fp32_tolerance",
+        "mlx_fp64_prefill_history": "within_preset_fp32_tolerance; diagnostic_candidate_only"
       }
     },
     {
@@ -81,7 +83,8 @@
         "automatic": "official_audio_generated_with_trace; prepared_reference_pruned_bert_wav_bytes_equal",
         "asr": "not_run",
         "listening": "not_run",
-        "mlx_fixed_history": "within_preset_fp32_tolerance"
+        "mlx_fixed_history": "within_preset_fp32_tolerance",
+        "mlx_fp64_prefill_history": "within_preset_fp32_tolerance; diagnostic_candidate_only"
       }
     },
     {
@@ -99,7 +102,8 @@
         "automatic": "official_audio_generated_with_trace; prepared_reference_pruned_bert_wav_bytes_equal",
         "asr": "not_run",
         "listening": "not_run",
-        "mlx_fixed_history": "within_preset_fp32_tolerance"
+        "mlx_fixed_history": "within_preset_fp32_tolerance",
+        "mlx_fp64_prefill_history": "within_preset_fp32_tolerance; diagnostic_candidate_only"
       }
     },
     {
@@ -119,7 +123,8 @@
         "automatic": "official_audio_generated_with_trace; prepared_reference_pruned_bert_wav_bytes_equal",
         "asr": "not_run",
         "listening": "not_run",
-        "mlx_fixed_history": "numerical_mismatch_at_step_329; original_tolerance_retained"
+        "mlx_fixed_history": "numerical_mismatch_at_step_329; original_tolerance_retained",
+        "mlx_fp64_prefill_history": "within_preset_fp32_tolerance; diagnostic_candidate_only"
       }
     },
     {
@@ -139,7 +144,8 @@
         "automatic": "official_audio_generated_with_trace; prepared_reference_pruned_bert_wav_bytes_equal",
         "asr": "not_run",
         "listening": "not_run",
-        "mlx_fixed_history": "within_preset_fp32_tolerance"
+        "mlx_fixed_history": "within_preset_fp32_tolerance",
+        "mlx_fp64_prefill_history": "within_preset_fp32_tolerance; diagnostic_candidate_only"
       }
     },
     {
@@ -160,7 +166,8 @@
         "automatic": "official_audio_generated_with_trace; prepared_reference_pruned_bert_wav_bytes_equal",
         "asr": "not_run",
         "listening": "not_run",
-        "mlx_fixed_history": "within_preset_fp32_tolerance"
+        "mlx_fixed_history": "within_preset_fp32_tolerance",
+        "mlx_fp64_prefill_history": "within_preset_fp32_tolerance; diagnostic_candidate_only"
       }
     },
     {
@@ -181,7 +188,8 @@
         "automatic": "official_audio_generated_with_trace; prepared_reference_pruned_bert_wav_bytes_equal",
         "asr": "not_run",
         "listening": "not_run",
-        "mlx_fixed_history": "within_preset_fp32_tolerance"
+        "mlx_fixed_history": "within_preset_fp32_tolerance",
+        "mlx_fp64_prefill_history": "within_preset_fp32_tolerance; diagnostic_candidate_only"
       }
     },
     {
@@ -201,7 +209,8 @@
         "automatic": "official_audio_generated_with_trace; prepared_reference_pruned_bert_wav_bytes_equal",
         "asr": "not_run",
         "listening": "not_run",
-        "mlx_fixed_history": "not_run"
+        "mlx_fixed_history": "not_run",
+        "mlx_fp64_prefill_history": "within_preset_fp32_tolerance; diagnostic_candidate_only"
       }
     },
     {
@@ -221,7 +230,8 @@
         "automatic": "official_audio_generated_with_trace; prepared_reference_pruned_bert_wav_bytes_equal",
         "asr": "not_run",
         "listening": "not_run",
-        "mlx_fixed_history": "not_run"
+        "mlx_fixed_history": "not_run",
+        "mlx_fp64_prefill_history": "within_preset_fp32_tolerance; diagnostic_candidate_only"
       }
     }
   ]

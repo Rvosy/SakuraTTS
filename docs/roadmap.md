@@ -14,7 +14,7 @@
 - 用户已确认指定官方与 official_text 候选的开头和助词正常；全文、音色及其他样例仍待验收。Windows 验证暂缓。尚未固定产品目标 NVIDIA GPU、首发系统、性能预算和质量门槛。
 - 参考资源释放与 BERT 无依赖层裁剪已通过 10 条中日文及混合输入的逐文件波形回归，请求结束 allocated 边界少约 698 MiB；独立内存采样仍显示较高瞬态 driver 占用。见 [资源实验](experiments/2026-09-19-bert-and-reference-memory.md)。
 - 已实现 GPT FP32 模型包转换和独立 MLX / Metal Prefill、Decode，固定两条历史的全部 logits 在预设容差内，运行环境未安装 PyTorch。见 [MLX 实验](experiments/2026-09-19-mlx-gpt.md)。
-- 扩展固定历史暴露日文长句第 329 步 MLX 数值超差，未放宽容差；GPT 正常计时与 KV 容量成本已单独记录。见 [GPT 实验](experiments/2026-09-19-gpt-capacity.md)。
+- 扩展固定历史暴露日文长句第 329 步 MLX 数值超差，未放宽容差；后续 CPU FP64 Prefill + MLX FP32 Decode 候选的 10 条、1805 步全部通过，尚待正常成本测量。GPT 正常计时与 KV 容量成本已单独记录。见 [GPT 实验](experiments/2026-09-19-gpt-capacity.md)。
 - 自有轻量运行时仍在研发，没有完整语音链路、正式音质、流式或干净部署验收结果。
 
 ## M0：固定范围并建立基线
