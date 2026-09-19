@@ -3,28 +3,19 @@
 Graph semantics follow GPT-SoVITS commit 48b1a016 (MIT, Copyright 2024
 RVC-Boss; see docs/third-party/GPT-SoVITS-LICENSE.txt), specifically WN,
 ResidualCouplingLayer, Flip and ResidualCouplingBlock. Original weight_norm
-g/v tensors are retained. This module covers FP32 prepared conditions only;
+g/v tensors are retained by default, with optional load-time FP32 folding.
+This module covers FP32 prepared conditions only;
 it does not prepare references or generate waveforms.
 """
 
 from __future__ import annotations
 
-import hashlib
-import json
 from pathlib import Path
 
 import mlx.core as mx
 import numpy as np
 
-from .weight_storage import read_fp32, validate_storage
-
-
-def sha256(path):
-    digest = hashlib.sha256()
-    with Path(path).open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+from .sovits_package import SoVITSPackage, sha256
 
 
 def weight_normalize(g, v, dim):
@@ -58,30 +49,30 @@ class MLXSoVITSFlow:
             self.layer_counts[prefix] = len(layers)
 
     @classmethod
-    def load(cls, package: Path):
-        package = Path(package)
-        manifest = json.loads((package / "manifest.json").read_text())
-        if manifest["format"] != "sakuratts-sovits-decode-fp32-v1":
-            raise ValueError("Expected the V2Pro FP32 decode package")
-        if manifest["config"]["model"]["version"] != "v2Pro" or manifest["dtype"] != "float32":
-            raise ValueError("Only the current V2Pro FP32 flow is covered")
-        path = package / manifest["weights"]["file"]
-        if sha256(path) != manifest["weights"]["sha256"]:
-            raise ValueError("Acoustic weights checksum mismatch")
-        selected = [key for key in manifest["tensor_sources"] if key.startswith("flow.")]
-        weights = {}
-        with np.load(path, allow_pickle=False) as archive:
-            validate_storage(manifest, archive.files)
-            for key in selected:
-                array = read_fp32(archive, manifest, key)
-                if array.dtype != np.float32 or list(array.shape) != manifest["tensor_sources"][key]["shape"]:
-                    raise ValueError(f"Unexpected dtype/shape for {key}")
-                weights[key] = mx.array(array)
+    def load(cls, package: Path, *, fold_weight_norm=False):
+        with SoVITSPackage.open(package) as source:
+            return cls.from_package(source, fold_weight_norm=fold_weight_norm)
+
+    @classmethod
+    def from_package(cls, source, *, fold_weight_norm=False):
+        weights = {name: mx.array(array) for name, array in source.tensors("flow.")}
         mx.eval(*weights.values())
-        return cls(manifest, weights)
+        model = cls(source.manifest, weights)
+        if fold_weight_norm:
+            for prefix, spec in model.weight_norm.items():
+                if not prefix.startswith("flow."):
+                    continue
+                weight = weight_normalize(weights[spec["g"]], weights[spec["v"]], spec["dim"])
+                # Use the current execution stream and original FP32 order.
+                # Evaluate before dropping g/v so their storage can be freed.
+                mx.eval(weight)
+                weights[prefix + ".weight"] = weight
+                del weights[spec["g"]], weights[spec["v"]]
+            model.weight_norm = {}
+        return model
 
     def conv(self, x, prefix):
-        """NTC activations, with checkpoint OIK layout and unfused g/v."""
+        """NTC activations, with checkpoint OIK weights."""
         spec = self.modules[prefix]
         if prefix in self.weight_norm:
             norm = self.weight_norm[prefix]

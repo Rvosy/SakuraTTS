@@ -9,26 +9,16 @@ Current scope: FP32, batch=1, speed=1, supplied checkpoint-bound ge512.
 
 from __future__ import annotations
 
-import hashlib
-import json
 import math
 from pathlib import Path
 
 import mlx.core as mx
 import numpy as np
 
-from .weight_storage import read_fp32, validate_storage
+from .sovits_package import SoVITSPackage, sha256
 
 
 CODEBOOK = "quantizer.vq.layers.0._codebook.embed"
-
-
-def sha256(path):
-    digest = hashlib.sha256()
-    with Path(path).open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def relative_to_absolute(x):
@@ -99,25 +89,14 @@ class MLXSoVITSEncoder:
 
     @classmethod
     def load(cls, package: Path, *, softmax="fp32"):
-        manifest = json.loads((package / "manifest.json").read_text())
-        if manifest["format"] != "sakuratts-sovits-decode-fp32-v1":
-            raise ValueError("Expected the V2Pro FP32 decode package")
-        if manifest["config"]["model"]["version"] != "v2Pro" or manifest["dtype"] != "float32":
-            raise ValueError("Only the current V2Pro FP32 encoder is covered")
-        path = package / manifest["weights"]["file"]
-        if sha256(path) != manifest["weights"]["sha256"]:
-            raise ValueError("Acoustic weights checksum mismatch")
-        selected = [key for key in manifest["tensor_sources"] if key.startswith("enc_p.") or key == CODEBOOK]
-        weights = {}
-        with np.load(path, allow_pickle=False) as archive:
-            validate_storage(manifest, archive.files)
-            for key in selected:
-                array = read_fp32(archive, manifest, key)
-                if array.dtype != np.float32 or list(array.shape) != manifest["tensor_sources"][key]["shape"]:
-                    raise ValueError(f"Unexpected dtype/shape for {key}")
-                weights[key] = mx.array(array)
+        with SoVITSPackage.open(package) as source:
+            return cls.from_package(source, softmax=softmax)
+
+    @classmethod
+    def from_package(cls, source, *, softmax="fp32"):
+        weights = {name: mx.array(array) for name, array in source.tensors("enc_p.", names=(CODEBOOK,))}
         mx.eval(*weights.values())
-        return cls(manifest, weights, softmax=softmax)
+        return cls(source.manifest, weights, softmax=softmax)
 
     def conv(self, x, prefix, same_padding=False):
         """NTC activations; original OIK checkpoint weights remain unchanged."""

@@ -75,6 +75,8 @@
 | 日文语言段 | 26 组完整 NJD、labels、韵律和音素 ID 与官方一致，实际覆盖 Nani、Sudachi 与用户词典，无 Torch | 上层路由、全链和新试听待验；见 [日文前端](../experiments/2026-09-19-japanese-g2p.md) |
 | G2PW 映射 ORT 包 | 实际接口 27 组 / 353 数组逐位一致；同条件 OS 最高 RSS 约 1357→851 MiB | Mac CPU 数据；Windows 需重建包，完整 TTS 资源未测；见 [映射实验](../experiments/2026-09-19-g2pw-mapped-ort.md) |
 | 单参考持久包 | 五数组新进程逐字节相同，12 项身份 / 损坏拒绝检查通过；完整包约 203 KiB | 不含无 Torch 的新参考准备，历史缺失身份已明列；见 [参考包](../experiments/2026-09-19-reference-condition-package.md) |
+| 静态 WeightNorm 折叠 | 显式选项下 131 权重、十例 330 阶段逐位相同；Flow 峰值少约 105–107 MB，完整声学收益较小 | 加载后缓存增加、完整速度有波动，默认关闭；Mac GPU 数据，见 [预计算取舍](../experiments/2026-09-19-sovits-static-weights.md) |
+| 声学共享归档 | 650 权重与十例 120 阶段逐位相同；整包校验 / 打开从三次变一次；五新进程加载中位 231→155 ms | 权重常驻不变，Mac 加载数据不代表 CUDA；见 [共享加载](../experiments/2026-09-19-sovits-shared-loading.md) |
 | 权重无损存储 | 三归档少 801.37 MiB；加载恢复的 1,303 张量逐位相同；复用已加载权重收回 Prefill 重复读取代价 | 加载成本和最终分发仍需衡量；不代表运行权重减少，见 [存储实验](../experiments/2026-09-19-lossless-weight-storage.md) |
 | GPT 按阶段释放 | 两条 prepared 请求的 GPT/KV 可在声学生成前释放，输出逐位保持；结合 pair 调度与缓存设置，本轮 allocator peak 为 622.05 MiB | 每次重载增加延迟；不含文本/参考准备、不推广到长句与其他模型；见 [生命周期](../experiments/2026-09-19-gpt-lifecycle.md) 与 [工作区](../experiments/2026-09-19-decoder-workspace.md) |
 | 当前单参考声学条件预计算 | ge/ge512 与官方实际条件相同；10 条 WAV 逐字节保持；请求后 allocated 少 148.99 MiB | RSS 峰值未降、通用持久化与多参考；仅显式实验选项 |

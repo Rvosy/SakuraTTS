@@ -12,6 +12,7 @@ import mlx.core as mx
 from .mlx_sovits_encoder import MLXSoVITSEncoder
 from .mlx_sovits_flow import MLXSoVITSFlow
 from .mlx_sovits_decoder import MLXSoVITSDecoder
+from .sovits_package import SoVITSPackage
 
 
 class MLXSoVITS:
@@ -24,11 +25,13 @@ class MLXSoVITS:
         self.sample_rate = encoder.manifest["config"]["sample_rate"]
 
     @classmethod
-    def load(cls, package, *, encoder_device=None, encoder_softmax="fp32"):
+    def load(cls, package, *, encoder_device=None, encoder_softmax="fp32", fold_weight_norm=False):
         """Load acoustic modules; FP64 softmax accumulation is CPU-only.
 
         This mode retains MLX's FP32 SIMD exponential approximation; it does
         not turn the encoder or its entire softmax calculation into FP64.
+        WeightNorm folding trades extra load work for lower flow workspace;
+        it is explicit because whole-acoustic latency has not improved reliably.
         """
         package = Path(package)
         if encoder_device not in (None, "cpu", "gpu"):
@@ -39,10 +42,12 @@ class MLXSoVITS:
             raise ValueError("Encoder softmax must be fp32 or fp64-accumulation")
         if encoder_softmax == "fp64-accumulation" and encoder_device != mx.cpu:
             raise ValueError("FP64 acoustic softmax accumulation is only covered for the CPU encoder")
-        with mx.stream(encoder_device):
-            encoder = MLXSoVITSEncoder.load(package, softmax=encoder_softmax)
-        return cls(encoder, MLXSoVITSFlow.load(package), MLXSoVITSDecoder.load(package),
-                   device, encoder_device)
+        with SoVITSPackage.open(package) as source:
+            with mx.stream(encoder_device):
+                encoder = MLXSoVITSEncoder.from_package(source, softmax=encoder_softmax)
+            flow = MLXSoVITSFlow.from_package(source, fold_weight_norm=fold_weight_norm)
+            decoder = MLXSoVITSDecoder.from_package(source, fold_weight_norm=fold_weight_norm)
+        return cls(encoder, flow, decoder, device, encoder_device)
 
     def decode(self, codes, phones, ge, ge512, noise, *, noise_scale=0.5, speed=1.0, capture=False):
         """Return complete NCT float waveform; no trimming or PCM conversion."""

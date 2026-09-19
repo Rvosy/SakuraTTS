@@ -64,7 +64,7 @@ def main():
     project = Path(__file__).resolve().parents[1]
     files = ["harness/encoder_softmax_candidate.py", "harness/softmax_candidates.py", "harness/mrte_numerical_diagnosis.py",
              "harness/sovits_fixed_conditions.py", *[f"src/sakuratts/{name}.py" for name in
-              ("mlx_sovits", "mlx_sovits_encoder", "mlx_sovits_flow", "mlx_sovits_decoder", "weight_storage")]]
+              ("mlx_sovits", "mlx_sovits_encoder", "mlx_sovits_flow", "mlx_sovits_decoder", "weight_storage", "sovits_package")]]
     for name in files:
         target = run / "source" / name
         target.parent.mkdir(parents=True, exist_ok=True)

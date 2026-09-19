@@ -1,4 +1,4 @@
-"""MLX V2Pro waveform generator candidate with original FP32 g/v weights.
+"""MLX V2Pro waveform generator with optional load-time FP32 weight folding.
 
 Follows GPT-SoVITS 48b1a016 Generator and ResBlock1 (MIT, Copyright 2024
 RVC-Boss; see docs/third-party/GPT-SoVITS-LICENSE.txt). Runtime dependencies
@@ -8,22 +8,12 @@ and prepared ge; this module does not prepare references or run flow.
 
 from __future__ import annotations
 
-import hashlib
-import json
 from pathlib import Path
 
 import mlx.core as mx
 import numpy as np
 
-from .weight_storage import read_fp32, validate_storage
-
-
-def sha256(path):
-    digest = hashlib.sha256()
-    with Path(path).open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+from .sovits_package import SoVITSPackage, sha256
 
 
 def normalized_weight(value, magnitude, dim):
@@ -51,25 +41,26 @@ class MLXSoVITSDecoder:
             raise ValueError("Grouped generator convolutions are not covered")
 
     @classmethod
-    def load(cls, package: Path):
-        manifest = json.loads((package / "manifest.json").read_text())
-        if manifest["format"] != "sakuratts-sovits-decode-fp32-v1" or manifest["config"]["model"]["version"] != "v2Pro":
-            raise ValueError("Expected the current V2Pro FP32 decoder package")
-        path = package / manifest["weights"]["file"]
-        if sha256(path) != manifest["weights"]["sha256"]:
-            raise ValueError("Decoder weights checksum mismatch")
-        weights = {}
-        with np.load(path, allow_pickle=False) as archive:
-            validate_storage(manifest, archive.files)
-            for key, spec in manifest["tensor_sources"].items():
-                if not key.startswith("dec."):
-                    continue
-                value = read_fp32(archive, manifest, key)
-                if value.dtype != np.float32 or list(value.shape) != spec["shape"]:
-                    raise ValueError(f"Unexpected decoder dtype/shape: {key}")
-                weights[key] = mx.array(value)
+    def load(cls, package: Path, *, fold_weight_norm=False):
+        with SoVITSPackage.open(package) as source:
+            return cls.from_package(source, fold_weight_norm=fold_weight_norm)
+
+    @classmethod
+    def from_package(cls, source, *, fold_weight_norm=False):
+        weights = {name: mx.array(array) for name, array in source.tensors("dec.")}
         mx.eval(*weights.values())
-        return cls(manifest, weights)
+        model = cls(source.manifest, weights)
+        if fold_weight_norm:
+            for prefix, spec in model.norms.items():
+                if not prefix.startswith("dec."):
+                    continue
+                # Normalize checkpoint OIK/IOK axes before layout conversion.
+                weight = normalized_weight(weights[spec["v"]], weights[spec["g"]], spec["dim"])
+                mx.eval(weight)
+                weights[prefix + ".weight"] = weight
+                del weights[spec["g"]], weights[spec["v"]]
+            model.norms = {}
+        return model
 
     def weight(self, prefix):
         if prefix in self.norms:
