@@ -67,6 +67,7 @@
 | G2PW 输入准备 | 自有纯 NumPy 实现的 18 映射、366 组输入与官方一致；保留官方请求内分词与实例静态表复用 | 同源 ONNX 概率已另行对照；正在连接多音字前后处理，>510 异质长文本的官方去重边界保留；见 [G2PW 输入实验](../experiments/2026-09-19-g2pw-inputs.md) |
 | G2PW 文本准备 | 25 组与固定官方函数对照一致，含 23 组完整输出和 2 组相同域外异常；保留 OpenCC / PyPinyin / 上下文 | 完整拼音与音素链尚未验收；见 [文本准备](../experiments/2026-09-19-g2pw-text.md) |
 | G2PW CPU 模型推理 | 自有 ORT 接口 8 组输入、16 组概率及标签/置信度与官方逐位一致，无 Torch/Transformers | 文本接口仍在组合；>510 异质词元的官方去重边界保留；三轮关闭后 RSS 约 380 MiB 趋稳，长期情况未验；见 [ONNX](../experiments/2026-09-19-g2pw-onnx.md) 与 [生命周期](../experiments/2026-09-19-g2pw-lifecycle.md) |
+| G2PW 完整拼音接口 | 规范化中文片段经 Text → Inputs → Session → 拼音填回，27 组输出 / 异常一致，353 数组逐位相同，无 Torch/Transformers；原边界保留 | 中文分词、修正词典、变调、儿化和最终音素尚未接入；见 [拼音闭环](../experiments/2026-09-19-g2pw-pinyin.md) |
 | 权重无损存储 | 三归档少 801.37 MiB；加载恢复的 1,303 张量逐位相同；复用已加载权重收回 Prefill 重复读取代价 | 加载成本和最终分发仍需衡量；不代表运行权重减少，见 [存储实验](../experiments/2026-09-19-lossless-weight-storage.md) |
 | GPT 按阶段释放 | 两条 prepared 请求的 GPT/KV 可在声学生成前释放，输出逐位保持；结合 pair 调度与缓存设置，本轮 allocator peak 为 622.05 MiB | 每次重载增加延迟；不含文本/参考准备、不推广到长句与其他模型；见 [生命周期](../experiments/2026-09-19-gpt-lifecycle.md) 与 [工作区](../experiments/2026-09-19-decoder-workspace.md) |
 | 当前单参考声学条件预计算 | ge/ge512 与官方实际条件相同；10 条 WAV 逐字节保持；请求后 allocated 少 148.99 MiB | RSS 峰值未降、通用持久化与多参考；仅显式实验选项 |

@@ -46,6 +46,7 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 | [G2PW 输入迁移](docs/experiments/2026-09-19-g2pw-inputs.md) | 查询截断、字符映射和输入准备的官方对照 |
 | [G2PW 文本准备](docs/experiments/2026-09-19-g2pw-text.md) | OpenCC、查询上下文和 PyPinyin 回退迁移 |
 | [G2PW 模型推理](docs/experiments/2026-09-19-g2pw-onnx.md) | 独立 ONNX 接口、官方概率一致性与实际依赖 |
+| [G2PW 拼音闭环](docs/experiments/2026-09-19-g2pw-pinyin.md) | 文本到模型预测再填回拼音的完整对照 |
 | [G2PW 释放观察](docs/experiments/2026-09-19-g2pw-lifecycle.md) | 三次创建与关闭后的 RSS 边界 |
 | [兼容矩阵](docs/specs/compatibility-matrix.md) | 各模型、语言和功能的实测范围与待验证项 |
 | [Mac 首轮验证](docs/experiments/2026-09-19-macos-reference-smoke.md) | 实际环境、运行命令、样音、耗时、资源记录和已知限制 |
