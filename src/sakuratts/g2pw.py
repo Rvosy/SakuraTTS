@@ -17,14 +17,18 @@ from .tokenizer import ChineseBertTokenizer
 
 
 class G2PW:
-    def __init__(self, resource_dir, tokenizer_json, model_path, *, context_chars=16,
-                 enable_opencc=True, sentence_dedup=True):
+    def __init__(self, resource_dir, tokenizer_json, model_path=None, *, context_chars=16,
+                 enable_opencc=True, sentence_dedup=True, ort_package=None):
+        if (model_path is None) == (ort_package is None):
+            raise ValueError("Provide an ONNX model_path or a prepared ort_package")
         self.text = G2PWText(resource_dir, context_chars=context_chars, enable_opencc=enable_opencc)
         # Model IDs use the complete table, before text-query exclusions.
         polyphonic = [line.split("\t") for line in
                       (Path(resource_dir) / "POLYPHONIC_CHARS.txt").read_text().strip().splitlines()]
         self.inputs = G2PWInputs(ChineseBertTokenizer(tokenizer_json), polyphonic)
-        self.session = G2PWSession(model_path, self.inputs.labels, sentence_dedup=sentence_dedup)
+        self.session = (G2PWSession(model_path, self.inputs.labels, sentence_dedup=sentence_dedup)
+                        if ort_package is None else
+                        G2PWSession.from_ort_package(ort_package, self.inputs.labels, sentence_dedup=sentence_dedup))
 
     def __call__(self, sentences):
         texts, model_positions, result_positions, sentence_ids, partials = self.text.prepare(sentences)

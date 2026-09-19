@@ -43,6 +43,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--equivalence-run", type=Path, required=True)
     parser.add_argument("--references", type=Path, default=PROJECT.parent / "SakuraTTS-References")
+    parser.add_argument("--ort-package", type=Path)
     args = parser.parse_args()
     source = args.equivalence_run.resolve()
     prepared = json.loads((source / "prepared.json").read_text())
@@ -54,6 +55,10 @@ def main():
     model_hash = sha256(prepared["model"])
     if model_hash != gold["model_sha256"]:
         raise ValueError("Model differs from the verified equivalence run")
+    if args.ort_package:
+        manifest = json.loads((args.ort_package / "manifest.json").read_text())
+        if manifest["source_sha256"] != model_hash:
+            raise ValueError("ORT package comes from a different model")
     with np.load(source / case["file"], allow_pickle=False) as archive:
         inputs = {name: archive[name] for name in archive.files}
     labels = json.loads((source / "labels.json").read_text())
@@ -65,6 +70,7 @@ def main():
     from sakuratts.g2pw_session import G2PWSession
 
     report = dict(status="running", command=[sys.executable, *sys.argv], input_run=str(source),
+                  ort_package=str(args.ort_package) if args.ort_package else None,
                   model_sha256=model_hash, case=case, input_sha256=sha256(source / case["file"]),
                   versions={name: metadata.version(name) for name in ("onnxruntime", "numpy")},
                   ort_build_info=ort.get_build_info(), ort_disable_telemetry=os.environ["ORT_DISABLE_TELEMETRY"],
@@ -73,7 +79,8 @@ def main():
     for cycle in range(1, 4):
         before = memory()
         started = time.perf_counter()
-        session = G2PWSession(prepared["model"], labels)
+        session = (G2PWSession(prepared["model"], labels) if args.ort_package is None else
+                   G2PWSession.from_ort_package(args.ort_package, labels))
         load_seconds = time.perf_counter() - started
         loaded = memory()
         started = time.perf_counter()

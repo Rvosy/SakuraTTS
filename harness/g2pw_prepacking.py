@@ -7,6 +7,7 @@ from importlib import metadata
 import json
 import os
 from pathlib import Path
+import platform
 import shutil
 import statistics
 import subprocess
@@ -39,14 +40,30 @@ def worker(args):
         if sha256(source / name) != expected:
             raise ValueError(f"Prepared input changed: {name}")
     labels = json.loads((source / "labels.json").read_text())
+    model_path = Path(prepared["model"])
+    optimized_manifest = None
+    if args.policy in ("preoptimized", "mmap", "runtime-mmap"):
+        optimized_manifest = json.loads((args.optimized_package / "manifest.json").read_text())
+        target_runtime = optimized_manifest["runtime"]
+        if (optimized_manifest["status"] != "converted_unvalidated"
+                or optimized_manifest["source_sha256"] != gold["model_sha256"]
+                or target_runtime["version"] != metadata.version("onnxruntime")
+                or target_runtime["build"] != ort.get_build_info()
+                or target_runtime["system"] != platform.system()
+                or target_runtime["machine"] != platform.machine()):
+            raise ValueError("Optimized graph source or CPU runtime differs")
+        model_path = args.optimized_package / optimized_manifest["model_file"]
+        if sha256(model_path) != optimized_manifest["model_sha256"]:
+            raise ValueError("Optimized graph changed")
     output = run / args.policy
     output.mkdir()
     report = dict(status="running", policy=args.policy, command=[sys.executable, *sys.argv],
                   source=str(source), model_sha256=gold["model_sha256"],
+                  loaded_model=str(model_path), optimized_manifest=optimized_manifest,
                   versions={name: metadata.version(name) for name in ("onnxruntime", "numpy")},
                   ort_build=ort.get_build_info(), memory={"initial": memory()},
-                  scope="Same CPU FP32 G2PW graph and fixed inputs; only the selected prepacking or CPU arena setting differs. No frontend/audio or GPU memory claim.",
-                  timing_scope="Normal predict, no probability capture or validation in timer, after diagnostics and two warmups; five measured requests per normalized input. Model load excludes streaming hash checks. Not process cold start.",
+                  scope="Same CPU FP32 G2PW and fixed inputs; change only the selected prepacking, arena or serialized optimization policy. No frontend/audio or GPU memory claim.",
+                  timing_scope="Normal predict, no probability capture or validation in timer, after diagnostics and two warmups; five measured requests per normalized input. Construction excludes harness prechecks but runtime-mmap includes its constructor's package validation and streaming hash. Not process cold start.",
                   memory_scope="CPU RSS boundaries and OS process-lifetime maximum, includes imports/load/validation and measured requests; not phase peaks.",
                   cases=[], timings=[])
     runner = None
@@ -54,11 +71,13 @@ def worker(args):
         start = time.perf_counter()
         if args.policy == "default":
             runner = G2PWSession(prepared["model"], labels)
+        elif args.policy == "runtime-mmap":
+            runner = G2PWSession.from_ort_package(args.optimized_package, labels)
         else:
             # The experimental constructor matches the production settings.
             # Its inference, dedup, decoding and close methods are unchanged.
             runner = G2PWSession.__new__(G2PWSession)
-            runner.model_path = Path(prepared["model"]).resolve()
+            runner.model_path = model_path.resolve()
             runner.labels, runner.sentence_dedup = labels, True
             options = ort.SessionOptions()
             options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
@@ -66,8 +85,13 @@ def worker(args):
             options.intra_op_num_threads = 2
             if args.policy == "no-prepack":
                 options.add_session_config_entry("session.disable_prepacking", "1")
-            else:
+            elif args.policy == "no-arena":
                 options.enable_cpu_mem_arena = False
+            else:
+                options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL
+                if args.policy == "mmap":
+                    options.add_session_config_entry("session.use_memory_mapped_ort_model", "1")
+                    options.add_session_config_entry("session.use_ort_model_bytes_for_initializers", "1")
             runner.session = ort.InferenceSession(str(runner.model_path), sess_options=options,
                                                   providers=["CPUExecutionProvider"])
         report["load_seconds"] = time.perf_counter() - start
@@ -78,6 +102,7 @@ def worker(args):
                                  execution_mode=str(options.execution_mode),
                                  graph_optimization=str(options.graph_optimization_level),
                                  cpu_mem_arena=options.enable_cpu_mem_arena,
+                                 mapped_ort_initializers=args.policy in ("mmap", "runtime-mmap"),
                                  disable_prepacking=options.get_session_config_entry("session.disable_prepacking")
                                  if args.policy == "no-prepack" else "0 (default)")
         prepared_inputs = []
@@ -155,9 +180,13 @@ def main():
     parser.add_argument("--references", type=Path, default=PROJECT.parent / "SakuraTTS-References")
     parser.add_argument("--equivalence-run", type=Path, required=True)
     parser.add_argument("--run", type=Path)
-    parser.add_argument("--policy", choices=("default", "no-prepack", "no-arena"))
-    parser.add_argument("--policies", nargs="+", choices=("default", "no-prepack", "no-arena"), default=["default", "no-prepack"])
+    policies = ("default", "no-prepack", "no-arena", "preoptimized", "mmap", "runtime-mmap")
+    parser.add_argument("--policy", choices=policies)
+    parser.add_argument("--policies", nargs="+", choices=policies, default=["default", "no-prepack"])
+    parser.add_argument("--optimized-package", type=Path)
     args = parser.parse_args()
+    if (args.policy in ("preoptimized", "mmap", "runtime-mmap") or {"preoptimized", "mmap", "runtime-mmap"}.intersection(args.policies)) and args.optimized_package is None:
+        parser.error("Preoptimized policy requires --optimized-package")
     if args.policy:
         if args.run is None:
             parser.error("Worker requires --run")
@@ -177,6 +206,8 @@ def main():
     for policy in args.policies:
         command = [sys.executable, str(Path(__file__).resolve()), "--equivalence-run", str(args.equivalence_run),
                    "--run", str(run), "--policy", policy]
+        if args.optimized_package is not None:
+            command += ["--optimized-package", str(args.optimized_package)]
         with (run / f"{policy}.log").open("x") as log:
             result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT)
         processes.append(dict(policy=policy, command=command, exit_code=result.returncode))

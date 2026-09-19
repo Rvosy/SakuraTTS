@@ -64,6 +64,8 @@ def prepare(args):
         resource_manifest_sha256=sha256(resources / 'manifest.json'), model=str(model),
         model_sha256='2eb3c71fd95117b2e1abef8d2d0cd78aae894bbe7f0fac105ddc9c32ce63cbd0',
         tokenizer=str(tokenizer), tokenizer_sha256=sha256(tokenizer / 'tokenizer.json'),
+        ort_package=str(args.ort_package.resolve()) if args.ort_package else None,
+        ort_manifest_sha256=sha256(args.ort_package / 'manifest.json') if args.ort_package else None,
         official_commit=COMMIT, source_sha256={str(path.relative_to(run)): sha256(path) for path in (run / 'source').rglob('*') if path.is_file()},
         scope='Normalized Chinese segments through full G2PW pinyin; no Chinese tone sandhi, final phones, feature BERT or audio'))
 
@@ -139,7 +141,8 @@ def worker(args):
     else:
         sys.path.insert(0, str(run / 'source'))
         from sakuratts.g2pw import G2PW
-        engine = G2PW(resources, Path(prepared['tokenizer']) / 'tokenizer.json', prepared['model'])
+        engine = G2PW(resources, Path(prepared['tokenizer']) / 'tokenizer.json',
+                      None if prepared.get('ort_package') else prepared['model'], ort_package=prepared.get('ort_package'))
         session, tokenizer = engine.session.session, engine.inputs.tokenizer
         labels, chars = engine.inputs.labels, engine.inputs.chars
         text_prepare = engine.text.prepare
@@ -209,6 +212,12 @@ def execute(args):
     if (run / 'comparison.json').exists():
         raise FileExistsError('Create new evidence instead of replacing this run')
     prepared = json.loads((run / 'prepared.json').read_text())
+    if prepared.get('ort_package'):
+        package = Path(prepared['ort_package'])
+        if sha256(package / 'manifest.json') != prepared['ort_manifest_sha256']:
+            raise ValueError('ORT package manifest changed')
+        if json.loads((package / 'manifest.json').read_text())['source_sha256'] != prepared['model_sha256']:
+            raise ValueError('ORT package was not converted from the official G2PW model')
     if sha256(Path(__file__)) != prepared['source_sha256']['source/g2pw_equivalence.py']:
         raise ValueError('Harness changed after preparation')
     for relative, expected in prepared['source_sha256'].items():
@@ -262,6 +271,7 @@ def main():
     commands = parser.add_subparsers(dest='command', required=True)
     prep = commands.add_parser('prepare')
     prep.add_argument('--text-run', type=Path, required=True)
+    prep.add_argument('--ort-package', type=Path)
     for name in ('run', 'worker'):
         child = commands.add_parser(name)
         child.add_argument('--run', type=Path, required=True)
