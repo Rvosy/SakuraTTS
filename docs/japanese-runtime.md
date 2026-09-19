@@ -33,6 +33,10 @@ SAKURA_REFS=../SakuraTTS-References
 
 CLI 会一次准备原文的所有 `cut0` 片段，再顺序合成完整 WAV。换行可能被官方短片合并规则合并；超过 510 字符时按官方标点规则继续拆分，不擅自硬切或丢弃原文。每片使用新的 GPT 历史和同一参考，整条请求共用一个 RNG；某片遇到 EOS 或次数限制后仍处理后续片段。JSON 的 `fragments` 保存每片文本、停止原因、PCM 偏移和长度；全部合成成功后才写 WAV，后片异常不会留下只含前片的音频。字符切分不保证 KV 容量足够，长输入仍可能需要显式调整 `--capacity`。
 
+`--text-split-method cut2` 是显式实验选项，默认仍为 `cut0`。它按官方规则累计完整子句，超过 50 字符后分组，末组不足 50 字符时并入前组，再执行换行和短片规则；并非每片固定 50 字符，也不保证容量足够。原文不改，方法记录在 JSON 中。Python 对应 `prepare_text_request(..., split_method="cut2")`；原单片 API 不变。当前仅有分句规则与自有入口验证，完整官方数值对照未完成，590 字自然长文的 ASR 也有遗漏和不匹配，不能据此宣称长文质量已通过。后续在 Windows 接续，见[本轮记录](experiments/2026-09-20-natural-long-handoff.md)。
+
+CLI 收到 `KeyboardInterrupt` 时记录 `interrupted` 和原 traceback，返回 130，保留已完成片段及中断阶段，不生成部分 WAV。这是控制台中断记录，不是新增宿主取消协议，也不承诺立即中断 GPU kernel。
+
 CLI 默认 `--model-policy staged`：每片完成语义生成后卸载 GPT，再加载 SoVITS，片尾卸载后处理下一片。`--model-policy simultaneous` 在所有片段间复用两模型，GPT 请求状态仍逐片释放。两者生成规则相同；此前[单片同条件实测](experiments/2026-09-19-native-staged-loading.md)中四例 WAV 保持相同，长句请求内 MLX 分配器峰值约少 304 MiB、耗时增加约 51 ms。多片段需要重复加载，代价另见[多片段验证](experiments/2026-09-20-japanese-multifragment.md)。这些是 Mac 数据，不能推作 NVIDIA 显存结论。
 
 `--bind-reference` 是另一个可选项，默认关闭。它在加载 SoVITS 时先算出当前参考的五项声学投影，再跳过对应的 14 个常驻权重。JSON 的 `runtime_policy.bind_reference` 记录选择，`reference_projection_seconds` 是 `sovits_load_seconds` 的子项，不重复累加。Python 对应 `MLXSoVITS.load(..., reference=reference)`；绑定后换参考须新建实例，错用参考会报错。原模型包和完整权重对照路径保留，安装体积不会因此缩小。

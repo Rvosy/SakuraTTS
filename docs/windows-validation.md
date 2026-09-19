@@ -2,6 +2,20 @@
 
 近期只推进日文，模型限“朱雀院红叶”V2Pro。Mac 保留为可执行对照，用来验证模型语义、部署数据与资源生命周期。Windows / NVIDIA 的后端、显存峰值和速度必须在实机上重新测量。
 
+## 当前交接状态
+
+2026-09-20 已具备转到 Windows 继续研发的条件。现有生产原型依赖 MLX / Metal，Windows 自有 CUDA 后端尚待实现；不应在 Windows 安装 `requirements-mlx-japanese.txt` 来假定引擎可运行。已完成的模型包、参考条件、文本规则和 NumPy 验收格式可继续使用。
+
+交接时保留 `feat/reference-parity` 的最新提交。若没有推送，可从参考目录的离线 Git bundle 在新目录检出该分支；不覆盖另一台电脑已有修改。还需携带：
+
+- GPT 与 SoVITS 的完整转换包，包含 manifest 和无损存储权重。
+- `japanese-frontend-resources`、日文参考 A / B 包；词典 / Nani / Sudachi 等依赖资源另按 Windows 环境准备。
+- 四例便携验收目录及原始 GPT / SoVITS 权重。开发基线另需固定官方代码、原参考音频、CNHuBERT / SV 和语言资源，普通推理无需常驻这些辅助模型。
+
+首次操作先记录 `nvidia-smi` 的 GPU、显存和驱动，核验包身份，再建立官方 CUDA / FP32 对照和一条自有 CUDA 候选。普通 FP32 数值通过后再独立测 FP16 与其他近似，不能直接跳到最低内存配置。
+
+自然 590 字长文仍有内容检查异常；新增 `cut2` 仅为实验入口，官方 MPS 全请求对照未完成。样例已入库，原文和所有失败记录保留，见[长文与交接记录](experiments/2026-09-20-natural-long-handoff.md)。到 Windows 后应优先完成同条件官方捕获，不能仅靠换分句方式宣布问题解决。
+
 ## 可搬迁的数据包
 
 `harness/export_validation_bundle.py` 从已有官方运行记录导出四条日文样例：原报告、短句、长句、标点。它不加载推理模型，不修改历史记录，也不复制原始模型。每例保存原文、规范化文本、音素、采样参数及以下数组：

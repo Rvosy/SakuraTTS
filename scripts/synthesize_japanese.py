@@ -107,7 +107,8 @@ def run(args, report):
         segmenter = LanguageSegmenter(packages["frontend"])
         frontend = TextFrontend(japanese=japanese, symbols=symbols, segmenter=segmenter)
         report["timings"]["frontend_load_seconds"] = time.perf_counter() - start
-        prepared_request = prepare_text_request(args.text, args.language, frontend)
+        prepared_request = prepare_text_request(args.text, args.language, frontend,
+                                                split_method=args.text_split_method)
     finally:
         start = time.perf_counter()
         if japanese is not None:
@@ -122,7 +123,7 @@ def run(args, report):
     targets = [{"normalized": prepared.target["norm_text"],
                 "phones": prepared.target["phones"], "segments": prepared.target["segments"]}
                for prepared in prepared_request.fragments]
-    report["text"] = {"original": args.text, "language": args.language,
+    report["text"] = {"original": args.text, "language": args.language, "split_method": args.text_split_method,
                       **(targets[0] if len(targets) == 1 else {"fragments": targets})}
     report["fragments"] = []
     report["loads"] = {"gpt": 0, "sovits": 0}
@@ -263,6 +264,8 @@ def main():
                         help="OpenJTalk dictionary; defaults to the installed pyopenjtalk-plus wheel")
     parser.add_argument("--text", required=True, help="Original Japanese text, before normalization")
     parser.add_argument("--language", choices=("ja", "all_ja"), default="ja")
+    parser.add_argument("--text-split-method", choices=("cut0", "cut2"), default="cut0",
+                        help="Official rule: cut0 is the validated default; experimental cut2 accumulates complete clauses past 50 characters")
     parser.add_argument("--output", type=Path, required=True, help="New WAV path; also creates its .json sibling")
     parser.add_argument("--seed", type=int, default=0, help="NumPy RNG seed; not Torch seed-equivalent (default: 0)")
     parser.add_argument("--top-k", type=int, default=15)
@@ -291,11 +294,13 @@ def main():
     report = {
         "status": "running", "created_utc": datetime.now(timezone.utc).isoformat(),
         "command": [sys.executable, *sys.argv], "seed": args.seed, "rng": "numpy.random.default_rng",
-        "input": {"text": args.text, "language": args.language}, "capacity": args.capacity,
+        "input": {"text": args.text, "language": args.language, "text_split_method": args.text_split_method},
+        "capacity": args.capacity,
         "parameters": {"top_k": args.top_k, "top_p": 1.0, "temperature": args.temperature,
                        "repetition_penalty": args.repetition_penalty, "early_stop_num": args.early_stop_num,
-                       "speed": 1.0, "noise_scale": 0.5, "fragment_interval": 0.3},
-        "scope": "V2Pro Japanese ja/all_ja, ordered cut0 fragments, one offline prepared Japanese reference, complete WAV only",
+                       "speed": 1.0, "noise_scale": 0.5, "fragment_interval": 0.3,
+                       "text_split_method": args.text_split_method},
+        "scope": f"V2Pro Japanese ja/all_ja, ordered {args.text_split_method} fragments, one offline prepared Japanese reference, complete WAV only",
         "validation_scope": "Only Suzakuin Momiji V2Pro has been validated; accepting another package is not a compatibility claim. The early-stop threshold is an explicit request parameter, not derived from package metadata.",
         "precision": {"gpt_prefill": "CPU FP64", "gpt_decode": "GPU FP32", "acoustic_encoder": "CPU FP32",
                       "flow_decoder": "GPU FP32", "fold_weight_norm": False},
@@ -310,6 +315,10 @@ def main():
     with record.open("x", encoding="utf-8") as stream:
         try:
             code = run(args, report)
+        except KeyboardInterrupt:
+            report.update(status="interrupted", error=traceback.format_exc())
+            traceback.print_exc()
+            code = 130
         except Exception:
             report.update(status="error", error=traceback.format_exc())
             traceback.print_exc()

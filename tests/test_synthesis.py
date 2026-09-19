@@ -16,6 +16,7 @@ from sakuratts.reference_condition import PreparedReference
 from sakuratts.generation import SynthesisCancelled
 from sakuratts.synthesis import (generate_prepared_semantic, prepare_text, prepare_text_request, synthesize,
                                  synthesize_acoustic, synthesize_prepared)
+from sakuratts.text_frontend import TextFrontend
 
 
 class Frontend:
@@ -133,6 +134,31 @@ class SynthesisTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "aligned"):
             prepare_text_request("こんにちは。\n今日はいい天気ですね。", "ja", self.frontend)
         self.assertFalse(hasattr(self.gpt, "inputs"))
+
+    def test_explicit_cut2_uses_full_original_text_and_preserves_fragment_order(self):
+        frontend = TextFrontend(
+            japanese=SimpleNamespace(normalize=lambda text: text, g2p=lambda text: ["a"] * 6),
+            symbols=["UNK", "a"], segmenter=lambda text, *args: [{"lang": "ja", "text": text}])
+        sentence = "今日はいい天気ですね。"
+        text = sentence * 10
+        default = prepare_text_request(text, "ja", frontend)
+        grouped = prepare_text_request(text, "ja", frontend, split_method="cut2")
+        self.assertEqual([p.target["norm_text"] for p in default.fragments], [text])
+        self.assertEqual([p.target["norm_text"] for p in grouped.fragments], [sentence * 5, sentence * 5])
+        self.assertTrue(all(p.text == text for p in grouped.fragments))
+        self.assertEqual(prepare_text(text, "ja", frontend).target["norm_text"], text)
+        self.assertFalse(hasattr(self.gpt, "inputs"))
+
+    def test_split_method_is_explicit_and_invalid_methods_fail_before_frontend(self):
+        text = "こんにちは。"
+        prepare_text_request(text, "all_ja", self.frontend, split_method="cut2")
+        self.assertEqual(self.frontend.request, (text, "all_ja", "cut2"))
+        frontend = Frontend()
+        with self.assertRaisesRegex(ValueError, "cut0/cut2"):
+            prepare_text_request(text, "ja", frontend, split_method="cut1")
+        with self.assertRaises(TypeError):
+            prepare_text_request(text, "ja", frontend, "cut2")
+        self.assertFalse(hasattr(frontend, "request"))
 
     def test_text_preparation_does_not_need_or_retain_synthesis_models(self):
         prepared = prepare_text("こんにちは。", "ja", self.frontend)

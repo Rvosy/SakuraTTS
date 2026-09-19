@@ -1,6 +1,6 @@
 # 实施路线
 
-状态：近期先完成日文独立运行链与通用优化；中文已有成果保留，整链与专项优化暂缓。自有 GPT、声学计算和语言段原型已建立，完整运行包仍未验收。更新日期：2026-09-20。
+状态：日文独立运行链与主要通用工作已有证据，准备转到 Windows / NVIDIA 接续；中文已有成果保留，整链与专项优化暂缓。现有 MLX 路径为 Mac 对照，Windows 自有 CUDA 后端尚待实现，完整产品仍未验收。更新日期：2026-09-20。
 
 目标与行为约束见 [推理契约](specs/inference-contract.md)，架构选择见 [ADR 0001](adr/0001-native-gpu-runtime.md)，测量规则见 [基准协议](specs/benchmark-protocol.md)。各阶段按证据推进，不按预估加速倍数或日历日期宣布完成。
 
@@ -39,6 +39,7 @@
 - [分离安装工具](experiments/2026-09-20-runtime-install-tools.md)后，默认推理目录为 1.047 GiB，含清单净少 23.865 MiB；另四个严格隔离 CLI 保持日文 WAV。pip / setuptools 和捆绑 ensurepip 不再随推理包复制，模型及语言资源不变，未宣称运行内存或速度改善。
 - [日文多片完整请求](experiments/2026-09-20-japanese-multifragment.md)已补齐：换行与 510 字符规则得到的所有片段顺序生成，同一请求共用 RNG。两例五片、814 步官方对照通过原容差；原四条 WAV 保持。三片热请求 staged 约 2.65 s、simultaneous 约 1.77 s，对应 MLX 高水位约 417 / 627 MiB，重复加载的延迟代价单列。新长样例使用容量 4096，内容质量待验。
 - [日文零特征](experiments/2026-09-20-japanese-zero-features.md)去掉逐段分配后再拼接的副本，六例特征和 WAV 保持。550 字符前端受跟踪分配峰值少 3.936 MiB，准备结果大小不变；未宣称速度或 GPU 峰值改善。
+- [自然长文与 Windows 交接](experiments/2026-09-20-natural-long-handoff.md)保留 590 字原文的内容检查异常。显式 `cut2` 分句规则通过，但官方 MPS 全请求诊断在资源压力下中断，完整数值与音质尚未验收；默认 `cut0` 不变。CLI / Harness 的中断状态已补齐，下一阶段优先在 Windows 补同条件官方基线。
 - 自有轻量运行时仍在研发，流式、宿主取消接入、同时多参考 / 新模型和 Windows 干净部署未验收。
 
 ## 当前实施顺序：先完成可迁移的运行链

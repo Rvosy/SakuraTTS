@@ -71,11 +71,13 @@ def load_gold(directory):
     if read_json(directory / "process-result.json")["returncode"] != 0:
         raise ValueError("Official worker did not exit successfully")
     request = source["request"]
-    required = {"text_lang": "ja", "prompt_lang": "ja", "batch_size": 1, "text_split_method": "cut0",
+    required = {"text_lang": "ja", "prompt_lang": "ja", "batch_size": 1,
         "parallel_infer": False, "streaming_mode": False, "return_fragment": False,
         "split_bucket": False, "speed_factor": 1.0, "top_p": 1.0}
     if any(request.get(key) != expected for key, expected in required.items()):
         raise ValueError("Official capture uses a different request contract")
+    if request.get("text_split_method") not in ("cut0", "cut2"):
+        raise ValueError("Official capture requires an explicit supported cut0/cut2 split method")
     if not 2 <= source["fragment_count"] <= 16 or source["fragment_count"] != len(source["fragments"]):
         raise ValueError("Expected 2..16 complete official fragments")
     resources = {str(directory / name): sha256_file(directory / name)
@@ -241,6 +243,9 @@ def worker(run):
         from sakuratts import synthesis
         mx.set_default_device(mx.gpu)
         source, gold, observed_reference, official_pcm, _ = load_gold(Path(config["official_run"]))
+        split_method = source["request"]["text_split_method"]
+        if config.get("text_split_method", split_method) != split_method:
+            raise ValueError("Prepared split method differs from the actual official request")
         packages = {name: Path(config[name + "_package"]) for name in PACKAGES}
         reference = PreparedReference.load(packages["reference"], **prepared["reference_identity"])
         ref_checks = {name: bool(np.array_equal(getattr(reference, name), value.reshape(-1)
@@ -254,7 +259,8 @@ def worker(run):
             segmenter = LanguageSegmenter(packages["frontend"])
             frontend = TextFrontend(japanese=japanese,
                 symbols=read_json(packages["frontend"] / "symbols-v2.json"), segmenter=segmenter)
-            target_request = synthesis.prepare_text_request(source["request"]["text"], "ja", frontend)
+            target_request = synthesis.prepare_text_request(source["request"]["text"], "ja", frontend,
+                                                           split_method=split_method)
         finally:
             if japanese is not None:
                 japanese.close()
@@ -266,6 +272,7 @@ def worker(run):
             mx.synchronize()
         report["frontend_diagnostic_seconds"] = time.perf_counter() - started
         report["text"] = {"original": target_request.text, "language": target_request.language,
+                          "split_method": split_method,
                           "fragment_count": len(target_request.fragments)}
         if len(target_request.fragments) != len(gold):
             raise ValueError("Independent frontend produced a different fragment count")
@@ -377,10 +384,19 @@ def worker(run):
             raise ValueError("Native replay unexpectedly imported a training dependency")
         report["status"] = ("completed" if all(row["passed"] for row in report["fragments"])
                             and report["complete_pcm"]["shape_equal"] else "numerical_mismatch")
+    except KeyboardInterrupt:
+        report.update(status="interrupted", error=traceback.format_exc())
+        traceback.print_exc()
     except Exception:
         report.update(status="error", error=traceback.format_exc())
         traceback.print_exc()
     finally:
+        report["observed_progress"] = {
+            "completed_fragments": sum(row.get("execution_status") == "completed" for row in report["fragments"]),
+            "incomplete_fragments": sum(row.get("execution_status") == "incomplete" for row in report["fragments"]),
+            "observed_sampling_steps": sum(row.get("observed_steps", 0) for row in report["fragments"]),
+            "scope": "Observed counters only; an incomplete fragment or request is not a completed output",
+        }
         gpt = sovits = None
         gc.collect()
         if mx is not None:
@@ -388,7 +404,7 @@ def worker(run):
             mx.synchronize()
             report["allocator_after_model_release"] = {"active_bytes": mx.get_active_memory(), "cache_bytes": mx.get_cache_memory()}
         write_json(run / "result.json", report)
-    return 0 if report["status"] == "completed" else 1
+    return 0 if report["status"] == "completed" else (130 if report["status"] == "interrupted" else 1)
 
 
 def main():
@@ -410,7 +426,7 @@ def main():
     source, _, _, _, resources = load_gold(args.official_run.resolve(strict=True))
     config = {name + "_package": str(getattr(args, name + "_package").resolve(strict=True)) for name in PACKAGES}
     config.update(official_run=str(args.official_run.resolve()), lifecycle=args.lifecycle, encoder_softmax=args.encoder_softmax,
-        capacity=args.capacity,
+        capacity=args.capacity, text_split_method=source["request"]["text_split_method"],
         main_dictionary=str((args.main_dictionary or Path(metadata.distribution("pyopenjtalk-plus").locate_file(
             "pyopenjtalk/dictionary"))).resolve(strict=True)))
     manifests = {name: read_json(Path(config[name + "_package"]) / "manifest.json") for name in PACKAGES}

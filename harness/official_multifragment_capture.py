@@ -158,12 +158,16 @@ def worker(run):
     request = read_json(run / "request.json")
     prepared = read_json(run / "reference-inputs.json")
     options, repo = prepared["options"], Path(prepared["options"]["official_source"])
+    split_method = request.get("text_split_method", "cut0")
     report = {"status": "running", "backend": "official", "source_commit": COMMIT,
         "scope": "Actual raw-reference Japanese multi-fragment official TTS.run; observation only",
         "timing_scope": TIMING_SCOPE, "quality": {"asr": "not_run", "human_listening": "not_run"}}
     engine = trace = torch = None
     handles = []
+    fragments = []
     try:
+        if split_method not in ("cut0", "cut2"):
+            raise ValueError("Capture supports official cut0/cut2 only")
         if sha256_file(run / "reference-inputs.json") != request["preparation_metadata_sha256"]:
             raise ValueError("Frozen raw-reference input metadata changed")
         verify_inputs(prepared)
@@ -234,12 +238,12 @@ def worker(run):
         original_infer, original_sample = gpt.infer_panel_naive, sample_module.sample
         original_decode, original_noise = engine.vits_model.decode, torch.randn_like
         original_preseg = engine.text_preprocessor.pre_seg_text
-        fragments, current = [], {"acoustic": None}
+        current = {"acoustic": None}
 
         def capture_preseg(*args, **kwargs):
             result = original_preseg(*args, **kwargs)
             if not 2 <= len(result) <= 16:
-                raise ValueError("Use raw text yielding 2..16 official cut0 fragments; observed " + str(len(result)))
+                raise ValueError(f"Use raw text yielding 2..16 official {split_method} fragments; observed " + str(len(result)))
             return result
 
         def capture_sample(logits, previous_tokens=None, *args, **kwargs):
@@ -306,7 +310,7 @@ def worker(run):
         inputs = {"text": request["text"], "text_lang": "ja", "ref_audio_path": options["audio"],
             "prompt_text": options["text"], "prompt_lang": "ja", "top_k": 15, "top_p": 1.0,
             "temperature": 1.0, "repetition_penalty": 1.35, "speed_factor": 1.0, "seed": request["seed"],
-            "batch_size": 1, "text_split_method": "cut0", "parallel_infer": False,
+            "batch_size": 1, "text_split_method": split_method, "parallel_infer": False,
             "streaming_mode": False, "return_fragment": False, "split_bucket": False, "fragment_interval": 0.3}
         report.update(request=inputs, model_version="v2Pro", device=str(engine.configs.device), dtype="float32",
             reference={"path": options["audio"], "text": options["text"], "language": "ja"},
@@ -376,10 +380,20 @@ def worker(run):
         if report["official_status_after"] != status_before:
             raise ValueError("Official checkout status changed during capture")
         report["status"] = "completed"
+    except KeyboardInterrupt:
+        report.update(status="interrupted", error=traceback.format_exc())
+        traceback.print_exc()
     except Exception:
         report.update(status="error", error=traceback.format_exc())
         traceback.print_exc()
     finally:
+        report["observed_progress"] = {
+            "completed_gpt_fragments": len(fragments),
+            "completed_acoustic_fragments": sum("acoustic" in fragment for fragment in fragments),
+            "observed_sampling_steps": len(trace.samples) if trace is not None else 0,
+            "fragment_sample_ranges": [fragment["sample_range"] for fragment in fragments],
+            "scope": "Observed counters only; an incomplete fragment or request is not a completed output",
+        }
         if trace is not None:
             trace.close()
         for handle in handles:
@@ -390,7 +404,7 @@ def worker(run):
             torch.mps.empty_cache()
             torch.mps.synchronize()
         write_json(run / "result.json", report)
-    return 0 if report["status"] == "completed" else 1
+    return 0 if report["status"] == "completed" else (130 if report["status"] == "interrupted" else 1)
 
 
 def main():
@@ -399,7 +413,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--prepare-inputs", type=Path, required=True,
                         help="Existing raw-reference preparation preflight.json or capture reference-inputs.json")
-    parser.add_argument("--text", required=True, help="Unmodified Japanese text yielding 2..16 official cut0 fragments")
+    parser.add_argument("--text", required=True, help="Unmodified Japanese text yielding 2..16 official fragments")
+    parser.add_argument("--text-split-method", choices=("cut0", "cut2"), default="cut0")
     parser.add_argument("--references", type=Path, required=True)
     parser.add_argument("--seed", type=int, default=1234)
     args = parser.parse_args()
@@ -425,7 +440,8 @@ def main():
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(spec["path"], destination)
         sources[str(destination)] = sha256_file(destination)
-    write_json(run / "request.json", {"text": args.text, "seed": args.seed, "source_sha256": sources,
+    write_json(run / "request.json", {"text": args.text, "text_split_method": args.text_split_method,
+        "seed": args.seed, "source_sha256": sources,
         "command": [sys.executable, *sys.argv], "preparation_metadata": str(preparation),
         "preparation_metadata_sha256": sha256_file(run / "reference-inputs.json")})
     print("RUN_DIRECTORY=" + str(run), flush=True)

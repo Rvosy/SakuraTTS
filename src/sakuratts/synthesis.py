@@ -24,7 +24,7 @@ class PreparedText:
 
 @dataclass
 class PreparedTextRequest:
-    """All cut0 fragments, prepared before any synthesis model is needed.
+    """All selected text fragments, prepared before synthesis models are needed.
 
     Each fragment retains the original request text; its target contains the
     actual normalized text and language segments. Frontend time belongs to the
@@ -92,8 +92,8 @@ def _validate_models(reference, gpt, sovits):
     _validate_model(reference, "sovits", sovits.encoder.manifest)
 
 
-def prepare_text_request(text, language, frontend):
-    """Prepare every official cut0 fragment in order, without synthesis models.
+def prepare_text_request(text, language, frontend, *, split_method="cut0"):
+    """Prepare official cut0/cut2 fragments in order, without synthesis models.
 
     Complete preparation precedes generation, including validation of later
     fragments. Do not re-normalize each fragment as a new standalone request.
@@ -102,8 +102,10 @@ def prepare_text_request(text, language, frontend):
     """
     if language not in ("ja", "all_ja"):
         raise ValueError("Only Japanese ja/all_ja requests are currently supported")
+    if split_method not in ("cut0", "cut2"):
+        raise ValueError("Only official cut0/cut2 text split methods are currently supported")
     start = time.perf_counter()
-    targets = frontend.prepare_target(text, language, split_method="cut0")
+    targets = frontend.prepare_target(text, language, split_method=split_method)
     if not targets:
         raise ValueError("The request has no Japanese text fragments")
     fragments = []
