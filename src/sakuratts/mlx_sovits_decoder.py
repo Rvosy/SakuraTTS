@@ -96,6 +96,9 @@ class MLXSoVITSDecoder:
             y = self.conv(leaky_relu(x, 0.1), f"{prefix}.convs1.{index}")
             y = self.conv(leaky_relu(y, 0.1), f"{prefix}.convs2.{index}")
             x = y + x
+            # Materialize each residual pair so its convolution temporaries
+            # can be released before the next pair is scheduled.
+            mx.eval(x)
         return x
 
     def decode(self, latent, ge, *, capture=False):
