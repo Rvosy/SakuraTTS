@@ -14,7 +14,9 @@
 - 用户已确认指定官方与 official_text 候选的开头和助词正常；全文、音色及其他样例仍待验收。Windows 验证暂缓。尚未固定产品目标 NVIDIA GPU、首发系统、性能预算和质量门槛。
 - 参考资源释放与 BERT 无依赖层裁剪已通过 10 条中日文及混合输入的逐文件波形回归，请求结束 allocated 边界少约 698 MiB；独立内存采样仍显示较高瞬态 driver 占用。见 [资源实验](experiments/2026-09-19-bert-and-reference-memory.md)。
 - 已实现 GPT FP32 模型包转换和独立 MLX / Metal Prefill、Decode，固定两条历史的全部 logits 在预设容差内，运行环境未安装 PyTorch。见 [MLX 实验](experiments/2026-09-19-mlx-gpt.md)。
-- 扩展固定历史暴露日文长句第 329 步 MLX 数值超差，未放宽容差；后续 CPU FP64 Prefill + MLX FP32 Decode 候选的 10 条、1805 步全部通过，尚待正常成本测量。GPT 正常计时与 KV 容量成本已单独记录。见 [GPT 实验](experiments/2026-09-19-gpt-capacity.md)。
+- 扩展固定历史暴露日文长句第 329 步 MLX 数值超差，未放宽容差；CPU FP64 Prefill + MLX FP32 Decode 的 10 条、1805 步全部通过。正常测量中 8 条更快、两条短句更慢，详见 [数值与成本](experiments/2026-09-19-mlx-numerics.md)。两条原始样例还完成了共享官方实采噪声的[自有历史生成对照](experiments/2026-09-19-native-gpt-generation.md)。
+- 独立 MLX 中文 BERT 的 CPU 路径通过 5 段逐层对照，空闲 RSS 少约 109 MiB；短句慢约 2%–7%，GPU 仍有一个中间元素超差。见 [BERT 实验](experiments/2026-09-19-mlx-bert.md)。
+- 已转换 SoVITS 解码包，官方 CPU 严格重载后两条完整波形逐位相同。自有 MLX 码本与声学编码器的两条、8 阶段对照通过，继续实现 flow 和声码器。见 [声学编码器](experiments/2026-09-19-mlx-sovits-encoder.md)。
 - 单参考声学条件预计算保持 10 条 WAV，请求后 allocated 再减少 148.99 MiB；RSS 峰值上升，继续调查，未默认启用。见 [声学生命周期](experiments/2026-09-19-acoustic-lifecycle.md)。
 - 自有轻量运行时仍在研发，没有完整语音链路、正式音质、流式或干净部署验收结果。
 
