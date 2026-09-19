@@ -53,11 +53,13 @@ def prepare(args):
         raise ValueError("Use the same dependency versions as the baseline")
     config = dict(source["config"], baseline_run=str(baseline), policy=args.policy,
                   mode=args.mode, epochs=args.epochs, warmup=args.warmup, repeat=args.repeat,
-                  bind_reference=args.bind_reference)
+                  bind_reference=args.bind_reference, frontend_policy=args.frontend_policy,
+                  tree_rss=args.tree_rss)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     run = args.references.resolve() / "runs" / (stamp + "-native-staged-lifecycle-" + args.policy + "-" + args.mode)
     run.mkdir(parents=True, exist_ok=False)
-    files = sorted(set(source["source_sha256"]) | {"harness/native_staged_lifecycle.py"})
+    files = sorted(set(source["source_sha256"]) | {"harness/native_staged_lifecycle.py",
+        "harness/japanese_frontend_process.py", "harness/process_tree_rss.py"})
     for name in files:
         destination = run / "source" / name
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -189,13 +191,20 @@ def worker(args):
             mx.clear_cache()
         return model, time.perf_counter() - started
 
-    def text_phase(case):
+    def frontend_modules():
+        return {name: any(module == name or module.startswith(name + ".") for module in sys.modules)
+                for name in ("pyopenjtalk", "onnxruntime", "sudachipy", "fast_langdetect", "fasttext")}
+
+    def text_phase(case, output):
+        if config["frontend_policy"] == "child":
+            from japanese_frontend_process import prepare_in_child
+            return prepare_in_child(case, config, output)
         japanese = segmenter = None
         try:
             japanese = JapaneseG2P(paths["japanese_main_dictionary"], paths["japanese_user_dictionary"])
             segmenter = LanguageSegmenter(paths["language_model_dir"])
             frontend = TextFrontend(japanese=japanese, symbols=symbols, segmenter=segmenter)
-            return prepare_text(case["text"], case["language"], frontend)
+            return prepare_text(case["text"], case["language"], frontend), None
         finally:
             if japanese is not None:
                 japanese.close()
@@ -206,8 +215,8 @@ def worker(args):
         dependencies=prepared["dependencies"], module_import_seconds=import_seconds,
         requests=[], expected_errors=[], cases={}, epochs=[], quality=dict(asr="not_run", human_listening="not_run"),
         timing_scope=("Diagnostic boundaries and scalar observations included; not speed evidence" if diagnostic else
-            "Each request includes frontend creation/close, both model loads and hash checks, semantic/acoustic APIs, CPU output/PCM, staged GPT unloading when selected, final cleanup and weakref/scalar ownership checks. Initial imports, resource validation, reference/gold reads, result comparisons and file writes excluded."),
-        lifecycle="Successful requests load and unload each model exactly once. Both policies release GPT KV before acoustics. Staged requests then drop the GPT object and collect/clear/synchronize before loading SoVITS. Semantic failures do not load SoVITS in staged mode. Frontend is closed before model loading; package-level frontend caches may remain.",
+            "Each request includes frontend creation/close, child transport/log I/O when selected, both model loads and hash checks, semantic/acoustic APIs, CPU output/PCM, staged GPT unloading when selected, final cleanup and weakref/scalar ownership checks. Initial imports, resource validation, reference/gold reads, result comparisons and final result file writes excluded."),
+        lifecycle="Successful requests load and unload each model exactly once. Both policies release GPT KV before acoustics. Staged requests then drop the GPT object and collect/clear/synchronize before loading SoVITS. Semantic failures do not load SoVITS in staged mode. In-process frontend closes its instances but may retain package caches; child frontend exits and is reaped before GPT loading, including transport/file costs in request timing.",
         peak_scope="Diagnostic peak resets before the entire request, including frontend and all model loads. Max request allocator peaks are aggregated separately. Boundary RSS is not a request RSS peak; OS maxrss covers worker lifetime. Normal mode performs no diagnostic resource sampling or peak resets.",
         resource_scope="MLX allocator counters on Apple unified memory, not NVIDIA VRAM or total physical GPU memory. RSS includes Harness/gold/baseline/output arrays. Weakrefs prove Python model object destruction, not that all allocator caches or OS pages have been returned.",
         cold_start_scope="First requests run inside an existing worker after imports and gold/reference loading; not full application cold startup.")
@@ -237,7 +246,11 @@ def worker(args):
                         request_start = time.perf_counter()
                         try:
                             frontend_start = time.perf_counter()
-                            target = text_phase(case)
+                            target, frontend_process = text_phase(case, run / "frontend" /
+                                f"{epoch}-{round_index}-{name}-{error_kind or 'request'}")
+                            modules_before_gpt = frontend_modules()
+                            if config["frontend_policy"] == "child" and any(modules_before_gpt.values()):
+                                raise AssertionError("Isolated parent imported a heavy frontend dependency")
                             gc.collect()
                             mx.clear_cache()
                             mx.synchronize()
@@ -316,11 +329,14 @@ def worker(args):
                             timings["final_cleanup_seconds"] = time.perf_counter() - cleanup_start
                             ownership["gpt_destroyed_after_request"] = gpt_ref is None or gpt_ref() is None
                             ownership["sovits_destroyed_after_request"] = sovits_ref is None or sovits_ref() is None
-                        timings["complete_request_seconds"] = time.perf_counter() - request_start
+                        request_finished = time.perf_counter()
+                        timings["complete_request_seconds"] = request_finished - request_start
                         memory["request_released"] = boundary()
                         if not ownership["gpt_destroyed_after_request"] or not ownership["sovits_destroyed_after_request"]:
                             raise AssertionError("A model object survived request cleanup")
                         record = dict(epoch=epoch, round=round_index, case=name,
+                            request_started_at=request_start, request_finished_at=request_finished,
+                            frontend_process=frontend_process, frontend_modules_before_gpt=modules_before_gpt,
                             phase="first_case_request" if round_index == 0 else
                                 ("warmup" if round_index <= config["warmup"] else "measured"),
                             loads=loads, ownership=ownership, observations=observation,
@@ -430,12 +446,19 @@ def execute(args):
     if sha256_file(run / "cases.json") != prepared["cases_sha256"]:
         raise ValueError("Original cases changed")
     command = [sys.executable, str(run / "source/harness/native_staged_lifecycle.py"), "worker", "--run", str(run)]
-    with (run / "stdout.log").open("x") as stdout, (run / "stderr.log").open("x") as stderr:
-        completed = subprocess.run(command, stdout=stdout, stderr=stderr,
-            env={**os.environ, "ORT_DISABLE_TELEMETRY": "1", "PYTHONDONTWRITEBYTECODE": "1"})
-    write_json(run / "process.json", dict(command=command, exit_code=completed.returncode))
-    print(json.dumps(dict(run=str(run), exit_code=completed.returncode)))
-    return completed.returncode
+    env = {**os.environ, "ORT_DISABLE_TELEMETRY": "1", "PYTHONDONTWRITEBYTECODE": "1"}
+    if prepared["config"]["tree_rss"]:
+        from process_tree_rss import run_sampled
+        sample = run_sampled(command, run / "stdout.log", run / "stderr.log", run / "tree-rss.jsonl", env=env)
+        write_json(run / "tree-rss-summary.json", sample)
+        exit_code = sample["returncode"]
+    else:
+        with (run / "stdout.log").open("x") as stdout, (run / "stderr.log").open("x") as stderr:
+            completed = subprocess.run(command, stdout=stdout, stderr=stderr, env=env)
+        exit_code = completed.returncode
+    write_json(run / "process.json", dict(command=command, exit_code=exit_code))
+    print(json.dumps(dict(run=str(run), exit_code=exit_code)))
+    return exit_code
 
 
 def main():
@@ -448,6 +471,9 @@ def main():
     preparation.add_argument("--mode", choices=("normal", "diagnostic"), required=True)
     preparation.add_argument("--bind-reference", action="store_true",
                              help="Bind SoVITS projections to the reference before loading remaining weights")
+    preparation.add_argument("--frontend-policy", choices=("in-process", "child"), default="in-process")
+    preparation.add_argument("--tree-rss", action="store_true",
+                             help="Sample worker and descendants from the controller; diagnostic mode only")
     preparation.add_argument("--epochs", type=int, default=2)
     preparation.add_argument("--warmup", type=int, default=1)
     preparation.add_argument("--repeat", type=int, default=3)
@@ -457,6 +483,8 @@ def main():
     if args.command == "prepare":
         if args.epochs < 2 or args.warmup < 0 or args.repeat < 1:
             parser.error("Require at least two epochs, nonnegative warmup and positive repeat")
+        if args.tree_rss and args.mode != "diagnostic":
+            parser.error("Process-tree RSS sampling is separate from normal timing")
         prepare(args)
         return 0
     return worker(args) if args.command == "worker" else execute(args)
