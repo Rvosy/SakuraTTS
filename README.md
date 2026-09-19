@@ -4,7 +4,9 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 
 现有 GPT / SoVITS 权重通过转换工具生成推理模型包，再由自己的运行时生成音频。转换与验证可以使用 PyTorch；日常推理运行包以不依赖完整 PyTorch 环境为目标。桌宠现有 CPU TTS 方案继续沿用。
 
-2026-09-19 在 Apple M4 上，使用“朱雀院红叶”V2Pro 完成了官方与 Lite 对照，并保存用户语音问题的消融与复听证据。自有运行时已有 GPT、中文 BERT 和完整声学计算原型；高精度 GPT 的 10 条固定历史及两条共享噪声的自有历史生成已通过。完整声学链的十条波形通过数值检查，但仍有一个 MRTE 中间值超差。文本与参考准备尚未接通，现有结果不代表正式音质或全模型兼容验收。
+2026-09-19 在 Apple M4 上，使用“朱雀院红叶”V2Pro 完成了官方与 Lite 对照，并保存用户语音问题的消融与复听证据。自有 GPT、采样和完整声学计算已接通：使用准备好的官方条件，十例生成 token、停止和最终波形通过对照；两个原始回归样例的四条官方 / 自有样音经用户确认正常且无明显差异。独立诊断仍有三个采样概率值和一个 MRTE 中间值超差，尚未完成整体数值验收。
+
+已验证的改动包括复用 GPT 权重、降低声码器工作区、可选按请求释放 GPT，以及三个权重归档无损减少 801.37 MiB。资源数据按文本长度和运行策略分别记录，不能用短句的分配器峰值代表完整 TTS。中文 BERT、tokenizer 和 G2PW 正在迁入独立前端，原始文本与参考准备尚未接通；当前不宣称全模型兼容或完整运行包交付。
 
 ## 文档
 
@@ -27,15 +29,24 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 | [自有 MLX GPT](docs/experiments/2026-09-19-mlx-gpt.md) | 独立转换、无 PyTorch 的语义计算与 Metal 数值对照 |
 | [自有历史生成](docs/experiments/2026-09-19-native-gpt-generation.md) | 共享实采噪声下的自行采样、停止与语义切片 |
 | [自有生成接声学](docs/experiments/2026-09-19-native-prepared-speech.md) | 准备好条件后的完整计算链、无插桩请求时间和资源 |
+| [十例整链生成](docs/experiments/2026-09-19-expanded-prepared-speech.md) | 扩展输出对照、试听文件保持和计量范围 |
+| [十例采样边界](docs/experiments/2026-09-19-expanded-native-generation.md) | token 保持与三个概率值超差 |
 | [独立中文 BERT](docs/experiments/2026-09-19-mlx-bert.md) | CPU 数值与正常成本、GPU 未解决误差 |
 | [声学解码包](docs/experiments/2026-09-19-sovits-package.md) | 权重转换、参考条件边界与严格重载 |
 | [自有声学编码器](docs/experiments/2026-09-19-mlx-sovits-encoder.md) | 码本、相对注意力、MRTE 和分布参数的独立实现 |
 | [完整声学计算](docs/experiments/2026-09-19-mlx-sovits-complete.md) | reverse flow、声码器、设备选择、正常速度和缓存代价 |
 | [扩展声学回归](docs/experiments/2026-09-19-expanded-acoustic.md) | 十例波形通过与保留的 MRTE 中间值失败 |
 | [无损权重存储](docs/experiments/2026-09-19-lossless-weight-storage.md) | 归档体积、恢复后的逐位一致性及读取代价 |
+| [GPT 权重复用](docs/experiments/2026-09-19-gpt-prefill-weight-reuse.md) | 去掉 Prefill 重复读取和校验的实测收益 |
+| [声码器工作区](docs/experiments/2026-09-19-decoder-workspace.md) | 调整求值时机、波形保持和峰值 / 延迟取舍 |
+| [GPT 生命周期](docs/experiments/2026-09-19-gpt-lifecycle.md) | 按请求释放语义模型和重新加载的成本 |
+| [声学数值定位](docs/experiments/2026-09-19-attention-softmax-numerics.md) | 首层 softmax 舍入及后续验证方向 |
 | [文本前端依赖](docs/experiments/2026-09-19-text-frontend-dependencies.md) | 中文 G2PW、日文词典与混合语言能力边界 |
 | [独立 tokenizer](docs/experiments/2026-09-19-tokenizer-runtime.md) | 移除 Transformers 后的词元与输入数组对照 |
 | [G2PW 输入迁移](docs/experiments/2026-09-19-g2pw-inputs.md) | 查询截断、字符映射和输入准备的官方对照 |
+| [G2PW 文本准备](docs/experiments/2026-09-19-g2pw-text.md) | OpenCC、查询上下文和 PyPinyin 回退迁移 |
+| [G2PW 模型推理](docs/experiments/2026-09-19-g2pw-onnx.md) | 独立 ONNX 接口、官方概率一致性与实际依赖 |
+| [G2PW 释放观察](docs/experiments/2026-09-19-g2pw-lifecycle.md) | 三次创建与关闭后的 RSS 边界 |
 | [兼容矩阵](docs/specs/compatibility-matrix.md) | 各模型、语言和功能的实测范围与待验证项 |
 | [Mac 首轮验证](docs/experiments/2026-09-19-macos-reference-smoke.md) | 实际环境、运行命令、样音、耗时、资源记录和已知限制 |
 
@@ -45,7 +56,7 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 
 当前按“先 Mac、后 Windows”的顺序验证。Mac 使用 MPS / FP32 跑通上游实现，首个样本已确定为“朱雀院红叶”V2Pro。Windows 验证暂缓。
 
-原生运行时仍以 NVIDIA CUDA、单活动请求、`batch=1` 和 FP16 正确性基线为候选起点，随后优化执行图、缓存、资源复用和流式生成。其他模型逐组验证，不默认兼容。
+当前在 Mac 上实现 MLX / NumPy 计算和必要的 CPU ONNX 模块，按实测接通文本、参考条件和资源生命周期。单活动请求、`batch=1` 是当前范围。FP16 和 NVIDIA CUDA 仍是后续候选，需要保留已验证的高精度对照并独立实测；其他模型逐组验证，不默认兼容。
 
 C++ 原生运行时是拟议方向。TensorRT-RTX、ONNX Runtime CUDA 和少量原生 CUDA 算子需要通过实际模型验证后取舍，尚未选定生产后端。首发系统、目标 NVIDIA GPU 与性能预算仍待确定，Mac 的跑通结果不能替代 CUDA 验证。
 

@@ -3,7 +3,8 @@
 
 Inputs are saved official text/reference conditions and explicit random draws.
 This is a prepared-condition request, not an independent text/audio frontend.
-No reference semantic token is ever fed into either runtime stage.
+No target gold semantic token is fed into either runtime stage. GPT still uses
+the official reference semantic prefix as a required conditioning input.
 """
 
 from __future__ import annotations

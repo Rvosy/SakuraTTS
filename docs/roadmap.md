@@ -11,16 +11,17 @@
 - 已在独立目录固定三个上游仓库、两个 Python 环境和模型来源，新增参考 Harness。
 - 使用用户选定的“朱雀院红叶”V2Pro，在 Apple M4 的 MPS / FP32 路径完成官方与 Lite 的中、日文合成，保存 8 个 WAV 及原始结果。详见 [Mac 首轮验证](experiments/2026-09-19-macos-reference-smoke.md)。
 - 已建立 10 条回归语料，追踪官方与 Lite 前端、参考、采样与切片差异；相同官方历史下，日文 121 步、中文 147 步 GPT logits 完全一致。参考辅助模型释放实验保持既有 WAV 哈希。见 [调用链与资源实验](experiments/2026-09-19-parity-and-lifecycle.md)。
-- 用户已确认指定官方与 official_text 候选的开头和助词正常；全文、音色及其他样例仍待验收。Windows 验证暂缓。尚未固定产品目标 NVIDIA GPU、首发系统、性能预算和质量门槛。
+- 用户已确认指定官方与 official_text 候选的开头和助词正常；后续两条原始回归的自有整链样音也获确认“四条都正常，未听出明显差异”，覆盖全文和音色。其余八例仍无人工验收。Windows 验证暂缓，产品目标 NVIDIA GPU、首发系统及性能预算尚未固定。
 - 参考资源释放与 BERT 无依赖层裁剪已通过 10 条中日文及混合输入的逐文件波形回归，请求结束 allocated 边界少约 698 MiB；独立内存采样仍显示较高瞬态 driver 占用。见 [资源实验](experiments/2026-09-19-bert-and-reference-memory.md)。
 - 已实现 GPT FP32 模型包转换和独立 MLX / Metal Prefill、Decode，固定两条历史的全部 logits 在预设容差内，运行环境未安装 PyTorch。见 [MLX 实验](experiments/2026-09-19-mlx-gpt.md)。
-- 扩展固定历史暴露日文长句第 329 步 MLX 数值超差，未放宽容差；CPU FP64 Prefill + MLX FP32 Decode 的 10 条、1805 步全部通过。正常测量中 8 条更快、两条短句更慢，详见 [数值与成本](experiments/2026-09-19-mlx-numerics.md)。两条原始样例还完成了共享官方实采噪声的[自有历史生成对照](experiments/2026-09-19-native-gpt-generation.md)。
+- 扩展固定历史暴露日文长句第 329 步 MLX 数值超差，未放宽容差；CPU FP64 Prefill + MLX FP32 Decode 的 10 条、1805 步 logits 全部通过。正常测量中 8 条更快、两条短句更慢，详见 [数值与成本](experiments/2026-09-19-mlx-numerics.md)。[十例自有历史生成](experiments/2026-09-19-expanded-native-generation.md)的 token、停止和切片相同，但两例三个采样概率值超差，整体仍按失败记录。
 - 独立 MLX 中文 BERT 的 CPU 路径通过 5 段逐层对照，空闲 RSS 少约 109 MiB；短句慢约 2%–7%，GPU 仍有一个中间元素超差。见 [BERT 实验](experiments/2026-09-19-mlx-bert.md)。
-- 自有 MLX 码本、声学编码器、reverse flow 和声码器已接通。显式 CPU encoder + GPU flow/decoder 下，十例最终波形通过；日文标点的一个 MRTE 中间元素超差，仍按失败继续定位。正常声学生成比官方慢约 29%–41%。见 [完整声学链](experiments/2026-09-19-mlx-sovits-complete.md) 与 [扩展回归](experiments/2026-09-19-expanded-acoustic.md)。
+- 自有 MLX 码本、声学编码器、reverse flow 和声码器已接通。CPU encoder + GPU flow/decoder 下，十例最终波形通过；日文标点的一个 MRTE 中间元素超差。已将首层差异追到 [softmax 舍入](experiments/2026-09-19-attention-softmax-numerics.md)；统一 FP64 LayerNorm 因长句波形退化被否决。此前正常声学生成比官方慢约 29%–41%，后续调度结果单独记录，不混用实验条件。
 - 单参考声学条件预计算保持 10 条 WAV，请求后 allocated 再减少 148.99 MiB；独立采样复测的生命周期 RSS 峰值基本不变，原先的大幅上升未重现。请求区间观察到的 allocated 最大值少约 143 MiB，driver 下降有限。见 [声学生命周期](experiments/2026-09-19-acoustic-lifecycle.md)。
-- 三个权重包采用逐张量无损存储后，归档合计少约 801 MiB，运行时恢复原 FP32 权重。日常重复展开/校验仍有耗时，继续优化；不把磁盘收益算成运行内存收益。见 [存储实验](experiments/2026-09-19-lossless-weight-storage.md)。
-- 中文词元接口已移除 Transformers 依赖；完整前端仍需保留 G2PW、多音字、日文 prosody 和混合语言处理。见 [前端依赖审查](experiments/2026-09-19-text-frontend-dependencies.md)。
-- 准备好官方文本和参考条件后，两条原始回归样例已经接通自有 GPT、采样、声学到 PCM；无诊断回调的热请求分别为 1.039 / 1.229 秒，token、停止与完整波形数值通过。该时间不含前端和参考准备。见 [整链实验](experiments/2026-09-19-native-prepared-speech.md)。
+- 三个权重包采用逐张量无损存储后，归档少 801.37 MiB，运行时恢复原 FP32 权重。[复用已加载权重](experiments/2026-09-19-gpt-prefill-weight-reuse.md)去掉高精度 Prefill 重复读取与校验，在相同紧凑包的两条请求中快约 17%；十条固定历史 logits 逐位保持。不把磁盘收益算成运行内存收益。
+- 中文 tokenizer 已移除 Transformers；[G2PW 输入](experiments/2026-09-19-g2pw-inputs.md)、[文本准备](experiments/2026-09-19-g2pw-text.md)和 [CPU ONNX Session](experiments/2026-09-19-g2pw-onnx.md)分别通过官方对照，正在接通完整拼音输出。三轮创建、关闭后的 RSS 在约 380 MiB 趋稳，尚不能据此判断长期泄漏。完整前端仍需中文变调、日文 prosody 和混合语言处理。
+- 准备好官方文本和参考条件后的自有 GPT → 声学 → PCM 已扩展到十例，token、停止和最终波形对照通过；仍保留独立概率和 MRTE 超差。见 [十例整链](experiments/2026-09-19-expanded-prepared-speech.md)。该路径不包含原始文本和参考准备，也不等于独立 RNG 验收。
+- [声码器逐残差对求值](experiments/2026-09-19-decoder-workspace.md)保持十例波形逐位不变，两条短句的 decoder 分配器峰值约降 45%，decoder 耗时增加约 10%–14%。结合可选 GPT 按请求释放，两条准备条件的短请求测到 622.05 MiB MLX 高水位；十例常驻策略轮则为 1,989.12 MiB。这些数据含义和条件不同，不代表完整 TTS 或统一的模型显存指标。
 - 自有轻量运行时仍在研发，没有原始文本到音频、正式音质、流式或干净部署验收结果。
 
 ## M0：固定范围并建立基线
