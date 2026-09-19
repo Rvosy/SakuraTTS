@@ -20,10 +20,11 @@
 - 进一步的 [MLX FP64 softmax 累积](experiments/2026-09-19-softmax-candidates.md)已通过十例 120 阶段并迁入显式 CPU 选项，默认 FP32 保留。编码器慢约 2.5%–10.9%、工作区略增，完整声学峰值基本不变；这是正确性改动，尚未补该路径的整链试听。NumPy 全 FP64 softmax 因两条波形退化被否决。
 - 单参考声学条件预计算保持 10 条 WAV，请求后 allocated 再减少 148.99 MiB；独立采样复测的生命周期 RSS 峰值基本不变，原先的大幅上升未重现。请求区间观察到的 allocated 最大值少约 143 MiB，driver 下降有限。见 [声学生命周期](experiments/2026-09-19-acoustic-lifecycle.md)。
 - 三个权重包采用逐张量无损存储后，归档少 801.37 MiB，运行时恢复原 FP32 权重。[复用已加载权重](experiments/2026-09-19-gpt-prefill-weight-reuse.md)去掉高精度 Prefill 重复读取与校验，在相同紧凑包的两条请求中快约 17%；十条固定历史 logits 逐位保持。不把磁盘收益算成运行内存收益。
-- 中文 tokenizer 已移除 Transformers；G2PW 文本、输入打包和 CPU ONNX Session 已接成[完整拼音接口](experiments/2026-09-19-g2pw-pinyin.md)，27 组输出对照和 353 数组逐位通过。三轮单独 Session 创建、关闭后的 RSS 在约 380 MiB 趋稳，尚不能据此判断长期泄漏。[中文音素与 BERT](experiments/2026-09-19-chinese-phones.md)、[日文韵律与词典](experiments/2026-09-19-japanese-g2p.md)已完成独立语言段对照，上层路由与整链接入继续推进。
+- 中文 tokenizer 已移除 Transformers；G2PW 文本、输入打包和 CPU ONNX Session 已接成[完整拼音接口](experiments/2026-09-19-g2pw-pinyin.md)，27 组输出对照和 353 数组逐位通过。三轮单独 Session 创建、关闭后的 RSS 在约 380 MiB 趋稳，尚不能据此判断长期泄漏。[中文音素与 BERT](experiments/2026-09-19-chinese-phones.md)、[日文韵律与词典](experiments/2026-09-19-japanese-g2p.md)已完成独立语言段对照；中文成果保留，新增整链接入暂缓。
 - 准备好官方文本和参考条件后的自有 GPT → 声学 → PCM 已扩展到十例，token、停止和最终波形对照通过；仍保留独立概率和 MRTE 超差。见 [十例整链](experiments/2026-09-19-expanded-prepared-speech.md)。该路径不包含原始文本和参考准备，也不等于独立 RNG 验收。
 - [声码器逐残差对求值](experiments/2026-09-19-decoder-workspace.md)保持十例波形逐位不变，两条短句的 decoder 分配器峰值约降 45%，decoder 耗时增加约 10%–14%。结合可选 GPT 按请求释放，两条准备条件的短请求测到 622.05 MiB MLX 高水位；十例常驻策略轮则为 1,989.12 MiB。这些数据含义和条件不同，不代表完整 TTS 或统一的模型显存指标。
-- 自有轻量运行时仍在研发，没有原始文本到音频、正式音质、流式或干净部署验收结果。
+- [日文原始目标文本 + 独立参考包](experiments/2026-09-19-native-japanese-text-speech.md)已接入自有生成，四例 32 次正常请求对照通过。新日文环境未安装 Torch、Transformers 或中文前端包；原始日文 WAV 与已获用户确认的样音逐字节相同。其他日文样例、独立随机生成、参考准备工具与 Windows 交付继续验收。
+- 自有轻量运行时仍在研发，流式、取消、多参考 / 新模型和 Windows 干净部署未验收。
 
 ## 当前实施顺序：先完成可迁移的运行链
 

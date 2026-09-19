@@ -281,7 +281,7 @@ class LanguageSegmenter:
                 continue
 
             # 处理短英文被识别为其他语言的问题
-            if full_en(dict_item['text']):  
+            if full_en(dict_item['text']):
                 dict_item['lang'] = 'en'
                 lang_list = merge_lang(lang_list,dict_item)
                 continue

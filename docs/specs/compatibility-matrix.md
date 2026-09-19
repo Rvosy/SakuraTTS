@@ -23,7 +23,7 @@
 
 | 家族与样本 | 官方 MPS / FP32 生成 | Lite MPS / FP32 生成 | 内容质量 | SakuraTTS 自有转换与运行时 | Windows / CUDA |
 |---|---|---|---|---|---|
-| V2Pro：“朱雀院红叶” | 10 条中日及混合输入已生成，已保存中间结果 | 中、日固定样例多次生成，已保存中间结果 | Lite 有 3 项用户报告的失败；官方 / official_text 及后来两条自有整链回归的指定样音经用户确认；后者覆盖全文和音色，其余八例待验 | 十例 prepared 整链 token、停止、最终波形通过；独立诊断有 3 个概率值及 1 个 MRTE 中间值超差，整体仍未通过；原始文本到音频未验收 | 暂缓，未验证 |
+| V2Pro：“朱雀院红叶” | 10 条中日及混合输入已生成，已保存中间结果 | 中、日固定样例多次生成，已保存中间结果 | Lite 有 3 项用户报告的失败；官方 / official_text 及后来两条自有整链回归的指定样音经用户确认；后者覆盖全文和音色，其余八例待验 | 十例 prepared 整链 token、停止、最终波形通过；独立诊断有 3 个概率值及 1 个 MRTE 中间值超差，整体仍未通过；四条日文原始目标 + 参考包已通过固定随机输入下的整链对照 | 暂缓，未验证 |
 | V2Pro：其他权重 | 未验证 | 未验证 | 未验证 | 未验证 | 暂缓，未验证 |
 | V2ProPlus | 未验证 | 未验证 | 未验证 | 未验证 | 暂缓，未验证 |
 | V2 | 未验证 | 未验证 | 未验证 | 未验证 | 暂缓，未验证 |
@@ -61,6 +61,7 @@
 | 中文 BERT 第 22 层 | CPU/MPS 裁剪后特征完全一致；独立 MLX CPU 的 5 段、120 项对照通过，正常计时和卸载已测 | MLX GPU 仍有 1 个中间元素超差；独立路径接入音频、其他语料与分发待验 |
 | 其他参考语言、无参考文本、多参考条件 | 未验证 | 逐项核对官方支持范围和条件语义 |
 | 自有 NumPy 采样与非流式停止 | 十条 Top-p 1 请求的 1805 步 token、停止和语义切片与官方相同；logits 通过，2 例 3 个概率值超差，整轮仍失败 | GPT 误差传播、其他 seed、独立 RNG、Top-p 小于 1 及 GPU 采样；见 [十例生成](../experiments/2026-09-19-expanded-native-generation.md) |
+| 日文原始目标文本与独立环境 | 四例目标 phones / BERT、生成 token / 停止 / 语义切片相同，波形通过；正常 32 请求通过；日文原报告 WAV 与已试听文件逐字节相同；见 [原文到 PCM](../experiments/2026-09-19-native-japanese-text-speech.md) | 新参考工具、独立 RNG 质量、其余三例人工试听与 Windows 待验；现阶段限单个 cut0 片段和 top_p=1 |
 | 准备好条件的自有语音链 | 十例自有 GPT → 语义 → 声学 → PCM 的 token、停止和最终波形通过；原始两例 WAV 与用户确认的四样音逐字节相同 | 既有概率及 MRTE 超差仍保留；原始文本和参考准备、独立 RNG、扩展质量及完整延迟；见 [十例整链](../experiments/2026-09-19-expanded-prepared-speech.md) |
 | 自有完整声学链 | 650 张量解码包严格重载通过；CPU encoder + GPU flow/decoder 的十例波形通过，119/120 阶段通过 | 日文标点 MRTE 单元素超差；全 GPU 两例仍有中文波形超差；见 [扩展声学](../experiments/2026-09-19-expanded-acoustic.md) |
 | 声学 CPU softmax 高精度累积 | 显式 `encoder_softmax=fp64-accumulation` 的十例 120 阶段通过原容差；源码输出逐位复现候选；默认 FP32 保留原行为 | 编码器时间与工作区增加；新输出的整链、试听待验，其他模型与 GPU 不覆盖；见 [精度与成本](../experiments/2026-09-19-softmax-candidates.md) |
@@ -72,7 +73,7 @@
 | G2PW CPU 模型推理 | 自有 ORT 接口 8 组输入、16 组概率及标签/置信度与官方逐位一致，无 Torch/Transformers | 文本接口仍在组合；>510 异质词元的官方去重边界保留；三轮关闭后 RSS 约 380 MiB 趋稳，长期情况未验；见 [ONNX](../experiments/2026-09-19-g2pw-onnx.md) 与 [生命周期](../experiments/2026-09-19-g2pw-lifecycle.md) |
 | G2PW 完整拼音接口 | 规范化中文片段经 Text → Inputs → Session → 拼音填回，27 组输出 / 异常一致，353 数组逐位相同，无 Torch/Transformers；原边界保留 | 中文段规则已另行接通，完整请求待验；见 [拼音闭环](../experiments/2026-09-19-g2pw-pinyin.md) |
 | 中文 V2 语言段 | 10 组真实 G2PW 后规范化、音素、ID、word2ph 全同；27 组规范化和 45,050 词典检查一致；五组 MLX CPU BERT 通过原阈值 | 上层语言路由与原始文本到音频仍待接入；见 [中文前端](../experiments/2026-09-19-chinese-phones.md) |
-| 日文语言段 | 26 组完整 NJD、labels、韵律和音素 ID 与官方一致，实际覆盖 Nani、Sudachi 与用户词典，无 Torch | 上层路由、全链和新试听待验；见 [日文前端](../experiments/2026-09-19-japanese-g2p.md) |
+| 日文语言段 | 26 组完整 NJD、labels、韵律和音素 ID 与官方一致，实际覆盖 Nani、Sudachi 与用户词典，无 Torch；[原始目标入口](../experiments/2026-09-19-japanese-target-frontend.md)及四例整链已另行通过 | 扩展语料和新试听待验；见 [日文前端](../experiments/2026-09-19-japanese-g2p.md) |
 | G2PW 映射 ORT 包 | 实际接口 27 组 / 353 数组逐位一致；同条件 OS 最高 RSS 约 1357→851 MiB | Mac CPU 数据；Windows 需重建包，完整 TTS 资源未测；见 [映射实验](../experiments/2026-09-19-g2pw-mapped-ort.md) |
 | 单参考持久包 | 五数组新进程逐字节相同，12 项身份 / 损坏拒绝检查通过；完整包约 203 KiB | 不含无 Torch 的新参考准备，历史缺失身份已明列；见 [参考包](../experiments/2026-09-19-reference-condition-package.md) |
 | 静态 WeightNorm 折叠 | 显式选项下 131 权重、十例 330 阶段逐位相同；Flow 峰值少约 105–107 MB，完整声学收益较小 | 加载后缓存增加、完整速度有波动，默认关闭；Mac GPU 数据，见 [预计算取舍](../experiments/2026-09-19-sovits-static-weights.md) |
