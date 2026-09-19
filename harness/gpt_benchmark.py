@@ -19,6 +19,7 @@ import gc
 import hashlib
 import importlib.metadata
 import json
+import os
 from pathlib import Path
 import resource
 import shutil
@@ -68,6 +69,15 @@ def comparison(actual, expected):
             "atol": 1e-4, "rtol": 1e-5,
             "within_fp32_tolerance": bool(np.allclose(actual, expected, atol=1e-4, rtol=1e-5)),
             "top1_matches": int((actual.argmax(axis=1) == expected.argmax(axis=1)).sum()), "steps": len(actual)}
+
+
+def process_memory():
+    return {
+        "process_rss_bytes_at_boundary": int(subprocess.check_output(
+            ["ps", "-o", "rss=", "-p", str(os.getpid())], text=True).strip()) * 1024,
+        "process_lifetime_peak_rss_bytes": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1 if sys.platform == "darwin" else 1024),
+        "rss_scope": "Process RSS includes CPU allocations; lifetime peak does not reset between cases; do not add to allocator counters",
+    }
 
 
 def distribution_sizes():
@@ -149,8 +159,8 @@ class LiteBackend:
 
     def memory(self):
         if self.device.type != "mps":
-            return {"scope": "CPU; GPU counters not applicable"}
-        return {"mps_current_allocated_bytes_at_boundary": self.torch.mps.current_allocated_memory(),
+            return {**process_memory(), "scope": "CPU; GPU counters not applicable"}
+        return {**process_memory(), "mps_current_allocated_bytes_at_boundary": self.torch.mps.current_allocated_memory(),
                 "mps_driver_allocated_bytes_at_boundary": self.torch.mps.driver_allocated_memory(),
                 "peak": "not measured; PyTorch MPS exposes boundary counters here"}
 
@@ -176,7 +186,7 @@ class LiteBackend:
 
 
 class MLXBackend:
-    def __init__(self, package, capacity, device):
+    def __init__(self, package, capacity, device, prefill_precision="fp32"):
         import mlx.core as mx
 
         sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -184,14 +194,14 @@ class MLXBackend:
 
         self.mx = mx
         mx.set_default_device(mx.gpu if device == "gpu" else mx.cpu)
-        self.model = MLXGPT.load(package, capacity)
+        self.model = MLXGPT.load(package, capacity, prefill_precision=prefill_precision)
         mx.eval(*self.model.keys, *self.model.values)
 
     def sync(self):
         self.mx.synchronize()
 
     def forward(self, data, capture=False):
-        logits = self.model.prefill(data["phones"], data["prompt"], data["bert"])
+        logits = self.prefill(data, profile=capture)
         captured = [self.to_numpy(logits)[0]] if capture else None
         for token in data["tokens"][:-1]:
             logits = self.model.decode(int(token))
@@ -199,11 +209,14 @@ class MLXBackend:
                 captured.append(self.to_numpy(logits)[0])
         return np.stack(captured) if capture else logits
 
+    def prefill(self, data, profile=False):
+        return self.model.prefill(data["phones"], data["prompt"], data["bert"], profile=profile)
+
     def to_numpy(self, value):
         return np.asarray(value).copy()
 
     def memory(self):
-        return {"mlx_active_bytes": self.mx.get_active_memory(), "mlx_cache_bytes": self.mx.get_cache_memory(),
+        return {**process_memory(), "mlx_active_bytes": self.mx.get_active_memory(), "mlx_cache_bytes": self.mx.get_cache_memory(),
                 "mlx_allocator_peak_bytes": self.mx.get_peak_memory(),
                 "scope": "MLX allocator on unified memory; not process RSS or NVIDIA VRAM"}
 
@@ -225,8 +238,8 @@ class MLXBackend:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--references", type=Path, required=True)
-    parser.add_argument("--official-run", type=Path, required=True)
-    parser.add_argument("--backend", choices=["lite", "mlx"], required=True)
+    parser.add_argument("--official-run", type=Path, nargs="+", required=True)
+    parser.add_argument("--backend", choices=["lite", "mlx", "mlx-fp64-prefill"], required=True)
     parser.add_argument("--package", type=Path)
     parser.add_argument("--device", choices=["cpu", "gpu"], default="cpu")
     parser.add_argument("--languages", nargs="+", default=["ja", "zh"])
@@ -239,12 +252,18 @@ def main():
     args = parser.parse_args()
     if args.repeat < 5 or args.warmup < 1:
         parser.error("Use at least five measurements and one warmup")
-    if args.backend == "mlx" and args.package is None:
+    if args.backend.startswith("mlx") and args.package is None:
         parser.error("MLX requires --package")
     if args.capacity == "required64" and args.equivalence_reference is None and not args.check_inputs:
         parser.error("required64 requires a same-backend 1024-capacity --equivalence-reference")
-    references, official_run = args.references.resolve(), args.official_run.resolve()
-    traces = {language: load_trace(official_run / f"{language}-1-trace.json") for language in args.languages}
+    references = args.references.resolve()
+    official_runs = [path.resolve() for path in args.official_run]
+    traces = {}
+    for language in args.languages:
+        paths = [path / f"{language}-1-trace.json" for path in official_runs if (path / f"{language}-1-trace.json").is_file()]
+        if len(paths) != 1:
+            raise ValueError(f"Expected one official trace for {language}; got {len(paths)}")
+        traces[language] = load_trace(paths[0])
     work = {language: {"text_tokens": data["phones"].shape[1], "reference_tokens": data["prompt"].shape[1],
                        "prefill_calls": 1, "decode_calls": len(data["tokens"]) - 1,
                        "output_projection_calls": len(data["tokens"]),
@@ -256,9 +275,10 @@ def main():
     if args.check_inputs:
         print(json.dumps({"status": "inputs_validated_no_backend_loaded", "capacity": capacity, "work": work}, indent=2))
         return 0
-    official = json.loads((official_run / "result.json").read_text())
-    if official["source_commit"] != "48b1a0169a28582a8984402f82cf438d3bfa6aca":
-        raise ValueError("Expected the pinned official source trace")
+    official_records = [json.loads((path / "result.json").read_text()) for path in official_runs]
+    official = official_records[0]
+    if any(record["source_commit"] != "48b1a0169a28582a8984402f82cf438d3bfa6aca" for record in official_records):
+        raise ValueError("Expected pinned official source traces")
     checkpoints = [Path(path) for path in official["input_sha256"] if Path(path).suffix == ".ckpt"]
     if len(checkpoints) != 1:
         raise ValueError("Expected one GPT checkpoint in the official run")
@@ -266,11 +286,17 @@ def main():
     checkpoint_hash = sha256(checkpoint)
     if checkpoint_hash != official["input_sha256"][str(checkpoint)]:
         raise ValueError("Official checkpoint hash differs from the trace")
+    for record in official_records[1:]:
+        recorded = [value for name, value in record["input_sha256"].items() if Path(name).suffix == ".ckpt"]
+        if recorded != [checkpoint_hash]:
+            raise ValueError("Official traces use different GPT checkpoints")
     package = args.package.resolve() if args.package else None
     if package:
         manifest = json.loads((package / "manifest.json").read_text())
         if manifest["source"]["checkpoint_sha256"] != checkpoint_hash:
             raise ValueError("Converted model is not the same official checkpoint")
+        if manifest["source"]["official_commit"] != official["source_commit"]:
+            raise ValueError("Converted model and traces use different official commits")
     equivalence = None
     if args.equivalence_reference:
         equivalence = json.loads((args.equivalence_reference / "result.json").read_text())
@@ -282,28 +308,38 @@ def main():
     root = Path(__file__).resolve().parents[1]
     snapshot_root = run / "source"
     source_files = ["harness/gpt_benchmark.py"]
-    if args.backend == "mlx":
+    if args.backend.startswith("mlx"):
         source_files += ["src/sakuratts/mlx_gpt.py", "requirements-mlx-candidate.txt"]
+    if args.backend == "mlx-fp64-prefill":
+        source_files += ["src/sakuratts/gpt_prefill.py"]
     for name in source_files:
         destination = snapshot_root / name
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(root / name, destination)
     result = {
-        "status": "running", "backend": args.backend, "device": args.device, "dtype": "float32", "capacity": capacity,
+        "status": "running", "backend": args.backend, "device": args.device,
+        "dtype": "prefill_float64_decode_float32" if args.backend == "mlx-fp64-prefill" else "float32", "capacity": capacity,
         "capacity_selection": args.capacity, "checkpoint_sha256": checkpoint_hash, "work": work,
         "capacity_caveat": "required64 uses known future history; production capacity must use a configured generation limit",
         "command_argv": [sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]],
+        "thread_environment": {name: os.environ.get(name) for name in ("OPENBLAS_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "OMP_NUM_THREADS")},
         "snapshot_root": str(snapshot_root), "source_sha256": {name: sha256(snapshot_root / name) for name in source_files},
         "model_disk": {"original_checkpoint_bytes": checkpoint.stat().st_size,
                        "converted_weights_bytes": (package / "weights.npz").stat().st_size if package else None},
         "timing_scope": "CPU input preparation, GPT prefill and fixed-history decode projections; boundary sync; no sampling, per-step CPU logits copies, or audio",
         "backend_evaluation_policy": "MLX candidate explicitly evaluates each step to bound its lazy graph; Lite runs eager PyTorch operators",
+        "fp64_prefill_timing": "Includes per-request layerwise weight reads/casts, full CPU prefill and completed FP32 KV transfer; per-weight diagnostic timers disabled inside normal timings" if args.backend == "mlx-fp64-prefill" else None,
         "repeat": args.repeat, "warmup": args.warmup, "cases": {},
     }
     backend = None
     try:
         started = time.perf_counter()
-        backend = LiteBackend(references, checkpoint, capacity, args.device, args.threads) if args.backend == "lite" else MLXBackend(package, capacity, args.device)
+        if args.backend == "lite":
+            backend = LiteBackend(references, checkpoint, capacity, args.device, args.threads)
+        elif args.backend == "mlx-fp64-prefill":
+            backend = MLXBackend(package, capacity, args.device, prefill_precision="fp64")
+        else:
+            backend = MLXBackend(package, capacity, args.device)
         backend.sync()
         result["load_seconds_including_import_and_backend_validation"] = time.perf_counter() - started
         result["memory_after_load"] = backend.memory()
@@ -312,11 +348,14 @@ def main():
             validation = backend.forward(data, capture=True)
             checked = comparison(validation, data["official_logits"])
             case = {"source": data["source"], "official_comparison": checked}
+            if args.backend == "mlx-fp64-prefill":
+                case["diagnostic_prefill_profile_outside_timing"] = backend.model.prefill_profile.copy()
             arrays_file = run / f"{language}-validation.npz"
             np.savez(arrays_file, logits=validation, fixed_sampled_history=data["tokens"])
             case.update({"arrays_file": str(arrays_file), "arrays_sha256": sha256(arrays_file)})
             result["cases"][language] = case
             if not checked["within_fp32_tolerance"]:
+                result["status"] = "numerical_mismatch"
                 raise AssertionError(f"{language} logits differ from official reference beyond preset tolerance")
             if equivalence:
                 baseline = equivalence["cases"][language]
@@ -346,9 +385,13 @@ def main():
             case.update({"seconds_samples": samples, "median_seconds": statistics.median(samples),
                          "min_seconds": min(samples), "max_seconds": max(samples),
                          "memory_after_measurements": backend.memory(), "array_nbytes": backend.arrays()})
+            print(json.dumps({"case": language, "median_seconds": case["median_seconds"],
+                              "min_seconds": case["min_seconds"], "max_seconds": case["max_seconds"],
+                              "within_fp32_tolerance": checked["within_fp32_tolerance"]}), flush=True)
         result["status"] = "completed"
     except Exception:
-        result["status"] = "error"
+        if result["status"] == "running":
+            result["status"] = "error"
         result["traceback"] = traceback.format_exc()
         raise
     finally:

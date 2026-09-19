@@ -25,6 +25,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from sakuratts.mlx_gpt import MLXGPT, sha256
+from sakuratts.gpt_prefill import prefill_fp64
 from mlx_gpt_replay import compare, trace_inputs
 
 
@@ -38,96 +39,21 @@ def memory():
     }
 
 
-def numpy_prefill(package, config, phones, prompt, bert):
-    """Return rounded FP32 KV/logits after full CPU float64 arithmetic."""
-    width, heads = config["hidden_dim"], config["heads"]
-    head_dim = width // heads
-    t, p = phones.shape[1], prompt.shape[1]
-    started = time.perf_counter()
-    weight_seconds = 0.0
-    with np.load(package / "weights.npz", allow_pickle=False) as archive:
-        def weight(name):
-            nonlocal weight_seconds
-            start = time.perf_counter()
-            value = archive[name].astype(np.float64)
-            weight_seconds += time.perf_counter() - start
-            return value
-
-        def linear(x, prefix):
-            result = x @ weight(prefix + ".weight").T
-            if prefix + ".bias" in archive:
-                result += weight(prefix + ".bias")
-            return result
-
-        def norm(x, prefix):
-            centered = x - x.mean(axis=-1, keepdims=True)
-            variance = np.mean(centered**2, axis=-1, keepdims=True)
-            return centered / np.sqrt(variance + config["layer_norm_epsilon"]) * weight(prefix + ".weight") + weight(prefix + ".bias")
-
-        position = weight("position_encoding")
-        text = weight("text_embedding")[phones] + linear(bert.astype(np.float64), "bert")
-        text += weight("text_alpha") * position[None, :t]
-        audio = weight("audio_embedding")[prompt] + weight("audio_alpha") * position[None, :p]
-        x = np.concatenate([text, audio], axis=1)
-        del text, audio, position
-        allowed = np.zeros((t + p, t + p), dtype=bool)
-        allowed[:t, :t] = True
-        allowed[t:, :t] = True
-        allowed[t:, t:] = np.tril(np.ones((p, p), dtype=bool))
-        keys, values = [], []
-        for layer in range(config["layers"]):
-            prefix = f"layers.{layer}."
-            q, k, v = [item.reshape(1, t + p, heads, head_dim).transpose(0, 2, 1, 3)
-                       for item in np.split(linear(x, prefix + "qkv"), 3, axis=-1)]
-            keys.append(k.astype(np.float32))
-            values.append(v.astype(np.float32))
-            scores = (q @ k.swapaxes(-1, -2)) * head_dim**-0.5
-            np.copyto(scores, -np.inf, where=~allowed)
-            scores -= scores.max(axis=-1, keepdims=True)
-            np.exp(scores, out=scores)
-            scores /= scores.sum(axis=-1, keepdims=True)
-            attended = (scores @ v).transpose(0, 2, 1, 3).reshape(1, t + p, width)
-            x = norm(x + linear(attended, prefix + "attention_output"), prefix + "norm1")
-            hidden = np.maximum(linear(x, prefix + "ffn_in"), 0)
-            x = norm(x + linear(hidden, prefix + "ffn_out"), prefix + "norm2")
-        logits = linear(x[:, -1], "output").astype(np.float32)
-    total = time.perf_counter() - started
-    return logits, keys, values, {
-        "cpu_prefill_seconds": total,
-        "cpu_weight_read_and_cast_seconds": weight_seconds,
-        "cpu_compute_and_housekeeping_seconds": total - weight_seconds,
-        "cpu_retained_fp32_kv_bytes": sum(value.nbytes for value in keys + values),
-        "precision": "All prefill arithmetic float64; completed KV and logits rounded once to float32",
-        "weights": "Read original converted FP32 tensors per layer; no persistent float64 weight copy",
-    }
-
-
-def replay(args, package, model, phones, prompt, bert, tokens, expected, run, case):
+def replay(args, model, phones, prompt, bert, tokens, expected, run, case):
     if phones.shape[1] + prompt.shape[1] + len(tokens) - 1 > model.capacity:
         raise ValueError("The fixed history exceeds KV capacity")
     if max(phones.shape[1], prompt.shape[1] + len(tokens) - 1) > model.config["max_positions"]:
         raise ValueError("The fixed history exceeds position capacity")
-    model.keys, model.values = [], []
-    model.length = 0
-    model.text_length = phones.shape[1]
     before = memory()
-    logits, keys, values, stages = numpy_prefill(package, model.config, phones, prompt, bert)
-    after_cpu = memory()
+    logits = np.asarray(model.prefill(phones, prompt, bert, precision="fp64", profile=True)).copy()
+    stages = model.prefill_profile.copy()
+    after_transfer = memory()
     if args.save_prefill:
-        arrays = {f"layers.{layer}.{name}": value for name, group in (("keys", keys), ("values", values))
+        arrays = {f"layers.{layer}.{name}": np.asarray(value[:, :, :model.length]).copy()
+                  for name, group in (("keys", model.keys), ("values", model.values))
                   for layer, value in enumerate(group)}
         np.savez(run / f"{case}-prefill.npz", logits=logits, **arrays)
-    started = time.perf_counter()
-    model.length = phones.shape[1] + prompt.shape[1]
-    padding = ((0, 0), (0, 0), (0, model.capacity - model.length), (0, 0))
-    model.keys = [mx.pad(mx.array(value), padding) for value in keys]
-    model.values = [mx.pad(mx.array(value), padding) for value in values]
-    mx.eval(*model.keys, *model.values)
-    stages["cpu_to_mlx_kv_seconds"] = time.perf_counter() - started
-    del keys, values
-    if args.save_prefill:
         del arrays
-    after_transfer = memory()
     actual = [logits[0]]
     started = time.perf_counter()
     for token in tokens[:-1]:
@@ -138,8 +64,7 @@ def replay(args, package, model, phones, prompt, bert, tokens, expected, run, ca
     np.savez(arrays_file, official_logits=expected, actual_logits=actual, fixed_sampled_history=tokens)
     return {
         **compare(actual, expected), "stages": stages,
-        "memory": {"before_prefill": before, "after_cpu_prefill": after_cpu,
-                   "after_kv_transfer": after_transfer, "after_decode": memory()},
+        "memory": {"before_prefill": before, "after_kv_transfer": after_transfer, "after_decode": memory()},
         "arrays_file": str(arrays_file), "arrays_sha256": sha256(arrays_file),
     }
 
@@ -159,7 +84,7 @@ def main():
     run = args.references / "runs" / f"{timestamp}-fp64-prefill-{'cpu-only' if args.cpu_prefill_only else 'mlx-decode'}"
     run.mkdir(parents=True, exist_ok=False)
     root = Path(__file__).resolve().parents[1]
-    for name in ("harness/fp64_prefill_replay.py", "harness/mlx_gpt_replay.py", "src/sakuratts/mlx_gpt.py"):
+    for name in ("harness/fp64_prefill_replay.py", "harness/mlx_gpt_replay.py", "src/sakuratts/mlx_gpt.py", "src/sakuratts/gpt_prefill.py"):
         destination = run / "source" / name
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(root / name, destination)
@@ -186,14 +111,15 @@ def main():
                 raise ValueError(f"Expected exactly one trace for {case}; got {len(paths)}")
             phones, prompt, bert, tokens, expected, source = trace_inputs(paths[0])
             if args.cpu_prefill_only:
-                logits, keys, values, stages = numpy_prefill(args.package, manifest["config"], phones, prompt, bert)
+                logits, keys, values, stages = prefill_fp64(
+                    args.package / manifest["weights"]["file"], manifest["config"], phones, prompt, bert, measure=True)
                 arrays = {f"layers.{layer}.{name}": value for name, group in (("keys", keys), ("values", values))
                           for layer, value in enumerate(group)}
                 np.savez(run / f"{case}-prefill.npz", logits=logits, **arrays)
                 item = {**compare(logits, expected[:1]), "stages": stages, "memory_after_prefill": memory()}
                 del keys, values, arrays
             else:
-                item = replay(args, args.package, model, phones, prompt, bert, tokens, expected, run, case)
+                item = replay(args, model, phones, prompt, bert, tokens, expected, run, case)
             item["source"] = source
             result["comparisons"][case] = item
             print(json.dumps({"case": case, "within_fp32_tolerance": item["within_fp32_tolerance"],

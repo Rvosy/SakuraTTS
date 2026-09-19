@@ -14,6 +14,7 @@ import json
 from pathlib import Path
 import shutil
 import sys
+import tempfile
 import time
 import traceback
 
@@ -154,8 +155,24 @@ def cpu_self_test():
     actual, _ = replay(model, phones, prompt, bert, tokens)
     expected = np.stack([oracle(phones, np.concatenate([prompt, tokens[:i][None]], axis=1), bert) for i in range(len(tokens))])
     np.testing.assert_allclose(actual, expected, atol=2e-6, rtol=2e-5)
+    with tempfile.TemporaryDirectory(prefix="sakuratts-prefill-test-") as directory:
+        package = Path(directory)
+        np.savez(package / "weights.npz", **weights)
+        manifest = {"format": "sakuratts-gpt-fp32-v1", "architecture": "gpt-sovits-ar-postnorm-relu",
+                    "config": config, "weights": {"file": "weights.npz", "sha256": sha256(package / "weights.npz")}}
+        (package / "manifest.json").write_text(json.dumps(manifest))
+        high_precision = MLXGPT.load(package, capacity=32, prefill_precision="fp64")
+        fp64_actual, _ = replay(high_precision, phones, prompt, bert, tokens)
+        np.testing.assert_allclose(fp64_actual, expected, atol=2e-6, rtol=2e-5)
+        fp32_override = np.asarray(high_precision.prefill(phones, prompt, bert, precision="fp32"))
+        np.testing.assert_array_equal(fp32_override[0], actual[0])
+        np.testing.assert_array_equal(np.asarray(high_precision.prefill(phones, prompt, bert))[0], fp64_actual[0])
+        if high_precision.prefill_precision != "fp64":
+            raise AssertionError("Per-request precision override changed the model default")
     return {"status": "passed", "device": "cpu", "test": "tiny cached MLX graph versus NumPy float64 full-prefix oracle",
-            "torch_imported": "torch" in sys.modules, "comparison": compare(actual, expected, atol=2e-6, rtol=2e-5)}
+            "torch_imported": "torch" in sys.modules, "comparison": compare(actual, expected, atol=2e-6, rtol=2e-5),
+            "fp64_prefill_comparison": compare(fp64_actual, expected, atol=2e-6, rtol=2e-5),
+            "per_request_precision_override": "passed"}
 
 
 def main():
@@ -180,6 +197,7 @@ def main():
     snapshot_files = {
         "harness/mlx_gpt_replay.py": Path(__file__).resolve(),
         "src/sakuratts/mlx_gpt.py": project_root / "src/sakuratts/mlx_gpt.py",
+        "src/sakuratts/gpt_prefill.py": project_root / "src/sakuratts/gpt_prefill.py",
         "requirements-mlx-candidate.txt": project_root / "requirements-mlx-candidate.txt",
     }
     for name, original in snapshot_files.items():

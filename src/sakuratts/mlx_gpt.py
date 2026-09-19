@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import time
 
 import mlx.core as mx
 import numpy as np
@@ -42,10 +43,15 @@ class MLXGPT:
             raise ValueError("Unsupported dimensions, capacity or position scaling")
         if any(value.dtype != mx.float32 for value in weights.values()):
             raise ValueError("This candidate runtime accepts only FP32 packages")
+        self.weights_file = None
+        self.prefill_precision = "fp32"
+        self.prefill_profile = None
         self.reset()
 
     @classmethod
-    def load(cls, package: Path, capacity: int = 1024):
+    def load(cls, package: Path, capacity: int = 1024, prefill_precision: str = "fp32"):
+        if prefill_precision not in ("fp32", "fp64"):
+            raise ValueError("Prefill precision must be fp32 or fp64")
         manifest = json.loads((package / "manifest.json").read_text())
         if manifest["format"] != "sakuratts-gpt-fp32-v1" or manifest["architecture"] != "gpt-sovits-ar-postnorm-relu":
             raise ValueError("Unsupported model package format or architecture")
@@ -54,7 +60,10 @@ class MLXGPT:
             raise ValueError("Converted weight archive hash mismatch")
         weights = mx.load(path)
         mx.eval(*weights.values())
-        return cls(manifest["config"], weights, capacity)
+        model = cls(manifest["config"], weights, capacity)
+        model.weights_file = path
+        model.prefill_precision = prefill_precision
+        return model
 
     def reset(self):
         shape = (1, self.heads, self.capacity, self.head_dim)
@@ -96,7 +105,11 @@ class MLXGPT:
         self.length = valid
         return logits
 
-    def prefill(self, phones: np.ndarray, prompt: np.ndarray, bert: np.ndarray):
+    def prefill(self, phones: np.ndarray, prompt: np.ndarray, bert: np.ndarray,
+                *, precision: str | None = None, profile: bool = False):
+        precision = self.prefill_precision if precision is None else precision
+        if precision not in ("fp32", "fp64"):
+            raise ValueError("Prefill precision must be fp32 or fp64")
         phones, prompt, bert = np.asarray(phones), np.asarray(prompt), np.asarray(bert)
         if phones.ndim != 2 or phones.shape[0] != 1 or prompt.ndim != 2 or prompt.shape[0] != 1:
             raise ValueError("Expected one text sequence and one nonempty reference sequence")
@@ -108,6 +121,10 @@ class MLXGPT:
         if (phones.min() < 0 or phones.max() >= self.config["phoneme_vocab_size"]
                 or prompt.min() < 0 or prompt.max() >= self.config["vocab_size"]):
             raise ValueError("Phone or reference semantic token is outside the model vocabulary")
+        self.prefill_profile = None
+        if precision == "fp64":
+            return self._prefill_fp64(phones.astype(np.int32), prompt.astype(np.int32),
+                                     bert.astype(np.float32), profile)
         self.reset()
         self.text_length = t
         position = self.weights["position_encoding"]
@@ -120,6 +137,28 @@ class MLXGPT:
         allowed[t:, :t] = True
         allowed[t:, t:] = np.tril(np.ones((p, p), dtype=np.bool_))
         return self._run(mx.concatenate([text, audio], axis=1), 0, t + p, mx.array(allowed[None, None]))
+
+    def _prefill_fp64(self, phones, prompt, bert, profile):
+        if self.weights_file is None:
+            raise ValueError("FP64 prefill requires a model loaded from a converted package")
+        from .gpt_prefill import prefill_fp64
+
+        self.keys, self.values = [], []
+        self.length = 0
+        self.text_length = phones.shape[1]
+        first, keys, values, stages = prefill_fp64(
+            self.weights_file, self.config, phones, prompt, bert, measure=profile)
+        started = time.perf_counter() if profile else None
+        self.length = phones.shape[1] + prompt.shape[1]
+        padding = ((0, 0), (0, 0), (0, self.capacity - self.length), (0, 0))
+        self.keys = [mx.pad(mx.array(value), padding) for value in keys]
+        self.values = [mx.pad(mx.array(value), padding) for value in values]
+        logits = mx.array(first)
+        mx.eval(logits, *self.keys, *self.values)
+        if profile:
+            stages["cpu_to_mlx_kv_seconds"] = time.perf_counter() - started
+            self.prefill_profile = stages
+        return logits
 
     def decode(self, token: int):
         if self.length == 0:
