@@ -465,19 +465,20 @@ class TextFrontend:
         unsupported = {item["lang"] for item in routes} - {"ja"}
         if unsupported:
             raise NotImplementedError(f"Language segment G2P is not implemented: {sorted(unsupported)}")
-        segments, phone_groups, feature_groups = [], [], []
+        if not routes:
+            raise ValueError("No Japanese language segments")
+        segments, phone_groups = [], []
         for item in routes:
             phones, word2ph, normalized = self.clean_segment(item["text"], item["lang"])
-            feature = np.zeros((1024, len(phones)), dtype=np.float32)
             phone_groups.append(phones)
-            feature_groups.append(feature)
             segments.append(dict(input=item["text"], language=item["lang"], phones=phones,
                                  word2ph=word2ph, norm_text=normalized))
         phones = sum(phone_groups, [])
-        features = np.concatenate(feature_groups, axis=1)
         normalized = "".join(item["norm_text"] for item in segments)
         if not final and len(phones) < 6:
             return self.segment("." + text, language, final=True)
+        # Every accepted route is Japanese, whose official BERT input is zero.
+        features = np.zeros((1024, len(phones)), dtype=np.float32)
         return dict(phones=phones, bert_features=features, norm_text=normalized, segments=segments)
 
     def prepare_target(self, text, language, split_method="cut0"):
