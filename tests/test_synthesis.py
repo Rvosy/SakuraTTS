@@ -93,6 +93,12 @@ class SynthesisTests(unittest.TestCase):
             self.request()
         self.assertFalse(hasattr(self.frontend, "request"))
 
+    def test_proplus_reference_cannot_be_used_with_pro_acoustic_graph(self):
+        self.reference.manifest["model_family"] = "v2ProPlus"
+        with self.assertRaisesRegex(ValueError, "must match"):
+            self.request()
+        self.assertFalse(hasattr(self.frontend, "request"))
+
     def test_replay_noise_cannot_force_a_different_semantic_length(self):
         with self.assertRaisesRegex(ValueError, "generated-history shape"):
             self.request(acoustic_noise=np.zeros((1, 192, 1), dtype=np.float32))

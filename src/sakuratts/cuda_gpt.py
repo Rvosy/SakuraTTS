@@ -1,0 +1,289 @@
+"""Single-weight CUDA GPT executor with in-place KV and optional CUDA graph.
+
+CuPy/cuBLAS execute the existing GPT package. Sampling and stopping remain in
+generation.py. No Torch, training source or alternate backend is imported.
+"""
+
+import ctypes
+import json
+import os
+from pathlib import Path
+
+import numpy as np
+
+from .cuda_runtime import configure_cuda
+from .reference_condition import sha256_file
+from .weight_storage import read_fp32, validate_storage
+
+configure_cuda()
+import cupy as cp
+
+
+class _GraphBLAS:
+    """cuBLAS handle bound once to our stream; no CuPy capture-time setStream.
+
+    CuPy 14 deliberately rejects its BLAS wrappers during stream capture.
+    The public CUDA cuBLAS API supports it when the handle is configured before
+    capture. Matrices remain owned by CuPy; this adapter never allocates weights.
+    """
+    def __init__(self, stream):
+        self.lib = ctypes.CDLL("cublas64_12.dll" if os.name == "nt" else "libcublas.so.12")
+        self.handle = ctypes.c_void_p()
+        self.lib.cublasCreate_v2.argtypes = [ctypes.POINTER(ctypes.c_void_p)]
+        self.lib.cublasSetStream_v2.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        self.lib.cublasDestroy_v2.argtypes = [ctypes.c_void_p]
+        self.lib.cublasSgemm_v2.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int,
+            ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_int, ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
+        self._check(self.lib.cublasCreate_v2(ctypes.byref(self.handle)))
+        self._check(self.lib.cublasSetStream_v2(self.handle, ctypes.c_void_p(stream.ptr)))
+        self.alpha, self.beta = ctypes.c_float(1), ctypes.c_float(0)
+
+    @staticmethod
+    def _check(status):
+        if status:
+            raise RuntimeError(f"cuBLAS failed with status {status}")
+
+    def linear(self, x, weight, out):
+        rows, columns = weight.shape
+        self._check(self.lib.cublasSgemm_v2(self.handle, 1, 0, rows, 1, columns,
+            ctypes.byref(self.alpha), weight.data.ptr, columns, x.data.ptr, columns,
+            ctypes.byref(self.beta), out.data.ptr, rows))
+
+    def close(self):
+        if self.handle:
+            self._check(self.lib.cublasDestroy_v2(self.handle))
+            self.handle = ctypes.c_void_p()
+
+
+_SOURCE = r'''
+extern "C" __global__ void layer_norm(float* x, const float* residual,
+ const float* bias, const float* weight, const float* shift, int width, float eps) {
+  __shared__ float sums[256];
+  int row=blockIdx.x, tid=threadIdx.x;
+  float s=0;
+  for(int c=tid;c<width;c+=256) s+=x[row*width+c]+residual[row*width+c]+bias[c];
+  sums[tid]=s; __syncthreads();
+  for(int n=128;n;n>>=1){if(tid<n)sums[tid]+=sums[tid+n];__syncthreads();}
+  float mean=sums[0]/width; s=0;
+  for(int c=tid;c<width;c+=256){float v=x[row*width+c]+residual[row*width+c]+bias[c]-mean;s+=v*v;}
+  sums[tid]=s; __syncthreads();
+  for(int n=128;n;n>>=1){if(tid<n)sums[tid]+=sums[tid+n];__syncthreads();}
+  float inv=rsqrtf(sums[0]/width+eps);
+  for(int c=tid;c<width;c+=256) x[row*width+c]=((x[row*width+c]+residual[row*width+c]+bias[c])-mean)*inv*weight[c]+shift[c];
+}
+extern "C" __global__ void embedding(float* x,const float* emb,const float* pe,
+ const float* alpha,const int* state,int width) {
+ int i=blockDim.x*blockIdx.x+threadIdx.x;
+ if(i<width)x[i]=emb[state[0]*width+i]+alpha[0]*pe[state[2]*width+i];
+}
+extern "C" __global__ void kv_write(const float* qkv, const float* bias,
+ float* key,float* value,const int* state,int width,int dim,int capacity){
+ int i=blockDim.x*blockIdx.x+threadIdx.x;
+ if(i<width){int dest=(i/dim*capacity+state[1])*dim+i%dim;
+ key[dest]=qkv[width+i]+bias[width+i];value[dest]=qkv[2*width+i]+bias[2*width+i];}
+}
+extern "C" __global__ void attention(const float* qkv,const float* bias,
+ const float* key,const float* value,float* out,const int* state,int dim,int capacity){
+ extern __shared__ float scores[];
+ __shared__ float reduce[256];
+ int h=blockIdx.x,tid=threadIdx.x,n=state[1]+1;
+ int lane=tid%32,warp=tid/32;
+ // One warp reads one key row contiguously. The previous serial-dot layout
+ // made adjacent lanes fetch different rows and wasted memory transactions.
+ for(int p=warp;p<n;p+=8){float s=0;
+   for(int d=lane;d<dim;d+=32)s+=(qkv[h*dim+d]+bias[h*dim+d])*key[(h*capacity+p)*dim+d];
+   for(int offset=16;offset;offset>>=1)s+=__shfl_down_sync(0xffffffff,s,offset);
+   if(lane==0)scores[p]=s*rsqrtf((float)dim);}
+ __syncthreads();
+ float maximum=-3.402823466e+38F;
+ for(int p=tid;p<n;p+=256)maximum=fmaxf(maximum,scores[p]);
+ reduce[tid]=maximum;__syncthreads();
+ for(int k=128;k;k>>=1){if(tid<k)reduce[tid]=fmaxf(reduce[tid],reduce[tid+k]);__syncthreads();}
+ maximum=reduce[0];float total=0;
+ for(int p=tid;p<n;p+=256){float s=expf(scores[p]-maximum);scores[p]=s;total+=s;}
+ reduce[tid]=total;__syncthreads();
+ for(int k=128;k;k>>=1){if(tid<k)reduce[tid]+=reduce[tid+k];__syncthreads();}
+ total=reduce[0];
+ for(int tile=0;tile<dim;tile+=32){
+   int d=tile+lane;float s=0;
+   if(d<dim)for(int p=warp;p<n;p+=8)s+=(scores[p]/total)*value[(h*capacity+p)*dim+d];
+   reduce[tid]=s;__syncthreads();
+   if(warp==0 && d<dim){float sum=0;for(int w=0;w<8;w++)sum+=reduce[w*32+lane];out[h*dim+d]=sum;}
+   __syncthreads();
+ }
+}
+'''
+
+
+class CUDAGPT:
+    def __init__(self, manifest, weights, capacity, use_graph=True):
+        self.weight_manifest = manifest
+        self.config = manifest["config"]
+        self.weights = weights
+        self.width = int(self.config["hidden_dim"])
+        self.heads = int(self.config["heads"])
+        self.layers = int(self.config["layers"])
+        self.head_dim = self.width // self.heads
+        self.epsilon = float(self.config["layer_norm_epsilon"])
+        if capacity < 1 or self.head_dim > 256 or capacity > 10000:
+            raise ValueError("Require KV capacity 1..10000 and head dimension <=256")
+        self.capacity, self.use_graph = capacity, use_graph
+        self.kernels = {name: cp.RawKernel(_SOURCE, name, options=("--std=c++11", "--fmad=false"))
+                        for name in ("layer_norm", "embedding", "kv_write", "attention")}
+        for kernel in self.kernels.values():
+            kernel.compile()
+        self.stream = cp.cuda.Stream(non_blocking=True)
+        self.blas = _GraphBLAS(self.stream)
+        self.keys = self.values = self.graph = self.workspace = None
+        self.length = self.text_length = 0
+
+    @classmethod
+    def load(cls, package, capacity=2048, use_graph=True):
+        package = Path(package)
+        manifest = json.loads((package / "manifest.json").read_text(encoding="utf-8"))
+        if (manifest["format"] != "sakuratts-gpt-fp32-v1"
+                or manifest["architecture"] != "gpt-sovits-ar-postnorm-relu"):
+            raise ValueError("Unsupported GPT package format or architecture")
+        path = package / manifest["weights"]["file"]
+        if sha256_file(path) != manifest["weights"]["sha256"]:
+            raise ValueError("GPT weight archive checksum mismatch")
+        with np.load(path, allow_pickle=False) as archive:
+            validate_storage(manifest, archive.files)
+            weights = {name: cp.asarray(read_fp32(archive, manifest, name)) for name in archive.files}
+        cp.cuda.get_current_stream().synchronize()
+        return cls(manifest, weights, capacity, use_graph)
+
+    def _allocate_state(self):
+        if self.keys is None:
+            shape = (self.layers, self.heads, self.capacity, self.head_dim)
+            self.keys, self.values = cp.empty(shape, cp.float32), cp.empty(shape, cp.float32)
+            w = self.width
+            self.workspace = {name: cp.empty(shape, cp.float32) for name, shape in {
+                "x": (1, w), "qkv": (1, 3*w), "attention": (1, w),
+                "mix": (1, w), "ffn": (1, 4*w), "out": (1, w),
+                "logits": (1, self.config["vocab_size"])}.items()}
+            self.state = cp.zeros(3, cp.int32)
+
+    def release_request_state(self):
+        self.stream.synchronize()
+        self.graph = None
+        self.keys = self.values = self.workspace = None
+        self.length = self.text_length = 0
+        cp.get_default_memory_pool().free_all_blocks()
+
+    def close(self):
+        self.release_request_state()
+        self.blas.close()
+        self.weights.clear()
+        cp.get_default_memory_pool().free_all_blocks()
+
+    def _norm(self, x, residual, prefix, bias):
+        self.kernels["layer_norm"]((x.shape[0],), (256,), (
+            x, residual, bias, self.weights[prefix+".weight"], self.weights[prefix+".bias"],
+            np.int32(self.width), np.float32(self.epsilon)))
+        return x
+
+    def prefill(self, phones, prompt, bert):
+        phones, prompt, bert = np.asarray(phones), np.asarray(prompt), np.asarray(bert)
+        if phones.dtype!=np.int64 or prompt.dtype!=np.int64 or bert.dtype!=np.float32:
+            raise ValueError("Require int64 phones/prompt and FP32 BERT features")
+        if phones.ndim != 2 or prompt.ndim != 2 or phones.shape[0] != 1 or prompt.shape[0] != 1:
+            raise ValueError("Expected batch=1 phones and reference semantics")
+        t, p = phones.shape[1], prompt.shape[1]
+        if min(t,p) < 1 or t+p > self.capacity or max(t,p)>self.config["max_positions"]:
+            raise ValueError("Empty sequence or GPT prefill capacity exceeded")
+        if bert.shape != (1,t,self.config["bert_dim"]) or not np.isfinite(bert).all():
+            raise ValueError("BERT features must be finite and align with all phones")
+        if phones.min()<0 or phones.max()>=self.config["phoneme_vocab_size"] or prompt.min()<0 or prompt.max()>=self.config["vocab_size"]:
+            raise ValueError("Phone or semantic token outside model vocabulary")
+        self._allocate_state()
+        self.text_length, self.length = t, t+p
+        w = self.weights
+        with self.stream:
+            text = w["text_embedding"][cp.asarray(phones[0])] + cp.asarray(bert[0]) @ w["bert.weight"].T + w["bert.bias"]
+            text += w["text_alpha"] * w["position_encoding"][:t]
+            audio = w["audio_embedding"][cp.asarray(prompt[0])] + w["audio_alpha"] * w["position_encoding"][:p]
+            x = cp.concatenate((text,audio))
+            allowed = np.zeros((t+p,t+p),bool)
+            allowed[:,:t] = True
+            allowed[t:,t:] = np.tril(np.ones((p,p),bool))
+            mask = cp.asarray(allowed)
+            for layer in range(self.layers):
+                pre = f"layers.{layer}."
+                qkv = x @ w[pre+"qkv.weight"].T + w[pre+"qkv.bias"]
+                q,k,v = [a.reshape(-1,self.heads,self.head_dim).transpose(1,0,2) for a in cp.split(qkv,3,axis=-1)]
+                self.keys[layer,:,:t+p] = k
+                self.values[layer,:,:t+p] = v
+                scores = (q @ k.transpose(0,2,1)) * np.float32(self.head_dim**-0.5)
+                scores = cp.where(mask, scores, -cp.inf)
+                scores -= cp.max(scores, axis=-1, keepdims=True)
+                cp.exp(scores, out=scores)
+                scores /= cp.sum(scores,axis=-1,keepdims=True)
+                attended = (scores @ v).transpose(1,0,2).reshape(-1,self.width)
+                mixed = attended @ w[pre+"attention_output.weight"].T
+                mixed = self._norm(mixed,x,pre+"norm1",w[pre+"attention_output.bias"])
+                ffn = cp.maximum(mixed @ w[pre+"ffn_in.weight"].T + w[pre+"ffn_in.bias"],0)
+                x = self._norm(ffn @ w[pre+"ffn_out.weight"].T,mixed,pre+"norm2",w[pre+"ffn_out.bias"])
+            logits = x[-1:] @ w["output.weight"].T
+            result = cp.asnumpy(logits)
+        self.stream.synchronize()
+        return result
+
+    def _decode_graph_body(self):
+        w,b = self.weights,self.workspace
+        self.kernels["embedding"](((self.width+255)//256,), (256,), (
+            b["x"],w["audio_embedding"],w["position_encoding"],w["audio_alpha"],self.state,np.int32(self.width)))
+        for layer in range(self.layers):
+            pre=f"layers.{layer}."
+            self.blas.linear(b["x"],w[pre+"qkv.weight"],b["qkv"])
+            self.kernels["kv_write"](((self.width+255)//256,), (256,), (
+                b["qkv"],w[pre+"qkv.bias"],self.keys[layer],self.values[layer],self.state,
+                np.int32(self.width),np.int32(self.head_dim),np.int32(self.capacity)))
+            self.kernels["attention"]((self.heads,), (256,), (
+                b["qkv"],w[pre+"qkv.bias"],self.keys[layer],self.values[layer],b["attention"],self.state,
+                np.int32(self.head_dim),np.int32(self.capacity)),shared_mem=self.capacity*4)
+            self.blas.linear(b["attention"],w[pre+"attention_output.weight"],b["mix"])
+            self._norm(b["mix"],b["x"],pre+"norm1",w[pre+"attention_output.bias"])
+            self.blas.linear(b["mix"],w[pre+"ffn_in.weight"],b["ffn"])
+            cp.add(b["ffn"],w[pre+"ffn_in.bias"],out=b["ffn"])
+            cp.maximum(b["ffn"],0,out=b["ffn"])
+            self.blas.linear(b["ffn"],w[pre+"ffn_out.weight"],b["x"])
+            self._norm(b["x"],b["mix"],pre+"norm2",w[pre+"ffn_out.bias"])
+        self.blas.linear(b["x"],w["output.weight"],b["logits"])
+
+    def decode(self, token):
+        if not isinstance(token,(int,np.integer)):
+            raise ValueError("Semantic token must be an integer")
+        if not self.length:
+            raise RuntimeError("Call prefill before decode")
+        if self.length>=self.capacity or self.length-self.text_length>=self.config["max_positions"]:
+            raise ValueError("GPT decode capacity exceeded; increase capacity, do not truncate text")
+        if token<0 or token>=self.config["vocab_size"]:
+            raise ValueError("Semantic token outside model vocabulary")
+        with self.stream:
+            self.state.set(np.array((token,self.length,self.length-self.text_length),np.int32))
+            if self.use_graph:
+                if self.graph is None:
+                    self._decode_graph_body()
+                    self.stream.synchronize()
+                    self.stream.begin_capture()
+                    try:
+                        self._decode_graph_body()
+                        self.graph=self.stream.end_capture()
+                    except BaseException:
+                        # CUDA invalidates a failed capture. End it before
+                        # request cleanup attempts stream synchronization.
+                        try:
+                            self.stream.end_capture()
+                        except Exception:
+                            pass
+                        self.graph=None
+                        raise
+                self.graph.launch(self.stream)
+            else:
+                self._decode_graph_body()
+            result=cp.asnumpy(self.workspace["logits"])
+        self.stream.synchronize()
+        self.length+=1
+        return result

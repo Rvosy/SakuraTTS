@@ -1,8 +1,23 @@
 # SakuraTTS
 
-SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎，用于 Sakura 桌宠的实时语音。目标是在保留模型能力和语音质量的前提下，降低安装体积、显存占用和生成延迟。
+SakuraTTS 是兼容已验证 GPT-SoVITS 权重的独立 GPU 推理项目，用于 Sakura 桌宠的语音生成。目标是在保留模型能力和语音质量的前提下，降低安装体积、显存占用和生成延迟。
 
 现有 GPT / SoVITS 权重通过转换工具生成推理模型包，再由自己的运行时生成音频。转换与验证可以使用 PyTorch；日常推理运行包以不依赖完整 PyTorch 环境为目标。桌宠现有 CPU TTS 方案继续沿用。
+
+## 安装与运行状态
+
+本项目通过根目录 `pyproject.toml` 安装，产品源码位于 `src/sakuratts/`。Windows / NVIDIA 已接通日文原文到完整 WAV：GPT 使用自有 CuPy CUDA 执行器，SoVITS 使用独立 ONNX Runtime CUDA 工作进程。普通运行不导入 PyTorch，也不读取官方、Lite 或 Genie 目录。当前实机模型是 Sakura V2ProPlus，GPU 是 RTX 5060 8 GB；完整验收范围和未解决问题见 [Windows 实测记录](docs/experiments/2026-09-20-windows-nvidia-backend.md)。
+
+先按 [Windows 安装与模型准备](docs/setup-windows-nvidia.md) 离线准备运行环境、模型和参考包，再执行：
+
+```powershell
+.venv-windows-runtime\Scripts\sakuratts.exe doctor --nvidia --config models\windows-sakura\runtime.json
+.venv-windows-runtime\Scripts\sakuratts.exe synthesize --config models\windows-sakura\runtime.json --reference 中性 --text "おはよう。今日もよろしくね。" --output outputs\sakura-neutral.wav
+```
+
+`doctor` 报告依赖、包哈希和参考身份是否通过，不生成音频，也不代表内容或音质验收。转换和官方对照使用单独的开发环境；安装依赖、组件大小和当前双 Python 版本的部署边界在 Windows 指南中说明。Mac 用户继续使用已有的 [MLX 日文入口](docs/japanese-runtime.md)，通用目录说明见[安装指南](docs/setup.md)。
+
+## 已有 Mac 验证
 
 2026-09-19 在 Apple M4 上，使用“朱雀院红叶”V2Pro 完成了官方与 Lite 对照，并保存用户语音问题的消融与复听证据。自有 GPT、采样和完整声学计算已接通：使用准备好的官方条件，十例生成 token、停止和最终波形通过对照；两个原始回归样例的四条官方 / 自有样音经用户确认正常且无明显差异。独立诊断仍有三个采样概率值和一个 MRTE 中间值超差，尚未完成整体数值验收。
 
@@ -16,6 +31,9 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 
 | 文档 | 内容 |
 |---|---|
+| [Windows 安装与推理](docs/setup-windows-nvidia.md) | 离线运行环境、经典日文前端、V2ProPlus 转换、参考准备和 WAV 命令 |
+| [Windows 实测记录](docs/experiments/2026-09-20-windows-nvidia-backend.md) | RTX 5060 官方对照、显存、速度、数值与已知问题 |
+| [Lite / Genie 定点研究](docs/research/windows-nvidia-reference-implementations.md) | 固定版本的缓存、采样、资源生命周期和可复用边界 |
 | [日文运行入口](docs/japanese-runtime.md) | 当前可运行范围、普通合成命令与离线参考准备 |
 | [推理行为与兼容契约](docs/specs/inference-contract.md) | 产品范围、模型兼容、解码语义、流式输出和资源生命周期 |
 | [原生 GPU 运行时方案](docs/adr/0001-native-gpu-runtime.md) | 转换器与运行包的边界、模块分工、后端候选及取舍 |
@@ -64,11 +82,11 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 
 ## 第一版方向
 
-近期先支持日文，中文已有代码与证据保留，待日文运行链和通用优化完成后单独恢复。生产以 Windows / NVIDIA CUDA 为重点。当前 Mac 阶段先完成可迁移的模型包、文本与参考准备、静态权重计算、KV 和资源生命周期；Mac 专用后端调优暂缓。首个样本为“朱雀院红叶”V2Pro，CUDA 性能留待目标设备验证。
+近期先支持日文，中文已有代码与证据保留，待日文运行链和通用优化完成后单独恢复。生产以 Windows / NVIDIA CUDA 为重点。Windows 复用了 Mac 阶段的模型包、文本与参考准备、采样和生命周期代码，另行适配 Sakura V2ProPlus；Mac 专用后端调优暂缓。
 
-当前在 Mac 上实现 MLX / NumPy 计算和必要的 CPU ONNX 模块，按实测接通文本、参考条件和资源生命周期。单活动请求、`batch=1` 是当前范围。FP16 和 NVIDIA CUDA 仍是后续候选，需要保留已验证的高精度对照并独立实测；其他模型逐组验证，不默认兼容。
+单活动请求、`batch=1`、FP32 和非流式完整 WAV 是当前 Windows 范围。其他精度、权重和模型家族需要独立验证；Mac 的 V2Pro 对照不能替代 Windows 的 V2ProPlus 验证。相同 seed 也不保证不同后端抽到同一序列，固定数值对照使用显式随机输入回放。
 
-C++ 原生运行时是拟议方向。TensorRT-RTX、ONNX Runtime CUDA 和少量原生 CUDA 算子需要通过实际模型验证后取舍，尚未选定生产后端。Windows 方向已确定，具体 NVIDIA GPU 与性能预算仍待固定。通用策略完成后，若剩余工作必须依赖 NVIDIA 硬件，就转入 Windows 接续，不继续深挖 Metal 特性。
+当前只维护一条 Windows 计算路径：CuPy CUDA GPT 与 ORT CUDA 声学解码。C++、TensorRT 和量化仍是候选；不以移植更多后端作为完成条件。速度和显存取舍以完整请求实测为准，质量、干净机器安装和宿主集成仍须分别验收。
 
 ## 目录结构
 
@@ -87,11 +105,11 @@ SakuraTTS/
     └── roadmap.md  # 实施阶段与待确定事项
 ```
 
-空目录通过 `.gitkeep` 保留，添加实际文件后可移除对应占位文件。
+安装文件与本地模型目录的完整说明见[项目结构](docs/setup.md#代码和资源放在哪里)。
 
 ## 开发
 
-开发约定见 [AGENTS.md](AGENTS.md)。三个上游仓库、独立 Python 环境、模型和运行结果放在本机同级目录 `../SakuraTTS-References/`，不随本仓库上传。本仓库的 [reference_smoke.py](harness/reference_smoke.py) 负责调用上游、保存音频及诊断信息；具体运行命令见 [Mac 首轮验证](docs/experiments/2026-09-19-macos-reference-smoke.md)。
+开发约定见 [AGENTS.md](AGENTS.md)。早期 Mac 实验将上游仓库、环境和资源放在 `../SakuraTTS-References/`；这是实验布局，普通合成不要求该目录存在。当前部分模型转换与参考准备工具仍依赖其中的固定上游源码，详见[安装指南](docs/setup.md)。[reference_smoke.py](harness/reference_smoke.py) 只用于调用上游作对照，历史命令见 [Mac 首轮验证](docs/experiments/2026-09-19-macos-reference-smoke.md)。
 
 本地配置使用 `.env`，需要共享配置格式时提供不含凭据的 `.env.example`。
 根目录下的 `data/`、`models/` 和 `outputs/` 用于本地运行数据、模型与生成结果，已加入 Git 忽略规则。

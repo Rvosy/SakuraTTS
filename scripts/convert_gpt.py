@@ -33,11 +33,17 @@ def sha256(path):
     return digest.hexdigest()
 
 
-def convert(checkpoint: Path, references: Path, max_positions: int):
-    source = references / "GPT-SoVITS"
-    commit = subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip()
-    if commit != OFFICIAL_COMMIT:
-        raise ValueError(f"Expected official commit {OFFICIAL_COMMIT}; got {commit}")
+def convert(checkpoint: Path, references: Path | None, max_positions: int,
+            *, official_source: Path | None = None, output: Path | None = None):
+    source = official_source if official_source is not None else references / "GPT-SoVITS"
+    if official_source is None:
+        commit = subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip()
+        if commit != OFFICIAL_COMMIT:
+            raise ValueError(f"Expected official commit {OFFICIAL_COMMIT}; got {commit}")
+    else:
+        # Release archives do not necessarily carry Git metadata. Preserve an
+        # explicit source identity; tensor schema validation below still applies.
+        commit = "source-sha256:" + sha256(source / "GPT_SoVITS/TTS_infer_pack/TTS.py")
     checkpoint_hash = sha256(checkpoint)
     original = torch.load(checkpoint, map_location="cpu", mmap=True, weights_only=True)
     raw_config = original["config"]["model"]
@@ -100,7 +106,7 @@ def convert(checkpoint: Path, references: Path, max_positions: int):
     encoding[:, 1::2] = torch.cos(position * frequencies)
     arrays["position_encoding"] = encoding.numpy()
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
-    destination = references / "models" / "converted" / f"{timestamp}-{checkpoint_hash[:12]}-gpt-fp32"
+    destination = output if output is not None else references / "models" / "converted" / f"{timestamp}-{checkpoint_hash[:12]}-gpt-fp32"
     destination.mkdir(parents=True, exist_ok=False)
     weights_file = destination / "weights.npz"
     np.savez(weights_file, **arrays)
@@ -126,7 +132,7 @@ def convert(checkpoint: Path, references: Path, max_positions: int):
                        "weights_layout": "linear weights preserve official [output, input] layout",
                        "position_encoding": "shared FP32 CPU table from the official formula; alpha applied at runtime"},
         "tensor_sources": tensor_sources,
-        "scope": "GPT component of the selected V2Pro reference pair only; other weights and families unverified",
+        "scope": "Validated post-norm ReLU GPT tensor schema; model-pair compatibility requires separate acoustic and end-to-end verification",
         "licenses": {"official_source": "MIT; see GPT-SoVITS-LICENSE",
                      "model_weights": "User-provided; redistribution rights not established by source code license"},
     }
@@ -140,10 +146,16 @@ def convert(checkpoint: Path, references: Path, max_positions: int):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", type=Path, required=True)
-    parser.add_argument("--references", type=Path, required=True)
+    parser.add_argument("--references", type=Path)
+    parser.add_argument("--official-source", type=Path, help="Explicit read-only source release; identity is recorded by content hash")
+    parser.add_argument("--output", type=Path)
     parser.add_argument("--max-positions", type=int, default=4000)
     args = parser.parse_args()
-    print(json.dumps(convert(args.checkpoint.resolve(), args.references.resolve(), args.max_positions), indent=2))
+    if not args.references and not (args.official_source and args.output):
+        parser.error("Use --references or both --official-source and --output")
+    print(json.dumps(convert(args.checkpoint.resolve(), args.references.resolve() if args.references else None,
+                             args.max_positions, official_source=args.official_source,
+                             output=args.output), indent=2))
 
 
 if __name__ == "__main__":

@@ -279,6 +279,10 @@ def main():
     parser.add_argument("--bind-reference", action="store_true",
                         help="Bind acoustic reference projections and omit their weights; requires reloading to change reference")
     args = parser.parse_args()
+    if sys.platform != "darwin":
+        parser.error("This script uses Apple Silicon / MLX. On Windows, use "
+                     "sakuratts synthesize --config PATH --text TEXT --output WAV; "
+                     "see docs/setup-windows-nvidia.md.")
     if (not args.text.strip() or args.seed < 0 or args.top_k < 1 or args.capacity < 1
             or args.early_stop_num < -1
             or not math.isfinite(args.temperature) or args.temperature <= 0

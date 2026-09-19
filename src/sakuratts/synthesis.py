@@ -82,9 +82,10 @@ def _validate_model(reference, name, manifest):
     if (manifest["source"]["checkpoint_sha256"] != identity[name + "_checkpoint_sha256"]
             or manifest["source"]["official_commit"] != identity["official_commit"]):
         raise ValueError(f"Loaded {name} model differs from the prepared reference")
-    if (reference.manifest["model_family"] != "v2Pro"
-            or name == "sovits" and manifest["config"]["model"]["version"] != "v2Pro"):
-        raise ValueError("Only the validated V2Pro architecture is supported")
+    family = reference.manifest["model_family"]
+    if (family not in ("v2Pro", "v2ProPlus")
+            or name == "sovits" and manifest["config"]["model"]["version"] != family):
+        raise ValueError("Reference family and acoustic architecture must match (V2Pro/V2ProPlus)")
 
 
 def _validate_models(reference, gpt, sovits):

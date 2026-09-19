@@ -1,0 +1,36 @@
+# Windows / Python 3.11 runtime dependencies, installed and checked offline.
+# Install the project separately with: uv --offline pip install --no-deps -e .
+# onnxruntime is the CPU runtime used by Japanese Nani frontend models.
+# The offline acoustic worker has its own CPython 3.9 / ORT CUDA bundle.
+# No Torch, Transformers, ONNX exporter, or training package is required here.
+annotated-types==0.8.0
+budoux==0.9.2
+certifi==2026.7.22
+charset-normalizer==3.5.1
+colorama==0.4.6
+colorlog==6.12.0
+cuda-pathfinder==1.8.2
+cupy-cuda12x==14.2.0
+fast-langdetect==1.0.1
+fasttext-predict==0.9.2.4
+flatbuffers==25.12.19
+idna==3.20
+numpy==2.4.6
+nvidia-cublas-cu12==12.9.2.10
+nvidia-cuda-nvrtc-cu12==12.9.86
+nvidia-cuda-runtime-cu12==12.9.79
+onnxruntime==1.30.0
+packaging==26.3
+protobuf==7.36.2
+pydantic==2.13.5
+pydantic-core==2.46.5
+pyopenjtalk-plus==0.4.1.post9
+requests==2.34.2
+robust-downloader==0.0.2
+split-lang==2.1.1
+sudachidict-core==20260723
+sudachipy==0.6.11
+tqdm==4.70.1
+typing-extensions==4.16.0
+typing-inspection==0.4.4
+urllib3==2.8.0

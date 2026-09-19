@@ -157,7 +157,7 @@ class PortableValidationTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "shape|Nonfinite"):
                     self.compare_saved()
 
-    def test_relative_paths_reject_traversal_absolute_drives_and_symlink_escape(self):
+    def test_relative_paths_reject_traversal_and_absolute_drives(self):
         for name in ("../case.npz", "/tmp/case.npz", "C:/case.npz", "C:case.npz", "cases\\case.npz", "./case.npz"):
             with self.subTest(path=name):
                 current = copy.deepcopy(self.bundle_manifest)
@@ -165,8 +165,16 @@ class PortableValidationTests(unittest.TestCase):
                 write_json(self.bundle_dir / "manifest.json", current)
                 with self.assertRaisesRegex(ValueError, "relative path"):
                     load_bundle(self.bundle_dir)
+
+    def test_relative_paths_reject_symlink_escape(self):
         link = self.bundle_dir / "escape.npz"
-        link.symlink_to(self.candidate_dir / "case.npz")
+        try:
+            link.symlink_to(self.candidate_dir / "case.npz")
+        except OSError as exc:
+            if getattr(exc, "winerror", None) == 1314:
+                self.skipTest("Windows requires Developer Mode or symlink privileges for this check")
+            raise
+        current = copy.deepcopy(self.bundle_manifest)
         current["cases"]["ja"]["file"] = link.name
         write_json(self.bundle_dir / "manifest.json", current)
         with self.assertRaisesRegex(ValueError, "escapes"):
