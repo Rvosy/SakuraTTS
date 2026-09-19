@@ -1,0 +1,83 @@
+{
+  "upstream": "https://github.com/RVC-Boss/GPT-SoVITS",
+  "commit": "48b1a0169a28582a8984402f82cf438d3bfa6aca",
+  "files": [
+    {
+      "source": "GPT_SoVITS/text/tone_sandhi.py",
+      "destination": "src/sakuratts/tone_sandhi.py",
+      "sha256": "b651a9cf7a94b66401101876616a85479bb2fb266aa41f85423b9371bbe4137d",
+      "bytes": 23791,
+      "changes": "none; original PaddlePaddle Apache-2.0 header retained"
+    },
+    {
+      "source": "GPT_SoVITS/text/zh_normalization/char_convert.py",
+      "destination": "src/sakuratts/zh_normalization/char_convert.py",
+      "sha256": "df066ce8e2a3385c7f3b4749f02049f2fdbabbfcc76e6784462a99f0347795e7",
+      "bytes": 66099,
+      "changes": "none; original PaddlePaddle Apache-2.0 header retained"
+    },
+    {
+      "source": "GPT_SoVITS/text/zh_normalization/chronology.py",
+      "destination": "src/sakuratts/zh_normalization/chronology.py",
+      "sha256": "bd873579e79976aaa465708791da13b79fd7beeafa6981743f438ec18f7d680a",
+      "bytes": 3428,
+      "changes": "none; original PaddlePaddle Apache-2.0 header retained"
+    },
+    {
+      "source": "GPT_SoVITS/text/zh_normalization/constants.py",
+      "destination": "src/sakuratts/zh_normalization/constants.py",
+      "sha256": "33dd3cbe8443454ab51f12f513d4ce4ba43770981cd0605e240f6d942a9b675b",
+      "bytes": 2329,
+      "changes": "none; original PaddlePaddle Apache-2.0 header retained"
+    },
+    {
+      "source": "GPT_SoVITS/text/zh_normalization/num.py",
+      "destination": "src/sakuratts/zh_normalization/num.py",
+      "sha256": "403d613bacc9a8d922db65dd89a6ecb9a283ff4f07b5b38f645005c24387a7e2",
+      "bytes": 9814,
+      "changes": "none; original PaddlePaddle Apache-2.0 header retained"
+    },
+    {
+      "source": "GPT_SoVITS/text/zh_normalization/phonecode.py",
+      "destination": "src/sakuratts/zh_normalization/phonecode.py",
+      "sha256": "d8279ca6ddf1af8f26119a75b4dfbb28c7da0adba5c51f807f4503c59d9816a5",
+      "bytes": 1953,
+      "changes": "none; original PaddlePaddle Apache-2.0 header retained"
+    },
+    {
+      "source": "GPT_SoVITS/text/zh_normalization/quantifier.py",
+      "destination": "src/sakuratts/zh_normalization/quantifier.py",
+      "sha256": "de2d3367906a9df18edcf30698ae286d441c13c090f89d1f492ffdbe0edf93d0",
+      "bytes": 1805,
+      "changes": "none; original PaddlePaddle Apache-2.0 header retained"
+    },
+    {
+      "source": "GPT_SoVITS/text/zh_normalization/text_normlization.py",
+      "destination": "src/sakuratts/zh_normalization/text_normlization.py",
+      "sha256": "2010a90d73d0e03cc4f99c22a774a4e127fc3a1fe5c0fdc38b03fb3b5754cbb3",
+      "bytes": 7663,
+      "changes": "none; original PaddlePaddle Apache-2.0 header retained"
+    },
+    {
+      "source": "GPT_SoVITS/text/chinese2.py",
+      "destination": "src/sakuratts/chinese.py",
+      "sha256": "a33a7fced1496c034522e46be2702c49f71f93cf4bc8e2bd216fab5d3fc08ae5",
+      "bytes": 10492,
+      "changes": "Explicit resource/model ownership; selected active G2PW rule branch; offline JSON tables; equivalent special marker processing"
+    },
+    {
+      "source": "GPT_SoVITS/text/cleaner.py",
+      "destination": "src/sakuratts/chinese.py",
+      "sha256": "c37c7768a635d7a4ac191cd2cb2dcbeb0544c5e3de60348117fac75fa24cb713",
+      "bytes": 3348,
+      "changes": "Explicit resource/model ownership; selected active G2PW rule branch; offline JSON tables; equivalent special marker processing"
+    },
+    {
+      "source": "GPT_SoVITS/text/g2pw/g2pw.py",
+      "destination": "src/sakuratts/chinese.py",
+      "sha256": "5267a8fad2a6b0509f74960a22d90d95b4f255477ecd467d51dc0620598d3d20",
+      "bytes": 5781,
+      "changes": "Explicit resource/model ownership; selected active G2PW rule branch; offline JSON tables; equivalent special marker processing"
+    }
+  ]
+}
