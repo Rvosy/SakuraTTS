@@ -4,3 +4,6 @@ mlx==0.32.2
 mlx-metal==0.32.2
 numpy==2.4.6
 tokenizers==0.21.4
+onnxruntime==1.30.0
+flatbuffers==25.12.19
+protobuf==7.36.2
