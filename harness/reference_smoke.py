@@ -34,6 +34,7 @@ def main() -> None:
     parser.add_argument("--diagnostic", action="store_true", help="Save intermediate values; timings include diagnostic overhead")
     parser.add_argument("--prepare-reference", action="store_true", help="Official V2Pro: prepare once, save conditions and release auxiliary models")
     parser.add_argument("--prune-bert", action="store_true", help="Official reference: compute only the required BERT feature layer")
+    parser.add_argument("--prepare-acoustic", action="store_true", help="Prepared V2Pro reference: cache acoustic conditions and release preparation-only modules")
     parser.add_argument("--sample-memory", action="store_true", help="Poll MPS and RSS at 10 ms; use a separate run from timing")
     args = parser.parse_args()
     if args.repeat < 1:
@@ -42,6 +43,8 @@ def main() -> None:
         parser.error("--prepare-reference requires --backend official")
     if args.prune_bert and args.backend != "official":
         parser.error("--prune-bert requires --backend official")
+    if args.prepare_acoustic and not args.prepare_reference:
+        parser.error("--prepare-acoustic requires --prepare-reference")
     if args.sample_memory and args.device != "mps":
         parser.error("--sample-memory currently measures MPS only")
 
@@ -73,6 +76,9 @@ def main() -> None:
     os.environ.setdefault("NLTK_DATA", str(root / "models" / "nltk_data"))
     os.environ.setdefault("language", "en_US")
     os.environ.setdefault("version", "v2")
+    # ORT 1.30.0 must see the opt-out before import to skip its uploader.
+    # Disabling events after import still leaves uploader teardown active.
+    os.environ["ORT_DISABLE_TELEMETRY"] = "1"
     report = {
         "status": "running",
         "purpose": "instrumented_diagnosis" if args.diagnostic else (
@@ -81,6 +87,7 @@ def main() -> None:
         "source_snapshot": str(output / "source"),
         "prepared_reference_experiment": args.prepare_reference,
         "pruned_bert_experiment": args.prune_bert,
+        "prepared_acoustic_experiment": args.prepare_acoustic,
         "backend": args.backend,
         "device": args.device,
         "dtype": "float32",
@@ -88,6 +95,7 @@ def main() -> None:
         "platform": platform.platform(),
         "machine": platform.machine(),
         "mps_fallback": os.environ.get("PYTORCH_ENABLE_MPS_FALLBACK", "unset"),
+        "ort_telemetry": "disabled_before_import_via_ORT_DISABLE_TELEMETRY=1",
         "seed": args.seed,
         "bert_enabled": True,
         "streaming": False,
@@ -241,6 +249,15 @@ def main() -> None:
             )
             report["reference_preparation"]["seconds_including_artifact_save"] = time.perf_counter() - started
             report["memory_after_reference_release"] = memory_snapshot()
+        if args.prepare_acoustic:
+            from prepared_acoustic import prepare_acoustic
+
+            started = time.perf_counter()
+            if sampler:
+                sampler.phase = "acoustic_preparation"
+            report["acoustic_preparation"] = prepare_acoustic(engine, output, synchronize)
+            report["acoustic_preparation"]["seconds_including_artifact_save"] = time.perf_counter() - started
+            report["memory_after_acoustic_release"] = memory_snapshot()
         trace = None
         if args.diagnostic:
             from trace_reference import ReferenceTrace

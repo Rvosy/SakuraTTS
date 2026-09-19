@@ -17,6 +17,7 @@ SakuraTTS 计划提供一套兼容 GPT-SoVITS 模型的轻量 GPU 推理引擎�
 | [实施路线](docs/roadmap.md) | 分阶段交付物、完成条件、首轮实验和待确定事项 |
 | [调用链与资源实验](docs/experiments/2026-09-19-parity-and-lifecycle.md) | 用户语音问题、固定历史数值对照、参考条件释放与证据 |
 | [参考资源与 BERT 裁剪](docs/experiments/2026-09-19-bert-and-reference-memory.md) | 输出保持、常驻边界、独立内存采样与测量限制 |
+| [声学准备与常驻](docs/experiments/2026-09-19-acoustic-lifecycle.md) | 同波形常驻下降、RSS 代价和完整退出记录 |
 | [文本条件与试听](docs/experiments/2026-09-19-asr-review.md) | 消融、离线 ASR、用户对指定样音的复听结果 |
 | [采样与停止规则](docs/experiments/2026-09-19-sampling-semantics.md) | 无 PyTorch 采样基线及尚未解决的 Top-p 边界 |
 | [扩展回归](docs/experiments/2026-09-19-expanded-regression.md) | 10 条输入的波形保持和英文资源修复 |
