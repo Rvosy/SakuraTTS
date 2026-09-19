@@ -30,7 +30,7 @@
 
 ## 包大小与当前验证边界
 
-生成目录相对于参考目录为 `models/converted/20260919T113249.439600Z-f8bd92196175-sovits-decode-fp32/`。
+首个用于 CPU 重载验证的目录相对于参考目录为 `models/converted/20260919T113249.439600Z-f8bd92196175-sovits-decode-fp32/`。
 
 - `weights.npz`：173,247,422 字节。
 - 全包文件合计：173,621,870 字节，包含 manifest、转换脚本快照和官方源码许可。
@@ -44,6 +44,8 @@ FP32 解码包仍比原 FP16 checkpoint 大，不能用排除张量数量宣布�
 
 原始对照保存在 `runs/20260919T113924.613659Z-sovits-package-replay-cpu/`，包含两例官方/重载后的数组、逐阶段误差、源码快照和命令。日文输出 153,600 样本，中文 186,880 样本，采样率均为 32 kHz；进程正常退出，退出码为 0。该校验采用官方 CPU 算子作为转换对照，没有实现自有声学算子，也没有进行新的 ASR、试听、正常计时或显存测量。
 
+实现 MLX 编码器时发现 MRTE cross-attention 没有直属权重，因此第一版 manifest 漏掉了它的注意力头数。转换器现已补充所有 `enc_p` 注意力模块的结构描述，并新建 `models/converted/20260919T115416.309917Z-f8bd92196175-sovits-decode-fp32/`，全包共 173,622,586 字节。新旧权重 NPZ 的 SHA-256 均为 `752e7ed40ec04014ec38b61dee4fba0310e075c89afb6e2ee9246abf7bd6996c`，没有改动权重。后续独立后端应使用这个补齐元数据的新包；两例 MLX 码本与编码器对照已通过，见 [编码器实验](2026-09-19-mlx-sovits-encoder.md)。
+
 ## 复现
 
 在项目根目录执行，转换器每次创建新包：
@@ -55,7 +57,7 @@ REF=/Users/beyondpower/Documents/Projects/SakuraTTS-References
   --checkpoint "$REF/models/suzakuinmomiji/voice/models/朱雀院红叶_e8_s38928.pth"
 "$REF/.venv-official-macos/bin/python" harness/sovits_package_replay.py \
   --references "$REF" \
-  --package "$REF/models/converted/20260919T113249.439600Z-f8bd92196175-sovits-decode-fp32" \
+  --package "$REF/models/converted/20260919T115416.309917Z-f8bd92196175-sovits-decode-fp32" \
   --checkpoint "$REF/models/suzakuinmomiji/voice/models/朱雀院红叶_e8_s38928.pth" \
   --official-trace-run "$REF/runs/20260919T102853.549769Z-official-mps" \
   --threads 2

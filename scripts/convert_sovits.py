@@ -137,6 +137,11 @@ def convert(checkpoint: Path, references: Path):
                 raise ValueError(f"Weight normalization schema differs for {owner}")
             norms[owner] = {"g": key, "v": owner + ".weight_v", "dim": hooks[0].dim,
                             "folded": False, "rule": "g * v / norm(v over all axes except dim)"}
+    # Cross-attention has no direct parameters when relative embeddings are
+    # disabled, but its head count is still part of the execution contract.
+    for name, module in model.named_modules():
+        if name.startswith("enc_p.") and type(module).__name__ == "MultiHeadAttention":
+            modules[name] = module_layout(module)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     destination = references / "models" / "converted" / f"{timestamp}-{checkpoint_hash[:12]}-sovits-decode-fp32"
     destination.mkdir(parents=True, exist_ok=False)
