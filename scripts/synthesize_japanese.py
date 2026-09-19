@@ -91,6 +91,9 @@ def run(args, report):
     report["source_sha256"] = {str(Path(module.__file__).relative_to(PROJECT)): sha256_file(module.__file__)
                                for name, module in tuple(sys.modules.items())
                                if name.startswith("sakuratts.") and getattr(module, "__file__", None)}
+    # FP64 Prefill imports this module lazily after the initial source inventory.
+    prefill_source = PROJECT / "src/sakuratts/gpt_prefill.py"
+    report["source_sha256"][str(prefill_source.relative_to(PROJECT))] = sha256_file(prefill_source)
     report["source_sha256"][str(Path(__file__).relative_to(PROJECT))] = sha256_file(__file__)
     symbols = read_json(packages["frontend"] / "symbols-v2.json")
     report["timings"]["package_validation_seconds"] = time.perf_counter() - start
