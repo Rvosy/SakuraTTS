@@ -1,15 +1,28 @@
 [build-system]
-requires = ["setuptools>=77"]
+requires = ["setuptools==84.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "sakuratts"
-version = "0.1.0.dev0"
+version = "0.1.0a1"
 description = "Independent inference runtime for supported GPT-SoVITS models"
 readme = "README.md"
-license-files = ["docs/third-party/*.txt", "docs/third-party/*.md"]
+license = "MIT"
+license-files = ["LICENSE", "docs/third-party/*.txt", "docs/third-party/*.md"]
+authors = [{name = "Rvosy"}]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
 requires-python = ">=3.11"
 dependencies = ["numpy==2.4.6"]
+
+[project.urls]
+Repository = "https://github.com/Rvosy/SakuraTTS"
+Issues = "https://github.com/Rvosy/SakuraTTS/issues"
+Documentation = "https://github.com/Rvosy/SakuraTTS/blob/feat/reference-parity/docs/preview-release.md"
 
 [project.optional-dependencies]
 japanese = [
@@ -46,3 +59,6 @@ sakuratts = "sakuratts.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["sakuratts*"]
+
+[tool.setuptools]
+include-package-data = false

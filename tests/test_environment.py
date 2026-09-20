@@ -44,6 +44,7 @@ class EnvironmentTests(unittest.TestCase):
                 patch("sakuratts.cli.metadata.version", return_value="test"), \
                 patch("sakuratts.cli.platform.system", return_value="Windows"), \
                 patch("sakuratts.cuda_runtime.configure_cuda"), \
+                patch("sakuratts.cuda_runtime.validate_gpt_cuda_include_paths", return_value={}), \
                 patch("sakuratts.diagnostics.check_windows_packages", side_effect=ValueError("reference identity mismatch")):
             report = doctor(config="runtime.json")
         self.assertTrue(report["synthesis"]["dependencies_ready"])

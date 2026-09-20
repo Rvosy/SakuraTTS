@@ -7,7 +7,9 @@ import sys
 import traceback
 
 sys.dont_write_bytecode = True
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+if not __package__:
+    from runpy import run_path
+    run_path(str(Path(__file__).with_name("_worker_bootstrap.py")))["load_package"](Path(__file__).resolve().parent)
 from sakuratts.array_protocol import read_message, write_message
 from sakuratts.japanese import JapaneseG2P
 

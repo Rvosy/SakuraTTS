@@ -40,8 +40,13 @@ def doctor(*, japanese=False, cuda=False, nvidia=False, config=None):
     if japanese or nvidia:
         modules.update(JAPANESE_MODULES)
     if nvidia:
-        from .cuda_runtime import configure_cuda
+        from .cuda_runtime import configure_cuda, validate_gpt_cuda_include_paths
         configure_cuda()
+        try:
+            report["gpt_cuda_headers"] = {"status": "passed", "include_paths": validate_gpt_cuda_include_paths()}
+        except Exception as exc:
+            report["gpt_cuda_headers"] = {"status": "failed", "error": str(exc)}
+            report["checks_passed"] = False
         modules["cupy-cuda12x"] = "cupy"
         report["synthesis"]["platform_supported"] = platform.system() == "Windows"
         if not report["synthesis"]["platform_supported"]:
@@ -114,6 +119,11 @@ def main(argv=None):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description="SakuraTTS diagnostics and independent Japanese CUDA synthesis")
+    try:
+        version = metadata.version("sakuratts")
+    except metadata.PackageNotFoundError:
+        version = "uninstalled source"
+    parser.add_argument("--version", action="version", version="%(prog)s " + version)
     subparsers = parser.add_subparsers(dest="command", required=True)
     check = subparsers.add_parser("doctor", help="Check imports and optional CUDA development execution")
     check.add_argument("--japanese", action="store_true", help="Check Japanese frontend libraries")

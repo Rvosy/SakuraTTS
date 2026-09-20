@@ -1,5 +1,7 @@
 # Windows / NVIDIA 独立推理
 
+面向开发者的 `0.1.0a1` wheel / 源码包安装、手动构建与 ModelScope 上传流程见[预览版说明](preview-release.md)。本页保留资源准备细节及本机离线命令；首次安装者没有本机缓存时应按预览指南联网安装依赖。
+
 SakuraTTS 的 Windows 路径使用自己的日文前端、GPT CUDA 执行器、采样与请求控制，再由独立 ONNX Runtime 工作进程执行 SoVITS。普通发声不导入 PyTorch，也不读取 g50、Lite、Genie 或 `SakuraTTS-References` 目录。原始权重和官方源码只在模型转换、参考准备及开发对照时使用。
 
 当前范围是 Windows / NVIDIA、日文、单模型组合、单请求、完整 WAV。默认保留 GPT/声学 FP32 和 baseline attention；split-KV 与声学 FP16 已提供显式候选，使用条件见下文。量化、中文及混合语言、流式播放和宿主集成尚未交付。V2ProPlus 的具体权重、数值和性能结果见 [Windows 实测记录](experiments/2026-09-20-windows-nvidia-backend.md)；不能把模型家族标签当作其他权重已验证的结论。
@@ -193,4 +195,4 @@ GPT FP16 + baseline attention 是本轮低显存配置。速度配置使用 `--g
 
 完整进程 CPU 内存测量使用 `psutil==7.2.2`，已声明在开发依赖中，普通合成无需安装。若在日常环境执行测量 Harness，可从已有缓存离线安装该包，并将增加的文件计入测量环境体积；本轮没有为它联网下载。
 
-上述检查证明本机离线安装和依赖隔离，未替代另一台干净机器的验收。本轮 Windows 新样音尚未完成人工听音或日文 ASR 检查；数值对照和正常停止也不能单独证明文本完整或音质合格。实际运行过的文本、参考切换、显存、冷启动、热请求和已知问题统一记录在 [Windows 实测记录](experiments/2026-09-20-windows-nvidia-backend.md)。本页不使用 Mac 或社区性能数字推断 RTX 5060 的结果。
+上述检查证明本机离线安装和依赖隔离，未替代另一台干净机器的验收。后续已完成 [24 条保存音频的 ASR 检查](experiments/2026-09-20-windows-asr.md)，部分内容疑点与人工听音仍待验；数值对照和正常停止也不能单独证明文本完整或音质合格。实际运行过的文本、参考切换、显存、冷启动、热请求和已知问题统一记录在 [Windows 实测记录](experiments/2026-09-20-windows-nvidia-backend.md)。本页不使用 Mac 或社区性能数字推断 RTX 5060 的结果。

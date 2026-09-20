@@ -11,10 +11,11 @@ from pathlib import Path
 
 import numpy as np
 
-from .cuda_runtime import configure_cuda
+from .cuda_runtime import configure_cuda, validate_gpt_cuda_include_paths
 from .reference_condition import sha256_file
 from .weight_storage import read_fp32, validate_storage
 
+validate_gpt_cuda_include_paths()
 configure_cuda()
 import cupy as cp
 

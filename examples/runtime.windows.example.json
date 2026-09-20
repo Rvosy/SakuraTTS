@@ -1,0 +1,9 @@
+{
+  "format": "sakuratts-windows-config-v1",
+  "gpt": "gpt",
+  "sovits": "sovits",
+  "frontend": "frontend-classic",
+  "references": {"neutral": "references/neutral"},
+  "default_reference": "neutral",
+  "acoustic_python": "../../data/windows-ort-runtime/python.exe"
+}

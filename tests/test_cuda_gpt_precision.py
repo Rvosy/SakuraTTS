@@ -27,7 +27,8 @@ def load_module():
     path = Path(__file__).resolve().parents[1] / "src/sakuratts/cuda_gpt.py"
     spec = importlib.util.spec_from_file_location("sakuratts._test_cuda_gpt_precision", path)
     module = importlib.util.module_from_spec(spec)
-    with patch.dict(sys.modules, {"cupy": cupy}), patch("sakuratts.cuda_runtime.configure_cuda"):
+    with patch.dict(sys.modules, {"cupy": cupy}), patch("sakuratts.cuda_runtime.configure_cuda"), \
+            patch("sakuratts.cuda_runtime.validate_gpt_cuda_include_paths", return_value={}):
         spec.loader.exec_module(module)
     return module
 

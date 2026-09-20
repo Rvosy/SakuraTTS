@@ -17,6 +17,10 @@
 
 ## Windows 下一步
 
+用户已确认当前性能足够进入开发者预览发布。当前优先完成 `0.1.0a1` 的源码、wheel / sdist、独立安装和使用说明，GitHub 保存源码，手动压缩的发行包上传 ModelScope；不新增自动发布流程，也不把现有实验候选直接改成默认。步骤见[开发者预览版](preview-release.md)。后续内核优化暂停扩展，保留下面的候选方向供下一版使用。
+
+[24 条 ASR 检查](experiments/2026-09-20-windows-asr.md)已完成，部分内容仍需复听；速度配置自然生成长句为 1557 ms / 25.90 秒 PCM，独立资源轮全卡增量 1108 MiB。[完整历史 GEMV 实验](experiments/2026-09-20-windows-gemv-replay.md)保留 attention-output 的严格失败；通过项也没有得到稳定完整请求加速证据，生产继续使用 cuBLAS。
+
 声码器分块已接入可回收的声学工作进程及公开入口，GPU latent 传递也已测量，当前没有净收益。[正式分块入口](experiments/2026-09-20-windows-vocoder-public.md)使用独立的 7 文件模型包，继续显式选择 256 帧和 arena 回收。分块主要改善峰值，不能仅按最低显存选默认。下一步速度优化针对 GPT 单步的小矩阵和 `head_dim=32` 注意力；[GEMV 探针](experiments/2026-09-20-windows-gemv.md)已有局部计时与数值失败，尚未进入生产执行。
 
 先补组合候选的内容、听感和更广的长文检查，并保留 FP32 baseline 的独立对照。两种组合已各完成 19 个自然请求，覆盖五参考和第二个 seed；各自三项真实故障恢复也通过，重试 PCM 逐位一致。声学 FP16 只能加载通过 screen v2 的 lowered 包，公开入口为 `--allow-experimental-acoustic-fp16`；具体转换和筛查流程以[声学实验](experiments/2026-09-20-windows-acoustic-fp16.md#使用与证据)为准。旧 GPT FP16 生命周期报告在 staged 路径漏传精度的问题已更正，新恢复记录明确采用同一精度，旧记录仍保留其边界。

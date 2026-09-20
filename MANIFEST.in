@@ -1,0 +1,14 @@
+include README.md LICENSE AGENTS.md pyproject.toml MANIFEST.in
+include requirements*.txt
+recursive-include src/sakuratts *.py
+recursive-include scripts *.py *.ps1
+recursive-include harness *.py *.json
+recursive-include tests *.py *.json
+recursive-include docs *.md *.txt *.json
+recursive-include examples *.py *.json *.md
+global-exclude *.pyc *.pyo
+prune data
+prune models
+prune outputs
+prune build
+prune dist

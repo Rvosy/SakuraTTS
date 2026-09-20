@@ -6,7 +6,10 @@ from pathlib import Path
 import subprocess
 import sys
 
-from .reference_condition import PreparedReference, sha256_file
+if not __package__:
+    from runpy import run_path
+    run_path(str(Path(__file__).with_name("_worker_bootstrap.py")))["load_package"](Path(__file__).resolve().parent)
+from sakuratts.reference_condition import PreparedReference, sha256_file
 
 
 def read_windows_config(config_path):
@@ -106,7 +109,8 @@ def check_worker_imports(python, frontend):
     # The isolated interpreter does not inherit the editable installation.
     code = """import json,os,sys
 from pathlib import Path
-sys.path.insert(0,sys.argv[1])
+from runpy import run_path
+run_path(str(Path(sys.argv[1])/'_worker_bootstrap.py'))['load_package'](sys.argv[1])
 def offline(event,args):
     if event=='socket.connect': raise RuntimeError('Diagnostics are offline')
 sys.addaudithook(offline)
@@ -127,7 +131,7 @@ print(json.dumps(result))
 """
     environment = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1")
     environment.pop("PYTHONPATH", None)
-    command = [str(python), "-B", "-c", code, str(Path(__file__).resolve().parents[1]), json.dumps(frontend)]
+    command = [str(python), "-B", "-c", code, str(Path(__file__).resolve().parent), json.dumps(frontend)]
     result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace",
                             env=environment, timeout=30, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     if result.returncode:
