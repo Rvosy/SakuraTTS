@@ -63,6 +63,9 @@ def load_replays(mapping_path, selected, reference_manifest):
         captured_reference = json.loads((path.parent / "references" / "中性" / "manifest.json").read_text(encoding="utf-8"))
         if captured_reference["identity"] != reference_manifest["identity"]:
             raise ValueError("Replay model/reference identity differs from the configured reference")
+        if captured_reference["arrays"] != reference_manifest["arrays"]:
+            raise ValueError(f"Replay prepared reference arrays differ from the configured reference: {case}. "
+                             "Use the same prepared reference as the capture; CPU and CUDA preparation are not interchangeable.")
         with np.load(path, allow_pickle=False) as archive:
             arrays = {name: archive[name] for name in ("exponential_draws", "acoustic_noise_00",
                       "enc_p_target_phones", "sampled_tokens", "semantic_generated_00", "semantic_idx_00")}
@@ -216,6 +219,9 @@ def main():
     parser.add_argument("--no-cuda-graph", action="store_true")
     parser.add_argument("--capacity", type=int, default=2048)
     parser.add_argument("--gpt-precision", choices=("fp32", "fp16"), default="fp32")
+    parser.add_argument("--allow-experimental-acoustic-fp16", action="store_true")
+    parser.add_argument("--gpt-attention", choices=("baseline", "split-kv"), default="baseline")
+    parser.add_argument("--gpt-attention-chunk-size", type=int, choices=(256, 512), default=256)
     parser.add_argument("--no-memory-sampler", action="store_true",
                         help="Disable nvidia-smi and background RSS/CuPy polling; retain boundary readings")
     parser.add_argument("--skip-reference-switch", action="store_true")
@@ -253,6 +259,9 @@ def main():
     preparation = {"config_path": str(config_path), "config_sha256": digest(config_path), "config": config,
         "manifests": manifests, "policy": args.policy, "cuda_graph": not args.no_cuda_graph,
         "capacity": args.capacity, "gpt_precision": args.gpt_precision,
+        "allow_experimental_acoustic_fp16": args.allow_experimental_acoustic_fp16,
+        "acoustic_precision": "fp16" if manifests["sovits"]["value"]["dtype"] == "float16" else "fp32",
+        "gpt_attention": args.gpt_attention, "gpt_attention_chunk_size": args.gpt_attention_chunk_size,
         "repeats": args.repeats, "cases": {name: TEXT_CASES[name] for name in selected},
         "reference": args.reference, "seed": args.seed,
         "reference_switch_enabled": not args.skip_reference_switch, "idle_unload_enabled": not args.skip_idle_unload}
@@ -295,8 +304,9 @@ def main():
             "rtf": "Complete PCM duration including configured trailing silence; speech-only duration also retained.",
             "cold_start": "Imports, engine construction, explicit load and first request separately recorded; no clearing of OS or compiler caches.",
             "replay_preparation": "When requested, capture arrays are loaded before monitoring/timing. Only draws and noise enter synthesis; equality checks occur after the request timer stops.",
-            "precision": {"gpt": args.gpt_precision, "acoustic": "fp32", "tf32": False,
+            "precision": {"gpt": args.gpt_precision, "acoustic": preparation["acoustic_precision"], "tf32": False,
                           "fp16_status": "experimental, not quality accepted"},
+            "gpt_attention": {"mode": args.gpt_attention, "chunk_size": args.gpt_attention_chunk_size},
             "quality": "Human listening and ASR are not run"}})
     result = {"status": "running", "policy": args.policy, "requests": [], "snapshots": [], "load_events": [], "errors": []}
     engine = None
@@ -329,7 +339,9 @@ def main():
         monitor.phase = "constructing_engine"
         t0 = time.perf_counter()
         engine = NVIDIAEngine(config_path, policy=args.policy, use_graph=not args.no_cuda_graph,
-                              capacity=args.capacity, gpt_precision=args.gpt_precision)
+                              capacity=args.capacity, gpt_precision=args.gpt_precision,
+                              gpt_attention=args.gpt_attention, gpt_attention_chunk_size=args.gpt_attention_chunk_size,
+                              allow_experimental_acoustic_fp16=args.allow_experimental_acoustic_fp16)
         result["engine_construction_ms"] = (time.perf_counter() - t0) * 1000
 
         def wrap_loader(name, attribute):

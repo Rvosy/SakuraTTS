@@ -58,6 +58,51 @@ class CudaGptPrecisionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "fp32 or fp16"):
             cuda_gpt.CUDAGPT.load("does-not-exist", precision="automatic")
 
+    def test_attention_candidates_are_explicit_and_rejected_before_loading(self):
+        with self.assertRaisesRegex(ValueError, "baseline or split-kv"):
+            cuda_gpt.CUDAGPT.load("does-not-exist", attention="automatic")
+        for chunk in (0, 128, 257, True):
+            with self.subTest(chunk=chunk), self.assertRaisesRegex(ValueError, "256 or 512"):
+                cuda_gpt.CUDAGPT.load("does-not-exist", attention="split-kv", attention_chunk_size=chunk)
+
+    def test_split_kv_workspace_is_fp32_bounded_and_recreated(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(cuda_gpt, "_GraphBLAS"):
+            root = Path(directory)
+            package(root)
+            for precision in ("fp32", "fp16"):
+                for chunk in (256, 512):
+                    with self.subTest(precision=precision, chunk=chunk):
+                        model = cuda_gpt.CUDAGPT.load(root, capacity=1000, precision=precision,
+                            attention="split-kv", attention_chunk_size=chunk)
+                        model._allocate_state()
+                        chunks = (1000+chunk-1)//chunk
+                        self.assertEqual(model.workspace["attention_stats"].shape, (1, chunks, 2))
+                        self.assertEqual(model.workspace["attention_partials"].shape, (1, chunks, 2))
+                        self.assertEqual(model.workspace["attention_stats"].dtype, np.float32)
+                        self.assertEqual(model.workspace["attention_partials"].dtype, np.float32)
+                        scratch = model.workspace["attention_partials"]
+                        model._allocate_state()
+                        self.assertIs(model.workspace["attention_partials"], scratch)
+                        model.graph = object()
+                        model.release_request_state()
+                        self.assertIsNone(model.graph)
+                        self.assertIsNone(model.workspace)
+                        model._allocate_state()
+                        self.assertIsNot(model.workspace["attention_partials"], scratch)
+                        self.assertEqual(model.workspace["attention_stats"].dtype, np.float32)
+                        model.close()
+
+    def test_baseline_does_not_allocate_split_kv_workspace(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(cuda_gpt, "_GraphBLAS"):
+            root = Path(directory)
+            package(root)
+            model = cuda_gpt.CUDAGPT.load(root)
+            model._allocate_state()
+            self.assertEqual(model.attention, "baseline")
+            self.assertNotIn("attention_stats", model.workspace)
+            self.assertNotIn("attention_partials", model.workspace)
+            model.close()
+
     def test_resident_weights_and_state_use_selected_precision_without_changing_package(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(cuda_gpt, "_GraphBLAS"):
             root = Path(directory)

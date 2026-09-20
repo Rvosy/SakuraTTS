@@ -22,6 +22,10 @@ INPUT_NAMES = ("codes", "phones", "ge", "ge512", "noise", "noise_scale")
 STAGES = ("waveform", "quantized", "ssl_encoded", "text_encoded", "mrte",
           "encoder_hidden", "mean", "log_scale", "mask", "flow_input",
           "flow_output", "decoder_input")
+FP16_SCREEN_VERSION = 2
+FP16_EXECUTION_OPTIONS = {"device_id": 0, "arena_extend_strategy": "kSameAsRequested",
+                          "cudnn_conv_algo_search": "HEURISTIC", "cudnn_conv_use_max_workspace": False,
+                          "enable_mem_pattern": False, "intra_op_num_threads": 4, "inter_op_num_threads": 1}
 
 
 def _package_file(root, spec):
@@ -34,15 +38,39 @@ def _package_file(root, spec):
     return path
 
 
-def read_manifest(package, *, diagnostic=False):
+def read_manifest(package, *, diagnostic=False, allow_experimental_fp16=False):
     package = Path(package).resolve()
     manifest = json.loads((package / "manifest.json").read_text(encoding="utf-8"))
-    if (manifest["format"] != FORMAT or manifest["dtype"] != "float32"
+    if (manifest["format"] != FORMAT or manifest["dtype"] not in ("float32", "float16")
             or manifest["config"]["model"]["version"] not in ("v2Pro", "v2ProPlus")):
-        raise ValueError("Expected an FP32 V2Pro/V2ProPlus ONNX acoustic package")
+        raise ValueError("Expected a V2Pro/V2ProPlus ONNX acoustic package")
+    if manifest["dtype"] == "float16":
+        if not allow_experimental_fp16:
+            raise ValueError("FP16 acoustic packages require allow_experimental_fp16=True")
+        precision = manifest.get("precision", {})
+        if (precision.get("profile") != "fp16-mixed-v1" or precision.get("keep_io_types") is not True
+                or precision.get("input_dtype") != "float32" or precision.get("output_dtype") != "float32"):
+            raise ValueError("FP16 acoustic package must preserve the FP32 public I/O boundary")
+        if precision.get("ort_graph_optimization_level") not in ("ORT_ENABLE_ALL", "ORT_ENABLE_BASIC", "ORT_DISABLE_ALL"):
+            raise ValueError("FP16 acoustic package must declare its tested ORT optimization level")
+        if not isinstance(precision.get("ort_use_deterministic_compute"), bool):
+            raise ValueError("FP16 acoustic package must declare its deterministic-compute policy")
     validation = manifest.get("validation")
     if not isinstance(validation, dict) or validation.get("passed") is not True:
         raise ValueError("Acoustic package did not pass export validation; inspect validation.json or export again")
+    if manifest["dtype"] == "float16":
+        if validation.get("kind") != "fp16-engineering-screen":
+            raise ValueError("FP16 acoustic package requires its own engineering screening")
+        report = json.loads(_package_file(package, validation).read_text(encoding="utf-8"))
+        if (report.get("engineering_screen", {}).get("passed") is not True
+                or report["engineering_screen"].get("version") != FP16_SCREEN_VERSION
+                or report.get("ort_execution_options") != FP16_EXECUTION_OPTIONS
+                or report.get("candidate_graph_sha256") != manifest["graphs"]["decode"]["sha256"]
+                or report.get("candidate_diagnostic_sha256") != manifest["graphs"]["diagnostic"]["sha256"]
+                or report.get("candidate_weights_sha256") != manifest["weights"]["sha256"]
+                or report.get("ort_graph_optimization_level") != precision["ort_graph_optimization_level"]
+                or report.get("ort_use_deterministic_compute") != precision["ort_use_deterministic_compute"]):
+            raise ValueError("FP16 engineering screening does not match the candidate package")
     if manifest["config"]["semantic_upsample_factor"] != 2:
         raise ValueError("Acoustic package requires the supported 25 Hz semantic conversion")
     _package_file(package, manifest["weights"])
@@ -63,10 +91,21 @@ class ORTSoVITS:
     def load(cls, package, *, device="cuda", device_id=0, diagnostic=False,
              arena_extend_strategy="kSameAsRequested", cudnn_conv_algo_search="HEURISTIC",
              cudnn_conv_use_max_workspace=False, enable_mem_pattern=False,
-             intra_op_num_threads=4, profile_prefix=None):
+             intra_op_num_threads=4, profile_prefix=None, allow_experimental_fp16=False):
         if device not in ("cuda", "cpu"):
             raise ValueError("Acoustic device must be cuda or cpu")
-        manifest, graph = read_manifest(package, diagnostic=diagnostic)
+        manifest, graph = read_manifest(package, diagnostic=diagnostic,
+                                        allow_experimental_fp16=allow_experimental_fp16)
+        if manifest["dtype"] == "float16" and device != "cuda":
+            raise ValueError("Experimental FP16 acoustic execution currently requires CUDA")
+        if manifest["dtype"] == "float16":
+            requested = {"device_id": device_id, "arena_extend_strategy": arena_extend_strategy,
+                         "cudnn_conv_algo_search": cudnn_conv_algo_search,
+                         "cudnn_conv_use_max_workspace": cudnn_conv_use_max_workspace,
+                         "enable_mem_pattern": enable_mem_pattern,
+                         "intra_op_num_threads": intra_op_num_threads, "inter_op_num_threads": 1}
+            if requested != FP16_EXECUTION_OPTIONS:
+                raise ValueError("Experimental FP16 acoustic execution requires its screened CUDA/session options")
         if device == "cuda":
             from .cuda_runtime import configure_cuda
             configure_cuda()
@@ -77,6 +116,10 @@ class ORTSoVITS:
         options.inter_op_num_threads = 1
         options.enable_mem_pattern = enable_mem_pattern
         options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        if manifest["dtype"] == "float16":
+            options.graph_optimization_level = getattr(ort.GraphOptimizationLevel,
+                manifest["precision"]["ort_graph_optimization_level"])
+            options.use_deterministic_compute = manifest["precision"]["ort_use_deterministic_compute"]
         if profile_prefix is not None:
             options.enable_profiling = True
             options.profile_file_prefix = str(profile_prefix)
@@ -99,6 +142,11 @@ class ORTSoVITS:
             raise ValueError("Unexpected acoustic graph input schema")
         if tuple(item.name for item in session.get_outputs()) != expected_outputs:
             raise ValueError("Unexpected acoustic graph output schema")
+        if manifest["dtype"] == "float16":
+            expected_types = ("tensor(int64)", "tensor(int64)") + ("tensor(float)",) * 4
+            if (tuple(item.type for item in session.get_inputs()) != expected_types
+                    or any(item.type != "tensor(float)" for item in session.get_outputs())):
+                raise ValueError("FP16 acoustic graph does not preserve FP32 public tensors")
         return cls(manifest, session, diagnostic=diagnostic)
 
     def validate_reference(self, reference):

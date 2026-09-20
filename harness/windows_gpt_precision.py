@@ -73,9 +73,11 @@ def main():
                         help="JSON case-to-capture mapping; paths relative to mapping")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--precision", choices=("fp32", "fp16"), required=True)
+    parser.add_argument("--attention", choices=("baseline", "split-kv"), default="baseline")
+    parser.add_argument("--attention-chunk-size", type=int, choices=(256, 512), default=256)
     parser.add_argument("--repeats", type=int, default=5)
     parser.add_argument("--capacity", type=int, default=2048)
-    parser.add_argument("--compare", type=Path, help="Other precision result directory")
+    parser.add_argument("--compare", type=Path, help="Baseline result directory with the same inputs")
     args = parser.parse_args()
     if args.repeats < 1:
         parser.error("repeats must be positive")
@@ -93,14 +95,28 @@ def main():
                 "reference_manifest_sha256": sha256_file(args.reference / "manifest.json"),
                 "reference_archive_sha256": reference_archive_sha256,
                 "capacity": args.capacity}
+    comparison = None
     if args.compare:
         prior = json.loads((args.compare / "result.json").read_text(encoding="utf-8"))
+        if prior.get("precision") not in ("fp32", "fp16"):
+            raise ValueError("Comparison requires a recorded fp32 or fp16 precision")
         if (any(prior.get(key) != value for key, value in identity.items())
                 or {k: v["sha256"] for k, v in prior.get("captures", {}).items()}
                    != {k: v["sha256"] for k, v in identities.items()}):
             raise ValueError("Comparison requires the same model, reference, captures and capacity")
+        comparison = {"result_directory": str(args.compare.resolve()),
+                      "precision": prior["precision"],
+                      "attention": prior.get("attention", "baseline"),
+                      "attention_chunk_size": prior.get("attention_chunk_size"),
+                      "executor_sha256": prior.get("executor_sha256"),
+                      "same_precision": prior["precision"] == args.precision,
+                      "strict_required": prior["precision"] == args.precision}
     report = {"status": "running", "engineering_passed": False,
-              "precision": args.precision, "captures": identities, **identity, "cases": {}}
+              "precision": args.precision, "attention": args.attention,
+              "attention_chunk_size": args.attention_chunk_size,
+              "captures": identities, **identity, "cases": {}}
+    if comparison is not None:
+        report["comparison"] = comparison
     outputs, model = {}, None
     try:
         from sakuratts.cuda_gpt import CUDAGPT
@@ -108,11 +124,12 @@ def main():
         report.update({
             "executor_sha256": sha256_file(ROOT / "src/sakuratts/cuda_gpt.py"),
             "timing_scope": "Fixed official token histories, preloaded input arrays, GPU through FP32 CPU logits. Sampling, frontend and acoustic execution excluded.",
-            "numerical_scope": "FP32 original tolerances retained; fp16 screen is not quality acceptance.",
+            "numerical_scope": "FP32 original tolerances retained; fp16 screen is not quality acceptance. Same-precision comparisons must also pass the original strict tolerances.",
             "thresholds": {"strict_atol": 1e-4, "strict_rtol": 1e-5,
                            "screen_rms": .05, "screen_max_abs": .5, "screen_cosine": .999}})
         started = time.perf_counter()
-        model = CUDAGPT.load(args.gpt, capacity=args.capacity, precision=args.precision)
+        model = CUDAGPT.load(args.gpt, capacity=args.capacity, precision=args.precision,
+                            attention=args.attention, attention_chunk_size=args.attention_chunk_size)
         report["load_ms"] = (time.perf_counter()-started)*1000
         report.update({"gpu": cp.cuda.runtime.getDeviceProperties(0)["name"].decode(),
                        "cuda_runtime": cp.cuda.runtime.runtimeGetVersion(),
@@ -132,8 +149,9 @@ def main():
                                 for key in ("prefill_ms", "decode_ms", "total_ms")},
                      "official_fp32": metrics(logits, arrays["raw_logits"])}
             if args.compare:
-                with np.load(args.compare / "logits.npz", allow_pickle=False) as prior:
-                    entry["other_precision"] = metrics(logits, prior[case])
+                with np.load(args.compare / "logits.npz", allow_pickle=False) as prior_logits:
+                    entry["comparison"] = metrics(logits, prior_logits[case])
+                    entry["other_precision"] = entry["comparison"]
             report["cases"][case] = entry
             print(json.dumps({"case": case, **entry["p50_ms"], "official": entry["official_fp32"]}), flush=True)
         first = next(iter(captures))
@@ -147,9 +165,12 @@ def main():
         eager, _ = replay(model, captures[first], prompt)
         report["graph_vs_eager"] = metrics(eager, outputs[first])
         numerical = "strict_passed" if args.precision == "fp32" else "screen_passed"
+        if comparison is not None:
+            comparison["strict_passed"] = all(c["comparison"]["strict_passed"] for c in report["cases"].values())
         report["engineering_passed"] = (all(c["official_fp32"][numerical] for c in report["cases"].values())
             and all(report[k]["strict_passed"] for k in ("after_other_requests", "after_recreate", "graph_vs_eager"))
-            and all(r["warm_logits_equal"] for c in report["cases"].values() for r in c["runs"]))
+            and all(r["warm_logits_equal"] for c in report["cases"].values() for r in c["runs"])
+            and (comparison is None or not comparison["strict_required"] or comparison["strict_passed"]))
         report["status"] = "completed" if report["engineering_passed"] else "numerical_screen_failed"
     except BaseException as error:
         report["status"], report["error"] = "failed", repr(error)

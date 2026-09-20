@@ -1,0 +1,3906 @@
+{
+  "scope": "Complete 16-bit PCM WAV from original-text requests; isolated acoustic FP16 increment uses identical FP32 GPT split-kv chunk=256, numerical reference inputs and replay draws/noise. Separate resource runs are not used for timing.",
+  "comparison_script": {
+    "path": "outputs/windows-acoustic/compare-combined.py",
+    "sha256": "66e067f6e0b8ced0e851a7fc8c75070665a73a9e813292ef2bb3bc4397cfe25e"
+  },
+  "metric_source": {
+    "path": "harness/windows_acoustic_precision.py",
+    "sha256": "b797b04ed1daf4a8b7b85adcb51873764d7ec8de9d587fed8d246a1cd6a5232f"
+  },
+  "thresholds": {
+    "max_abs_error": 0.05,
+    "rmse": 0.005,
+    "minimum_snr_db": 25.0,
+    "max_peak_ratio": 1.05,
+    "peak_absolute_allowance": 0.0001,
+    "max_spectral_convergence": 0.05,
+    "max_active_log_spectral_rms_db": 1.0,
+    "stft_window": 1024,
+    "stft_hop": 256,
+    "active_magnitude_floor_db": -60.0
+  },
+  "original_fp32_tolerance": {
+    "atol": 0.0001,
+    "rtol": 1e-05
+  },
+  "normalization": "Signed int16 PCM divided by 32768, with no loudness/peak normalization. Complete PCM and speech excluding appended silence are both screened.",
+  "sources": {
+    "fp32_split256": {
+      "results": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/results.json",
+        "sha256": "ea0ddc16ee4d4e7512efc14b8826ee686050f0e4ffb1df481efa112ce4c92cd2"
+      },
+      "run_config": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/run-config.json",
+        "sha256": "701c047f38bcd80ae3a93edbe5e1668fe5038e492bce94b1c1a7de3f04c3ed77"
+      }
+    },
+    "combined": {
+      "results": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/results.json",
+        "sha256": "e9a2f5dbf8076d2b1045e40446d20d49c4efd275762aab14287e83bdda0414d0"
+      },
+      "run_config": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/run-config.json",
+        "sha256": "694315d8858edd1a773fa5173fbe1674959cd1fa7b071617c62bd8b895d600de"
+      }
+    },
+    "fp32_naive": {
+      "results": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-baseline/results.json",
+        "sha256": "9bb57545c0f0a6cec73d3ac24950541a6dec8987269cce6aa2cf6e421db49a4e"
+      },
+      "run_config": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-baseline/run-config.json",
+        "sha256": "ffe0dd1dd399748eae96e3449eabaa1c33da7a027e3cd0bf9fb60501a01d5ade"
+      }
+    }
+  },
+  "reference_conditions": [
+    {
+      "path": "models/windows-sakura/references-cuda/中性/conditions.npz",
+      "sha256": "d426d62f5cb97bcb8a88169ff999a75e1d6666f19045e735f13f37823c4cde15"
+    },
+    {
+      "path": "models/windows-sakura/references-cuda/不满/conditions.npz",
+      "sha256": "be73a99810545a84229c64668df5ffdf4d6cca049e300ec0aff5c61cad6ded3a"
+    },
+    {
+      "path": "models/windows-sakura/references-cuda/害羞/conditions.npz",
+      "sha256": "c23e96ecd6f6bd388c232341fb05f118cb4ea7040cd4a3f163ee5eba8456dbc4"
+    },
+    {
+      "path": "models/windows-sakura/references-cuda/请求/conditions.npz",
+      "sha256": "87a2ff83caf40b376f97b5e3769946ded8097702d47d941bb16d444fe9b078e0"
+    },
+    {
+      "path": "models/windows-sakura/references-cuda/惊讶/conditions.npz",
+      "sha256": "d1ce8c3035222be5e9ec2116630240ca5f249382d84dcf379f546537995bbc5b"
+    }
+  ],
+  "matched_controls": {
+    "policy": true,
+    "cuda_graph": true,
+    "capacity": true,
+    "gpt_precision": true,
+    "gpt_attention": true,
+    "gpt_attention_chunk_size": true,
+    "repeats": true,
+    "cases": true,
+    "reference": true,
+    "seed": true,
+    "reference_switch_enabled": true,
+    "idle_unload_enabled": true,
+    "replay_captures": true,
+    "config_gpt": true,
+    "config_frontend": true,
+    "config_acoustic_python": true,
+    "config_default_reference": true,
+    "config_references": true,
+    "manifest_gpt": true,
+    "manifest_frontend": true,
+    "reference_arrays_equal_to_original_capture": true,
+    "no_source_changes_during_runs": true,
+    "no_runtime_errors": true
+  },
+  "naive_fp32_request_identity_except_attention_equal": {
+    "first-neutral-short": true,
+    "hot-neutral-short-00": true,
+    "hot-neutral-short-01": true,
+    "hot-neutral-short-02": true,
+    "hot-neutral-long-00": true,
+    "hot-neutral-long-01": true,
+    "hot-neutral-long-02": true,
+    "hot-neutral-multi-00": true,
+    "hot-neutral-multi-01": true,
+    "hot-neutral-multi-02": true,
+    "hot-neutral-punctuation-00": true,
+    "hot-neutral-punctuation-01": true,
+    "hot-neutral-punctuation-02": true,
+    "after-idle-unload-first": true,
+    "after-idle-unload-hot": true
+  },
+  "pair_count": 15,
+  "all_request_identities_equal": true,
+  "engineering_screen_passed": true,
+  "original_fp32_tolerance_passed": false,
+  "candidate_run_status": "replay_validation_failed",
+  "status_explanation": "The benchmark intentionally retains replay_validation_failed because the original FP32 PCM tolerance fails; this comparison does not replace or relax it.",
+  "hot_request_medians": {
+    "short": {
+      "n": 3,
+      "pcm_seconds": 2.02,
+      "semantic_tokens": 43,
+      "fp32_naive_ms": 168.9399000024423,
+      "fp32_split256_ms": 178.419899995788,
+      "fp32_split256_acoustic_fp16_ms": 122.22819999442436,
+      "acoustic_incremental_request_reduction_percent": 31.49407661515906,
+      "combined_request_reduction_percent": 27.64989206655305
+    },
+    "long": {
+      "n": 3,
+      "pcm_seconds": 27.3,
+      "semantic_tokens": 675,
+      "fp32_naive_ms": 3045.146399999794,
+      "fp32_split256_ms": 2007.748800002446,
+      "fp32_split256_acoustic_fp16_ms": 1592.2983000054955,
+      "acoustic_incremental_request_reduction_percent": 20.692354541387058,
+      "combined_request_reduction_percent": 47.71028742639095
+    },
+    "multi": {
+      "n": 3,
+      "pcm_seconds": 10.62,
+      "semantic_tokens": 258,
+      "fp32_naive_ms": 932.1344999989378,
+      "fp32_split256_ms": 793.918899995333,
+      "fp32_split256_acoustic_fp16_ms": 651.4939000044251,
+      "acoustic_incremental_request_reduction_percent": 17.939489788156592,
+      "combined_request_reduction_percent": 30.107307474922617
+    },
+    "punctuation": {
+      "n": 3,
+      "pcm_seconds": 8.38,
+      "semantic_tokens": 202,
+      "fp32_naive_ms": 691.0050999940722,
+      "fp32_split256_ms": 612.6006000049529,
+      "fp32_split256_acoustic_fp16_ms": 469.738600004348,
+      "acoustic_incremental_request_reduction_percent": 23.32057787724169,
+      "combined_request_reduction_percent": 32.02096482234681
+    }
+  },
+  "requests": [
+    {
+      "name": "first-neutral-short",
+      "case": "short",
+      "kind": "first",
+      "identity_passed": true,
+      "checks": {
+        "name": true,
+        "case": true,
+        "kind": true,
+        "reference": true,
+        "seed": true,
+        "semantic_token_count": true,
+        "sampled_token_count": true,
+        "semantic_sha256": true,
+        "pcm_seconds": true,
+        "speech_seconds": true,
+        "engine_text": true,
+        "engine_reference_identity": true,
+        "engine_parameters": true,
+        "engine_policy": true,
+        "engine_cuda_graph": true,
+        "engine_capacity": true,
+        "engine_sample_rate": true,
+        "engine_frontend_profile": true,
+        "engine_random_inputs": true,
+        "engine_gpt_precision": true,
+        "engine_gpt_attention": true,
+        "engine_gpt_attention_chunk_size": true,
+        "both_completed": true,
+        "fragment_count": true,
+        "fragment_0_index": true,
+        "fragment_0_normalized_text": true,
+        "fragment_0_phones": true,
+        "fragment_0_sampled_tokens": true,
+        "fragment_0_semantic_tokens": true,
+        "fragment_0_stop_reasons": true,
+        "fragment_0_returned_index": true,
+        "fragment_0_waveform_samples": true,
+        "fragment_0_pcm_samples": true,
+        "wav_sample_rate": true,
+        "wav_samples": true,
+        "candidate_pcm_hash": true,
+        "baseline_pcm_hash": true,
+        "fragment_0_silence_zero": true
+      },
+      "semantic_sha256": "72e4e3bbc85fc90954b2d67656c57613cbb67696d36ee93bfbfdbcf58a046f28",
+      "baseline_wav": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/first-neutral-short.wav",
+        "sha256": "abcb8f9103919bca9c8718bac611b6722260d1db99d83fb39fc1f1390a52d60a"
+      },
+      "candidate_wav": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/first-neutral-short.wav",
+        "sha256": "b63d93207dd89eb87f76d380bca3293710aca59cd63fe35b663d3a0b860e38f0"
+      },
+      "original_fp32_tolerance": {
+        "passed": false,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.0009844928608903328,
+        "outside_tolerance": 23340,
+        "elements": 64640,
+        "atol": 0.0001,
+        "rtol": 1e-05
+      },
+      "full_pcm_engineering_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 64640,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.0009844928608903328,
+        "snr_db": 40.00511324170313,
+        "peak": 0.50927734375,
+        "reference_peak": 0.50830078125,
+        "rms": 0.09842953239394675,
+        "reference_rms": 0.09850725864170795,
+        "absolute_peak_delta": 0.0009765625,
+        "spectral_convergence": 0.002970121233482392,
+        "active_log_spectral_rms_db": 0.17188174550575758,
+        "active_spectral_bins": 39940,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      },
+      "speech_without_appended_silence_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 55040,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.0010669007795214946,
+        "snr_db": 40.00511324170313,
+        "peak": 0.50927734375,
+        "reference_peak": 0.50830078125,
+        "rms": 0.10666867075508031,
+        "reference_rms": 0.1067529031529168,
+        "absolute_peak_delta": 0.0009765625,
+        "spectral_convergence": 0.00297012123346823,
+        "active_log_spectral_rms_db": 0.17188174550575758,
+        "active_spectral_bins": 39940,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "name": "hot-neutral-short-00",
+      "case": "short",
+      "kind": "hot",
+      "identity_passed": true,
+      "checks": {
+        "name": true,
+        "case": true,
+        "kind": true,
+        "reference": true,
+        "seed": true,
+        "semantic_token_count": true,
+        "sampled_token_count": true,
+        "semantic_sha256": true,
+        "pcm_seconds": true,
+        "speech_seconds": true,
+        "engine_text": true,
+        "engine_reference_identity": true,
+        "engine_parameters": true,
+        "engine_policy": true,
+        "engine_cuda_graph": true,
+        "engine_capacity": true,
+        "engine_sample_rate": true,
+        "engine_frontend_profile": true,
+        "engine_random_inputs": true,
+        "engine_gpt_precision": true,
+        "engine_gpt_attention": true,
+        "engine_gpt_attention_chunk_size": true,
+        "both_completed": true,
+        "fragment_count": true,
+        "fragment_0_index": true,
+        "fragment_0_normalized_text": true,
+        "fragment_0_phones": true,
+        "fragment_0_sampled_tokens": true,
+        "fragment_0_semantic_tokens": true,
+        "fragment_0_stop_reasons": true,
+        "fragment_0_returned_index": true,
+        "fragment_0_waveform_samples": true,
+        "fragment_0_pcm_samples": true,
+        "wav_sample_rate": true,
+        "wav_samples": true,
+        "candidate_pcm_hash": true,
+        "baseline_pcm_hash": true,
+        "fragment_0_silence_zero": true
+      },
+      "semantic_sha256": "72e4e3bbc85fc90954b2d67656c57613cbb67696d36ee93bfbfdbcf58a046f28",
+      "baseline_wav": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/hot-neutral-short-00.wav",
+        "sha256": "8e7571923824791614af83c58480741337a2214e30c0ec75f4a161f2c2dc701c"
+      },
+      "candidate_wav": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/hot-neutral-short-00.wav",
+        "sha256": "b63d93207dd89eb87f76d380bca3293710aca59cd63fe35b663d3a0b860e38f0"
+      },
+      "original_fp32_tolerance": {
+        "passed": false,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.0009844922681815469,
+        "outside_tolerance": 23340,
+        "elements": 64640,
+        "atol": 0.0001,
+        "rtol": 1e-05
+      },
+      "full_pcm_engineering_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 64640,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.0009844922681815469,
+        "snr_db": 40.00511833864742,
+        "peak": 0.50927734375,
+        "reference_peak": 0.50830078125,
+        "rms": 0.09842953239394675,
+        "reference_rms": 0.09850725714069748,
+        "absolute_peak_delta": 0.0009765625,
+        "spectral_convergence": 0.0029701250409263076,
+        "active_log_spectral_rms_db": 0.1718839227086409,
+        "active_spectral_bins": 39940,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      },
+      "speech_without_appended_silence_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 55040,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.0010669001371994514,
+        "snr_db": 40.00511833864742,
+        "peak": 0.50927734375,
+        "reference_peak": 0.50830078125,
+        "rms": 0.10666867075508031,
+        "reference_rms": 0.10675290152626281,
+        "absolute_peak_delta": 0.0009765625,
+        "spectral_convergence": 0.0029701250409121457,
+        "active_log_spectral_rms_db": 0.1718839227086409,
+        "active_spectral_bins": 39940,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "name": "hot-neutral-short-01",
+      "case": "short",
+      "kind": "hot",
+      "identity_passed": true,
+      "checks": {
+        "name": true,
+        "case": true,
+        "kind": true,
+        "reference": true,
+        "seed": true,
+        "semantic_token_count": true,
+        "sampled_token_count": true,
+        "semantic_sha256": true,
+        "pcm_seconds": true,
+        "speech_seconds": true,
+        "engine_text": true,
+        "engine_reference_identity": true,
+        "engine_parameters": true,
+        "engine_policy": true,
+        "engine_cuda_graph": true,
+        "engine_capacity": true,
+        "engine_sample_rate": true,
+        "engine_frontend_profile": true,
+        "engine_random_inputs": true,
+        "engine_gpt_precision": true,
+        "engine_gpt_attention": true,
+        "engine_gpt_attention_chunk_size": true,
+        "both_completed": true,
+        "fragment_count": true,
+        "fragment_0_index": true,
+        "fragment_0_normalized_text": true,
+        "fragment_0_phones": true,
+        "fragment_0_sampled_tokens": true,
+        "fragment_0_semantic_tokens": true,
+        "fragment_0_stop_reasons": true,
+        "fragment_0_returned_index": true,
+        "fragment_0_waveform_samples": true,
+        "fragment_0_pcm_samples": true,
+        "wav_sample_rate": true,
+        "wav_samples": true,
+        "candidate_pcm_hash": true,
+        "baseline_pcm_hash": true,
+        "fragment_0_silence_zero": true
+      },
+      "semantic_sha256": "72e4e3bbc85fc90954b2d67656c57613cbb67696d36ee93bfbfdbcf58a046f28",
+      "baseline_wav": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/hot-neutral-short-01.wav",
+        "sha256": "2ac0ffaff50c3ba7ac21be19c55c7184b76c524fc352455f56d82107d8fbce92"
+      },
+      "candidate_wav": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/hot-neutral-short-01.wav",
+        "sha256": "b63d93207dd89eb87f76d380bca3293710aca59cd63fe35b663d3a0b860e38f0"
+      },
+      "original_fp32_tolerance": {
+        "passed": false,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.0009844938121506017,
+        "outside_tolerance": 23340,
+        "elements": 64640,
+        "atol": 0.0001,
+        "rtol": 1e-05
+      },
+      "full_pcm_engineering_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 64640,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.0009844938121506017,
+        "snr_db": 40.00510441886429,
+        "peak": 0.50927734375,
+        "reference_peak": 0.50830078125,
+        "rms": 0.09842953239394675,
+        "reference_rms": 0.09850725376329585,
+        "absolute_peak_delta": 0.0009765625,
+        "spectral_convergence": 0.0029701254506754697,
+        "active_log_spectral_rms_db": 0.17188642691941103,
+        "active_spectral_bins": 39940,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      },
+      "speech_without_appended_silence_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 55040,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.001066901810407916,
+        "snr_db": 40.00510441886429,
+        "peak": 0.50927734375,
+        "reference_peak": 0.50830078125,
+        "rms": 0.10666867075508031,
+        "reference_rms": 0.10675289786615254,
+        "absolute_peak_delta": 0.0009765625,
+        "spectral_convergence": 0.002970125450661308,
+        "active_log_spectral_rms_db": 0.17188642691941103,
+        "active_spectral_bins": 39940,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "name": "hot-neutral-short-02",
+      "case": "short",
+      "kind": "hot",
+      "identity_passed": true,
+      "checks": {
+        "name": true,
+        "case": true,
+        "kind": true,
+        "reference": true,
+        "seed": true,
+        "semantic_token_count": true,
+        "sampled_token_count": true,
+        "semantic_sha256": true,
+        "pcm_seconds": true,
+        "speech_seconds": true,
+        "engine_text": true,
+        "engine_reference_identity": true,
+        "engine_parameters": true,
+        "engine_policy": true,
+        "engine_cuda_graph": true,
+        "engine_capacity": true,
+        "engine_sample_rate": true,
+        "engine_frontend_profile": true,
+        "engine_random_inputs": true,
+        "engine_gpt_precision": true,
+        "engine_gpt_attention": true,
+        "engine_gpt_attention_chunk_size": true,
+        "both_completed": true,
+        "fragment_count": true,
+        "fragment_0_index": true,
+        "fragment_0_normalized_text": true,
+        "fragment_0_phones": true,
+        "fragment_0_sampled_tokens": true,
+        "fragment_0_semantic_tokens": true,
+        "fragment_0_stop_reasons": true,
+        "fragment_0_returned_index": true,
+        "fragment_0_waveform_samples": true,
+        "fragment_0_pcm_samples": true,
+        "wav_sample_rate": true,
+        "wav_samples": true,
+        "candidate_pcm_hash": true,
+        "baseline_pcm_hash": true,
+        "fragment_0_silence_zero": true
+      },
+      "semantic_sha256": "72e4e3bbc85fc90954b2d67656c57613cbb67696d36ee93bfbfdbcf58a046f28",
+      "baseline_wav": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/hot-neutral-short-02.wav",
+        "sha256": "26034733ec0546f9cea1ddd638645d6430b4f335ea8bf57d09392b8422f01fb1"
+      },
+      "candidate_wav": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/hot-neutral-short-02.wav",
+        "sha256": "b63d93207dd89eb87f76d380bca3293710aca59cd63fe35b663d3a0b860e38f0"
+      },
+      "original_fp32_tolerance": {
+        "passed": false,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.000984492487703361,
+        "outside_tolerance": 23340,
+        "elements": 64640,
+        "atol": 0.0001,
+        "rtol": 1e-05
+      },
+      "full_pcm_engineering_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 64640,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.000984492487703361,
+        "snr_db": 40.005116324013336,
+        "peak": 0.50927734375,
+        "reference_peak": 0.50830078125,
+        "rms": 0.09842953239394675,
+        "reference_rms": 0.09850725625771571,
+        "absolute_peak_delta": 0.0009765625,
+        "spectral_convergence": 0.002970106775253013,
+        "active_log_spectral_rms_db": 0.17188431065089338,
+        "active_spectral_bins": 39940,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      },
+      "speech_without_appended_silence_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 55040,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.0010669003750965495,
+        "snr_db": 40.005116324013336,
+        "peak": 0.50927734375,
+        "reference_peak": 0.50830078125,
+        "rms": 0.10666867075508031,
+        "reference_rms": 0.10675290056937022,
+        "absolute_peak_delta": 0.0009765625,
+        "spectral_convergence": 0.0029701067752388507,
+        "active_log_spectral_rms_db": 0.17188431065089338,
+        "active_spectral_bins": 39940,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "name": "hot-neutral-long-00",
+      "case": "long",
+      "kind": "hot",
+      "identity_passed": true,
+      "checks": {
+        "name": true,
+        "case": true,
+        "kind": true,
+        "reference": true,
+        "seed": true,
+        "semantic_token_count": true,
+        "sampled_token_count": true,
+        "semantic_sha256": true,
+        "pcm_seconds": true,
+        "speech_seconds": true,
+        "engine_text": true,
+        "engine_reference_identity": true,
+        "engine_parameters": true,
+        "engine_policy": true,
+        "engine_cuda_graph": true,
+        "engine_capacity": true,
+        "engine_sample_rate": true,
+        "engine_frontend_profile": true,
+        "engine_random_inputs": true,
+        "engine_gpt_precision": true,
+        "engine_gpt_attention": true,
+        "engine_gpt_attention_chunk_size": true,
+        "both_completed": true,
+        "fragment_count": true,
+        "fragment_0_index": true,
+        "fragment_0_normalized_text": true,
+        "fragment_0_phones": true,
+        "fragment_0_sampled_tokens": true,
+        "fragment_0_semantic_tokens": true,
+        "fragment_0_stop_reasons": true,
+        "fragment_0_returned_index": true,
+        "fragment_0_waveform_samples": true,
+        "fragment_0_pcm_samples": true,
+        "wav_sample_rate": true,
+        "wav_samples": true,
+        "candidate_pcm_hash": true,
+        "baseline_pcm_hash": true,
+        "fragment_0_silence_zero": true
+      },
+      "semantic_sha256": "57ecbcfdc6327819385ba4d236b6da19d5dfee1b3cd39cd1d6672d8c633c74aa",
+      "baseline_wav": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/hot-neutral-long-00.wav",
+        "sha256": "d14f4b2a107e3fc25f6fb600e5f6419cfd92ef08374252b50bc2aa7360e2e5ff"
+      },
+      "candidate_wav": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/hot-neutral-long-00.wav",
+        "sha256": "9cc50b4ba1d6f1411b129063a296f0e6f88efa6e3a2075acb75de43cf8f9c462"
+      },
+      "original_fp32_tolerance": {
+        "passed": false,
+        "max_abs_error": 0.038421630859375,
+        "rmse": 0.0010335275170389193,
+        "outside_tolerance": 325617,
+        "elements": 873600,
+        "atol": 0.0001,
+        "rtol": 1e-05
+      },
+      "full_pcm_engineering_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 873600,
+        "max_abs_error": 0.038421630859375,
+        "rmse": 0.0010335275170389193,
+        "snr_db": 39.547204293867246,
+        "peak": 0.7373046875,
+        "reference_peak": 0.737640380859375,
+        "rms": 0.0980484729886742,
+        "reference_rms": 0.0981029932870411,
+        "absolute_peak_delta": -0.000335693359375,
+        "spectral_convergence": 0.004755515121697333,
+        "active_log_spectral_rms_db": 0.1509675038378809,
+        "active_spectral_bins": 554954,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      },
+      "speech_without_appended_silence_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 864000,
+        "max_abs_error": 0.038421630859375,
+        "rmse": 0.0010392534750770417,
+        "snr_db": 39.547204293867246,
+        "peak": 0.7373046875,
+        "reference_peak": 0.737640380859375,
+        "rms": 0.09859168198193217,
+        "reference_rms": 0.09864650433412495,
+        "absolute_peak_delta": -0.000335693359375,
+        "spectral_convergence": 0.0047555151217015595,
+        "active_log_spectral_rms_db": 0.1509675038378809,
+        "active_spectral_bins": 554954,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "name": "hot-neutral-long-01",
+      "case": "long",
+      "kind": "hot",
+      "identity_passed": true,
+      "checks": {
+        "name": true,
+        "case": true,
+        "kind": true,
+        "reference": true,
+        "seed": true,
+        "semantic_token_count": true,
+        "sampled_token_count": true,
+        "semantic_sha256": true,
+        "pcm_seconds": true,
+        "speech_seconds": true,
+        "engine_text": true,
+        "engine_reference_identity": true,
+        "engine_parameters": true,
+        "engine_policy": true,
+        "engine_cuda_graph": true,
+        "engine_capacity": true,
+        "engine_sample_rate": true,
+        "engine_frontend_profile": true,
+        "engine_random_inputs": true,
+        "engine_gpt_precision": true,
+        "engine_gpt_attention": true,
+        "engine_gpt_attention_chunk_size": true,
+        "both_completed": true,
+        "fragment_count": true,
+        "fragment_0_index": true,
+        "fragment_0_normalized_text": true,
+        "fragment_0_phones": true,
+        "fragment_0_sampled_tokens": true,
+        "fragment_0_semantic_tokens": true,
+        "fragment_0_stop_reasons": true,
+        "fragment_0_returned_index": true,
+        "fragment_0_waveform_samples": true,
+        "fragment_0_pcm_samples": true,
+        "wav_sample_rate": true,
+        "wav_samples": true,
+        "candidate_pcm_hash": true,
+        "baseline_pcm_hash": true,
+        "fragment_0_silence_zero": true
+      },
+      "semantic_sha256": "57ecbcfdc6327819385ba4d236b6da19d5dfee1b3cd39cd1d6672d8c633c74aa",
+      "baseline_wav": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/hot-neutral-long-01.wav",
+        "sha256": "e1e57e655cba6f6dbb6371c4fd8d21c26d9a164d9745a66fc57bc3810c6b601b"
+      },
+      "candidate_wav": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/hot-neutral-long-01.wav",
+        "sha256": "9cc50b4ba1d6f1411b129063a296f0e6f88efa6e3a2075acb75de43cf8f9c462"
+      },
+      "original_fp32_tolerance": {
+        "passed": false,
+        "max_abs_error": 0.038421630859375,
+        "rmse": 0.0010335276676366003,
+        "outside_tolerance": 325615,
+        "elements": 873600,
+        "atol": 0.0001,
+        "rtol": 1e-05
+      },
+      "full_pcm_engineering_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 873600,
+        "max_abs_error": 0.038421630859375,
+        "rmse": 0.0010335276676366003,
+        "snr_db": 39.54720306092937,
+        "peak": 0.7373046875,
+        "reference_peak": 0.737640380859375,
+        "rms": 0.0980484729886742,
+        "reference_rms": 0.09810299365640666,
+        "absolute_peak_delta": -0.000335693359375,
+        "spectral_convergence": 0.0047555165726631855,
+        "active_log_spectral_rms_db": 0.15096515609941427,
+        "active_spectral_bins": 554952,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      },
+      "speech_without_appended_silence_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 864000,
+        "max_abs_error": 0.038421630859375,
+        "rmse": 0.0010392536265090655,
+        "snr_db": 39.54720306092937,
+        "peak": 0.7373046875,
+        "reference_peak": 0.737640380859375,
+        "rms": 0.09859168198193217,
+        "reference_rms": 0.09864650470553689,
+        "absolute_peak_delta": -0.000335693359375,
+        "spectral_convergence": 0.00475551657266741,
+        "active_log_spectral_rms_db": 0.15096515609941427,
+        "active_spectral_bins": 554952,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "name": "hot-neutral-long-02",
+      "case": "long",
+      "kind": "hot",
+      "identity_passed": true,
+      "checks": {
+        "name": true,
+        "case": true,
+        "kind": true,
+        "reference": true,
+        "seed": true,
+        "semantic_token_count": true,
+        "sampled_token_count": true,
+        "semantic_sha256": true,
+        "pcm_seconds": true,
+        "speech_seconds": true,
+        "engine_text": true,
+        "engine_reference_identity": true,
+        "engine_parameters": true,
+        "engine_policy": true,
+        "engine_cuda_graph": true,
+        "engine_capacity": true,
+        "engine_sample_rate": true,
+        "engine_frontend_profile": true,
+        "engine_random_inputs": true,
+        "engine_gpt_precision": true,
+        "engine_gpt_attention": true,
+        "engine_gpt_attention_chunk_size": true,
+        "both_completed": true,
+        "fragment_count": true,
+        "fragment_0_index": true,
+        "fragment_0_normalized_text": true,
+        "fragment_0_phones": true,
+        "fragment_0_sampled_tokens": true,
+        "fragment_0_semantic_tokens": true,
+        "fragment_0_stop_reasons": true,
+        "fragment_0_returned_index": true,
+        "fragment_0_waveform_samples": true,
+        "fragment_0_pcm_samples": true,
+        "wav_sample_rate": true,
+        "wav_samples": true,
+        "candidate_pcm_hash": true,
+        "baseline_pcm_hash": true,
+        "fragment_0_silence_zero": true
+      },
+      "semantic_sha256": "57ecbcfdc6327819385ba4d236b6da19d5dfee1b3cd39cd1d6672d8c633c74aa",
+      "baseline_wav": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/hot-neutral-long-02.wav",
+        "sha256": "fcd9b27212436dd9f7fcc4836da571bb8720e8865725711543f486559d0fc9bf"
+      },
+      "candidate_wav": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/hot-neutral-long-02.wav",
+        "sha256": "9cc50b4ba1d6f1411b129063a296f0e6f88efa6e3a2075acb75de43cf8f9c462"
+      },
+      "original_fp32_tolerance": {
+        "passed": false,
+        "max_abs_error": 0.038421630859375,
+        "rmse": 0.0010335278084350975,
+        "outside_tolerance": 325617,
+        "elements": 873600,
+        "atol": 0.0001,
+        "rtol": 1e-05
+      },
+      "full_pcm_engineering_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 873600,
+        "max_abs_error": 0.038421630859375,
+        "rmse": 0.0010335278084350975,
+        "snr_db": 39.54720194644218,
+        "peak": 0.7373046875,
+        "reference_peak": 0.737640380859375,
+        "rms": 0.0980484729886742,
+        "reference_rms": 0.09810299443347074,
+        "absolute_peak_delta": -0.000335693359375,
+        "spectral_convergence": 0.004755515341505701,
+        "active_log_spectral_rms_db": 0.1509665914667849,
+        "active_spectral_bins": 554954,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      },
+      "speech_without_appended_silence_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 864000,
+        "max_abs_error": 0.038421630859375,
+        "rmse": 0.0010392537680876156,
+        "snr_db": 39.54720194644218,
+        "peak": 0.7373046875,
+        "reference_peak": 0.737640380859375,
+        "rms": 0.09859168198193217,
+        "reference_rms": 0.09864650548690607,
+        "absolute_peak_delta": -0.000335693359375,
+        "spectral_convergence": 0.004755515341509927,
+        "active_log_spectral_rms_db": 0.1509665914667849,
+        "active_spectral_bins": 554954,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "name": "hot-neutral-multi-00",
+      "case": "multi",
+      "kind": "hot",
+      "identity_passed": true,
+      "checks": {
+        "name": true,
+        "case": true,
+        "kind": true,
+        "reference": true,
+        "seed": true,
+        "semantic_token_count": true,
+        "sampled_token_count": true,
+        "semantic_sha256": true,
+        "pcm_seconds": true,
+        "speech_seconds": true,
+        "engine_text": true,
+        "engine_reference_identity": true,
+        "engine_parameters": true,
+        "engine_policy": true,
+        "engine_cuda_graph": true,
+        "engine_capacity": true,
+        "engine_sample_rate": true,
+        "engine_frontend_profile": true,
+        "engine_random_inputs": true,
+        "engine_gpt_precision": true,
+        "engine_gpt_attention": true,
+        "engine_gpt_attention_chunk_size": true,
+        "both_completed": true,
+        "fragment_count": true,
+        "fragment_0_index": true,
+        "fragment_0_normalized_text": true,
+        "fragment_0_phones": true,
+        "fragment_0_sampled_tokens": true,
+        "fragment_0_semantic_tokens": true,
+        "fragment_0_stop_reasons": true,
+        "fragment_0_returned_index": true,
+        "fragment_0_waveform_samples": true,
+        "fragment_0_pcm_samples": true,
+        "wav_sample_rate": true,
+        "wav_samples": true,
+        "candidate_pcm_hash": true,
+        "baseline_pcm_hash": true,
+        "fragment_0_silence_zero": true
+      },
+      "semantic_sha256": "1b176bf6d8c8442585e8e25f31bf2de7c8f565d73d33104961ac3a6a6f2d1b35",
+      "baseline_wav": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/hot-neutral-multi-00.wav",
+        "sha256": "b324b3056bafe0c03fcc47c42864666ed7b59e91de8b4a11b7136604336e6375"
+      },
+      "candidate_wav": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/hot-neutral-multi-00.wav",
+        "sha256": "bf2e650d4ee3d7353380c2f4217cdc66e071d9dbe5cd66b558d868d1f57f2e3e"
+      },
+      "original_fp32_tolerance": {
+        "passed": false,
+        "max_abs_error": 0.024993896484375,
+        "rmse": 0.0009072313730942355,
+        "outside_tolerance": 115894,
+        "elements": 339840,
+        "atol": 0.0001,
+        "rtol": 1e-05
+      },
+      "full_pcm_engineering_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 339840,
+        "max_abs_error": 0.024993896484375,
+        "rmse": 0.0009072313730942355,
+        "snr_db": 40.4858654359937,
+        "peak": 0.7255859375,
+        "reference_peak": 0.7252197265625,
+        "rms": 0.09589554864171931,
+        "reference_rms": 0.09594256653951513,
+        "absolute_peak_delta": 0.0003662109375,
+        "spectral_convergence": 0.004961243971583906,
+        "active_log_spectral_rms_db": 0.13552367340351762,
+        "active_spectral_bins": 213427,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      },
+      "speech_without_appended_silence_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 330240,
+        "max_abs_error": 0.024993896484375,
+        "rmse": 0.0009203234115755621,
+        "snr_db": 40.4858654359937,
+        "peak": 0.7255859375,
+        "reference_peak": 0.7252197265625,
+        "rms": 0.09727939431795884,
+        "reference_rms": 0.09732709071976754,
+        "absolute_peak_delta": 0.0003662109375,
+        "spectral_convergence": 0.004961243971595755,
+        "active_log_spectral_rms_db": 0.13552367340351762,
+        "active_spectral_bins": 213427,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "name": "hot-neutral-multi-01",
+      "case": "multi",
+      "kind": "hot",
+      "identity_passed": true,
+      "checks": {
+        "name": true,
+        "case": true,
+        "kind": true,
+        "reference": true,
+        "seed": true,
+        "semantic_token_count": true,
+        "sampled_token_count": true,
+        "semantic_sha256": true,
+        "pcm_seconds": true,
+        "speech_seconds": true,
+        "engine_text": true,
+        "engine_reference_identity": true,
+        "engine_parameters": true,
+        "engine_policy": true,
+        "engine_cuda_graph": true,
+        "engine_capacity": true,
+        "engine_sample_rate": true,
+        "engine_frontend_profile": true,
+        "engine_random_inputs": true,
+        "engine_gpt_precision": true,
+        "engine_gpt_attention": true,
+        "engine_gpt_attention_chunk_size": true,
+        "both_completed": true,
+        "fragment_count": true,
+        "fragment_0_index": true,
+        "fragment_0_normalized_text": true,
+        "fragment_0_phones": true,
+        "fragment_0_sampled_tokens": true,
+        "fragment_0_semantic_tokens": true,
+        "fragment_0_stop_reasons": true,
+        "fragment_0_returned_index": true,
+        "fragment_0_waveform_samples": true,
+        "fragment_0_pcm_samples": true,
+        "wav_sample_rate": true,
+        "wav_samples": true,
+        "candidate_pcm_hash": true,
+        "baseline_pcm_hash": true,
+        "fragment_0_silence_zero": true
+      },
+      "semantic_sha256": "1b176bf6d8c8442585e8e25f31bf2de7c8f565d73d33104961ac3a6a6f2d1b35",
+      "baseline_wav": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/hot-neutral-multi-01.wav",
+        "sha256": "33b610bb0dce90cba59f20e6b52a927a2637e7e280a8702cbc6562c5d590bd78"
+      },
+      "candidate_wav": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/hot-neutral-multi-01.wav",
+        "sha256": "bf2e650d4ee3d7353380c2f4217cdc66e071d9dbe5cd66b558d868d1f57f2e3e"
+      },
+      "original_fp32_tolerance": {
+        "passed": false,
+        "max_abs_error": 0.024993896484375,
+        "rmse": 0.0009072333758160292,
+        "outside_tolerance": 115893,
+        "elements": 339840,
+        "atol": 0.0001,
+        "rtol": 1e-05
+      },
+      "full_pcm_engineering_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 339840,
+        "max_abs_error": 0.024993896484375,
+        "rmse": 0.0009072333758160292,
+        "snr_db": 40.48584631203247,
+        "peak": 0.7255859375,
+        "reference_peak": 0.7252197265625,
+        "rms": 0.09589554864171931,
+        "reference_rms": 0.09594256709402203,
+        "absolute_peak_delta": 0.0003662109375,
+        "spectral_convergence": 0.004961252645720616,
+        "active_log_spectral_rms_db": 0.13552393872136442,
+        "active_spectral_bins": 213426,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      },
+      "speech_without_appended_silence_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 330240,
+        "max_abs_error": 0.024993896484375,
+        "rmse": 0.0009203254431981539,
+        "snr_db": 40.48584631203247,
+        "peak": 0.7255859375,
+        "reference_peak": 0.7252197265625,
+        "rms": 0.09727939431795884,
+        "reference_rms": 0.0973270912822764,
+        "absolute_peak_delta": 0.0003662109375,
+        "spectral_convergence": 0.004961252645732463,
+        "active_log_spectral_rms_db": 0.13552393872136442,
+        "active_spectral_bins": 213426,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "name": "hot-neutral-multi-02",
+      "case": "multi",
+      "kind": "hot",
+      "identity_passed": true,
+      "checks": {
+        "name": true,
+        "case": true,
+        "kind": true,
+        "reference": true,
+        "seed": true,
+        "semantic_token_count": true,
+        "sampled_token_count": true,
+        "semantic_sha256": true,
+        "pcm_seconds": true,
+        "speech_seconds": true,
+        "engine_text": true,
+        "engine_reference_identity": true,
+        "engine_parameters": true,
+        "engine_policy": true,
+        "engine_cuda_graph": true,
+        "engine_capacity": true,
+        "engine_sample_rate": true,
+        "engine_frontend_profile": true,
+        "engine_random_inputs": true,
+        "engine_gpt_precision": true,
+        "engine_gpt_attention": true,
+        "engine_gpt_attention_chunk_size": true,
+        "both_completed": true,
+        "fragment_count": true,
+        "fragment_0_index": true,
+        "fragment_0_normalized_text": true,
+        "fragment_0_phones": true,
+        "fragment_0_sampled_tokens": true,
+        "fragment_0_semantic_tokens": true,
+        "fragment_0_stop_reasons": true,
+        "fragment_0_returned_index": true,
+        "fragment_0_waveform_samples": true,
+        "fragment_0_pcm_samples": true,
+        "wav_sample_rate": true,
+        "wav_samples": true,
+        "candidate_pcm_hash": true,
+        "baseline_pcm_hash": true,
+        "fragment_0_silence_zero": true
+      },
+      "semantic_sha256": "1b176bf6d8c8442585e8e25f31bf2de7c8f565d73d33104961ac3a6a6f2d1b35",
+      "baseline_wav": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/hot-neutral-multi-02.wav",
+        "sha256": "8084ed180f24d453159a33c0d147280b1d8fed7fc623d32e70cacbef055e96f6"
+      },
+      "candidate_wav": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/hot-neutral-multi-02.wav",
+        "sha256": "bf2e650d4ee3d7353380c2f4217cdc66e071d9dbe5cd66b558d868d1f57f2e3e"
+      },
+      "original_fp32_tolerance": {
+        "passed": false,
+        "max_abs_error": 0.024993896484375,
+        "rmse": 0.0009072324726283167,
+        "outside_tolerance": 115893,
+        "elements": 339840,
+        "atol": 0.0001,
+        "rtol": 1e-05
+      },
+      "full_pcm_engineering_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 339840,
+        "max_abs_error": 0.024993896484375,
+        "rmse": 0.0009072324726283167,
+        "snr_db": 40.48585484968139,
+        "peak": 0.7255859375,
+        "reference_peak": 0.7252197265625,
+        "rms": 0.09589554864171931,
+        "reference_rms": 0.09594256588437834,
+        "absolute_peak_delta": 0.0003662109375,
+        "spectral_convergence": 0.00496124758974777,
+        "active_log_spectral_rms_db": 0.13552321418650332,
+        "active_spectral_bins": 213427,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      },
+      "speech_without_appended_silence_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 330240,
+        "max_abs_error": 0.024993896484375,
+        "rmse": 0.000920324526976756,
+        "snr_db": 40.48585484968139,
+        "peak": 0.7255859375,
+        "reference_peak": 0.7252197265625,
+        "rms": 0.09727939431795884,
+        "reference_rms": 0.09732709005517663,
+        "absolute_peak_delta": 0.0003662109375,
+        "spectral_convergence": 0.004961247589759617,
+        "active_log_spectral_rms_db": 0.13552321418650332,
+        "active_spectral_bins": 213427,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "name": "hot-neutral-punctuation-00",
+      "case": "punctuation",
+      "kind": "hot",
+      "identity_passed": true,
+      "checks": {
+        "name": true,
+        "case": true,
+        "kind": true,
+        "reference": true,
+        "seed": true,
+        "semantic_token_count": true,
+        "sampled_token_count": true,
+        "semantic_sha256": true,
+        "pcm_seconds": true,
+        "speech_seconds": true,
+        "engine_text": true,
+        "engine_reference_identity": true,
+        "engine_parameters": true,
+        "engine_policy": true,
+        "engine_cuda_graph": true,
+        "engine_capacity": true,
+        "engine_sample_rate": true,
+        "engine_frontend_profile": true,
+        "engine_random_inputs": true,
+        "engine_gpt_precision": true,
+        "engine_gpt_attention": true,
+        "engine_gpt_attention_chunk_size": true,
+        "both_completed": true,
+        "fragment_count": true,
+        "fragment_0_index": true,
+        "fragment_0_normalized_text": true,
+        "fragment_0_phones": true,
+        "fragment_0_sampled_tokens": true,
+        "fragment_0_semantic_tokens": true,
+        "fragment_0_stop_reasons": true,
+        "fragment_0_returned_index": true,
+        "fragment_0_waveform_samples": true,
+        "fragment_0_pcm_samples": true,
+        "wav_sample_rate": true,
+        "wav_samples": true,
+        "candidate_pcm_hash": true,
+        "baseline_pcm_hash": true,
+        "fragment_0_silence_zero": true
+      },
+      "semantic_sha256": "47b9de98a98eeb4628e94e0524522544eb8fd3616d6d590a693e903a698de3c0",
+      "baseline_wav": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/hot-neutral-punctuation-00.wav",
+        "sha256": "9c3bad58c08cccd664ba9a5259d958a3dd17abf2bd3aca20a3477747af6c17f0"
+      },
+      "candidate_wav": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/hot-neutral-punctuation-00.wav",
+        "sha256": "3cd0a542141e80e4cb4b4f083656edcdd3c8e32b2ca4cda2ae62e3e75f530e43"
+      },
+      "original_fp32_tolerance": {
+        "passed": false,
+        "max_abs_error": 0.03314208984375,
+        "rmse": 0.0009008797157048533,
+        "outside_tolerance": 82806,
+        "elements": 268160,
+        "atol": 0.0001,
+        "rtol": 1e-05
+      },
+      "full_pcm_engineering_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 268160,
+        "max_abs_error": 0.03314208984375,
+        "rmse": 0.0009008797157048533,
+        "snr_db": 40.20466274251288,
+        "peak": 0.58984375,
+        "reference_peak": 0.589935302734375,
+        "rms": 0.09216083726135157,
+        "reference_rms": 0.09223589060205689,
+        "absolute_peak_delta": -9.1552734375e-05,
+        "spectral_convergence": 0.0038307519029509235,
+        "active_log_spectral_rms_db": 0.16335243973213984,
+        "active_spectral_bins": 161216,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      },
+      "speech_without_appended_silence_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 258560,
+        "max_abs_error": 0.03314208984375,
+        "rmse": 0.0009174515470635849,
+        "snr_db": 40.20466274251288,
+        "peak": 0.58984375,
+        "reference_peak": 0.589935302734375,
+        "rms": 0.09385615110442071,
+        "reference_rms": 0.0939325850637407,
+        "absolute_peak_delta": -9.1552734375e-05,
+        "spectral_convergence": 0.0038307519029634647,
+        "active_log_spectral_rms_db": 0.16335243973213984,
+        "active_spectral_bins": 161216,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "name": "hot-neutral-punctuation-01",
+      "case": "punctuation",
+      "kind": "hot",
+      "identity_passed": true,
+      "checks": {
+        "name": true,
+        "case": true,
+        "kind": true,
+        "reference": true,
+        "seed": true,
+        "semantic_token_count": true,
+        "sampled_token_count": true,
+        "semantic_sha256": true,
+        "pcm_seconds": true,
+        "speech_seconds": true,
+        "engine_text": true,
+        "engine_reference_identity": true,
+        "engine_parameters": true,
+        "engine_policy": true,
+        "engine_cuda_graph": true,
+        "engine_capacity": true,
+        "engine_sample_rate": true,
+        "engine_frontend_profile": true,
+        "engine_random_inputs": true,
+        "engine_gpt_precision": true,
+        "engine_gpt_attention": true,
+        "engine_gpt_attention_chunk_size": true,
+        "both_completed": true,
+        "fragment_count": true,
+        "fragment_0_index": true,
+        "fragment_0_normalized_text": true,
+        "fragment_0_phones": true,
+        "fragment_0_sampled_tokens": true,
+        "fragment_0_semantic_tokens": true,
+        "fragment_0_stop_reasons": true,
+        "fragment_0_returned_index": true,
+        "fragment_0_waveform_samples": true,
+        "fragment_0_pcm_samples": true,
+        "wav_sample_rate": true,
+        "wav_samples": true,
+        "candidate_pcm_hash": true,
+        "baseline_pcm_hash": true,
+        "fragment_0_silence_zero": true
+      },
+      "semantic_sha256": "47b9de98a98eeb4628e94e0524522544eb8fd3616d6d590a693e903a698de3c0",
+      "baseline_wav": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/hot-neutral-punctuation-01.wav",
+        "sha256": "b7fb72954432a70b9ec0428edc9da707facc7f71d67a594b1b5fbfd0e285d7c6"
+      },
+      "candidate_wav": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/hot-neutral-punctuation-01.wav",
+        "sha256": "3cd0a542141e80e4cb4b4f083656edcdd3c8e32b2ca4cda2ae62e3e75f530e43"
+      },
+      "original_fp32_tolerance": {
+        "passed": false,
+        "max_abs_error": 0.03314208984375,
+        "rmse": 0.0009008805946746658,
+        "outside_tolerance": 82804,
+        "elements": 268160,
+        "atol": 0.0001,
+        "rtol": 1e-05
+      },
+      "full_pcm_engineering_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 268160,
+        "max_abs_error": 0.03314208984375,
+        "rmse": 0.0009008805946746658,
+        "snr_db": 40.2046544428467,
+        "peak": 0.58984375,
+        "reference_peak": 0.589935302734375,
+        "rms": 0.09216083726135157,
+        "reference_rms": 0.09223589246011006,
+        "absolute_peak_delta": -9.1552734375e-05,
+        "spectral_convergence": 0.0038307678630687863,
+        "active_log_spectral_rms_db": 0.16335532132718955,
+        "active_spectral_bins": 161216,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      },
+      "speech_without_appended_silence_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 258560,
+        "max_abs_error": 0.03314208984375,
+        "rmse": 0.0009174524422021924,
+        "snr_db": 40.2046544428467,
+        "peak": 0.58984375,
+        "reference_peak": 0.589935302734375,
+        "rms": 0.09385615110442071,
+        "reference_rms": 0.09393258695597306,
+        "absolute_peak_delta": -9.1552734375e-05,
+        "spectral_convergence": 0.0038307678630813274,
+        "active_log_spectral_rms_db": 0.16335532132718955,
+        "active_spectral_bins": 161216,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "name": "hot-neutral-punctuation-02",
+      "case": "punctuation",
+      "kind": "hot",
+      "identity_passed": true,
+      "checks": {
+        "name": true,
+        "case": true,
+        "kind": true,
+        "reference": true,
+        "seed": true,
+        "semantic_token_count": true,
+        "sampled_token_count": true,
+        "semantic_sha256": true,
+        "pcm_seconds": true,
+        "speech_seconds": true,
+        "engine_text": true,
+        "engine_reference_identity": true,
+        "engine_parameters": true,
+        "engine_policy": true,
+        "engine_cuda_graph": true,
+        "engine_capacity": true,
+        "engine_sample_rate": true,
+        "engine_frontend_profile": true,
+        "engine_random_inputs": true,
+        "engine_gpt_precision": true,
+        "engine_gpt_attention": true,
+        "engine_gpt_attention_chunk_size": true,
+        "both_completed": true,
+        "fragment_count": true,
+        "fragment_0_index": true,
+        "fragment_0_normalized_text": true,
+        "fragment_0_phones": true,
+        "fragment_0_sampled_tokens": true,
+        "fragment_0_semantic_tokens": true,
+        "fragment_0_stop_reasons": true,
+        "fragment_0_returned_index": true,
+        "fragment_0_waveform_samples": true,
+        "fragment_0_pcm_samples": true,
+        "wav_sample_rate": true,
+        "wav_samples": true,
+        "candidate_pcm_hash": true,
+        "baseline_pcm_hash": true,
+        "fragment_0_silence_zero": true
+      },
+      "semantic_sha256": "47b9de98a98eeb4628e94e0524522544eb8fd3616d6d590a693e903a698de3c0",
+      "baseline_wav": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/hot-neutral-punctuation-02.wav",
+        "sha256": "c52189f4de1624708c9936ae085f6442185be4b278701cb89c7f410e6fa982d1"
+      },
+      "candidate_wav": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/hot-neutral-punctuation-02.wav",
+        "sha256": "3cd0a542141e80e4cb4b4f083656edcdd3c8e32b2ca4cda2ae62e3e75f530e43"
+      },
+      "original_fp32_tolerance": {
+        "passed": false,
+        "max_abs_error": 0.03314208984375,
+        "rmse": 0.0009008792376682794,
+        "outside_tolerance": 82804,
+        "elements": 268160,
+        "atol": 0.0001,
+        "rtol": 1e-05
+      },
+      "full_pcm_engineering_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 268160,
+        "max_abs_error": 0.03314208984375,
+        "rmse": 0.0009008792376682794,
+        "snr_db": 40.20466752291962,
+        "peak": 0.58984375,
+        "reference_peak": 0.589935302734375,
+        "rms": 0.09216083726135157,
+        "reference_rms": 0.09223589242200465,
+        "absolute_peak_delta": -9.1552734375e-05,
+        "spectral_convergence": 0.0038307431247356543,
+        "active_log_spectral_rms_db": 0.16335172034892828,
+        "active_spectral_bins": 161215,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      },
+      "speech_without_appended_silence_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 258560,
+        "max_abs_error": 0.03314208984375,
+        "rmse": 0.0009174510602334492,
+        "snr_db": 40.20466752291962,
+        "peak": 0.58984375,
+        "reference_peak": 0.589935302734375,
+        "rms": 0.09385615110442071,
+        "reference_rms": 0.09393258691716669,
+        "absolute_peak_delta": -9.1552734375e-05,
+        "spectral_convergence": 0.003830743124748196,
+        "active_log_spectral_rms_db": 0.16335172034892828,
+        "active_spectral_bins": 161215,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "name": "after-idle-unload-first",
+      "case": "short",
+      "kind": "reload",
+      "identity_passed": true,
+      "checks": {
+        "name": true,
+        "case": true,
+        "kind": true,
+        "reference": true,
+        "seed": true,
+        "semantic_token_count": true,
+        "sampled_token_count": true,
+        "semantic_sha256": true,
+        "pcm_seconds": true,
+        "speech_seconds": true,
+        "engine_text": true,
+        "engine_reference_identity": true,
+        "engine_parameters": true,
+        "engine_policy": true,
+        "engine_cuda_graph": true,
+        "engine_capacity": true,
+        "engine_sample_rate": true,
+        "engine_frontend_profile": true,
+        "engine_random_inputs": true,
+        "engine_gpt_precision": true,
+        "engine_gpt_attention": true,
+        "engine_gpt_attention_chunk_size": true,
+        "both_completed": true,
+        "fragment_count": true,
+        "fragment_0_index": true,
+        "fragment_0_normalized_text": true,
+        "fragment_0_phones": true,
+        "fragment_0_sampled_tokens": true,
+        "fragment_0_semantic_tokens": true,
+        "fragment_0_stop_reasons": true,
+        "fragment_0_returned_index": true,
+        "fragment_0_waveform_samples": true,
+        "fragment_0_pcm_samples": true,
+        "wav_sample_rate": true,
+        "wav_samples": true,
+        "candidate_pcm_hash": true,
+        "baseline_pcm_hash": true,
+        "fragment_0_silence_zero": true
+      },
+      "semantic_sha256": "72e4e3bbc85fc90954b2d67656c57613cbb67696d36ee93bfbfdbcf58a046f28",
+      "baseline_wav": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/after-idle-unload-first.wav",
+        "sha256": "5f7196ee5be5f427e038476b75e846fbb60b6e7b4f522376b8e99522bdfc25e4"
+      },
+      "candidate_wav": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/after-idle-unload-first.wav",
+        "sha256": "b63d93207dd89eb87f76d380bca3293710aca59cd63fe35b663d3a0b860e38f0"
+      },
+      "original_fp32_tolerance": {
+        "passed": false,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.0009844937975158352,
+        "outside_tolerance": 23340,
+        "elements": 64640,
+        "atol": 0.0001,
+        "rtol": 1e-05
+      },
+      "full_pcm_engineering_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 64640,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.0009844937975158352,
+        "snr_db": 40.00510480055023,
+        "peak": 0.50927734375,
+        "reference_peak": 0.50830078125,
+        "rms": 0.09842953239394675,
+        "reference_rms": 0.09850725662768463,
+        "absolute_peak_delta": 0.0009765625,
+        "spectral_convergence": 0.0029701189835845258,
+        "active_log_spectral_rms_db": 0.17188462109371797,
+        "active_spectral_bins": 39939,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      },
+      "speech_without_appended_silence_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 55040,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.0010669017945481325,
+        "snr_db": 40.00510480055023,
+        "peak": 0.50927734375,
+        "reference_peak": 0.50830078125,
+        "rms": 0.10666867075508031,
+        "reference_rms": 0.10675290097030773,
+        "absolute_peak_delta": 0.0009765625,
+        "spectral_convergence": 0.002970118983570363,
+        "active_log_spectral_rms_db": 0.17188462109371797,
+        "active_spectral_bins": 39939,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      }
+    },
+    {
+      "name": "after-idle-unload-hot",
+      "case": "short",
+      "kind": "reload_hot",
+      "identity_passed": true,
+      "checks": {
+        "name": true,
+        "case": true,
+        "kind": true,
+        "reference": true,
+        "seed": true,
+        "semantic_token_count": true,
+        "sampled_token_count": true,
+        "semantic_sha256": true,
+        "pcm_seconds": true,
+        "speech_seconds": true,
+        "engine_text": true,
+        "engine_reference_identity": true,
+        "engine_parameters": true,
+        "engine_policy": true,
+        "engine_cuda_graph": true,
+        "engine_capacity": true,
+        "engine_sample_rate": true,
+        "engine_frontend_profile": true,
+        "engine_random_inputs": true,
+        "engine_gpt_precision": true,
+        "engine_gpt_attention": true,
+        "engine_gpt_attention_chunk_size": true,
+        "both_completed": true,
+        "fragment_count": true,
+        "fragment_0_index": true,
+        "fragment_0_normalized_text": true,
+        "fragment_0_phones": true,
+        "fragment_0_sampled_tokens": true,
+        "fragment_0_semantic_tokens": true,
+        "fragment_0_stop_reasons": true,
+        "fragment_0_returned_index": true,
+        "fragment_0_waveform_samples": true,
+        "fragment_0_pcm_samples": true,
+        "wav_sample_rate": true,
+        "wav_samples": true,
+        "candidate_pcm_hash": true,
+        "baseline_pcm_hash": true,
+        "fragment_0_silence_zero": true
+      },
+      "semantic_sha256": "72e4e3bbc85fc90954b2d67656c57613cbb67696d36ee93bfbfdbcf58a046f28",
+      "baseline_wav": {
+        "path": "outputs/windows-split-kv/fp32-correct-reference-256/after-idle-unload-hot.wav",
+        "sha256": "0f94a10cfc6a73cdaac908198b9e513deef8e79e990717033bcb7f91171d9d85"
+      },
+      "candidate_wav": {
+        "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/after-idle-unload-hot.wav",
+        "sha256": "b63d93207dd89eb87f76d380bca3293710aca59cd63fe35b663d3a0b860e38f0"
+      },
+      "original_fp32_tolerance": {
+        "passed": false,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.0009844944487627295,
+        "outside_tolerance": 23340,
+        "elements": 64640,
+        "atol": 0.0001,
+        "rtol": 1e-05
+      },
+      "full_pcm_engineering_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 64640,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.0009844944487627295,
+        "snr_db": 40.00509908850404,
+        "peak": 0.50927734375,
+        "reference_peak": 0.50830078125,
+        "rms": 0.09842953239394675,
+        "reference_rms": 0.09850725700993954,
+        "absolute_peak_delta": 0.0009765625,
+        "spectral_convergence": 0.0029701309031044923,
+        "active_log_spectral_rms_db": 0.17188156358296366,
+        "active_spectral_bins": 39940,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      },
+      "speech_without_appended_silence_metrics": {
+        "shape_equal": true,
+        "finite": true,
+        "samples": 55040,
+        "max_abs_error": 0.01416015625,
+        "rmse": 0.0010669025003082725,
+        "snr_db": 40.00509908850404,
+        "peak": 0.50927734375,
+        "reference_peak": 0.50830078125,
+        "rms": 0.10666867075508031,
+        "reference_rms": 0.10675290138455965,
+        "absolute_peak_delta": 0.0009765625,
+        "spectral_convergence": 0.00297013090309033,
+        "active_log_spectral_rms_db": 0.17188156358296366,
+        "active_spectral_bins": 39940,
+        "samples_outside_unit_range": 0,
+        "reference_samples_outside_unit_range": 0,
+        "checks": {
+          "max_abs_error": true,
+          "rmse": true,
+          "snr": true,
+          "amplitude": true,
+          "spectral_convergence": true,
+          "active_log_spectral_rms": true
+        },
+        "passed": true
+      }
+    }
+  ],
+  "resource_runs": {
+    "fp32_baseline": {
+      "source": {
+        "path": "outputs/windows-acoustic/combined-memory-fp32-baseline/results.json",
+        "sha256": "bd518c8b1dcf496047fa374ea5459bdae18b52e4bc8acb961307af8f410c9edd"
+      },
+      "samples_source": {
+        "path": "outputs/windows-acoustic/combined-memory-fp32-baseline/memory-samples.json",
+        "sha256": "a3cd7c7cb1b986e29e98f33e6ddf73389e5ac2cb5d7ff9c7f7fd2bec4c8ec53d"
+      },
+      "run_config": {
+        "path": "outputs/windows-acoustic/combined-memory-fp32-baseline/run-config.json",
+        "sha256": "1500f20500847b82eea9f9ff8e64cc94e0acd6eccfc955e4e2a2cd4011b57f35"
+      },
+      "run_status": "completed",
+      "no_runtime_errors": true,
+      "no_source_changes_during_run": true,
+      "reference_arrays_equal_to_capture": true,
+      "first_sample": {
+        "elapsed_s": 0.04883439999684924,
+        "phase": "constructing_engine",
+        "nvidia_smi": [
+          "2026/09/20 07:49:48.679",
+          "2208",
+          "8151",
+          "3",
+          "19.22"
+        ],
+        "cpu_rss_bytes": 51216384,
+        "cpu_tree_rss_bytes": 63381504,
+        "cpu_processes": [
+          {
+            "pid": 48800,
+            "ppid": 48180,
+            "rss_bytes": 51216384
+          },
+          {
+            "pid": 45680,
+            "ppid": 27568,
+            "rss_bytes": 12165120
+          }
+        ],
+        "cpu_sampling_errors": [],
+        "extra": {
+          "cupy_imported": false
+        }
+      },
+      "global_device_first_mib": 2208.0,
+      "global_device_peak_minus_first_mib": 1804.0,
+      "samples": 188,
+      "global_device_peak_mib": 4012.0,
+      "cpu_tree_peak_rss_bytes": 1972035584,
+      "cpu_parent_peak_rss_bytes": 768954368,
+      "cupy_observed_peak_used_bytes": 526149120,
+      "cupy_observed_peak_total_bytes": 616599040
+    },
+    "fp32_gpt_acoustic_fp16": {
+      "source": {
+        "path": "outputs/windows-acoustic/combined-memory-fp32-gpt/results.json",
+        "sha256": "52fd047bc7051c9fb31c8983ebf0c937a6b6fdef9f4b7ca74b2524c714533b8e"
+      },
+      "samples_source": {
+        "path": "outputs/windows-acoustic/combined-memory-fp32-gpt/memory-samples.json",
+        "sha256": "b07fba59627a5d33bf7048fa0972accfde10b633cbbcd2791d51a14897a930ea"
+      },
+      "run_config": {
+        "path": "outputs/windows-acoustic/combined-memory-fp32-gpt/run-config.json",
+        "sha256": "364285b1d761283389fa57345541b9f51e4141b27cb0dca4514eb9a0047bc66b"
+      },
+      "run_status": "replay_validation_failed",
+      "no_runtime_errors": true,
+      "no_source_changes_during_run": true,
+      "reference_arrays_equal_to_capture": true,
+      "first_sample": {
+        "elapsed_s": 0.04914659999485593,
+        "phase": "constructing_engine",
+        "nvidia_smi": [
+          "2026/09/20 07:50:44.660",
+          "2218",
+          "8151",
+          "3",
+          "19.09"
+        ],
+        "cpu_rss_bytes": 51105792,
+        "cpu_tree_rss_bytes": 63275008,
+        "cpu_processes": [
+          {
+            "pid": 43736,
+            "ppid": 39980,
+            "rss_bytes": 51105792
+          },
+          {
+            "pid": 49016,
+            "ppid": 35176,
+            "rss_bytes": 12169216
+          }
+        ],
+        "cpu_sampling_errors": [],
+        "extra": {
+          "cupy_imported": false
+        }
+      },
+      "global_device_first_mib": 2218.0,
+      "global_device_peak_minus_first_mib": 1624.0,
+      "samples": 153,
+      "global_device_peak_mib": 3842.0,
+      "cpu_tree_peak_rss_bytes": 2090508288,
+      "cpu_parent_peak_rss_bytes": 771530752,
+      "cupy_observed_peak_used_bytes": 534312448,
+      "cupy_observed_peak_total_bytes": 613279744
+    }
+  },
+  "shared_process_experiment": {
+    "status": "experiment_only_not_integrated_into_product",
+    "results": {
+      "path": "outputs/windows-unified/combined-shared-memory/results.json",
+      "sha256": "a4064a7d7fff16f0f338ae65ec470bc3828555150f2d2deb7ee08a6eb62003fc"
+    },
+    "run_config": {
+      "path": "outputs/windows-unified/combined-shared-memory/run-config.json",
+      "sha256": "364285b1d761283389fa57345541b9f51e4141b27cb0dca4514eb9a0047bc66b"
+    },
+    "environment": {
+      "path": "outputs/windows-unified/combined-shared-memory/environment.json",
+      "sha256": "7712c806eadcf76c1b69dc9ea85b210a60b37ca2afca50f00c7809109a3d8893"
+    },
+    "experiment_script": {
+      "path": "harness/windows_shared_cuda_process.py",
+      "sha256": "9051220da31cd07eb3a380a9cea08e663aa4be2ec54136795aeef1b97ae78747"
+    },
+    "request_count": 7,
+    "pairs": [
+      {
+        "name": "first-neutral-short",
+        "identity_equal": true,
+        "pcm_bitwise_equal": true,
+        "original_tolerance_comparison": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 64640,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "shared_wav": {
+          "path": "outputs/windows-unified/combined-shared-memory/first-neutral-short.wav",
+          "sha256": "b63d93207dd89eb87f76d380bca3293710aca59cd63fe35b663d3a0b860e38f0"
+        },
+        "separate_wav": {
+          "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/first-neutral-short.wav",
+          "sha256": "b63d93207dd89eb87f76d380bca3293710aca59cd63fe35b663d3a0b860e38f0"
+        }
+      },
+      {
+        "name": "hot-neutral-short-00",
+        "identity_equal": true,
+        "pcm_bitwise_equal": true,
+        "original_tolerance_comparison": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 64640,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "shared_wav": {
+          "path": "outputs/windows-unified/combined-shared-memory/hot-neutral-short-00.wav",
+          "sha256": "b63d93207dd89eb87f76d380bca3293710aca59cd63fe35b663d3a0b860e38f0"
+        },
+        "separate_wav": {
+          "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/hot-neutral-short-00.wav",
+          "sha256": "b63d93207dd89eb87f76d380bca3293710aca59cd63fe35b663d3a0b860e38f0"
+        }
+      },
+      {
+        "name": "hot-neutral-long-00",
+        "identity_equal": true,
+        "pcm_bitwise_equal": true,
+        "original_tolerance_comparison": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 873600,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "shared_wav": {
+          "path": "outputs/windows-unified/combined-shared-memory/hot-neutral-long-00.wav",
+          "sha256": "9cc50b4ba1d6f1411b129063a296f0e6f88efa6e3a2075acb75de43cf8f9c462"
+        },
+        "separate_wav": {
+          "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/hot-neutral-long-00.wav",
+          "sha256": "9cc50b4ba1d6f1411b129063a296f0e6f88efa6e3a2075acb75de43cf8f9c462"
+        }
+      },
+      {
+        "name": "hot-neutral-multi-00",
+        "identity_equal": true,
+        "pcm_bitwise_equal": true,
+        "original_tolerance_comparison": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 339840,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "shared_wav": {
+          "path": "outputs/windows-unified/combined-shared-memory/hot-neutral-multi-00.wav",
+          "sha256": "bf2e650d4ee3d7353380c2f4217cdc66e071d9dbe5cd66b558d868d1f57f2e3e"
+        },
+        "separate_wav": {
+          "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/hot-neutral-multi-00.wav",
+          "sha256": "bf2e650d4ee3d7353380c2f4217cdc66e071d9dbe5cd66b558d868d1f57f2e3e"
+        }
+      },
+      {
+        "name": "hot-neutral-punctuation-00",
+        "identity_equal": true,
+        "pcm_bitwise_equal": true,
+        "original_tolerance_comparison": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 268160,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "shared_wav": {
+          "path": "outputs/windows-unified/combined-shared-memory/hot-neutral-punctuation-00.wav",
+          "sha256": "3cd0a542141e80e4cb4b4f083656edcdd3c8e32b2ca4cda2ae62e3e75f530e43"
+        },
+        "separate_wav": {
+          "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/hot-neutral-punctuation-00.wav",
+          "sha256": "3cd0a542141e80e4cb4b4f083656edcdd3c8e32b2ca4cda2ae62e3e75f530e43"
+        }
+      },
+      {
+        "name": "after-idle-unload-first",
+        "identity_equal": true,
+        "pcm_bitwise_equal": true,
+        "original_tolerance_comparison": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 64640,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "shared_wav": {
+          "path": "outputs/windows-unified/combined-shared-memory/after-idle-unload-first.wav",
+          "sha256": "b63d93207dd89eb87f76d380bca3293710aca59cd63fe35b663d3a0b860e38f0"
+        },
+        "separate_wav": {
+          "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/after-idle-unload-first.wav",
+          "sha256": "b63d93207dd89eb87f76d380bca3293710aca59cd63fe35b663d3a0b860e38f0"
+        }
+      },
+      {
+        "name": "after-idle-unload-hot",
+        "identity_equal": true,
+        "pcm_bitwise_equal": true,
+        "original_tolerance_comparison": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 64640,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "shared_wav": {
+          "path": "outputs/windows-unified/combined-shared-memory/after-idle-unload-hot.wav",
+          "sha256": "b63d93207dd89eb87f76d380bca3293710aca59cd63fe35b663d3a0b860e38f0"
+        },
+        "separate_wav": {
+          "path": "outputs/windows-acoustic/combined-fp32-gpt-replay/after-idle-unload-hot.wav",
+          "sha256": "b63d93207dd89eb87f76d380bca3293710aca59cd63fe35b663d3a0b860e38f0"
+        }
+      }
+    ],
+    "first_sample": {
+      "elapsed_s": 0.043704299998353235,
+      "phase": "constructing_engine",
+      "nvidia_smi": [
+        "2026/09/20 07:53:08.041",
+        "2200",
+        "8151",
+        "4",
+        "19.06"
+      ],
+      "cpu_rss_bytes": 62930944,
+      "cpu_tree_rss_bytes": 75096064,
+      "cpu_processes": [
+        {
+          "pid": 21376,
+          "ppid": 47048,
+          "rss_bytes": 62930944
+        },
+        {
+          "pid": 36092,
+          "ppid": 15212,
+          "rss_bytes": 12165120
+        }
+      ],
+      "cpu_sampling_errors": [],
+      "extra": {
+        "cupy_imported": false
+      }
+    },
+    "resource_summary": {
+      "samples": 120,
+      "global_device_peak_mib": 3742.0,
+      "cpu_tree_peak_rss_bytes": 1730420736,
+      "cpu_parent_peak_rss_bytes": 1667719168,
+      "cupy_observed_peak_used_bytes": 532024832,
+      "cupy_observed_peak_total_bytes": 613279744
+    },
+    "global_device_peak_minus_first_mib": 1542.0,
+    "scope": "Resource experiment only; timings are not speed evidence. PCM is compared against the same FP32 GPT split256 and FP16 acoustic candidate in separate processes, not against FP32 acoustics."
+  },
+  "both_fp16_natural_experiment": {
+    "scope": "Experimental FP16 GPT baseline attention plus FP16 acoustics; fresh NumPy random draws, not the FP32 replay workload, and no paired strict-equivalence or listening/ASR acceptance.",
+    "timing_results": {
+      "path": "outputs/windows-acoustic/both-fp16-natural/results.json",
+      "sha256": "04afebe750d43c97490700030f344117844b5cb74e536246358a6f7f140e6cb5"
+    },
+    "timing_run_config": {
+      "path": "outputs/windows-acoustic/both-fp16-natural/run-config.json",
+      "sha256": "a8b3bb72ac2f83c6d501b3c0ff360cb7e66a9bb5e45f7d4a1ce070f7b2c03077"
+    },
+    "status": "completed",
+    "no_runtime_errors": true,
+    "no_source_changes_during_run": true,
+    "request_count": 19,
+    "requests": [
+      {
+        "name": "first-neutral-short",
+        "case": "short",
+        "kind": "first",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 80,
+        "semantic_token_count": 79,
+        "pcm_seconds": 3.46,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/first-neutral-short.wav",
+          "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+        }
+      },
+      {
+        "name": "hot-neutral-short-00",
+        "case": "short",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 80,
+        "semantic_token_count": 79,
+        "pcm_seconds": 3.46,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/hot-neutral-short-00.wav",
+          "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+        }
+      },
+      {
+        "name": "hot-neutral-short-01",
+        "case": "short",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 80,
+        "semantic_token_count": 79,
+        "pcm_seconds": 3.46,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/hot-neutral-short-01.wav",
+          "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+        }
+      },
+      {
+        "name": "hot-neutral-short-02",
+        "case": "short",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 80,
+        "semantic_token_count": 79,
+        "pcm_seconds": 3.46,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/hot-neutral-short-02.wav",
+          "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+        }
+      },
+      {
+        "name": "hot-neutral-long-00",
+        "case": "long",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 630,
+        "semantic_token_count": 629,
+        "pcm_seconds": 25.46,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/hot-neutral-long-00.wav",
+          "sha256": "25eb387ad64dece522a86c1f702ff9e4aabda242ee84d4a3dc2c0c8111952faa"
+        }
+      },
+      {
+        "name": "hot-neutral-long-01",
+        "case": "long",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 630,
+        "semantic_token_count": 629,
+        "pcm_seconds": 25.46,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/hot-neutral-long-01.wav",
+          "sha256": "25eb387ad64dece522a86c1f702ff9e4aabda242ee84d4a3dc2c0c8111952faa"
+        }
+      },
+      {
+        "name": "hot-neutral-long-02",
+        "case": "long",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 630,
+        "semantic_token_count": 629,
+        "pcm_seconds": 25.46,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/hot-neutral-long-02.wav",
+          "sha256": "25eb387ad64dece522a86c1f702ff9e4aabda242ee84d4a3dc2c0c8111952faa"
+        }
+      },
+      {
+        "name": "hot-neutral-multi-00",
+        "case": "multi",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 350,
+        "semantic_token_count": 349,
+        "pcm_seconds": 14.26,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/hot-neutral-multi-00.wav",
+          "sha256": "d91772ec91fe1fdcba956ff77cd8a0ad360be69bbe8fb8256cc8efb3c611010c"
+        }
+      },
+      {
+        "name": "hot-neutral-multi-01",
+        "case": "multi",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 350,
+        "semantic_token_count": 349,
+        "pcm_seconds": 14.26,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/hot-neutral-multi-01.wav",
+          "sha256": "d91772ec91fe1fdcba956ff77cd8a0ad360be69bbe8fb8256cc8efb3c611010c"
+        }
+      },
+      {
+        "name": "hot-neutral-multi-02",
+        "case": "multi",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 350,
+        "semantic_token_count": 349,
+        "pcm_seconds": 14.26,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/hot-neutral-multi-02.wav",
+          "sha256": "d91772ec91fe1fdcba956ff77cd8a0ad360be69bbe8fb8256cc8efb3c611010c"
+        }
+      },
+      {
+        "name": "hot-neutral-punctuation-00",
+        "case": "punctuation",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 185,
+        "semantic_token_count": 184,
+        "pcm_seconds": 7.66,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/hot-neutral-punctuation-00.wav",
+          "sha256": "79d690a2553ba70e46f29732688469781d0c87ec0912b10d3a9e93b34f0632d5"
+        }
+      },
+      {
+        "name": "hot-neutral-punctuation-01",
+        "case": "punctuation",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 185,
+        "semantic_token_count": 184,
+        "pcm_seconds": 7.66,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/hot-neutral-punctuation-01.wav",
+          "sha256": "79d690a2553ba70e46f29732688469781d0c87ec0912b10d3a9e93b34f0632d5"
+        }
+      },
+      {
+        "name": "hot-neutral-punctuation-02",
+        "case": "punctuation",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 185,
+        "semantic_token_count": 184,
+        "pcm_seconds": 7.66,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/hot-neutral-punctuation-02.wav",
+          "sha256": "79d690a2553ba70e46f29732688469781d0c87ec0912b10d3a9e93b34f0632d5"
+        }
+      },
+      {
+        "name": "switch-reference-01",
+        "case": "short",
+        "kind": "switch",
+        "reference": "不满",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 75,
+        "semantic_token_count": 74,
+        "pcm_seconds": 3.26,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/switch-reference-01.wav",
+          "sha256": "f08f979bd6eb10ca05d37812182a5d1be0f6ab9acee01a394b752f56d79d75d1"
+        }
+      },
+      {
+        "name": "switch-reference-02",
+        "case": "short",
+        "kind": "switch",
+        "reference": "害羞",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 78,
+        "semantic_token_count": 77,
+        "pcm_seconds": 3.38,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/switch-reference-02.wav",
+          "sha256": "058ca21f3afd2020518e5753117426f82b180f6e71fc83c79d3577cd3f8bde50"
+        }
+      },
+      {
+        "name": "switch-reference-03",
+        "case": "short",
+        "kind": "switch",
+        "reference": "请求",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 73,
+        "semantic_token_count": 72,
+        "pcm_seconds": 3.18,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/switch-reference-03.wav",
+          "sha256": "d7e4d3c6fbe4608be3bebe051b05192a8c53d298b12b5506e4db418222616cdb"
+        }
+      },
+      {
+        "name": "switch-reference-04",
+        "case": "short",
+        "kind": "switch",
+        "reference": "惊讶",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 82,
+        "semantic_token_count": 81,
+        "pcm_seconds": 3.54,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/switch-reference-04.wav",
+          "sha256": "cb9e47b3aaf3336cbb70f0e9c75be598f736ae8e10e3599e3b47e194a776f671"
+        }
+      },
+      {
+        "name": "switch-back-neutral",
+        "case": "short",
+        "kind": "switch",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 80,
+        "semantic_token_count": 79,
+        "pcm_seconds": 3.46,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/switch-back-neutral.wav",
+          "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+        }
+      },
+      {
+        "name": "random-neutral-short",
+        "case": "short",
+        "kind": "random",
+        "reference": "中性",
+        "seed": 4321,
+        "status": "completed",
+        "random_inputs": "fresh",
+        "sampled_token_count": 86,
+        "semantic_token_count": 85,
+        "pcm_seconds": 3.7,
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "wav": {
+          "path": "outputs/windows-acoustic/both-fp16-natural/random-neutral-short.wav",
+          "sha256": "0209a86927a5b8fa7eea7589041d21b28e1bedf49af1edefb6652dc71d9062d9"
+        }
+      }
+    ],
+    "hot_summary": {
+      "short": {
+        "n": 3,
+        "p50_ms": 176.14740000135498,
+        "min_ms": 173.1999999974505,
+        "max_ms": 176.5869999944698,
+        "rtf_pcm_p50": 0.05090965317958236,
+        "audio_seconds": [
+          3.46,
+          3.46,
+          3.46
+        ],
+        "semantic_token_counts": [
+          79,
+          79,
+          79
+        ],
+        "all_completed": true
+      },
+      "long": {
+        "n": 3,
+        "p50_ms": 2416.665600001579,
+        "min_ms": 2391.8077999987872,
+        "max_ms": 2506.0024999984307,
+        "rtf_pcm_p50": 0.09492009426557656,
+        "audio_seconds": [
+          25.46,
+          25.46,
+          25.46
+        ],
+        "semantic_token_counts": [
+          629,
+          629,
+          629
+        ],
+        "all_completed": true
+      },
+      "multi": {
+        "n": 3,
+        "p50_ms": 995.8172999977251,
+        "min_ms": 987.8465000001597,
+        "max_ms": 1002.9495999988285,
+        "rtf_pcm_p50": 0.06983291023826964,
+        "audio_seconds": [
+          14.26,
+          14.26,
+          14.26
+        ],
+        "semantic_token_counts": [
+          349,
+          349,
+          349
+        ],
+        "all_completed": true
+      },
+      "punctuation": {
+        "n": 3,
+        "p50_ms": 443.95649999933084,
+        "min_ms": 440.81110000115586,
+        "max_ms": 444.701400003396,
+        "rtf_pcm_p50": 0.05795776762393353,
+        "audio_seconds": [
+          7.66,
+          7.66,
+          7.66
+        ],
+        "semantic_token_counts": [
+          184,
+          184,
+          184
+        ],
+        "all_completed": true
+      }
+    },
+    "resource_results": {
+      "path": "outputs/windows-acoustic/both-fp16-memory/results.json",
+      "sha256": "babea83f59cb7bd632dd09b85390f3b6443f4e366382aba94402d57d6d5555f4"
+    },
+    "resource_run_config": {
+      "path": "outputs/windows-acoustic/both-fp16-memory/run-config.json",
+      "sha256": "a657577e481704ea04c682315760921c200860691f33cd7d0072d05c4fe4c4e3"
+    },
+    "resource_samples": {
+      "path": "outputs/windows-acoustic/both-fp16-memory/memory-samples.json",
+      "sha256": "889baeef58cba051a332a3d4da27b59303c9f5e4cd1164f160548b2e84460150"
+    },
+    "resource_summary": {
+      "samples": 179,
+      "global_device_peak_mib": 3523.0,
+      "cpu_tree_peak_rss_bytes": 2245320704,
+      "cpu_parent_peak_rss_bytes": 968163328,
+      "cupy_observed_peak_used_bytes": 267315200,
+      "cupy_observed_peak_total_bytes": 330963456
+    },
+    "first_sample": {
+      "elapsed_s": 0.047735599997395184,
+      "phase": "imports",
+      "nvidia_smi": [
+        "2026/09/20 07:55:03.721",
+        "2196",
+        "8151",
+        "3",
+        "19.07"
+      ],
+      "cpu_rss_bytes": 34250752,
+      "cpu_tree_rss_bytes": 46419968,
+      "cpu_processes": [
+        {
+          "pid": 2804,
+          "ppid": 30092,
+          "rss_bytes": 34250752
+        },
+        {
+          "pid": 46948,
+          "ppid": 45336,
+          "rss_bytes": 12169216
+        }
+      ],
+      "cpu_sampling_errors": [],
+      "extra": {
+        "cupy_imported": false
+      }
+    },
+    "global_device_peak_minus_first_mib": 1327.0,
+    "human_listening": "not_run",
+    "asr": "not_run",
+    "quality_accepted": false,
+    "shared_process_experiment": {
+      "status": "experiment_only_not_integrated_into_product",
+      "results": {
+        "path": "outputs/windows-unified/both-fp16-shared-memory/results.json",
+        "sha256": "25c065db72dd716cf2d8e799ab179d50241672ee823a39d542ddc6f303c997fa"
+      },
+      "run_config": {
+        "path": "outputs/windows-unified/both-fp16-shared-memory/run-config.json",
+        "sha256": "a657577e481704ea04c682315760921c200860691f33cd7d0072d05c4fe4c4e3"
+      },
+      "environment": {
+        "path": "outputs/windows-unified/both-fp16-shared-memory/environment.json",
+        "sha256": "9205b6bdfc02919da63cb2825cd24b138bf38ab8d42deafd99479b4ddd559d08"
+      },
+      "request_count": 7,
+      "pairs": [
+        {
+          "name": "first-neutral-short",
+          "identity_equal": true,
+          "pcm_bitwise_equal": true,
+          "original_tolerance_comparison": {
+            "passed": true,
+            "max_abs_error": 0.0,
+            "rmse": 0.0,
+            "outside_tolerance": 0,
+            "elements": 110720,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "shared_wav": {
+            "path": "outputs/windows-unified/both-fp16-shared-memory/first-neutral-short.wav",
+            "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+          },
+          "separate_wav": {
+            "path": "outputs/windows-acoustic/both-fp16-memory/first-neutral-short.wav",
+            "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+          }
+        },
+        {
+          "name": "hot-neutral-short-00",
+          "identity_equal": true,
+          "pcm_bitwise_equal": true,
+          "original_tolerance_comparison": {
+            "passed": true,
+            "max_abs_error": 0.0,
+            "rmse": 0.0,
+            "outside_tolerance": 0,
+            "elements": 110720,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "shared_wav": {
+            "path": "outputs/windows-unified/both-fp16-shared-memory/hot-neutral-short-00.wav",
+            "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+          },
+          "separate_wav": {
+            "path": "outputs/windows-acoustic/both-fp16-memory/hot-neutral-short-00.wav",
+            "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+          }
+        },
+        {
+          "name": "hot-neutral-long-00",
+          "identity_equal": true,
+          "pcm_bitwise_equal": true,
+          "original_tolerance_comparison": {
+            "passed": true,
+            "max_abs_error": 0.0,
+            "rmse": 0.0,
+            "outside_tolerance": 0,
+            "elements": 814720,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "shared_wav": {
+            "path": "outputs/windows-unified/both-fp16-shared-memory/hot-neutral-long-00.wav",
+            "sha256": "25eb387ad64dece522a86c1f702ff9e4aabda242ee84d4a3dc2c0c8111952faa"
+          },
+          "separate_wav": {
+            "path": "outputs/windows-acoustic/both-fp16-memory/hot-neutral-long-00.wav",
+            "sha256": "25eb387ad64dece522a86c1f702ff9e4aabda242ee84d4a3dc2c0c8111952faa"
+          }
+        },
+        {
+          "name": "hot-neutral-multi-00",
+          "identity_equal": true,
+          "pcm_bitwise_equal": true,
+          "original_tolerance_comparison": {
+            "passed": true,
+            "max_abs_error": 0.0,
+            "rmse": 0.0,
+            "outside_tolerance": 0,
+            "elements": 456320,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "shared_wav": {
+            "path": "outputs/windows-unified/both-fp16-shared-memory/hot-neutral-multi-00.wav",
+            "sha256": "d91772ec91fe1fdcba956ff77cd8a0ad360be69bbe8fb8256cc8efb3c611010c"
+          },
+          "separate_wav": {
+            "path": "outputs/windows-acoustic/both-fp16-memory/hot-neutral-multi-00.wav",
+            "sha256": "d91772ec91fe1fdcba956ff77cd8a0ad360be69bbe8fb8256cc8efb3c611010c"
+          }
+        },
+        {
+          "name": "hot-neutral-punctuation-00",
+          "identity_equal": true,
+          "pcm_bitwise_equal": true,
+          "original_tolerance_comparison": {
+            "passed": true,
+            "max_abs_error": 0.0,
+            "rmse": 0.0,
+            "outside_tolerance": 0,
+            "elements": 245120,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "shared_wav": {
+            "path": "outputs/windows-unified/both-fp16-shared-memory/hot-neutral-punctuation-00.wav",
+            "sha256": "79d690a2553ba70e46f29732688469781d0c87ec0912b10d3a9e93b34f0632d5"
+          },
+          "separate_wav": {
+            "path": "outputs/windows-acoustic/both-fp16-memory/hot-neutral-punctuation-00.wav",
+            "sha256": "79d690a2553ba70e46f29732688469781d0c87ec0912b10d3a9e93b34f0632d5"
+          }
+        },
+        {
+          "name": "after-idle-unload-first",
+          "identity_equal": true,
+          "pcm_bitwise_equal": true,
+          "original_tolerance_comparison": {
+            "passed": true,
+            "max_abs_error": 0.0,
+            "rmse": 0.0,
+            "outside_tolerance": 0,
+            "elements": 110720,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "shared_wav": {
+            "path": "outputs/windows-unified/both-fp16-shared-memory/after-idle-unload-first.wav",
+            "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+          },
+          "separate_wav": {
+            "path": "outputs/windows-acoustic/both-fp16-memory/after-idle-unload-first.wav",
+            "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+          }
+        },
+        {
+          "name": "after-idle-unload-hot",
+          "identity_equal": true,
+          "pcm_bitwise_equal": true,
+          "original_tolerance_comparison": {
+            "passed": true,
+            "max_abs_error": 0.0,
+            "rmse": 0.0,
+            "outside_tolerance": 0,
+            "elements": 110720,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "shared_wav": {
+            "path": "outputs/windows-unified/both-fp16-shared-memory/after-idle-unload-hot.wav",
+            "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+          },
+          "separate_wav": {
+            "path": "outputs/windows-acoustic/both-fp16-memory/after-idle-unload-hot.wav",
+            "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+          }
+        }
+      ],
+      "first_sample": {
+        "elapsed_s": 0.041224499997042585,
+        "phase": "constructing_engine",
+        "nvidia_smi": [
+          "2026/09/20 07:58:19.705",
+          "2201",
+          "8151",
+          "4",
+          "18.95"
+        ],
+        "cpu_rss_bytes": 52674560,
+        "cpu_tree_rss_bytes": 64839680,
+        "cpu_processes": [
+          {
+            "pid": 37808,
+            "ppid": 48356,
+            "rss_bytes": 52674560
+          },
+          {
+            "pid": 6672,
+            "ppid": 45564,
+            "rss_bytes": 12165120
+          }
+        ],
+        "cpu_sampling_errors": [],
+        "extra": {
+          "cupy_imported": false
+        }
+      },
+      "resource_summary": {
+        "samples": 146,
+        "global_device_peak_mib": 3419.0,
+        "cpu_tree_peak_rss_bytes": 1633632256,
+        "cpu_parent_peak_rss_bytes": 1570889728,
+        "cupy_observed_peak_used_bytes": 283311616,
+        "cupy_observed_peak_total_bytes": 330963456
+      },
+      "global_device_peak_minus_first_mib": 1218.0
+    }
+  },
+  "failure_recovery": {
+    "lifecycle-fast": {
+      "source": {
+        "path": "outputs/windows-acoustic/lifecycle-fast/result.json",
+        "sha256": "5d550170c5b96e2e19ff61e54e52d1869eb66eee2a6b796a033bd8273315929b"
+      },
+      "report": {
+        "passed": true,
+        "cases": [
+          {
+            "case": "resident_worker_killed_then_retry",
+            "checks": {
+              "raised": true,
+              "busy_cleared": true,
+              "worker_retired": true,
+              "gpt_weights_preserved": true,
+              "request_state_released": true,
+              "pcm_exact": true,
+              "phones_equal": true,
+              "sampled_tokens_equal": true,
+              "stop_reasons_equal": true,
+              "completed": true,
+              "new_worker_pid": true
+            },
+            "pcm_comparison": {
+              "length_equal": true,
+              "max_abs_lsb": 0,
+              "different_samples": 0,
+              "existing_fp32_atol": 0.0001,
+              "existing_fp32_rtol": 1e-05,
+              "within_existing_fp32_tolerance": true
+            },
+            "error": "OSError(22, 'Invalid argument')",
+            "killed_pid": 33916,
+            "recovered_pid": 48988
+          },
+          {
+            "case": "staged_semantic_cancellation_then_retry",
+            "checks": {
+              "cancelled_at_expected_stage": true,
+              "busy_cleared": true,
+              "gpt_unloaded": true,
+              "sovits_unloaded": true,
+              "pcm_exact": true,
+              "phones_equal": true,
+              "sampled_tokens_equal": true,
+              "stop_reasons_equal": true,
+              "completed": true,
+              "retry_unloaded_all_models": true
+            },
+            "pcm_comparison": {
+              "length_equal": true,
+              "max_abs_lsb": 0,
+              "different_samples": 0,
+              "existing_fp32_atol": 0.0001,
+              "existing_fp32_rtol": 1e-05,
+              "within_existing_fp32_tolerance": true
+            },
+            "cancellation_stage": "after_prefill"
+          },
+          {
+            "case": "staged_acoustic_cancellation_then_retry",
+            "checks": {
+              "cancelled_at_expected_stage": true,
+              "busy_cleared": true,
+              "gpt_unloaded": true,
+              "sovits_unloaded": true,
+              "pcm_exact": true,
+              "phones_equal": true,
+              "sampled_tokens_equal": true,
+              "stop_reasons_equal": true,
+              "completed": true,
+              "retry_unloaded_all_models": true
+            },
+            "pcm_comparison": {
+              "length_equal": true,
+              "max_abs_lsb": 0,
+              "different_samples": 0,
+              "existing_fp32_atol": 0.0001,
+              "existing_fp32_rtol": 1e-05,
+              "within_existing_fp32_tolerance": true
+            },
+            "cancellation_stage": "before_acoustic"
+          }
+        ],
+        "text": "おはよう。今日もよろしくね。",
+        "lifecycle_passed": true,
+        "numerical_within_existing_tolerance": true,
+        "bitwise_equal": true,
+        "seed": 1234,
+        "rng": "numpy.default_rng; same backend retries",
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "gpt_attention_chunk_size": 256,
+        "model_config_sha256": "84a62fcd604a30d6db4f845f93340333e533cafa5d4fee8f8822bb46a653dedf",
+        "source_sha256": {
+          "nvidia.py": "350a93ee96d94a9c6b3e97b00ff7e502ef531a778d3a6844cd93b4e8209a85fd",
+          "cuda_gpt.py": "30666267ba9d92969ecf5bbbdf14879f47e197b6c9ea78726972165ed370f358",
+          "ort_process.py": "0caba3ac92296f82eabb3f63263ed37b4e737caa053f94720ae74d3834105996",
+          "ort_sovits.py": "7ade156b55b32e2b3b98f90ee2c4ab8821772e29bd27e4a5c84673f6cdd17a26"
+        },
+        "wall_seconds": 13.502855999999156,
+        "torch_imported": false,
+        "scope": "Real GPU models; one neutral short text; no quality/performance claim"
+      }
+    },
+    "lifecycle-both-fp16": {
+      "source": {
+        "path": "outputs/windows-acoustic/lifecycle-both-fp16/result.json",
+        "sha256": "be4f3b617798da29b18e0f116dbe8eefd078266b3a712e7d97095d2ce279597b"
+      },
+      "report": {
+        "passed": true,
+        "cases": [
+          {
+            "case": "resident_worker_killed_then_retry",
+            "checks": {
+              "raised": true,
+              "busy_cleared": true,
+              "worker_retired": true,
+              "gpt_weights_preserved": true,
+              "request_state_released": true,
+              "pcm_exact": true,
+              "phones_equal": true,
+              "sampled_tokens_equal": true,
+              "stop_reasons_equal": true,
+              "completed": true,
+              "new_worker_pid": true
+            },
+            "pcm_comparison": {
+              "length_equal": true,
+              "max_abs_lsb": 0,
+              "different_samples": 0,
+              "existing_fp32_atol": 0.0001,
+              "existing_fp32_rtol": 1e-05,
+              "within_existing_fp32_tolerance": true
+            },
+            "error": "OSError(22, 'Invalid argument')",
+            "killed_pid": 48024,
+            "recovered_pid": 42440
+          },
+          {
+            "case": "staged_semantic_cancellation_then_retry",
+            "checks": {
+              "cancelled_at_expected_stage": true,
+              "busy_cleared": true,
+              "gpt_unloaded": true,
+              "sovits_unloaded": true,
+              "pcm_exact": true,
+              "phones_equal": true,
+              "sampled_tokens_equal": true,
+              "stop_reasons_equal": true,
+              "completed": true,
+              "retry_unloaded_all_models": true
+            },
+            "pcm_comparison": {
+              "length_equal": true,
+              "max_abs_lsb": 0,
+              "different_samples": 0,
+              "existing_fp32_atol": 0.0001,
+              "existing_fp32_rtol": 1e-05,
+              "within_existing_fp32_tolerance": true
+            },
+            "cancellation_stage": "after_prefill"
+          },
+          {
+            "case": "staged_acoustic_cancellation_then_retry",
+            "checks": {
+              "cancelled_at_expected_stage": true,
+              "busy_cleared": true,
+              "gpt_unloaded": true,
+              "sovits_unloaded": true,
+              "pcm_exact": true,
+              "phones_equal": true,
+              "sampled_tokens_equal": true,
+              "stop_reasons_equal": true,
+              "completed": true,
+              "retry_unloaded_all_models": true
+            },
+            "pcm_comparison": {
+              "length_equal": true,
+              "max_abs_lsb": 0,
+              "different_samples": 0,
+              "existing_fp32_atol": 0.0001,
+              "existing_fp32_rtol": 1e-05,
+              "within_existing_fp32_tolerance": true
+            },
+            "cancellation_stage": "before_acoustic"
+          }
+        ],
+        "text": "おはよう。今日もよろしくね。",
+        "lifecycle_passed": true,
+        "numerical_within_existing_tolerance": true,
+        "bitwise_equal": true,
+        "seed": 1234,
+        "rng": "numpy.default_rng; same backend retries",
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "baseline",
+        "gpt_attention_chunk_size": 256,
+        "model_config_sha256": "84a62fcd604a30d6db4f845f93340333e533cafa5d4fee8f8822bb46a653dedf",
+        "source_sha256": {
+          "nvidia.py": "350a93ee96d94a9c6b3e97b00ff7e502ef531a778d3a6844cd93b4e8209a85fd",
+          "cuda_gpt.py": "30666267ba9d92969ecf5bbbdf14879f47e197b6c9ea78726972165ed370f358",
+          "ort_process.py": "0caba3ac92296f82eabb3f63263ed37b4e737caa053f94720ae74d3834105996",
+          "ort_sovits.py": "7ade156b55b32e2b3b98f90ee2c4ab8821772e29bd27e4a5c84673f6cdd17a26"
+        },
+        "wall_seconds": 14.369508099996892,
+        "torch_imported": false,
+        "scope": "Real GPU models; one neutral short text; no quality/performance claim"
+      }
+    }
+  },
+  "fp32_gpt_split256_acoustic_fp16_natural_experiment": {
+    "scope": "FP32 GPT split-kv chunk=256 plus FP16 acoustics with fresh NumPy random draws, distinct from fixed replay workload; successful completion is not perceptual acceptance.",
+    "results": {
+      "path": "outputs/windows-acoustic/fast-natural/results.json",
+      "sha256": "3e9ecf9147f9cec2b3792517a7d0110b9ebe69d6eab2e677f086b731f50f93ec"
+    },
+    "run_config": {
+      "path": "outputs/windows-acoustic/fast-natural/run-config.json",
+      "sha256": "30f90c4b8dd5f5e1c2847ce840310119187f4be6a78074e642e1d8215bcf5b1d"
+    },
+    "status": "completed",
+    "no_runtime_errors": true,
+    "no_source_changes_during_run": true,
+    "hot_summary": {
+      "short": {
+        "n": 3,
+        "p50_ms": 215.37810000154423,
+        "min_ms": 212.30640000430867,
+        "max_ms": 216.92930000426713,
+        "rtf_pcm_p50": 0.06224800578079313,
+        "audio_seconds": [
+          3.46,
+          3.46,
+          3.46
+        ],
+        "semantic_token_counts": [
+          79,
+          79,
+          79
+        ],
+        "all_completed": true
+      },
+      "long": {
+        "n": 3,
+        "p50_ms": 1511.054000002332,
+        "min_ms": 1505.681900001946,
+        "max_ms": 1530.3155000001425,
+        "rtf_pcm_p50": 0.05834185328194332,
+        "audio_seconds": [
+          25.9,
+          25.9,
+          25.9
+        ],
+        "semantic_token_counts": [
+          640,
+          640,
+          640
+        ],
+        "all_completed": true
+      },
+      "multi": {
+        "n": 3,
+        "p50_ms": 835.9325000055833,
+        "min_ms": 821.2535999991815,
+        "max_ms": 839.4662999999127,
+        "rtf_pcm_p50": 0.05797035367583795,
+        "audio_seconds": [
+          14.42,
+          14.42,
+          14.42
+        ],
+        "semantic_token_counts": [
+          353,
+          353,
+          353
+        ],
+        "all_completed": true
+      },
+      "punctuation": {
+        "n": 3,
+        "p50_ms": 437.4826999992365,
+        "min_ms": 435.85629999870434,
+        "max_ms": 439.231700001983,
+        "rtf_pcm_p50": 0.05711262402078805,
+        "audio_seconds": [
+          7.66,
+          7.66,
+          7.66
+        ],
+        "semantic_token_counts": [
+          184,
+          184,
+          184
+        ],
+        "all_completed": true
+      }
+    },
+    "request_count": 19,
+    "requests": [
+      {
+        "name": "first-neutral-short",
+        "case": "short",
+        "kind": "first",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 3.46,
+        "semantic_token_count": 79,
+        "sampled_token_count": 80,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/first-neutral-short.wav",
+          "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+        }
+      },
+      {
+        "name": "hot-neutral-short-00",
+        "case": "short",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 3.46,
+        "semantic_token_count": 79,
+        "sampled_token_count": 80,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/hot-neutral-short-00.wav",
+          "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+        }
+      },
+      {
+        "name": "hot-neutral-short-01",
+        "case": "short",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 3.46,
+        "semantic_token_count": 79,
+        "sampled_token_count": 80,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/hot-neutral-short-01.wav",
+          "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+        }
+      },
+      {
+        "name": "hot-neutral-short-02",
+        "case": "short",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 3.46,
+        "semantic_token_count": 79,
+        "sampled_token_count": 80,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/hot-neutral-short-02.wav",
+          "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+        }
+      },
+      {
+        "name": "hot-neutral-long-00",
+        "case": "long",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 25.9,
+        "semantic_token_count": 640,
+        "sampled_token_count": 641,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/hot-neutral-long-00.wav",
+          "sha256": "65fd135339b02ae65bb8218389cf852753860a2603917f65e4ccef9a08355026"
+        }
+      },
+      {
+        "name": "hot-neutral-long-01",
+        "case": "long",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 25.9,
+        "semantic_token_count": 640,
+        "sampled_token_count": 641,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/hot-neutral-long-01.wav",
+          "sha256": "65fd135339b02ae65bb8218389cf852753860a2603917f65e4ccef9a08355026"
+        }
+      },
+      {
+        "name": "hot-neutral-long-02",
+        "case": "long",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 25.9,
+        "semantic_token_count": 640,
+        "sampled_token_count": 641,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/hot-neutral-long-02.wav",
+          "sha256": "65fd135339b02ae65bb8218389cf852753860a2603917f65e4ccef9a08355026"
+        }
+      },
+      {
+        "name": "hot-neutral-multi-00",
+        "case": "multi",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 14.42,
+        "semantic_token_count": 353,
+        "sampled_token_count": 354,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/hot-neutral-multi-00.wav",
+          "sha256": "4cbc9520622f30acc3eebf369ba873cb698b362dc414447f18998f675faf1bf4"
+        }
+      },
+      {
+        "name": "hot-neutral-multi-01",
+        "case": "multi",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 14.42,
+        "semantic_token_count": 353,
+        "sampled_token_count": 354,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/hot-neutral-multi-01.wav",
+          "sha256": "4cbc9520622f30acc3eebf369ba873cb698b362dc414447f18998f675faf1bf4"
+        }
+      },
+      {
+        "name": "hot-neutral-multi-02",
+        "case": "multi",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 14.42,
+        "semantic_token_count": 353,
+        "sampled_token_count": 354,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/hot-neutral-multi-02.wav",
+          "sha256": "4cbc9520622f30acc3eebf369ba873cb698b362dc414447f18998f675faf1bf4"
+        }
+      },
+      {
+        "name": "hot-neutral-punctuation-00",
+        "case": "punctuation",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 7.66,
+        "semantic_token_count": 184,
+        "sampled_token_count": 185,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/hot-neutral-punctuation-00.wav",
+          "sha256": "d8c0884a120ac1a4f81d1d37d3ecb0703b0891df207d6a874d69b7c108eb22c1"
+        }
+      },
+      {
+        "name": "hot-neutral-punctuation-01",
+        "case": "punctuation",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 7.66,
+        "semantic_token_count": 184,
+        "sampled_token_count": 185,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/hot-neutral-punctuation-01.wav",
+          "sha256": "d8c0884a120ac1a4f81d1d37d3ecb0703b0891df207d6a874d69b7c108eb22c1"
+        }
+      },
+      {
+        "name": "hot-neutral-punctuation-02",
+        "case": "punctuation",
+        "kind": "hot",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 7.66,
+        "semantic_token_count": 184,
+        "sampled_token_count": 185,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/hot-neutral-punctuation-02.wav",
+          "sha256": "d8c0884a120ac1a4f81d1d37d3ecb0703b0891df207d6a874d69b7c108eb22c1"
+        }
+      },
+      {
+        "name": "switch-reference-01",
+        "case": "short",
+        "kind": "switch",
+        "reference": "不满",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 3.26,
+        "semantic_token_count": 74,
+        "sampled_token_count": 75,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/switch-reference-01.wav",
+          "sha256": "f08f979bd6eb10ca05d37812182a5d1be0f6ab9acee01a394b752f56d79d75d1"
+        }
+      },
+      {
+        "name": "switch-reference-02",
+        "case": "short",
+        "kind": "switch",
+        "reference": "害羞",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 3.38,
+        "semantic_token_count": 77,
+        "sampled_token_count": 78,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/switch-reference-02.wav",
+          "sha256": "058ca21f3afd2020518e5753117426f82b180f6e71fc83c79d3577cd3f8bde50"
+        }
+      },
+      {
+        "name": "switch-reference-03",
+        "case": "short",
+        "kind": "switch",
+        "reference": "请求",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 3.18,
+        "semantic_token_count": 72,
+        "sampled_token_count": 73,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/switch-reference-03.wav",
+          "sha256": "d7e4d3c6fbe4608be3bebe051b05192a8c53d298b12b5506e4db418222616cdb"
+        }
+      },
+      {
+        "name": "switch-reference-04",
+        "case": "short",
+        "kind": "switch",
+        "reference": "惊讶",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 3.54,
+        "semantic_token_count": 81,
+        "sampled_token_count": 82,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/switch-reference-04.wav",
+          "sha256": "cb9e47b3aaf3336cbb70f0e9c75be598f736ae8e10e3599e3b47e194a776f671"
+        }
+      },
+      {
+        "name": "switch-back-neutral",
+        "case": "short",
+        "kind": "switch",
+        "reference": "中性",
+        "seed": 1234,
+        "status": "completed",
+        "pcm_seconds": 3.46,
+        "semantic_token_count": 79,
+        "sampled_token_count": 80,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/switch-back-neutral.wav",
+          "sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7"
+        }
+      },
+      {
+        "name": "random-neutral-short",
+        "case": "short",
+        "kind": "random",
+        "reference": "中性",
+        "seed": 4321,
+        "status": "completed",
+        "pcm_seconds": 3.7,
+        "semantic_token_count": 85,
+        "sampled_token_count": 86,
+        "gpt_precision": "fp32",
+        "acoustic_precision": "fp16",
+        "gpt_attention": "split-kv",
+        "random_inputs": "fresh",
+        "stop_reasons": [
+          [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        ],
+        "wav": {
+          "path": "outputs/windows-acoustic/fast-natural/random-neutral-short.wav",
+          "sha256": "0209a86927a5b8fa7eea7589041d21b28e1bedf49af1edefb6652dc71d9062d9"
+        }
+      }
+    ],
+    "human_listening": "not_run",
+    "asr": "not_run",
+    "quality_accepted": false
+  },
+  "resource_scope": "WDDM full-card nvidia-smi sampling includes desktop activity and may miss brief peaks. Peak minus first sample is not exact process-exclusive VRAM. CPU process-tree RSS is host memory, not VRAM.",
+  "cli": {
+    "source": {
+      "path": "outputs/windows-acoustic/combined-cli.json",
+      "sha256": "f03b6861d5059f54c5ec01d91b350360c52bcd3ee31b512d8a4f6a37c450a672"
+    },
+    "status": "completed",
+    "gpt_precision": "fp32",
+    "acoustic_precision": "fp16",
+    "gpt_attention": "split-kv",
+    "gpt_attention_chunk_size": 256,
+    "sample_rate": 32000,
+    "pcm_seconds": 3.62,
+    "wav_sha256": "6425c5b3c47b2236d63345e6ee89a5c671c5aae34be82e88715d04e6507e0ba7",
+    "torch_imported": false,
+    "quality": {
+      "human_listening": "not_run",
+      "asr": "not_run"
+    }
+  },
+  "human_listening": "not_run",
+  "asr": "not_run",
+  "quality_accepted": false
+}

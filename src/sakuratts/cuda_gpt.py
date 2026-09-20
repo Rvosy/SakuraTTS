@@ -232,10 +232,100 @@ extern "C" __global__ void attention(const __half* qkv,const __half* bias,
 '''
 
 
+_SPLIT_KV_SOURCE = r'''
+#include <cuda_fp16.h>
+#if USE_FP16
+typedef __half scalar_t;
+__device__ float read_value(scalar_t v){return __half2float(v);}
+__device__ scalar_t write_value(float v){return __float2half_rn(v);}
+#else
+typedef float scalar_t;
+__device__ float read_value(scalar_t v){return v;}
+__device__ scalar_t write_value(float v){return v;}
+#endif
+extern "C" __global__ void attention_split(const scalar_t* qkv,const scalar_t* bias,
+ const scalar_t* key,const scalar_t* value,float* stats,float* partials,
+ const int* state,int dim,int capacity,int chunk_size,int chunks){
+ extern __shared__ float scores[];
+ __shared__ float reduce[256];
+ int h=blockIdx.x,chunk=blockIdx.y,tid=threadIdx.x;
+ int start=chunk*chunk_size,n=state[1]+1;
+ int count=min(chunk_size,max(0,n-start));
+ int part=h*chunks+chunk,lane=tid%32,warp=tid/32;
+ if(count==0){
+   if(tid==0){stats[part*2]=-3.402823466e+38F;stats[part*2+1]=0;}
+   for(int d=tid;d<dim;d+=256)partials[part*dim+d]=0;
+   return;
+ }
+ for(int p=warp;p<count;p+=8){float s=0;
+   for(int d=lane;d<dim;d+=32){
+     float q=read_value(write_value(read_value(qkv[h*dim+d])+read_value(bias[h*dim+d])));
+     s+=q*read_value(key[(h*capacity+start+p)*dim+d]);
+   }
+   for(int offset=16;offset;offset>>=1)s+=__shfl_down_sync(0xffffffff,s,offset);
+   if(lane==0)scores[p]=s*rsqrtf((float)dim);
+ }
+ __syncthreads();
+ float maximum=-3.402823466e+38F;
+ for(int p=tid;p<count;p+=256)maximum=fmaxf(maximum,scores[p]);
+ reduce[tid]=maximum;__syncthreads();
+ for(int k=128;k;k>>=1){if(tid<k)reduce[tid]=fmaxf(reduce[tid],reduce[tid+k]);__syncthreads();}
+ maximum=reduce[0];float total=0;
+ for(int p=tid;p<count;p+=256){float s=expf(scores[p]-maximum);scores[p]=s;total+=s;}
+ reduce[tid]=total;__syncthreads();
+ for(int k=128;k;k>>=1){if(tid<k)reduce[tid]+=reduce[tid+k];__syncthreads();}
+ if(tid==0){stats[part*2]=maximum;stats[part*2+1]=reduce[0];}
+ __syncthreads();
+ for(int tile=0;tile<dim;tile+=32){
+   int d=tile+lane;float s=0;
+   if(d<dim)for(int p=warp;p<count;p+=8)s+=scores[p]*read_value(value[(h*capacity+start+p)*dim+d]);
+   reduce[tid]=s;__syncthreads();
+   if(warp==0 && d<dim){float sum=0;for(int w=0;w<8;w++)sum+=reduce[w*32+lane];partials[part*dim+d]=sum;}
+   __syncthreads();
+ }
+}
+extern "C" __global__ void attention_merge(const float* stats,const float* partials,
+ scalar_t* out,int dim,int chunks){
+ extern __shared__ float factors[];
+ __shared__ float reduce[256];
+ int h=blockIdx.x,tid=threadIdx.x;
+ float maximum=-3.402823466e+38F;
+ for(int c=tid;c<chunks;c+=256){int part=h*chunks+c;
+   if(stats[part*2+1]>0)maximum=fmaxf(maximum,stats[part*2]);
+ }
+ reduce[tid]=maximum;__syncthreads();
+ for(int k=128;k;k>>=1){if(tid<k)reduce[tid]=fmaxf(reduce[tid],reduce[tid+k]);__syncthreads();}
+ maximum=reduce[0];float total=0;
+ for(int c=tid;c<chunks;c+=256){int part=h*chunks+c;
+   float factor=stats[part*2+1]>0 ? expf(stats[part*2]-maximum) : 0;
+   factors[c]=factor;total+=factor*stats[part*2+1];
+ }
+ reduce[tid]=total;__syncthreads();
+ for(int k=128;k;k>>=1){if(tid<k)reduce[tid]+=reduce[tid+k];__syncthreads();}
+ total=reduce[0];
+ for(int d=tid;d<dim;d+=256){float sum=0;
+   for(int c=0;c<chunks;c++)sum+=factors[c]*partials[(h*chunks+c)*dim+d];
+   out[h*dim+d]=write_value(sum/total);
+ }
+}
+'''
+
+
+def _validate_attention(attention, chunk_size):
+    if attention not in ("baseline", "split-kv"):
+        raise ValueError("GPT attention must be baseline or split-kv")
+    if not isinstance(chunk_size, (int, np.integer)) or chunk_size not in (256, 512):
+        raise ValueError("GPT attention chunk size must be 256 or 512")
+
+
 class CUDAGPT:
-    def __init__(self, manifest, weights, capacity, use_graph=True, precision="fp32"):
+    def __init__(self, manifest, weights, capacity, use_graph=True, precision="fp32",
+                 attention="baseline", attention_chunk_size=256):
         if precision not in ("fp32", "fp16"):
             raise ValueError("GPT precision must be fp32 or fp16")
+        _validate_attention(attention, attention_chunk_size)
+        self.attention, self.attention_chunk_size = attention, attention_chunk_size
+        self.attention_chunks = (capacity+attention_chunk_size-1)//attention_chunk_size
         self.precision = precision
         self.dtype = cp.float16 if precision == "fp16" else cp.float32
         if any(weight.dtype != self.dtype for weight in weights.values()):
@@ -254,6 +344,10 @@ class CUDAGPT:
         source = _FP16_SOURCE if precision == "fp16" else _SOURCE
         self.kernels = {name: cp.RawKernel(source, name, options=("--std=c++11", "--fmad=false"))
                         for name in ("layer_norm", "embedding", "kv_write", "attention")}
+        if attention == "split-kv":
+            split_source = f"#define USE_FP16 {int(precision == 'fp16')}\n" + _SPLIT_KV_SOURCE
+            self.kernels.update({name: cp.RawKernel(split_source, name,
+                options=("--std=c++11", "--fmad=false")) for name in ("attention_split", "attention_merge")})
         for kernel in self.kernels.values():
             kernel.compile()
         self.stream = cp.cuda.Stream(non_blocking=True)
@@ -263,9 +357,11 @@ class CUDAGPT:
         self.length = self.text_length = 0
 
     @classmethod
-    def load(cls, package, capacity=2048, use_graph=True, precision="fp32"):
+    def load(cls, package, capacity=2048, use_graph=True, precision="fp32",
+             attention="baseline", attention_chunk_size=256):
         if precision not in ("fp32", "fp16"):
             raise ValueError("GPT precision must be fp32 or fp16")
+        _validate_attention(attention, attention_chunk_size)
         package = Path(package)
         manifest = json.loads((package / "manifest.json").read_text(encoding="utf-8"))
         if (manifest["format"] != "sakuratts-gpt-fp32-v1"
@@ -288,7 +384,7 @@ class CUDAGPT:
                     value = np.ascontiguousarray(value, dtype=dtype)
                 weights[name] = cp.asarray(value)
         cp.cuda.get_current_stream().synchronize()
-        return cls(manifest, weights, capacity, use_graph, precision)
+        return cls(manifest, weights, capacity, use_graph, precision, attention, attention_chunk_size)
 
     def _allocate_state(self):
         if self.keys is None:
@@ -299,6 +395,9 @@ class CUDAGPT:
                 "x": (1, w), "qkv": (1, 3*w), "attention": (1, w),
                 "mix": (1, w), "ffn": (1, 4*w), "out": (1, w),
                 "logits": (1, self.config["vocab_size"])}.items()}
+            if self.attention == "split-kv":
+                self.workspace["attention_stats"] = cp.empty((self.heads, self.attention_chunks, 2), cp.float32)
+                self.workspace["attention_partials"] = cp.empty((self.heads, self.attention_chunks, self.head_dim), cp.float32)
             self.state = cp.zeros(3, cp.int32)
 
     def release_request_state(self):
@@ -430,9 +529,21 @@ class CUDAGPT:
             self.kernels["kv_write"](((self.width+255)//256,), (256,), (
                 b["qkv"],w[pre+"qkv.bias"],self.keys[layer],self.values[layer],self.state,
                 np.int32(self.width),np.int32(self.head_dim),np.int32(self.capacity)))
-            self.kernels["attention"]((self.heads,), (256,), (
-                b["qkv"],w[pre+"qkv.bias"],self.keys[layer],self.values[layer],b["attention"],self.state,
-                np.int32(self.head_dim),np.int32(self.capacity)),shared_mem=self.capacity*4)
+            if self.attention == "split-kv":
+                self.kernels["attention_split"]((self.heads, self.attention_chunks), (256,), (
+                    b["qkv"],w[pre+"qkv.bias"],self.keys[layer],self.values[layer],
+                    b["attention_stats"],b["attention_partials"],self.state,
+                    np.int32(self.head_dim),np.int32(self.capacity),
+                    np.int32(self.attention_chunk_size),np.int32(self.attention_chunks)),
+                    shared_mem=self.attention_chunk_size*4)
+                self.kernels["attention_merge"]((self.heads,), (256,), (
+                    b["attention_stats"],b["attention_partials"],b["attention"],
+                    np.int32(self.head_dim),np.int32(self.attention_chunks)),
+                    shared_mem=self.attention_chunks*4)
+            else:
+                self.kernels["attention"]((self.heads,), (256,), (
+                    b["qkv"],w[pre+"qkv.bias"],self.keys[layer],self.values[layer],b["attention"],self.state,
+                    np.int32(self.head_dim),np.int32(self.capacity)),shared_mem=self.capacity*4)
             self.blas.linear(b["attention"],w[pre+"attention_output.weight"],b["mix"])
             self._norm(b["mix"],b["x"],pre+"norm1",w[pre+"attention_output.bias"])
             self.blas.linear(b["mix"],w[pre+"ffn_in.weight"],b["ffn"])

@@ -134,7 +134,13 @@ def main(argv=None):
     speech.add_argument("--early-stop-num", type=int, default=2700)
     speech.add_argument("--capacity", type=int, default=2048)
     speech.add_argument("--gpt-precision", choices=("fp32", "fp16"), default="fp32",
-                        help="GPT execution precision; fp16 is experimental, acoustic execution remains fp32")
+                        help="GPT execution precision; fp16 is experimental")
+    speech.add_argument("--allow-experimental-acoustic-fp16", action="store_true",
+                        help="Allow a separately converted and screened FP16 acoustic package")
+    speech.add_argument("--gpt-attention", choices=("baseline", "split-kv"), default="baseline",
+                        help="GPT decode attention; split-kv is an explicit experimental candidate")
+    speech.add_argument("--gpt-attention-chunk-size", type=int, choices=(256, 512), default=256,
+                        help="KV tokens per chunk when using split-kv attention")
     speech.add_argument("--model-policy", choices=("resident","release-state","staged"), default="resident")
     speech.add_argument("--no-cuda-graph", action="store_true")
     args = parser.parse_args(argv)

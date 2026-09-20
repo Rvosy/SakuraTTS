@@ -1,0 +1,378 @@
+{
+  "scope": "GPT fixed history only. Fresh processes; 3 repeats, 43 short/675 long decode tokens. Root task downloaded ORT concurrently; exploratory diagnosis, not final performance benchmark.",
+  "memory_units": "MiB",
+  "snapshots": {
+    "fp32": [
+      {
+        "phase": "before_cuda_import",
+        "rss": 35.74609375,
+        "uss": 22.85546875,
+        "private_commit": 506.16015625,
+        "mapped_resident": 14.66796875,
+        "cupy_used": 0.0,
+        "cupy_total": 0.0
+      },
+      {
+        "phase": "after_cuda_import",
+        "rss": 195.33203125,
+        "uss": 118.671875,
+        "private_commit": 757.91015625,
+        "mapped_resident": 160.9921875,
+        "cupy_used": 0.0,
+        "cupy_total": 0.0
+      },
+      {
+        "phase": "loaded",
+        "rss": 349.50390625,
+        "uss": 254.640625,
+        "private_commit": 1347.41015625,
+        "mapped_resident": 183.08984375,
+        "cupy_used": 303.8583984375,
+        "cupy_total": 303.8583984375
+      },
+      {
+        "phase": "short:prefill",
+        "rss": 560.234375,
+        "uss": 458.109375,
+        "private_commit": 1793.4921875,
+        "mapped_resident": 191.47265625,
+        "cupy_used": 495.884765625,
+        "cupy_total": 516.5302734375
+      },
+      {
+        "phase": "short:first_decode",
+        "rss": 563.0390625,
+        "uss": 460.7265625,
+        "private_commit": 1796.78515625,
+        "mapped_resident": 191.6640625,
+        "cupy_used": 495.884765625,
+        "cupy_total": 516.5302734375
+      },
+      {
+        "phase": "short:hot_decode",
+        "rss": 569.30859375,
+        "uss": 466.37890625,
+        "private_commit": 1804.6953125,
+        "mapped_resident": 191.9921875,
+        "cupy_used": 495.884765625,
+        "cupy_total": 516.5302734375
+      },
+      {
+        "phase": "long:prefill",
+        "rss": 569.54296875,
+        "uss": 466.3984375,
+        "private_commit": 1876.83984375,
+        "mapped_resident": 192.0078125,
+        "cupy_used": 495.884765625,
+        "cupy_total": 584.8525390625
+      },
+      {
+        "phase": "long:first_decode",
+        "rss": 569.54296875,
+        "uss": 466.3984375,
+        "private_commit": 1876.83984375,
+        "mapped_resident": 192.0078125,
+        "cupy_used": 495.884765625,
+        "cupy_total": 584.8525390625
+      },
+      {
+        "phase": "long:hot_decode",
+        "rss": 571.90234375,
+        "uss": 468.7421875,
+        "private_commit": 1877.60546875,
+        "mapped_resident": 192.02734375,
+        "cupy_used": 495.884765625,
+        "cupy_total": 584.8525390625
+      },
+      {
+        "phase": "released",
+        "rss": 571.9296875,
+        "uss": 468.7421875,
+        "private_commit": 1813.484375,
+        "mapped_resident": 192.05078125,
+        "cupy_used": 303.8583984375,
+        "cupy_total": 303.8583984375
+      },
+      {
+        "phase": "closed",
+        "rss": 571.93359375,
+        "uss": 468.7421875,
+        "private_commit": 1483.1953125,
+        "mapped_resident": 192.0546875,
+        "cupy_used": 0.0,
+        "cupy_total": 0.0
+      }
+    ],
+    "fp16": [
+      {
+        "phase": "before_cuda_import",
+        "rss": 35.625,
+        "uss": 22.72265625,
+        "private_commit": 506.0234375,
+        "mapped_resident": 14.66796875,
+        "cupy_used": 0.0,
+        "cupy_total": 0.0
+      },
+      {
+        "phase": "after_cuda_import",
+        "rss": 195.37109375,
+        "uss": 118.70703125,
+        "private_commit": 757.98046875,
+        "mapped_resident": 160.98828125,
+        "cupy_used": 0.0,
+        "cupy_total": 0.0
+      },
+      {
+        "phase": "loaded",
+        "rss": 341.296875,
+        "uss": 246.37890625,
+        "private_commit": 1161.45703125,
+        "mapped_resident": 183.14453125,
+        "cupy_used": 151.9296875,
+        "cupy_total": 151.9296875
+      },
+      {
+        "phase": "short:prefill",
+        "rss": 756.859375,
+        "uss": 650.57421875,
+        "private_commit": 1705.30078125,
+        "mapped_resident": 195.75,
+        "cupy_used": 247.9453125,
+        "cupy_total": 264.3896484375
+      },
+      {
+        "phase": "short:first_decode",
+        "rss": 759.23828125,
+        "uss": 652.75,
+        "private_commit": 1707.41015625,
+        "mapped_resident": 195.94921875,
+        "cupy_used": 247.9453125,
+        "cupy_total": 264.3896484375
+      },
+      {
+        "phase": "short:hot_decode",
+        "rss": 760.91015625,
+        "uss": 654.0859375,
+        "private_commit": 1708.51953125,
+        "mapped_resident": 196.25390625,
+        "cupy_used": 247.9453125,
+        "cupy_total": 264.3896484375
+      },
+      {
+        "phase": "long:prefill",
+        "rss": 761.87890625,
+        "uss": 654.56640625,
+        "private_commit": 1763.38671875,
+        "mapped_resident": 196.2890625,
+        "cupy_used": 247.9453125,
+        "cupy_total": 315.63134765625
+      },
+      {
+        "phase": "long:first_decode",
+        "rss": 762.00390625,
+        "uss": 654.69140625,
+        "private_commit": 1763.38671875,
+        "mapped_resident": 196.2890625,
+        "cupy_used": 247.9453125,
+        "cupy_total": 315.63134765625
+      },
+      {
+        "phase": "long:hot_decode",
+        "rss": 766.734375,
+        "uss": 659.40234375,
+        "private_commit": 1769.00390625,
+        "mapped_resident": 196.30859375,
+        "cupy_used": 247.9453125,
+        "cupy_total": 315.63134765625
+      },
+      {
+        "phase": "released",
+        "rss": 766.7578125,
+        "uss": 659.40234375,
+        "private_commit": 1769.00390625,
+        "mapped_resident": 196.33203125,
+        "cupy_used": 151.9296875,
+        "cupy_total": 151.9296875
+      },
+      {
+        "phase": "closed",
+        "rss": 766.76171875,
+        "uss": 659.40234375,
+        "private_commit": 1672.8203125,
+        "mapped_resident": 196.3359375,
+        "cupy_used": 0.0,
+        "cupy_total": 0.0
+      }
+    ]
+  },
+  "per_token": {
+    "fp32": {
+      "short": {
+        "host_baseline_mean_ms": 1.936018604572227,
+        "host_instrumented_mean_ms": 1.9612883723227221,
+        "gpu_graph_mean_ms": 1.8800386938937874,
+        "host_minus_graph_mean_ms": 0.08124967842893459,
+        "gpu_fraction_of_instrumented_host": 0.9585733135547466,
+        "bitwise_equal_logits": true,
+        "graph_first_to_last_band_ms": [
+          1.842941149075826,
+          1.9236403873988561
+        ]
+      },
+      "long": {
+        "host_baseline_mean_ms": 3.4749213826589656,
+        "host_instrumented_mean_ms": 3.442267753118448,
+        "gpu_graph_mean_ms": 3.364691390991211,
+        "host_minus_graph_mean_ms": 0.07757636212723698,
+        "gpu_fraction_of_instrumented_host": 0.977463588630792,
+        "bitwise_equal_logits": true,
+        "graph_first_to_last_band_ms": [
+          2.8110126965134232,
+          3.914093419180976
+        ]
+      }
+    },
+    "fp16": {
+      "short": {
+        "host_baseline_mean_ms": 1.5602434108050922,
+        "host_instrumented_mean_ms": 1.5767503877453752,
+        "gpu_graph_mean_ms": 1.5192508531171223,
+        "host_minus_graph_mean_ms": 0.05749953462825294,
+        "gpu_fraction_of_instrumented_host": 0.9635328869584281,
+        "bitwise_equal_logits": true,
+        "graph_first_to_last_band_ms": [
+          1.5147015200720892,
+          1.542112756343115
+        ]
+      },
+      "long": {
+        "host_baseline_mean_ms": 3.396233234520036,
+        "host_instrumented_mean_ms": 3.3939792592449254,
+        "gpu_graph_mean_ms": 3.3216902609224674,
+        "host_minus_graph_mean_ms": 0.0722889983224579,
+        "gpu_fraction_of_instrumented_host": 0.9787008131751105,
+        "bitwise_equal_logits": true,
+        "graph_first_to_last_band_ms": [
+          2.763402902815077,
+          3.8809942238419146
+        ]
+      }
+    }
+  },
+  "eager_long_position_1204": {
+    "fp32": {
+      "embedding": 0.031136000528931618,
+      "linear": 1.4432639805600047,
+      "kv_write": 0.3272320004180074,
+      "attention": 3.1880320087075233,
+      "layer_norm": 0.25187200121581554,
+      "whole_stream_interval": 6.433248043060303,
+      "other_stream_interval": 1.1180480355396867,
+      "host": 6.423400001949631
+    },
+    "fp16": {
+      "embedding": 0.015168000012636185,
+      "linear": 1.5304319788701832,
+      "kv_write": 0.5026559995021671,
+      "attention": 3.06044802069664,
+      "layer_norm": 0.33971199952065945,
+      "whole_stream_interval": 6.861663818359375,
+      "other_stream_interval": 1.608479788992554,
+      "host": 6.847000004199799
+    }
+  },
+  "interpretation": [
+    "FP16 extra host memory appears during first prefill; mostly private residency, not mapped DLL pages or CuPy pool.",
+    "First calls to distinct cuBLAS GEMM input/output/batch forms account for large persistent private increases. Public counters cannot identify the precise internal CUDA allocator/cache.",
+    "Long decode spends about 98% of observed wall time inside the GPU graph. Its GPU duration increases with KV length; eliminating remaining host transfers alone has a small upper bound.",
+    "Intrusive eager component intervals include CPU enqueue gaps and must not be treated as normal inference timing; attention is the largest observed component."
+  ],
+  "fp16_first_gemm_memory_increments": [
+    {
+      "operation": "gemm_2d_float16",
+      "rss": 233.77734375,
+      "uss": 230.13671875,
+      "mapped_resident": 4.8359375,
+      "shapes": [
+        [
+          83,
+          1024
+        ],
+        [
+          512,
+          1024
+        ],
+        [
+          83,
+          512
+        ]
+      ]
+    },
+    {
+      "operation": "gemm_3d_float32",
+      "rss": 103.12890625,
+      "uss": 100.9921875,
+      "mapped_resident": 2.390625,
+      "shapes": [
+        [
+          16,
+          239,
+          32
+        ],
+        [
+          16,
+          239,
+          32
+        ],
+        [
+          16,
+          239,
+          239
+        ]
+      ]
+    },
+    {
+      "operation": "gemm_3d_float16",
+      "rss": 0.7734375,
+      "uss": 0.734375,
+      "mapped_resident": 0.04296875,
+      "shapes": [
+        [
+          16,
+          239,
+          239
+        ],
+        [
+          16,
+          239,
+          32
+        ],
+        [
+          16,
+          239,
+          32
+        ]
+      ]
+    },
+    {
+      "operation": "gemm_2d_float32",
+      "rss": 32.7890625,
+      "uss": 31.28515625,
+      "mapped_resident": 1.859375,
+      "shapes": [
+        [
+          1,
+          512
+        ],
+        [
+          1025,
+          512
+        ],
+        [
+          1,
+          1025
+        ]
+      ]
+    }
+  ]
+}

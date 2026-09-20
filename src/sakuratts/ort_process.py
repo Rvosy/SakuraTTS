@@ -11,10 +11,11 @@ from .ort_sovits import ORTSoVITS, read_manifest
 
 
 class ORTProcessSoVITS:
-    def __init__(self,package,python,*,diagnostic=False):
+    def __init__(self,package,python,*,diagnostic=False,allow_experimental_fp16=False):
         package=Path(package).resolve(strict=True)
         python=Path(python).resolve(strict=True)
-        manifest,_=read_manifest(package,diagnostic=diagnostic)
+        manifest,_=read_manifest(package,diagnostic=diagnostic,
+                                 allow_experimental_fp16=allow_experimental_fp16)
         self.encoder=SimpleNamespace(manifest=manifest)
         self.sample_rate=manifest["config"]["sample_rate"]
         self.last_transfer=None
@@ -22,6 +23,8 @@ class ORTProcessSoVITS:
         command=[str(python),"-B",str(Path(__file__).with_name("ort_worker.py")),"--package",str(package)]
         if diagnostic:
             command.append("--diagnostic")
+        if allow_experimental_fp16:
+            command.append("--allow-experimental-fp16")
         environment=dict(os.environ,PYTHONDONTWRITEBYTECODE="1",PYTHONUTF8="1")
         environment.pop("PYTHONPATH",None)
         self.process=subprocess.Popen(command,stdin=subprocess.PIPE,stdout=subprocess.PIPE,env=environment,

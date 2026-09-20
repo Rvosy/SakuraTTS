@@ -71,7 +71,9 @@ GEMM 使用 `cublasGemmEx` / `cublasGemmStridedBatchedEx`，指定 FP32 累积�
 
 本轮全卡峰值少 421 MiB，减初始值后差 419 MiB。但长句自然生成长度不同，且全卡包含桌面负载，这不等于精确的进程独占显存收益。WDDM 逐进程显存不可用，短峰值可能漏采。进程树 RSS 峰值反而多约 197.54 MiB；加载后的主进程 RSS 相近，差距主要在首次计算后出现，原因尚未通过库映射或分配轨迹确认，不能简单归因于权重转换。
 
-同一半精度引擎已验证 worker 被终止后重试、分阶段语义取消、声学前取消及后续重试，状态清理、停止和 token 检查通过。三个恢复用例 PCM 各有 15–19 个样本相差 1 LSB，原数值容差通过，逐字节检查失败。原 Harness 的 `passed=false` 和退出码 1 保留，没有为消除这项差异修改阈值或汇总规则。
+2026-09-20 后续复核更正：worker 被终止后的 resident 重试实际使用 GPT FP16；两个 staged 取消/重试用例在第二次创建 Engine 时遗漏了 `gpt_precision`，实际使用默认 FP32。因此旧记录不能支持“全部生命周期用例均已验证半精度”的结论。三个用例当时的状态清理、停止和 token 检查通过，PCM 各有 15–19 个样本相差 1 LSB，原数值容差通过，逐字节检查失败。原 JSON、`passed=false` 和退出码 1 均保留；Harness 已修正为向两次 Engine 构造传递相同精度和 attention，修复后的低精度生命周期需另行验证。
+
+后续 [GPT profile 汇总](data/2026-09-20-windows-gpt-profile.json)在新进程中复现了首次 Prefill 后约 196.6 MiB 的 FP16 额外 RSS，其中 USS 差约 192.5 MiB、实际文件映射驻留差约 4.3 MiB。单独分段诊断发现，首次使用不同输入/输出和批次形式的 cuBLAS GEMM 会触发大块私有常驻增长，关闭模型后仍保留。现有计数器支持“主要来自首次计算后的 CUDA 运行库/驱动私有分配”这一定位，尚不能区分具体内部 allocator 或缓存；没有证据把差额全部归给权重转换或 DLL 映射。每个 token 的 CUDA events 显示长历史约 98% 的 host 用时在 GPU Graph 内，后续 [split-KV 实验](2026-09-20-windows-split-kv.md)据此优先处理注意力计算。
 
 公开 CLI 通过 `--gpt-precision fp16` 完成 3.46 秒短句 WAV，JSON 正确记录 GPT / 声学精度和 `torch_imported=false`。开发环境全量单测运行 118 项，116 通过、2 跳过；符号链接相关验证受当前 Windows 权限限制。最初误用无 Torch 日常环境运行全部开发测试时，两项 Torch 测试无法导入；最终全量测试使用已有 `.venv`，未为测试添加日常依赖。
 

@@ -64,13 +64,19 @@ def main():
     parser.add_argument("--config", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--gpt-precision", choices=("fp32", "fp16"), default="fp32")
+    parser.add_argument("--allow-experimental-acoustic-fp16", action="store_true")
+    parser.add_argument("--gpt-attention", choices=("baseline", "split-kv"), default="baseline")
+    parser.add_argument("--gpt-attention-chunk-size", type=int, choices=(256, 512), default=256)
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     checks = []
     started = time.perf_counter()
-    engine = NVIDIAEngine(args.config, policy="resident", gpt_precision=args.gpt_precision)
+    engine = NVIDIAEngine(args.config, policy="resident", gpt_precision=args.gpt_precision,
+                          gpt_attention=args.gpt_attention, gpt_attention_chunk_size=args.gpt_attention_chunk_size,
+                          allow_experimental_acoustic_fp16=args.allow_experimental_acoustic_fp16)
+    acoustic_precision = engine.acoustic_precision
     try:
         expected_pcm, expected_report = engine.synthesize(TEXT)
         np.save(args.output.parent / "baseline-pcm.npy", expected_pcm, allow_pickle=False)
@@ -101,7 +107,9 @@ def main():
     finally:
         engine.close()
 
-    engine = NVIDIAEngine(args.config, policy="staged")
+    engine = NVIDIAEngine(args.config, policy="staged", gpt_precision=args.gpt_precision,
+                          gpt_attention=args.gpt_attention, gpt_attention_chunk_size=args.gpt_attention_chunk_size,
+                          allow_experimental_acoustic_fp16=args.allow_experimental_acoustic_fp16)
     try:
         calls = 0
         def after_prefill():
@@ -137,7 +145,8 @@ def main():
         "passed": passed, "cases": checks, "text": TEXT,
         **aggregate_lifecycle(checks),
         "seed": 1234, "rng": "numpy.default_rng; same backend retries",
-        "gpt_precision": args.gpt_precision, "acoustic_precision": "fp32",
+        "gpt_precision": args.gpt_precision, "acoustic_precision": acoustic_precision,
+        "gpt_attention": args.gpt_attention, "gpt_attention_chunk_size": args.gpt_attention_chunk_size,
         "model_config_sha256": sha256_file(args.config),
         "source_sha256": {name: sha256_file(PROJECT / "src" / "sakuratts" / name)
                           for name in ("nvidia.py", "cuda_gpt.py", "ort_process.py", "ort_sovits.py")},

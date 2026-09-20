@@ -17,12 +17,20 @@ from .synthesis import prepare_text_request, generate_prepared_semantic, synthes
 class NVIDIAEngine:
     """One active model pair and one synchronous request; caller owns lifetime."""
     def __init__(self, config, *, policy="resident", use_graph=True, capacity=2048,
-                 gpt_precision="fp32"):
+                 gpt_precision="fp32", gpt_attention="baseline", gpt_attention_chunk_size=256,
+                 allow_experimental_acoustic_fp16=False):
         if policy not in ("resident", "release-state", "staged"):
             raise ValueError("Unknown model policy")
         if gpt_precision not in ("fp32", "fp16"):
             raise ValueError("GPT precision must be fp32 or fp16")
+        if gpt_attention not in ("baseline", "split-kv"):
+            raise ValueError("GPT attention must be baseline or split-kv")
+        if (not isinstance(gpt_attention_chunk_size, (int, np.integer))
+                or gpt_attention_chunk_size not in (256, 512)):
+            raise ValueError("GPT attention chunk size must be 256 or 512")
         self.gpt_precision = gpt_precision
+        self.gpt_attention, self.gpt_attention_chunk_size = gpt_attention, gpt_attention_chunk_size
+        self.allow_experimental_acoustic_fp16 = allow_experimental_acoustic_fp16
         self.config_path = Path(config).resolve(strict=True)
         self.config = json.loads(self.config_path.read_text(encoding="utf-8"))
         if self.config.get("format") != "sakuratts-windows-config-v1":
@@ -32,6 +40,12 @@ class NVIDIAEngine:
                          for key in ("gpt", "sovits", "frontend")}
         self.manifests = {key: json.loads((path / "manifest.json").read_text(encoding="utf-8"))
                           for key, path in self.packages.items()}
+        acoustic_dtype = self.manifests["sovits"].get("dtype")
+        if acoustic_dtype not in ("float32", "float16"):
+            raise ValueError("Expected FP32 or screened experimental FP16 acoustic weights")
+        self.acoustic_precision = "fp16" if acoustic_dtype == "float16" else "fp32"
+        if self.acoustic_precision == "fp16" and not allow_experimental_acoustic_fp16:
+            raise ValueError("FP16 acoustic packages require allow_experimental_acoustic_fp16=True")
         source = self.manifests["gpt"]["source"]["official_commit"]
         if (self.manifests["sovits"]["source"]["official_commit"] != source
                 or self.manifests["frontend"]["official_commit"] != source):
@@ -107,17 +121,20 @@ class NVIDIAEngine:
         if self.gpt is None:
             from .cuda_gpt import CUDAGPT
             self.gpt = CUDAGPT.load(self.packages["gpt"], capacity=self.capacity,
-                                    use_graph=self.use_graph, precision=self.gpt_precision)
+                                    use_graph=self.use_graph, precision=self.gpt_precision,
+                                    attention=self.gpt_attention, attention_chunk_size=self.gpt_attention_chunk_size)
 
     def _load_sovits(self):
         if self.sovits is None:
             if self.config.get("acoustic_python"):
                 from .ort_process import ORTProcessSoVITS
                 self.sovits = ORTProcessSoVITS(self.packages["sovits"],
-                    self.config_path.parent / self.config["acoustic_python"])
+                    self.config_path.parent / self.config["acoustic_python"],
+                    allow_experimental_fp16=self.allow_experimental_acoustic_fp16)
             else:
                 from .ort_sovits import ORTSoVITS
-                self.sovits = ORTSoVITS.load(self.packages["sovits"])
+                self.sovits = ORTSoVITS.load(self.packages["sovits"],
+                    allow_experimental_fp16=self.allow_experimental_acoustic_fp16)
 
     def unload(self):
         """Idle unload is explicit; the next request includes the reload cost."""
@@ -198,9 +215,9 @@ class NVIDIAEngine:
                 "sample_rate":rate,"audio_seconds":duration,"pcm_seconds":pcm.size/rate,
                 "rtf":elapsed/duration,"fragments":fragments,
                 "timing_scope":"Original text through complete PCM, including missing model loads, transfers and sampling; file output separate",
-                "precision":("FP32; CUDA TF32 disabled; no quantization" if self.gpt_precision == "fp32" else
-                    "Experimental GPT FP16 storage/compute with FP32 accumulation and logits; acoustic FP32; no quantization"),
-                "gpt_precision":self.gpt_precision,"acoustic_precision":"fp32",
+                "precision": f"GPT {self.gpt_precision.upper()}, acoustic {self.acoustic_precision.upper()}; FP16 paths are experimental; public logits and acoustic I/O remain FP32",
+                "gpt_precision":self.gpt_precision,"acoustic_precision":self.acoustic_precision,
+                "gpt_attention":self.gpt_attention,"gpt_attention_chunk_size":self.gpt_attention_chunk_size,
                 "frontend_profile":self.manifests["frontend"].get("japanese_g2p",{"implementation":"pyopenjtalk-plus"}),
                 "random_inputs":"fresh" if random_inputs is None else "explicit replay of draws and acoustic noise",
                 "quality":{"human_listening":"not_run","asr":"not_run"}}
@@ -247,7 +264,9 @@ def run_cli(args):
         raise ValueError("Choose a new .wav output path; neither WAV nor JSON may already exist")
     start=time.perf_counter()
     engine=NVIDIAEngine(args.config,policy=args.model_policy,use_graph=not args.no_cuda_graph,
-                        capacity=args.capacity,gpt_precision=args.gpt_precision)
+        capacity=args.capacity,gpt_precision=args.gpt_precision,
+                        gpt_attention=args.gpt_attention,gpt_attention_chunk_size=args.gpt_attention_chunk_size,
+                        allow_experimental_acoustic_fp16=args.allow_experimental_acoustic_fp16)
     try:
         pcm,report=engine.synthesize(args.text,reference=args.reference,seed=args.seed,
             language=args.language,split_method=args.text_split_method,top_k=args.top_k,
