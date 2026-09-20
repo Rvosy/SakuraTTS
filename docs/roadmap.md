@@ -1,6 +1,6 @@
 # 实施路线
 
-状态：Windows / RTX 5060 已接通 Sakura V2ProPlus 的日文独立推理，FP32 split-KV、声学 FP16、相位重排和请求后 arena 回收已完成实机验证。默认保留 GPT/声学 FP32、baseline attention，arena 回收默认关闭；精度与图改写候选的内容和听感尚未验收。现有 MLX 路径保留为 Mac 对照；中文整链与专项优化暂缓，完整产品仍未验收。更新日期：2026-09-20。
+状态：Windows / RTX 5060 已接通 Sakura V2ProPlus 的日文独立推理，FP32 split-KV、声学 FP16、相位重排、arena 回收与完整上下文声码器分块已有实机证据，分块包已接入公开合成入口。默认保留 GPT/声学 FP32、baseline attention，arena 回收默认关闭；精度与图改写候选的内容和听感尚未验收。现有 MLX 路径保留为 Mac 对照；中文整链与专项优化暂缓，完整产品仍未验收。更新日期：2026-09-20。
 
 目标与行为约束见 [推理契约](specs/inference-contract.md)，架构选择见 [ADR 0001](adr/0001-native-gpu-runtime.md)，测量规则见 [基准协议](specs/benchmark-protocol.md)。各阶段按证据推进，不按预估加速倍数或日历日期宣布完成。
 
@@ -8,15 +8,16 @@
 
 - [Windows 自有后端](experiments/2026-09-20-windows-nvidia-backend.md)已有原地 KV、共享权重、单步 CUDA Graph 与日文完整 PCM。[split-KV](experiments/2026-09-20-windows-split-kv.md)的 FP32 256 候选经后续 1182 步固定历史、104 项边界和 192 组 Prefill/首步检查；正确 CUDA 参考下，两组各 15 个完整请求通过官方原容差。首次 256 Prefill 异常仍保留，GPT FP16 split-KV 未通过同精度严格检查。
 - [声学 FP16](experiments/2026-09-20-windows-acoustic-fp16.md)通过独立 screen v2；转置卷积改写解决了候选的重复执行波动。GPT FP32 + split-KV 256 + 声学 FP16 的固定回放中，27.30 秒完整音频为 1592.30 ms，2.02 秒为 122.23 ms；原 FP32 baseline 分别为 3045.15 / 168.94 ms。组合通过工程筛查，未通过原 FP32 波形严格容差，也未做听音或 ASR。公共入口须显式允许已筛查的声学包，见 [Windows 使用说明](setup-windows-nvidia.md)。
-- 同固定输入的资源轮，全卡峰值减首个空载样本为 1804→1624 MiB；它包含桌面负载，不是进程独占显存。[GPT 混合精度](experiments/2026-09-20-windows-gpt-fp16.md)的权重/KV 减少 247.93 MiB 是另一项候选，不能加总成组合实测。[Lite 本机对照](experiments/2026-09-20-windows-lite-baseline.md)与[依赖清点](experiments/2026-09-20-windows-runtime-inventory.md)继续作为资源和分发优化依据；0.8 GB 显存、200 MB 运行包尚未实现。下面的 Mac 记录保留各次实验当时的范围。
+- 同固定输入的早期资源轮，全卡峰值减首个空载样本为 1804→1624 MiB；它包含桌面负载，不是进程独占显存。[GPT 混合精度](experiments/2026-09-20-windows-gpt-fp16.md)的权重/KV 减少 247.93 MiB 是另一项候选，不能加总成组合实测。[Lite 本机对照](experiments/2026-09-20-windows-lite-baseline.md)与[依赖清点](experiments/2026-09-20-windows-runtime-inventory.md)继续作为资源和分发优化依据。后续分块配置已测到约 800 MiB 的全卡采样增量，但测量口径和能力范围还不能与 Lite 的 0.8 GB 直接等同；200 MB 运行包尚未实现。下面的 Mac 记录保留各次实验当时的范围。
 - [WDDM 归因](experiments/2026-09-20-windows-wddm-memory.md)把长句后主要保留量定位到声学进程。[arena 回收](experiments/2026-09-20-windows-acoustic-arena.md)已接入 `--acoustic-arena-shrink`，原 FP32 配置的 7 次官方回放通过原容差；声学 FP16 回收前后完整输出逐位一致。[相位重排](experiments/2026-09-20-windows-acoustic-polyphase.md)消除声码器补零大张量，完整 FP32 图改写通过 48 个阶段检查，但同 FP16 的新旧声学波形未通过原严格容差，仍是单独筛查的实验包。
 - 相位重排加回收的完整请求中，GPT FP32 split-KV 的固定长句为 1597.12 ms / 27.30 秒 PCM，同配置独立资源轮的全卡峰值增量为 1508 MiB；双 FP16 自然长句为 2390.18 ms / 25.46 秒 PCM，工作量不同。双 FP16 独立 worker 资源轮全卡峰值增量为 1180 MiB，共享进程实验为 1078 MiB；两轮 7 对 PCM 逐位一致。另一轮完整引擎 WDDM 边界中，声学请求后保持 259.52 MiB，长句后的全卡增量为 689 MiB。峰值与请求后保留量分别计量，不能把 689 MiB 宣称为生成峰值。
 - [声码器分块](experiments/2026-09-20-windows-vocoder-chunks.md)保留完整编码器/flow，只按 11 帧真实上下文拆分局部声码器。FP32 分块通过原容差；FP16 通过独立波形/接缝筛查，严格差异保留。共享进程中，双 FP16 长句为 2390→2361 ms，全卡采样峰值减初值为 1057→701 MiB；FP32 GPT split-KV 固定回放为 1588→1570 ms，1407→1011 MiB。每组有自身的原整图对照，不能混合速度和显存数字。
-- [独立分块工作进程](experiments/2026-09-20-windows-vocoder-worker.md)已在开发 harness 中接通。双 FP16 自然长句为 2392→2423 ms，全卡采样增量 1153→800 MiB；FP32 GPT split-KV 固定回放为 1591→1567 ms、1578→1126 MiB。两组均通过实际多块长句的工作进程终止后恢复、重复卸载，以及三个阶段的取消 / 重试；同候选重试 PCM 逐位一致。分块的主要收益是峰值显存，公开配置、听音与 ASR 尚未验收。[GPU latent 传递](experiments/2026-09-20-windows-vocoder-device.md)保持逐位一致，但声学耗时和采样显存没有改善，工作进程沿用主机传递。
+- [独立分块工作进程](experiments/2026-09-20-windows-vocoder-worker.md)最初在开发 harness 中接通。双 FP16 自然长句为 2392→2423 ms，全卡采样增量 1153→800 MiB；FP32 GPT split-KV 固定回放为 1591→1567 ms、1578→1126 MiB。两组均通过实际多块长句的工作进程终止后恢复、重复卸载，以及三个阶段的取消 / 重试；同候选重试 PCM 逐位一致。[GPU latent 传递](experiments/2026-09-20-windows-vocoder-device.md)保持逐位一致，但声学耗时和采样显存没有改善，工作进程沿用主机传递。
+- [正式分块入口](experiments/2026-09-20-windows-vocoder-public.md)已使用独立 7 文件声学包接通 CLI / Python API。双 FP16 自然长句为 2373 ms / 25.46 秒音频、全卡采样增量 799 MiB；FP32 GPT split-KV 固定回放为 1580 ms / 27.30 秒、1124 MiB。41 对公开 / 私有请求 PCM 逐位一致，原 FP32 整图的 5 次官方回放通过；两种公开配置的故障、卸载及取消后恢复也通过。候选仍保留原严格波形失败，听音与 ASR 待验。
 
 ## Windows 下一步
 
-优先把已验证的声码器分块接入可回收的声学工作进程，并测量 GPU I/O Binding 是否能减少两会话之间及每块的主机传输成本。当前 256 帧分块主要改善峰值，短句和中等长度的耗时略有回退，不能仅按最低显存选默认。共享进程仍保留独立的生命周期和故障隔离验收边界。
+声码器分块已接入可回收的声学工作进程及公开入口，GPU latent 传递也已测量，当前没有净收益。[正式分块入口](experiments/2026-09-20-windows-vocoder-public.md)使用独立的 7 文件模型包，继续显式选择 256 帧和 arena 回收。分块主要改善峰值，不能仅按最低显存选默认。下一步速度优化针对 GPT 单步的小矩阵和 `head_dim=32` 注意力；[GEMV 探针](experiments/2026-09-20-windows-gemv.md)已有局部计时与数值失败，尚未进入生产执行。
 
 先补组合候选的内容、听感和更广的长文检查，并保留 FP32 baseline 的独立对照。两种组合已各完成 19 个自然请求，覆盖五参考和第二个 seed；各自三项真实故障恢复也通过，重试 PCM 逐位一致。声学 FP16 只能加载通过 screen v2 的 lowered 包，公开入口为 `--allow-experimental-acoustic-fp16`；具体转换和筛查流程以[声学实验](experiments/2026-09-20-windows-acoustic-fp16.md#使用与证据)为准。旧 GPT FP16 生命周期报告在 staged 路径漏传精度的问题已更正，新恢复记录明确采用同一精度，旧记录仍保留其边界。
 
