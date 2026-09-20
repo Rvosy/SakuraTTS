@@ -20,6 +20,10 @@ with Engine.load(model) as engine:
 
 一个 Engine 同时只处理一个请求，重入会抛出 `BusyError`。使用 `with` 或显式 `close()` 释放资源；关闭后不能继续合成。失败会沿原链路释放请求状态。宿主应在同一个线程中拥有、调用和关闭引擎，HTTP 服务已执行这一约束。
 
+CUDA 引擎默认在每片声学计算结束后收缩 ORT 显存池，释放不再使用的工作区，避免长文本将后续空闲占用一直抬高。权重和仍在使用的分配继续保留；这不保证显存回到加载时的数值，也不会降低计算过程所需的峰值。FP32 精度和采样规则保持不变。
+
+需要对照旧策略时，可用 `Engine.load(path, experimental={"acoustic_arena_shrink": False})` 关闭收缩。CLI 的 `tts`、`serve`、`benchmark` 可通过 `--experimental` 读取同样的 JSON；旧 `synthesize` 命令可用 `--no-acoustic-arena-shrink`。实际策略记录在合成报告的 `acoustic_arena_shrink` 字段中。内部 `ORTSoVITS` / `ORTProcessSoVITS` 的直接调用仍需显式选择收缩，研究脚本应记录自己的选项。
+
 实验后端选项通过 `Engine.load(path, experimental={...})` 显式传入。支持的键为 `policy`、`use_graph`、`capacity`、`gpt_precision`、`gpt_attention`、`gpt_attention_chunk_size`、`allow_experimental_acoustic_fp16`、`acoustic_arena_shrink`、`acoustic_chunk_frames`。它们不是新的兼容性承诺。
 
 旧版 `from sakuratts.nvidia import NVIDIAEngine, write_wav` 继续可用。其他内部模块已迁移；新的业务代码应使用包顶层 API。

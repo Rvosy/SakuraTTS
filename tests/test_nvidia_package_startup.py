@@ -39,6 +39,34 @@ def fixture(root):
 
 
 class NvidiaPackageStartupTests(unittest.TestCase):
+    def test_public_engine_defaults_to_shrink_and_preserves_explicit_override_on_reload(self):
+        from sakuratts import Engine
+
+        for private in (False, True):
+            for options, expected in ((None, True), ({"acoustic_arena_shrink": False}, False)):
+                with self.subTest(private=private, options=options), tempfile.TemporaryDirectory() as directory:
+                    config, _, _ = fixture(Path(directory))
+                    with patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P"), \
+                            patch("sakuratts.frontend.text_frontend.LanguageSegmenter"), \
+                            patch("sakuratts.frontend.text_frontend.TextFrontend"), \
+                            patch("sakuratts.backends.onnx.process.ORTProcessSoVITS") as process, \
+                            patch("sakuratts.backends.onnx.sovits.ORTSoVITS.load") as direct:
+                        with Engine.load(config, experimental=options, load_references=False) as engine:
+                            runtime = engine._runtime
+                            if not private:
+                                runtime.config.pop("acoustic_python")
+                            self.assertIs(runtime.acoustic_arena_shrink, expected)
+                            selected, unused = (process, direct) if private else (direct, process)
+                            runtime._load_sovits()
+                            runtime.unload()
+                            selected.return_value.close.assert_called_once()
+                            runtime._load_sovits()
+                            self.assertEqual(selected.call_count, 2)
+                            for call in selected.call_args_list:
+                                self.assertIs(call.kwargs["acoustic_arena_shrink"], expected)
+                                self.assertFalse(call.kwargs["allow_experimental_fp16"])
+                            unused.assert_not_called()
+
     def test_fp16_acoustic_requires_explicit_opt_in_before_frontend_startup(self):
         with tempfile.TemporaryDirectory() as directory:
             config, _, _ = fixture(Path(directory))
@@ -151,8 +179,9 @@ class NvidiaPackageStartupTests(unittest.TestCase):
 
     def test_cli_attention_selection_reaches_engine(self):
         from sakuratts.cli import main
-        for options, attention, chunk in (([], "baseline", 256),
-                (["--gpt-attention", "split-kv", "--gpt-attention-chunk-size", "512", "--acoustic-arena-shrink"], "split-kv", 512)):
+        for options, attention, chunk, shrink in (([], "baseline", 256, True),
+                (["--gpt-attention", "split-kv", "--gpt-attention-chunk-size", "512", "--acoustic-arena-shrink"], "split-kv", 512, True),
+                (["--no-acoustic-arena-shrink"], "baseline", 256, False)):
             with self.subTest(attention=attention), tempfile.TemporaryDirectory() as directory:
                 runtime = Mock()
                 runtime.synthesize.side_effect = RuntimeError("stop before inference")
@@ -165,7 +194,7 @@ class NvidiaPackageStartupTests(unittest.TestCase):
                 self.assertEqual(constructor.call_args.kwargs["gpt_attention"], attention)
                 self.assertEqual(constructor.call_args.kwargs["gpt_attention_chunk_size"], chunk)
                 self.assertFalse(constructor.call_args.kwargs["allow_experimental_acoustic_fp16"])
-                self.assertEqual(constructor.call_args.kwargs["acoustic_arena_shrink"], bool(options))
+                self.assertIs(constructor.call_args.kwargs["acoustic_arena_shrink"], shrink)
                 self.assertIsNone(constructor.call_args.kwargs["acoustic_chunk_frames"])
                 runtime.close.assert_called_once()
 

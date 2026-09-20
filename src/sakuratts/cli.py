@@ -153,8 +153,8 @@ def main(argv=None):
                         help="GPT execution precision; fp16 is experimental")
     speech.add_argument("--allow-experimental-acoustic-fp16", action="store_true",
                         help="Allow a separately converted and screened FP16 acoustic package")
-    speech.add_argument("--acoustic-arena-shrink", action="store_true",
-                        help="Release unused CUDA acoustic arena regions after each decode; may increase latency")
+    speech.add_argument("--acoustic-arena-shrink", action=argparse.BooleanOptionalAction, default=True,
+                        help="Release unused CUDA acoustic arena regions after each decode (default: enabled)")
     speech.add_argument("--acoustic-chunk-frames", type=int,
                         help="Explicit experimental split-package chunk length; 0 runs its full vocoder control")
     speech.add_argument("--gpt-attention", choices=("baseline", "split-kv"), default="baseline",

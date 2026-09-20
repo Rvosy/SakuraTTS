@@ -123,6 +123,8 @@ Windows `CUDAGPT.load(..., precision="fp16")`、`NVIDIAEngine(..., gpt_precision
 
 运行时统一拥有模型、缓存和执行状态。首版按需准备一个活动模型组合，避免为全部角色、batch 和容量档位提前分配。
 
+Windows CUDA 的 `Engine` / `NVIDIAEngine` 及共用该链路的 CLI、HTTP 入口默认启用声学 arena 收缩。每片 ORT 声学执行结束时释放不再使用的工作区，保留权重及活跃分配；不承诺空闲显存回到加载时的值，也不把收缩视为计算峰值上限。显式 `acoustic_arena_shrink=False` 可恢复保留工作区的策略；选择须传递至同进程或独立声学 worker，并在合成报告中记录。内存策略不能改变模型精度、输入、采样和输出格式。
+
 | 资源 | 生命周期 |
 |---|---|
 | 模型权重 | 模型加载至卸载；Prefill 与 Decode 应避免重复驻留相同权重 |

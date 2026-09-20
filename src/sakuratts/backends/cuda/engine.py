@@ -22,7 +22,7 @@ class NVIDIAEngine:
     """One active model pair and one synchronous request; caller owns lifetime."""
     def __init__(self, config, *, policy="resident", use_graph=True, capacity=2048,
                  gpt_precision="fp32", gpt_attention="baseline", gpt_attention_chunk_size=256,
-                 allow_experimental_acoustic_fp16=False, acoustic_arena_shrink=False,
+                 allow_experimental_acoustic_fp16=False, acoustic_arena_shrink=True,
                  acoustic_chunk_frames=None, load_references=True):
         if policy not in ("resident", "release-state", "staged"):
             raise ValueError("Unknown model policy")
