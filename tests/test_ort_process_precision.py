@@ -15,17 +15,27 @@ class ORTProcessPrecisionTests(unittest.TestCase):
             root = Path(temporary)
             package = root / "package"
             package.mkdir()
+            (package / "manifest.json").write_text("{}", encoding="utf-8")
             python = root / "python.exe"
             python.write_bytes(b"interpreter fixture")
             manifest = {"dtype": "float16", "config": {"sample_rate": 32000}}
             process = Mock()
-            process.poll.return_value = 0
+            process.pid = 4321
+            process.poll.return_value = None
+            process.wait.return_value = 0
+            from sakuratts.reference_condition import sha256_file
+            ready = {"status": "ready", "acoustic_dtype": "float16", "private_acoustic_process": True,
+                "shared_cuda_process": False, "worker_pid": process.pid, "executable": str(python.resolve()),
+                "package_manifest_sha256": sha256_file(package / "manifest.json"), "acoustic_arena_shrink": True,
+                "diagnostic": True, "chunk_frames": None, "torch_imported": False, "onnx_imported": False,
+                "providers": ["CUDAExecutionProvider"], "provider_options": {}}
             with patch("sakuratts.ort_process.read_manifest", return_value=(manifest, package / "graph.onnx")) as read, \
                  patch("sakuratts.ort_process.subprocess.Popen", return_value=process) as launch, \
-                 patch("sakuratts.ort_process.read_message", return_value=({"status": "ready", "acoustic_dtype": "float16"}, {})):
+                 patch("sakuratts.ort_process.read_message", return_value=(ready, {})):
                 model = ORTProcessSoVITS(package, python, diagnostic=True, allow_experimental_fp16=True,
                                          acoustic_arena_shrink=True)
-                read.assert_called_once_with(package.resolve(), diagnostic=True, allow_experimental_fp16=True)
+                read.assert_called_once_with(package.resolve(), diagnostic=True, allow_experimental_fp16=True,
+                    acoustic_arena_shrink=True, acoustic_chunk_frames=None)
                 self.assertIn("--allow-experimental-fp16", launch.call_args.args[0])
                 self.assertIn("--diagnostic", launch.call_args.args[0])
                 self.assertIn("--acoustic-arena-shrink", launch.call_args.args[0])
@@ -42,7 +52,8 @@ class ORTProcessPrecisionTests(unittest.TestCase):
                  patch("sakuratts.ort_process.subprocess.Popen") as launch:
                 with self.assertRaisesRegex(ValueError, "opt-in"):
                     ORTProcessSoVITS(root, python)
-                read.assert_called_once_with(root.resolve(), diagnostic=False, allow_experimental_fp16=False)
+                read.assert_called_once_with(root.resolve(), diagnostic=False, allow_experimental_fp16=False,
+                    acoustic_arena_shrink=False, acoustic_chunk_frames=None)
                 launch.assert_not_called()
 
 

@@ -24,6 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / "src"), str(ROOT / "harness"), str(ROOT / "scripts")]
 from sakuratts.ort_sovits import FP16_EXECUTION_OPTIONS, INPUT_NAMES, ORTSoVITS, _package_file, read_manifest
 from sakuratts.reference_condition import sha256_file
+from sakuratts.ort_chunked import ORTChunkedSoVITS
 from vocoder_receptive_field import VocoderReceptiveField
 
 
@@ -79,18 +80,12 @@ def verify_split(package, split_package, rf_spec, *, allow_experimental_fp16):
     return manifest, split, planner, provenance
 
 
-class SplitAcousticAdapter(ORTSoVITS):
+class SplitAcousticAdapter(ORTChunkedSoVITS):
     """Development-only adapter; the inherited reference and input checks apply."""
 
-    def __init__(self, manifest, sessions, planner, chunk_frames, provenance):
-        super().__init__(manifest, sessions["latent"], acoustic_arena_shrink=True)
-        self.vocoder_session = sessions["vocoder"]
-        self.planner, self.chunk_frames = planner, chunk_frames
-        self.last_transfer = None
-        self.runtime = {"experiment": "split-full" if chunk_frames == 0 else "chunked-vocoder",
-                        "development_only": True, "quality_accepted": False, "shared_cuda_process": True,
-                        "chunk_frames": chunk_frames, **provenance,
-                        "providers": {kind: session.get_provider_options() for kind, session in sessions.items()}}
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.runtime["shared_cuda_process"] = True
 
     @classmethod
     def load_split(cls, package, split_package, rf_spec, *, chunk_frames,
@@ -140,66 +135,6 @@ class SplitAcousticAdapter(ORTSoVITS):
             gc.collect()
             raise
 
-    def decode(self, codes, phones, ge, ge512, noise, *, noise_scale=0.5, speed=1.0, capture=False):
-        if self.session is None or self.vocoder_session is None:
-            raise RuntimeError("The split acoustic model has been unloaded")
-        if capture:
-            raise ValueError("Intermediate capture is unsupported by the split experiment")
-        self.last_transfer = None
-        feeds = self._inputs(codes, phones, ge, ge512, noise, noise_scale, speed)
-        latent = chunk_input = chunk = part = waveform = None
-        try:
-            started = time.perf_counter()
-            latent = self.session.run(["decoder_input"], feeds, run_options=self._run_options)[0]
-            latent_ms = (time.perf_counter() - started) * 1000
-            config = self.encoder.manifest["config"]
-            total = feeds["codes"].shape[-1] * config["semantic_upsample_factor"]
-            dtype = np.float16 if self.encoder.manifest["dtype"] == "float16" else np.float32
-            if (latent.dtype != dtype or latent.shape != (1, config["model"]["inter_channels"], total)
-                    or not np.isfinite(latent).all()):
-                raise RuntimeError("Split latent does not preserve the complete internal compute tensor")
-            ratio = self.planner.samples_per_frame
-            waveform = np.empty((1, 1, total * ratio), np.float32)
-            plans = ([self.planner.plan(total, 0, total)] if self.chunk_frames == 0 else
-                     self.planner.plan_chunks(total, self.chunk_frames))
-            inputs_bytes = outputs_bytes = 0
-            for plan in plans:
-                chunk_input = np.ascontiguousarray(latent[..., plan["input_start"]:plan["input_end"]])
-                chunk = self.vocoder_session.run(["waveform"], {"decoder_input": chunk_input, "ge": feeds["ge"]},
-                                                run_options=self._run_options)[0]
-                if (chunk.dtype != np.float32
-                        or chunk.shape != (1, 1, (plan["input_end"] - plan["input_start"]) * ratio)
-                        or not np.isfinite(chunk).all()):
-                    raise RuntimeError("Split vocoder produced an invalid complete chunk waveform")
-                part = chunk[..., plan["crop_start"]:plan["crop_end"]]
-                a, b = plan["core_start_frame"], plan["core_end_frame"]
-                if part.shape != (1, 1, (b - a) * ratio):
-                    raise RuntimeError("Vocoder crop differs from the planned core length")
-                waveform[..., a * ratio:b * ratio] = part
-                inputs_bytes += chunk_input.nbytes + feeds["ge"].nbytes
-                outputs_bytes += chunk.nbytes
-                chunk_input = chunk = part = None
-            self.last_transfer = {"experiment": self.runtime["experiment"], "chunk_frames": self.chunk_frames,
-                "chunks": len(plans), "latent_dtype": str(latent.dtype), "latent_frames": total,
-                "latent_d2h_bytes": latent.nbytes, "latent_inputs_h2d_bytes": sum(value.nbytes for value in feeds.values()),
-                "vocoder_inputs_h2d_bytes": inputs_bytes, "vocoder_outputs_d2h_bytes": outputs_bytes,
-                "byte_scope": "Logical host tensor sizes; excludes driver copies, workspaces and transfer profiling",
-                "latent_ms": latent_ms, "decode_ms": (time.perf_counter() - started) * 1000,
-                "plans": plans, "pcm": "Normalized once by the unchanged engine after full waveform reconstruction"}
-            return waveform
-        finally:
-            feeds.clear()
-            latent = chunk_input = chunk = part = waveform = None
-
-    def release_request_state(self):
-        self.last_transfer = None
-
-    def unload(self):
-        self.session = self.vocoder_session = self._run_options = None
-        self.release_request_state()
-        gc.collect()
-
-    close = unload
 
 
 def _finalize_experiment(output, record):

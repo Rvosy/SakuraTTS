@@ -61,17 +61,64 @@ class NvidiaPackageStartupTests(unittest.TestCase):
                     model.config, model.sovits = config, None
                     model.allow_experimental_acoustic_fp16 = allowed
                     model.acoustic_arena_shrink = allowed
+                    model.acoustic_chunk_frames = 256 if allowed else None
                     with patch("sakuratts.ort_process.ORTProcessSoVITS") as process, \
                             patch("sakuratts.ort_sovits.ORTSoVITS.load") as direct:
                         model._load_sovits()
                     selected, unused = (process, direct) if config else (direct, process)
                     self.assertEqual(selected.call_args.kwargs["allow_experimental_fp16"], allowed)
                     self.assertEqual(selected.call_args.kwargs["acoustic_arena_shrink"], allowed)
+                    self.assertEqual(selected.call_args.kwargs["acoustic_chunk_frames"], 256 if allowed else None)
                     unused.assert_not_called()
 
     def test_unknown_precision_is_rejected_before_loading_resources(self):
         with self.assertRaisesRegex(ValueError, "precision"):
             NVIDIAEngine("does-not-exist.json", gpt_precision="int8")
+
+    def test_invalid_acoustic_chunk_type_fails_before_loading_resources(self):
+        for value in (True, -1, 256., "256"):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "acoustic_chunk_frames"):
+                NVIDIAEngine("does-not-exist.json", acoustic_chunk_frames=value)
+
+    def test_split_admission_precedes_references_and_frontend_workers(self):
+        for package_format, chunk in (("sakuratts-sovits-split-onnx-v1", None),
+                ("sakuratts-sovits-split-onnx-v1", 256), ("sakuratts-sovits-onnx-v1", 0)):
+            with self.subTest(package_format=package_format, chunk=chunk), tempfile.TemporaryDirectory() as directory:
+                config, _, _ = fixture(Path(directory))
+                path = Path(directory) / "sovits/manifest.json"
+                acoustic = json.loads(path.read_text(encoding="utf-8"))
+                acoustic["format"] = package_format
+                path.write_text(json.dumps(acoustic), encoding="utf-8")
+                with patch("sakuratts.ort_sovits.read_manifest", side_effect=ValueError("package admission failed")) as read, \
+                        patch("sakuratts.nvidia.PreparedReference.load") as reference, \
+                        patch("sakuratts.classic_japanese.ClassicJapaneseG2P") as frontend:
+                    with self.assertRaisesRegex(ValueError, "package admission"):
+                        NVIDIAEngine(config, acoustic_chunk_frames=chunk, acoustic_arena_shrink=True)
+                read.assert_called_once_with(path.parent.resolve(), allow_experimental_fp16=False,
+                    acoustic_arena_shrink=True, acoustic_chunk_frames=chunk)
+                reference.assert_not_called()
+                frontend.assert_not_called()
+
+    def test_split_package_identity_is_used_without_original_package(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config, _, _ = fixture(Path(directory))
+            path = Path(directory) / "sovits/manifest.json"
+            acoustic = json.loads(path.read_text(encoding="utf-8"))
+            acoustic["format"] = "sakuratts-sovits-split-onnx-v1"
+            acoustic["dtype"] = "float16"
+            path.write_text(json.dumps(acoustic), encoding="utf-8")
+            with patch("sakuratts.ort_sovits.read_manifest", return_value=(acoustic, None)), \
+                    patch("sakuratts.nvidia.PreparedReference.load", return_value=object()) as reference, \
+                    patch("sakuratts.classic_japanese.ClassicJapaneseG2P"), \
+                    patch("sakuratts.text_frontend.LanguageSegmenter"), \
+                    patch("sakuratts.text_frontend.TextFrontend"):
+                model = NVIDIAEngine(config, acoustic_chunk_frames=256, acoustic_arena_shrink=True,
+                                     allow_experimental_acoustic_fp16=True)
+                self.assertEqual(model.acoustic_chunk_frames, 256)
+                self.assertEqual(model.acoustic_precision, "fp16")
+                self.assertEqual(reference.call_args.kwargs["sovits_checkpoint_sha256"], "checkpoint")
+                self.assertEqual(reference.call_args.kwargs["official_commit"], "source")
+                model.close()
 
     def test_invalid_attention_is_rejected_before_loading_resources(self):
         with self.assertRaisesRegex(ValueError, "attention"):
@@ -119,6 +166,26 @@ class NvidiaPackageStartupTests(unittest.TestCase):
                 self.assertEqual(constructor.call_args.kwargs["gpt_attention_chunk_size"], chunk)
                 self.assertFalse(constructor.call_args.kwargs["allow_experimental_acoustic_fp16"])
                 self.assertEqual(constructor.call_args.kwargs["acoustic_arena_shrink"], bool(options))
+                self.assertIsNone(constructor.call_args.kwargs["acoustic_chunk_frames"])
+                runtime.close.assert_called_once()
+
+    def test_cli_explicit_acoustic_chunk_choice_reaches_engine(self):
+        from sakuratts.cli import main
+        for chunk in (0, 256):
+            with self.subTest(chunk=chunk), tempfile.TemporaryDirectory() as directory:
+                runtime = Mock()
+                runtime.synthesize.side_effect = RuntimeError("stop before inference")
+                with patch("sakuratts.diagnostics.read_windows_config"), \
+                        patch("sakuratts.nvidia.NVIDIAEngine", return_value=runtime) as constructor, \
+                        contextlib.redirect_stderr(io.StringIO()):
+                    with self.assertRaises(SystemExit):
+                        main(["synthesize", "--config", "unused.json", "--text", "test",
+                              "--output", str(Path(directory) / "speech.wav"),
+                              "--acoustic-chunk-frames", str(chunk), "--allow-experimental-acoustic-fp16",
+                              "--acoustic-arena-shrink"])
+                self.assertEqual(constructor.call_args.kwargs["acoustic_chunk_frames"], chunk)
+                self.assertTrue(constructor.call_args.kwargs["allow_experimental_acoustic_fp16"])
+                self.assertTrue(constructor.call_args.kwargs["acoustic_arena_shrink"])
                 runtime.close.assert_called_once()
 
     def test_classic_profile_cannot_load_module_or_dictionary_outside_package(self):

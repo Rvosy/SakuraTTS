@@ -38,9 +38,17 @@ def _package_file(root, spec):
     return path
 
 
-def read_manifest(package, *, diagnostic=False, allow_experimental_fp16=False):
+def read_manifest(package, *, diagnostic=False, allow_experimental_fp16=False,
+                  acoustic_chunk_frames=None, acoustic_arena_shrink=False):
     package = Path(package).resolve()
     manifest = json.loads((package / "manifest.json").read_text(encoding="utf-8"))
+    if manifest.get("format") == "sakuratts-sovits-chunked-v1":
+        from .chunked_package import read_chunked_manifest
+        return read_chunked_manifest(package, diagnostic=diagnostic,
+            allow_experimental_fp16=allow_experimental_fp16, acoustic_chunk_frames=acoustic_chunk_frames,
+            acoustic_arena_shrink=acoustic_arena_shrink)
+    if acoustic_chunk_frames is not None:
+        raise ValueError("acoustic_chunk_frames requires a validated chunked acoustic package")
     if (manifest["format"] != FORMAT or manifest["dtype"] not in ("float32", "float16")
             or manifest["config"]["model"]["version"] not in ("v2Pro", "v2ProPlus")):
         raise ValueError("Expected a V2Pro/V2ProPlus ONNX acoustic package")
@@ -102,7 +110,7 @@ class ORTSoVITS:
              arena_extend_strategy="kSameAsRequested", cudnn_conv_algo_search="HEURISTIC",
              cudnn_conv_use_max_workspace=False, enable_mem_pattern=False,
              intra_op_num_threads=4, profile_prefix=None, allow_experimental_fp16=False,
-             acoustic_arena_shrink=False):
+             acoustic_arena_shrink=False, acoustic_chunk_frames=None):
         if device not in ("cuda", "cpu"):
             raise ValueError("Acoustic device must be cuda or cpu")
         if not isinstance(acoustic_arena_shrink, bool):
@@ -110,10 +118,11 @@ class ORTSoVITS:
         if acoustic_arena_shrink and device != "cuda":
             raise ValueError("Acoustic arena shrinkage requires CUDA execution")
         manifest, graph = read_manifest(package, diagnostic=diagnostic,
-                                        allow_experimental_fp16=allow_experimental_fp16)
+            allow_experimental_fp16=allow_experimental_fp16, acoustic_chunk_frames=acoustic_chunk_frames,
+            acoustic_arena_shrink=acoustic_arena_shrink)
         if manifest["dtype"] == "float16" and device != "cuda":
             raise ValueError("Experimental FP16 acoustic execution currently requires CUDA")
-        if manifest["dtype"] == "float16":
+        if manifest["dtype"] == "float16" or graph is None:
             requested = {"device_id": device_id, "arena_extend_strategy": arena_extend_strategy,
                          "cudnn_conv_algo_search": cudnn_conv_algo_search,
                          "cudnn_conv_use_max_workspace": cudnn_conv_use_max_workspace,
@@ -121,10 +130,17 @@ class ORTSoVITS:
                          "intra_op_num_threads": intra_op_num_threads, "inter_op_num_threads": 1}
             if requested != FP16_EXECUTION_OPTIONS:
                 raise ValueError("Experimental FP16 acoustic execution requires its screened CUDA/session options")
+        if graph is None and device != "cuda":
+            raise ValueError("Chunked acoustic execution requires CUDA")
         if device == "cuda":
             from .cuda_runtime import configure_cuda
             configure_cuda()
         import onnxruntime as ort
+
+        if graph is None:
+            from .ort_chunked import ORTChunkedSoVITS
+            return ORTChunkedSoVITS.load_verified(package, manifest,
+                chunk_frames=acoustic_chunk_frames, profile_prefix=profile_prefix)
 
         options = ort.SessionOptions()
         options.intra_op_num_threads = intra_op_num_threads

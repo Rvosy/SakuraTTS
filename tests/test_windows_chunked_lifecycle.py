@@ -8,7 +8,7 @@ import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 
 import numpy as np
 
@@ -51,6 +51,8 @@ class GPT:
 class Worker:
     def __init__(self, *, chunks=3):
         self.process, self.last_transfer, self.chunks = Process(), None, chunks
+        self.runtime = {"worker_pid": self.process.pid, "private_acoustic_process": True,
+                        "shared_cuda_process": False, "chunk_frames": 256}
 
     def decode(self):
         self.last_transfer = None
@@ -87,6 +89,7 @@ class EngineFactory:
         engine.use_graph, engine.capacity = True, 2048
         engine.gpt_precision = engine.acoustic_precision = "fp16"
         engine.acoustic_arena_shrink = True
+        engine.acoustic_chunk_frames = None
         engine.gpt_attention, engine.gpt_attention_chunk_size = "baseline", 256
         engine.gpt = engine.sovits = None
         engine.japanese = Worker()
@@ -171,6 +174,21 @@ class ChunkedLifecycleTests(unittest.TestCase):
             self.assertFalse(probe.aggregate(result["cases"], result["cleanup"])["lifecycle_passed"])
             self.assertFalse(result["cases"][0]["checks"]["actual_multiple_chunks"])
 
+    def test_public_mode_observes_staged_and_resident_workers_without_wrapping_loaders(self):
+        with tempfile.TemporaryDirectory() as directory:
+            factory, result = EngineFactory(), record()
+            result.update(entrypoint="public-package", loads=[])
+            with patch("sakuratts.nvidia.prepare_text_request", side_effect=factory.prepare), \
+                    patch("sakuratts.nvidia.generate_prepared_semantic", side_effect=factory.semantic), \
+                    patch("sakuratts.nvidia.synthesize_acoustic", side_effect=factory.acoustic):
+                probe.run_checks(factory, Path(directory), result)
+        self.assertTrue(probe.aggregate(result["cases"], result["cleanup"])["lifecycle_passed"])
+        self.assertEqual({row["worker_pid"] for row in result["loads"]}, {worker.pid for worker in factory.workers})
+        self.assertEqual(len(result["loads"]), len(factory.workers))
+        self.assertEqual({row["policy"] for row in result["loads"]}, {"resident", "staged"})
+        self.assertTrue(all(row["private_acoustic_process"] for row in result["loads"]))
+        self.assertTrue(all(row["implementation"].endswith(".Worker") for row in result["loads"]))
+
     def test_comparison_checks_every_fragment(self):
         with tempfile.TemporaryDirectory() as directory:
             _, result = self.run_fake_suite(Path(directory))
@@ -219,6 +237,113 @@ class ChunkedLifecycleTests(unittest.TestCase):
                 self.assertEqual(run.call_count, 0 if check_only else 1)
                 if not check_only:
                     self.assertIn("injected suite failure", saved["errors"][0])
+
+    @staticmethod
+    def public_configuration(root):
+        from test_chunked_package import make_package
+        package = root / "chunk-package"
+        package.mkdir()
+        make_package(package)
+        config = root / "public-config.json"
+        config.write_text(json.dumps({"format": "sakuratts-windows-config-v1",
+            "sovits": "chunk-package", "acoustic_python": sys.executable}), encoding="utf-8")
+        return config
+
+    def test_public_main_uses_config_and_engine_options_without_any_loader_assignment(self):
+        for precision, attention in (("fp16", "baseline"), ("fp32", "split-kv")):
+            with self.subTest(precision=precision, attention=attention), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                config = self.public_configuration(root)
+                output = root / "run"
+                constructed = []
+
+                class NoLoaderMutation(type):
+                    def __setattr__(cls, name, value):
+                        if name == "_load_sovits":
+                            raise AssertionError("The public mode must never replace or restore a loader")
+                        super().__setattr__(name, value)
+
+                class Engine(metaclass=NoLoaderMutation):
+                    _load_sovits = object()
+
+                    def __init__(self, selected_config, **kwargs):
+                        constructed.append((selected_config, kwargs))
+
+                def run(engine_factory, actual_output, result):
+                    engine_factory("resident")
+                    engine_factory("staged")
+                    self.assertEqual(actual_output, output)
+                    self.assertEqual(result["entrypoint"], "public-package")
+                    self.assertEqual(result["provenance"]["sample_ratio"], 3)
+                    self.assertIn("src/sakuratts/ort_chunked.py", result["sources_sha256"])
+                    result["cases"].append({"checks": {"completed": True}})
+                    result["cleanup"].append({"passed": True})
+
+                argv = ["--public-package", "--config", str(config), "--output", str(output),
+                    "--gpt-precision", precision, "--gpt-attention", attention,
+                    "--allow-experimental-acoustic-fp16", "--acoustic-arena-shrink"]
+                with patch.object(probe, "NVIDIAEngine", Engine), \
+                        patch.object(probe, "verify_split", side_effect=AssertionError("Development verifier invoked")), \
+                        patch.object(probe, "ChunkedProcessSoVITS", side_effect=AssertionError("Development worker invoked")), \
+                        patch.object(probe, "run_checks", side_effect=run), redirect_stdout(io.StringIO()):
+                    self.assertEqual(probe.main(argv), 0)
+                self.assertEqual([kwargs["policy"] for _, kwargs in constructed], ["resident", "staged"])
+                for selected_config, kwargs in constructed:
+                    self.assertEqual(selected_config, config.resolve())
+                    self.assertEqual(kwargs["acoustic_chunk_frames"], 256)
+                    self.assertEqual(kwargs["gpt_precision"], precision)
+                    self.assertEqual(kwargs["gpt_attention"], attention)
+                    self.assertTrue(kwargs["allow_experimental_acoustic_fp16"])
+                    self.assertTrue(kwargs["acoustic_arena_shrink"])
+                saved = json.loads((output / "results.json").read_text(encoding="utf-8"))
+                self.assertFalse(saved["loader_replaced"])
+                self.assertEqual(saved["acoustic_python"], str(Path(sys.executable).resolve()))
+                self.assertEqual(saved["status"], "lifecycle_completed")
+
+    def test_public_check_only_and_failure_leave_the_public_loader_untouched(self):
+        for check_only in (True, False):
+            with self.subTest(check_only=check_only), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                config = self.public_configuration(root)
+                output = root / "run"
+                argv = ["--public-package", "--config", str(config), "--output", str(output),
+                    "--allow-experimental-acoustic-fp16", "--acoustic-arena-shrink"]
+                if check_only:
+                    argv.append("--check-only")
+                original_loader = NVIDIAEngine._load_sovits
+                with patch.object(probe, "verify_split", side_effect=AssertionError("Development verifier invoked")), \
+                        patch.object(probe, "run_checks", side_effect=RuntimeError("public suite failure")) as run, \
+                        redirect_stdout(io.StringIO()):
+                    self.assertEqual(probe.main(argv), 0 if check_only else 1)
+                self.assertIs(NVIDIAEngine._load_sovits, original_loader)
+                self.assertEqual(run.call_count, 0 if check_only else 1)
+                saved = json.loads((output / "results.json").read_text(encoding="utf-8"))
+                self.assertFalse(saved["loader_replaced"])
+                self.assertEqual(saved["status"], "configuration_verified" if check_only else "failed")
+                if not check_only:
+                    self.assertIn("public suite failure", saved["errors"][0])
+
+    def test_public_mode_rejects_development_overrides_and_wrong_chunk_before_loading(self):
+        for extra in (["--split-package", "unused"], ["--rf-spec", "unused"],
+                ["--acoustic-python", sys.executable], ["--cuda-dir", "unused"], ["--chunk-frames", "128"]):
+            with self.subTest(extra=extra), patch.object(probe, "read_manifest") as read, \
+                    redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                probe.main(["--public-package", "--config", "unused", "--output", "unused",
+                            "--acoustic-arena-shrink", *extra])
+            read.assert_not_called()
+
+    def test_public_mode_requires_a_private_worker_before_creating_output(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = root / "config.json"
+            config.write_text(json.dumps({"format": "sakuratts-windows-config-v1", "sovits": "unused"}),
+                              encoding="utf-8")
+            output = root / "run"
+            with patch.object(probe, "read_manifest") as read, self.assertRaisesRegex(ValueError, "private acoustic_python"):
+                probe.main(["--public-package", "--config", str(config), "--output", str(output),
+                            "--acoustic-arena-shrink"])
+            read.assert_not_called()
+            self.assertFalse(output.exists())
 
 
 if __name__ == "__main__":

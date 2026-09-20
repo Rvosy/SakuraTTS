@@ -161,6 +161,28 @@ uv --offline pip check --python .venv-windows-runtime\Scripts\python.exe
 
 声学默认使用 `HEURISTIC` 卷积算法搜索并关闭最大 cuDNN 工作区。较大工作区的候选在实测中可以更快，但会超过这张 8 GB 显卡的可用显存预算；默认限制有速度代价，不能称为免费优化。工作区、加载策略和完整请求的具体取舍见实测记录，不根据单个算子的计时改变默认配置。
 
+### 独立声码器分块包
+
+已筛查的分块包可以直接通过 `synthesize` 和 `NVIDIAEngine` 使用。编码器和 flow 仍处理完整序列，只有声码器按真实依赖范围分块，最后返回完整 PCM。它不提供流式首包。当前包覆盖 `--acoustic-chunk-frames 256`，以及用于数值对照的 `0`（拆图后整段声码器）；其他块长需要对应的筛查证据。
+
+本机已准备 `outputs/windows-vocoder-worker/package-offline-v1`，配置 `outputs/windows-vocoder-public/runtime-fp16-chunk256.json` 指向该包，并保留 CUDA 参考和独立声学解释器。可以直接执行：
+
+```powershell
+.venv-windows-runtime/Scripts/python.exe -B -m sakuratts synthesize `
+  --config outputs/windows-vocoder-public/runtime-fp16-chunk256.json `
+  --text "おはよう。今日もよろしくね。" `
+  --gpt-precision fp16 `
+  --allow-experimental-acoustic-fp16 --acoustic-arena-shrink `
+  --acoustic-chunk-frames 256 `
+  --output outputs/sakura-neutral-chunk256.wav
+```
+
+GPT FP16 + baseline attention 是本轮低显存配置。速度配置使用 `--gpt-precision fp32 --gpt-attention split-kv --gpt-attention-chunk-size 256`；两者的自然采样输出可能不同，各自与同条件基线比较。Python 对应 `NVIDIAEngine(config, acoustic_chunk_frames=256, acoustic_arena_shrink=True, allow_experimental_acoustic_fp16=True, ...)`。
+
+分块包只含两张图、两份互不重复的权重、感受野说明、筛查报告和 manifest，共 7 个文件。运行时校验这些包内文件及报告绑定关系，不读取原整图、拆图实验目录或验证输入。报告目前标记 `quality_accepted=false`；它证明已有波形与接缝工程检查，未替代人工听音和内容验收。具体结果及从保存证据生成新包的命令见[正式分块入口实验](experiments/2026-09-20-windows-vocoder-public.md)。
+
+分块包必须显式选择块长并启用 arena 回收；FP16 仍需精度许可参数。整图包不接受块长参数，分块包不支持中间层诊断捕获。`doctor --nvidia` 当前只覆盖原有 FP32 整图配置，尚不接受声学 FP16 或分块包；上述候选通过实际 `synthesize` 和专用 harness 验证，不能用 doctor 代替。干净机器部署仍待验收。
+
 ## 已核对的安装成本与边界
 
 本机从缓存新建 `.venv-windows-runtime`，运行包依赖检查、CLI 帮助和日文前端检查均通过。Torch、torchaudio、Transformers、ONNX 导出器与 MLX 均不可导入，CUDA DLL 发现路径全部位于新的日常环境。移除重复 cuDNN 后、安装测量用 psutil 前，主环境逻辑文件大小为 1,560,256,402 字节，约 1.45 GiB。

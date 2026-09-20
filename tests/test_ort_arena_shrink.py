@@ -78,9 +78,11 @@ class ORTArenaShrinkTests(unittest.TestCase):
              patch.object(ort_worker.ORTSoVITS, "load", return_value=model) as load, \
              patch.object(ort_worker, "read_message", return_value=({"command": "close"}, {})), \
              patch.object(ort_worker, "write_message") as send, \
+             patch.object(ort_worker, "sha256_file", return_value="manifest-hash"), \
              patch.dict(sys.modules, {"onnxruntime": SimpleNamespace(__version__="test")}):
             self.assertEqual(ort_worker.main(), 0)
-        load.assert_called_once_with("unused", diagnostic=False, allow_experimental_fp16=True, acoustic_arena_shrink=True)
+        load.assert_called_once_with("unused", diagnostic=False, allow_experimental_fp16=True,
+                                     acoustic_arena_shrink=True, acoustic_chunk_frames=None)
         self.assertTrue(send.call_args.args[1]["acoustic_arena_shrink"])
         model.close.assert_called_once()
 

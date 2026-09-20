@@ -1,5 +1,6 @@
 """Reject mixed reference preparation before complete-request GPU execution."""
 import hashlib
+import io
 import json
 from pathlib import Path
 import sys
@@ -51,6 +52,22 @@ def fixture(root, *, mixed):
 
 
 class WindowsNvidiaBenchmarkTests(unittest.TestCase):
+    def test_check_only_records_explicit_chunk_configuration_without_runtime(self):
+        for chunk in (None, 0, 256):
+            with self.subTest(chunk=chunk), tempfile.TemporaryDirectory() as temporary:
+                _, _, config = fixture(Path(temporary), mixed=False)
+                args = ["windows_nvidia_benchmark.py", "--config", str(config), "--check-only"]
+                if chunk is not None:
+                    args.extend(("--acoustic-chunk-frames", str(chunk), "--acoustic-arena-shrink",
+                                 "--allow-experimental-acoustic-fp16"))
+                with patch.object(sys, "argv", args), patch.object(sys, "stdout", io.StringIO()) as output:
+                    self.assertEqual(benchmark.main(), 0)
+                result = json.loads(output.getvalue())
+                self.assertEqual(result["acoustic_chunk_frames"], chunk)
+                self.assertEqual(result["acoustic_arena_shrink"], chunk is not None)
+                self.assertFalse(result["gpu_execution"])
+                self.assertFalse(result["runtime_imported"])
+
     def test_identical_reference_arrays_are_accepted(self):
         with tempfile.TemporaryDirectory() as temporary:
             mapping, manifest, _ = fixture(Path(temporary), mixed=False)

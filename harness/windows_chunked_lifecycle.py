@@ -1,4 +1,4 @@
-"""Development-only lifecycle checks for the host-latent chunked worker.
+"""Lifecycle checks for the public or development host-latent chunked worker.
 
 The long input must execute more than one vocoder chunk. Only a worker owned
 by this run is killed, between requests. Cancellation remains cooperative at
@@ -12,6 +12,7 @@ import argparse
 from copy import deepcopy
 import hashlib
 import json
+import math
 from pathlib import Path
 import sys
 import time
@@ -23,6 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / "src"), str(ROOT / "harness"), str(ROOT / "scripts")]
 from sakuratts.generation import SynthesisCancelled
 from sakuratts.nvidia import NVIDIAEngine
+from sakuratts.ort_sovits import read_manifest
 from sakuratts.reference_condition import sha256_file
 from windows_chunked_process import ChunkedProcessSoVITS
 from windows_chunked_synthesis import verify_split
@@ -35,6 +37,10 @@ SOURCE_FILES = tuple(dict.fromkeys((*WORKER_SOURCE_FILES,
     "harness/windows_failure_lifecycle.py", "scripts/windows_official_baseline.py",
     "src/sakuratts/nvidia.py", "src/sakuratts/cuda_gpt.py", "src/sakuratts/generation.py",
     "src/sakuratts/synthesis.py", "src/sakuratts/ort_process.py")))
+PUBLIC_SOURCE_FILES = tuple(dict.fromkeys((*SOURCE_FILES, "src/sakuratts/ort_worker.py",
+    "src/sakuratts/ort_chunked.py", "src/sakuratts/chunked_package.py",
+    "src/sakuratts/vocoder_receptive_field.py", "src/sakuratts/cuda_runtime.py",
+    "src/sakuratts/reference_condition.py")))
 TEXT = TEXT_CASES["long"]
 
 
@@ -109,8 +115,23 @@ def _close_engine(engine, record):
 def run_checks(engine_factory, output, record):
     """Run actual requests; CPU tests inject an engine with the same boundaries."""
     sample_ratio = record["provenance"]["sample_ratio"]
+    observed_pids = set()
+
+    def observe_worker(engine):
+        if record.get("entrypoint") == "public-package":
+            model = engine.sovits
+            process = getattr(model, "process", None)
+            if process is not None and process.pid not in observed_pids:
+                record["loads"].append({"policy": engine.policy,
+                    "implementation": type(model).__module__ + "." + type(model).__qualname__,
+                    **deepcopy(model.runtime)})
+                observed_pids.add(process.pid)
+        return False
+
     def request(engine, name):
-        pcm, details = engine.synthesize(TEXT, seed=1234)
+        kwargs = ({"cancel_requested": lambda: observe_worker(engine)}
+                  if record.get("entrypoint") == "public-package" else {})
+        pcm, details = engine.synthesize(TEXT, seed=1234, **kwargs)
         path = output / (name + "-pcm.npy")
         np.save(path, pcm, allow_pickle=False)
         record["requests"].append({"name": name, "pcm_file": path.name,
@@ -173,6 +194,7 @@ def run_checks(engine_factory, output, record):
             def cancelled():
                 nonlocal calls
                 calls += 1
+                observe_worker(staged)
                 if staged.gpt is not None:
                     observed["gpt"] = staged.gpt
                 if staged.sovits is not None:
@@ -218,11 +240,13 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True, help="New directory for this run only")
-    parser.add_argument("--split-package", type=Path, required=True)
-    parser.add_argument("--rf-spec", type=Path, required=True)
+    parser.add_argument("--public-package", action="store_true",
+                        help="Use the self-contained package and acoustic Python in config through the public engine")
+    parser.add_argument("--split-package", type=Path)
+    parser.add_argument("--rf-spec", type=Path)
     parser.add_argument("--chunk-frames", type=int, default=256)
-    parser.add_argument("--acoustic-python", type=Path, default=ROOT / "data/windows-ort-runtime/python.exe")
-    parser.add_argument("--cuda-dir", type=Path, default=ROOT / "data/windows-ort-runtime/cuda")
+    parser.add_argument("--acoustic-python", type=Path)
+    parser.add_argument("--cuda-dir", type=Path)
     parser.add_argument("--gpt-precision", choices=("fp32", "fp16"), default="fp32")
     parser.add_argument("--gpt-attention", choices=("baseline", "split-kv"), default="baseline")
     parser.add_argument("--gpt-attention-chunk-size", type=int, choices=(256, 512), default=256)
@@ -232,22 +256,53 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.chunk_frames <= 0 or not args.acoustic_arena_shrink:
         parser.error("Require positive --chunk-frames and explicit --acoustic-arena-shrink")
-    config_path, python, cuda_dir = [value.resolve(strict=True) for value in
-                                    (args.config, args.acoustic_python, args.cuda_dir)]
+    if args.public_package:
+        if any(value is not None for value in (args.split_package, args.rf_spec, args.acoustic_python, args.cuda_dir)):
+            parser.error("--public-package uses only config resources; do not pass development package or runtime overrides")
+        if args.chunk_frames != 256:
+            parser.error("--public-package lifecycle checks require --chunk-frames 256")
+    elif args.split_package is None or args.rf_spec is None:
+        parser.error("Development mode requires --split-package and --rf-spec")
+    config_path = args.config.resolve(strict=True)
     config = json.loads(config_path.read_text(encoding="utf-8"))
-    _, _, _, provenance = verify_split(config_path.parent / config["sovits"], args.split_package, args.rf_spec,
-        allow_experimental_fp16=args.allow_experimental_acoustic_fp16)
+    if args.public_package:
+        if config.get("format") != "sakuratts-windows-config-v1" or not isinstance(config.get("acoustic_python"), str) or not config["acoustic_python"].strip():
+            raise ValueError("Public lifecycle checks require a Windows configuration with its own private acoustic_python")
+        python = (config_path.parent / config["acoustic_python"]).resolve(strict=True)
+        cuda_dir = python.parent / "cuda"
+        cuda_dir = cuda_dir if cuda_dir.is_dir() else None
+        package = (config_path.parent / config["sovits"]).resolve(strict=True)
+        manifest, graph = read_manifest(package,
+            allow_experimental_fp16=args.allow_experimental_acoustic_fp16,
+            acoustic_arena_shrink=True, acoustic_chunk_frames=256)
+        if graph is not None:
+            raise ValueError("Public lifecycle checks require a self-contained chunk package")
+        provenance = {**deepcopy(manifest["provenance"]), "package": str(package),
+            "package_manifest_sha256": sha256_file(package / "manifest.json"),
+            "package_format": manifest["format"], "source_identity": deepcopy(manifest["source"]),
+            "sample_ratio": math.prod(manifest["config"]["model"]["upsample_rates"]),
+            "graphs": deepcopy(manifest["graphs"]), "weights": deepcopy(manifest["weights"]),
+            "settings": deepcopy(manifest["settings"]), "validation": deepcopy(manifest["validation"]),
+            "rf_spec_sha256": manifest["rf"]["sha256"]}
+    else:
+        python = (args.acoustic_python or ROOT / "data/windows-ort-runtime/python.exe").resolve(strict=True)
+        cuda_dir = (args.cuda_dir or ROOT / "data/windows-ort-runtime/cuda").resolve(strict=True)
+        _, _, _, provenance = verify_split(config_path.parent / config["sovits"], args.split_package, args.rf_spec,
+            allow_experimental_fp16=args.allow_experimental_acoustic_fp16)
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     record = {"status": "running", "development_only": True, "quality_accepted": False,
+        "entrypoint": "public-package" if args.public_package else "development-loader",
+        "loader_replaced": False,
         "scope": "Long original-text requests; host-latent chunk worker. Idle owned-worker kill, completed-compute cancellation boundaries and explicit unload. No in-flight kill, cancellation-latency, streaming, quality or performance claim.",
         "comparison_scope": "Same candidate, precision, reference and seed; not official-model numerical validation",
         "exit_code_scope": "Lifecycle and evidence validity only; PCM tolerance and bitwise results are separate",
         "text": TEXT, "seed": 1234, "gpt_precision": args.gpt_precision, "gpt_attention": args.gpt_attention,
         "gpt_attention_chunk_size": args.gpt_attention_chunk_size, "chunk_frames": args.chunk_frames,
         "acoustic_arena_shrink": True, "config": str(config_path), "config_sha256": sha256_file(config_path),
-        "acoustic_python": str(python), "cuda_directory": str(cuda_dir), "provenance": provenance,
-        "gpu_execution_requested": not args.check_only, "sources_sha256": {name: sha256_file(ROOT / name) for name in SOURCE_FILES},
+        "acoustic_python": str(python), "cuda_directory": str(cuda_dir) if cuda_dir is not None else None, "provenance": provenance,
+        "gpu_execution_requested": not args.check_only,
+        "sources_sha256": {name: sha256_file(ROOT / name) for name in (PUBLIC_SOURCE_FILES if args.public_package else SOURCE_FILES)},
         "cases": [], "requests": [], "loads": [], "cleanup": [], "errors": []}
     original_loader, started = NVIDIAEngine._load_sovits, time.perf_counter()
 
@@ -260,15 +315,19 @@ def main(argv=None):
             record["loads"].append({"policy": engine.policy, **deepcopy(engine.sovits.runtime)})
 
     def engine_factory(policy):
+        kwargs = {"acoustic_chunk_frames": 256} if args.public_package else {}
         return NVIDIAEngine(config_path, policy=policy, gpt_precision=args.gpt_precision,
             gpt_attention=args.gpt_attention, gpt_attention_chunk_size=args.gpt_attention_chunk_size,
-            allow_experimental_acoustic_fp16=args.allow_experimental_acoustic_fp16, acoustic_arena_shrink=True)
+            allow_experimental_acoustic_fp16=args.allow_experimental_acoustic_fp16, acoustic_arena_shrink=True,
+            **kwargs)
 
     try:
         if args.check_only:
             record["status"] = "configuration_verified"
         else:
-            NVIDIAEngine._load_sovits = load_worker
+            if not args.public_package:
+                NVIDIAEngine._load_sovits = load_worker
+                record["loader_replaced"] = True
             run_checks(engine_factory, output, record)
             record.update(aggregate(record["cases"], record["cleanup"]))
             record["status"] = "lifecycle_completed" if record["lifecycle_passed"] else "lifecycle_failed"
@@ -276,7 +335,8 @@ def main(argv=None):
         record.update(status="failed", lifecycle_passed=False)
         record["errors"].append(traceback.format_exc())
     finally:
-        NVIDIAEngine._load_sovits = original_loader
+        if not args.public_package:
+            NVIDIAEngine._load_sovits = original_loader
         record.update(elapsed_seconds=time.perf_counter() - started,
                       torch_imported="torch" in sys.modules, onnx_imported="onnx" in sys.modules)
         record["sources_changed"] = []

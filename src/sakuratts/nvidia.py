@@ -18,13 +18,16 @@ class NVIDIAEngine:
     """One active model pair and one synchronous request; caller owns lifetime."""
     def __init__(self, config, *, policy="resident", use_graph=True, capacity=2048,
                  gpt_precision="fp32", gpt_attention="baseline", gpt_attention_chunk_size=256,
-                 allow_experimental_acoustic_fp16=False, acoustic_arena_shrink=False):
+                 allow_experimental_acoustic_fp16=False, acoustic_arena_shrink=False,
+                 acoustic_chunk_frames=None):
         if policy not in ("resident", "release-state", "staged"):
             raise ValueError("Unknown model policy")
         if gpt_precision not in ("fp32", "fp16"):
             raise ValueError("GPT precision must be fp32 or fp16")
         if not isinstance(acoustic_arena_shrink, bool):
             raise ValueError("acoustic_arena_shrink must be a bool")
+        if acoustic_chunk_frames is not None and (type(acoustic_chunk_frames) is not int or acoustic_chunk_frames<0):
+            raise ValueError("acoustic_chunk_frames must be a nonnegative integer or None")
         if gpt_attention not in ("baseline", "split-kv"):
             raise ValueError("GPT attention must be baseline or split-kv")
         if (not isinstance(gpt_attention_chunk_size, (int, np.integer))
@@ -34,6 +37,7 @@ class NVIDIAEngine:
         self.gpt_attention, self.gpt_attention_chunk_size = gpt_attention, gpt_attention_chunk_size
         self.allow_experimental_acoustic_fp16 = allow_experimental_acoustic_fp16
         self.acoustic_arena_shrink = acoustic_arena_shrink
+        self.acoustic_chunk_frames = acoustic_chunk_frames
         self.config_path = Path(config).resolve(strict=True)
         self.config = json.loads(self.config_path.read_text(encoding="utf-8"))
         if self.config.get("format") != "sakuratts-windows-config-v1":
@@ -49,6 +53,12 @@ class NVIDIAEngine:
         self.acoustic_precision = "fp16" if acoustic_dtype == "float16" else "fp32"
         if self.acoustic_precision == "fp16" and not allow_experimental_acoustic_fp16:
             raise ValueError("FP16 acoustic packages require allow_experimental_acoustic_fp16=True")
+        if (acoustic_chunk_frames is not None
+                or self.manifests["sovits"].get("format", "sakuratts-sovits-onnx-v1") != "sakuratts-sovits-onnx-v1"):
+            from .ort_sovits import read_manifest
+            self.manifests["sovits"],_ = read_manifest(self.packages["sovits"],
+                allow_experimental_fp16=allow_experimental_acoustic_fp16,
+                acoustic_arena_shrink=acoustic_arena_shrink, acoustic_chunk_frames=acoustic_chunk_frames)
         source = self.manifests["gpt"]["source"]["official_commit"]
         if (self.manifests["sovits"]["source"]["official_commit"] != source
                 or self.manifests["frontend"]["official_commit"] != source):
@@ -134,12 +144,14 @@ class NVIDIAEngine:
                 self.sovits = ORTProcessSoVITS(self.packages["sovits"],
                     self.config_path.parent / self.config["acoustic_python"],
                     allow_experimental_fp16=self.allow_experimental_acoustic_fp16,
-                    acoustic_arena_shrink=self.acoustic_arena_shrink)
+                    acoustic_arena_shrink=self.acoustic_arena_shrink,
+                    acoustic_chunk_frames=self.acoustic_chunk_frames)
             else:
                 from .ort_sovits import ORTSoVITS
                 self.sovits = ORTSoVITS.load(self.packages["sovits"],
                     allow_experimental_fp16=self.allow_experimental_acoustic_fp16,
-                    acoustic_arena_shrink=self.acoustic_arena_shrink)
+                    acoustic_arena_shrink=self.acoustic_arena_shrink,
+                    acoustic_chunk_frames=self.acoustic_chunk_frames)
 
     def unload(self):
         """Idle unload is explicit; the next request includes the reload cost."""
@@ -223,6 +235,7 @@ class NVIDIAEngine:
                 "precision": f"GPT {self.gpt_precision.upper()}, acoustic {self.acoustic_precision.upper()}; FP16 paths are experimental; public logits and acoustic I/O remain FP32",
                 "gpt_precision":self.gpt_precision,"acoustic_precision":self.acoustic_precision,
                 "acoustic_arena_shrink":self.acoustic_arena_shrink,
+                "acoustic_chunk_frames":self.acoustic_chunk_frames,
                 "gpt_attention":self.gpt_attention,"gpt_attention_chunk_size":self.gpt_attention_chunk_size,
                 "frontend_profile":self.manifests["frontend"].get("japanese_g2p",{"implementation":"pyopenjtalk-plus"}),
                 "random_inputs":"fresh" if random_inputs is None else "explicit replay of draws and acoustic noise",
@@ -273,7 +286,8 @@ def run_cli(args):
         capacity=args.capacity,gpt_precision=args.gpt_precision,
                         gpt_attention=args.gpt_attention,gpt_attention_chunk_size=args.gpt_attention_chunk_size,
                         allow_experimental_acoustic_fp16=args.allow_experimental_acoustic_fp16,
-                        acoustic_arena_shrink=args.acoustic_arena_shrink)
+                        acoustic_arena_shrink=args.acoustic_arena_shrink,
+                        acoustic_chunk_frames=args.acoustic_chunk_frames)
     try:
         pcm,report=engine.synthesize(args.text,reference=args.reference,seed=args.seed,
             language=args.language,split_method=args.text_split_method,top_k=args.top_k,

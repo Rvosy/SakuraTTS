@@ -91,7 +91,7 @@ Embedding、位置编码、残差、LayerNorm、激活函数及执行顺序遵�
 
 当前 Mac 高精度基线继续保留；FP16 是待验证的产品候选，不能在数值、语音质量与目标硬件验证前替代它。归一化、概率计算或累加可保留必要的较高精度。量化另设可选配置，记录模块、位宽、分组、校准来源和质量结果。
 
-Windows `CUDAGPT.load(..., precision="fp16")`、`NVIDIAEngine(..., gpt_precision="fp16")` 和 CLI `--gpt-precision fp16` 显式选择 GPT 混合精度候选；默认仍为 `fp32`。候选使用同一模型包，运行时转换共享权重、KV 和主要工作区，GEMM 与归约使用 FP32 累积，向采样器返回 FP32 logits。声学继续使用 FP32。报告分别记录两部分精度，不能把工程误差筛查视为语音质量通过，也不能因精度选择改变采样、停止或容量规则。
+Windows `CUDAGPT.load(..., precision="fp16")`、`NVIDIAEngine(..., gpt_precision="fp16")` 和 CLI `--gpt-precision fp16` 显式选择 GPT 混合精度候选；默认仍为 `fp32`。候选使用同一模型包，运行时转换共享权重、KV 和主要工作区，GEMM 与归约使用 FP32 累积，向采样器返回 FP32 logits。声学默认使用 FP32；已筛查的实验 FP16 声学包另需 `allow_experimental_acoustic_fp16=True` / `--allow-experimental-acoustic-fp16`。报告分别记录两部分精度，不能把工程误差筛查视为语音质量通过，也不能因精度选择改变采样、停止或容量规则。
 
 当前 Mac GPT 原型的 Prefill 精度由调用方显式选择。`MLXGPT.load(..., prefill_precision="fp32")` 保留原默认路径；`"fp64"` 使用同一 FP32 权重包，在 CPU 上逐层临时转为 FP64 计算，完成的 K/V 与首步 logits 一次舍入为 FP32，再接续原 FP32 Decode。不常驻完整 FP64 权重副本，也不修改模型包。`prefill(..., precision=...)` 只覆盖本次调用，不改变加载时的选择。
 
@@ -146,6 +146,12 @@ Windows `CUDAGPT.load(..., precision="fp16")`、`NVIDIAEngine(..., gpt_precision
 卸载后应释放模型、图和工作区持有的资源，报告进程实际剩余占用。驱动上下文仍可能有基础开销，不能据此承诺显存归零。空闲保留模型与卸载模型的下一句延迟分别测试。
 
 Windows CUDA 声学支持显式的 `acoustic_arena_shrink=True`，CLI 为 `--acoustic-arena-shrink`，默认关闭。启用后在每次声学 Decode 结束时尝试释放完全空闲的 ORT arena 区域，不卸载模型、不裁剪输出，也不改变 Session/Provider 的数值配置；CPU 路径明确拒绝。运行报告记录该选项，完整输出等价和资源收益单独验证，不将默认 RunOptions 下的 FP16 筛查结果解释为已覆盖回收策略。回收针对请求后保留的区域，不是显存硬上限或活动峰值承诺。
+
+可选的 `sakuratts-sovits-chunked-v1` 声学包在同一声学实例内拥有完整 encoder/flow 图和局部 vocoder 图。包内须包含两张图、各自权重、纯 JSON 依赖规格和与整个包身份绑定的独立筛查报告；原包、诊断图及转换工具路径只作来源记录，运行时不得读取它们。图、权重、RF、精度、接口、执行设置或验收报告错配时拒绝加载。
+
+分块由 `acoustic_chunk_frames` / `--acoustic-chunk-frames` 显式选择，默认 `None` 保留整图路径。选择值必须在该包的验收集合内；`0` 表示两张图均整段执行，正数表示每块中心部分的 latent 帧数。分块当前只支持 CUDA 和显式 arena 回收，HALF 包同时需要 FP16 选项，不支持诊断中间量 capture。选项与包不匹配时，在前端或声学工作进程启动前拒绝。样本中的最大长度只说明验证范围，不成为截断用户文本或 latent 的理由。
+
+分块始终先生成整段 latent，再按 RF 规格计算每块的真实上下文与整数样本裁剪位置；与真实句首、句尾相交时只取实际存在的帧，不补 latent、不淡入淡出、不裁掉 encoder/flow 上下文。全部声码器块成功后才返回完整 FP32 波形，由原有片段逻辑归一化、追加静音和转换 PCM 一次。私有工作进程沿用 FP32 / int64 输入协议，HALF latent 留在进程内。任意块失败不返回部分波形；后续请求按既有生命周期规则恢复。关闭模型释放两张 session，构造失败也清除半构造对象持有的 session 引用。
 
 ## 完成条件
 
