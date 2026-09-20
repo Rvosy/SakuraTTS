@@ -9,7 +9,7 @@ from unittest.mock import Mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("windows_wddm_memory", ROOT / "harness/windows_wddm_memory.py")
+spec = importlib.util.spec_from_file_location("windows_wddm_memory", ROOT / "research/tools/windows_wddm_memory.py")
 wddm = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(wddm)
 NAME = "pid_123_luid_0x00000000_0x0001DF70_phys_0"

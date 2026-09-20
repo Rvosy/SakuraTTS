@@ -9,12 +9,12 @@ from unittest.mock import patch
 
 import numpy as np
 
-sys.path[:0] = [str(Path(__file__).resolve().parents[1] / part) for part in ("src", "scripts")]
+sys.path[:0] = [str(Path(__file__).resolve().parents[1] / part) for part in ("src", "tools")]
 import package_sovits_chunks as builder
-from sakuratts.chunked_package import read_chunked_manifest
-from sakuratts.ort_sovits import FP16_EXECUTION_OPTIONS
-from sakuratts.synthesis import single_fragment_pcm
-from sakuratts.vocoder_receptive_field import TemporalOperation, VocoderReceptiveField
+from sakuratts.backends.onnx.chunked_package import read_chunked_manifest
+from sakuratts.backends.onnx.sovits import FP16_EXECUTION_OPTIONS
+from sakuratts._internal.synthesis import single_fragment_pcm
+from sakuratts.backends.onnx.vocoder_receptive_field import TemporalOperation, VocoderReceptiveField
 
 
 def write_json(path, value):

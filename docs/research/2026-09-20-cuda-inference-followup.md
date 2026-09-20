@@ -40,17 +40,17 @@ FlashInfer 的 [安装文档](https://docs.flashinfer.ai/installation.html) 当�
 
 这项保留为后续候选，先补含采样的时间分解。当前固定历史 profile 已表明，仅移除 `decode()` 的图外开销不应期待大幅改善长句速度。
 
-当前 [`CUDAGPT.decode()`](../../src/sakuratts/cuda_gpt.py) 每步用 `state.set()` 上传 token 与位置，再通过 `cp.asnumpy()` 回传 1,025 个 FP32 logits 并同步。随后 [`generate_semantic()`](../../src/sakuratts/generation.py) 在 NumPy 完成重复惩罚、Top-k、随机抽样和停止判断。单步图已经覆盖 Transformer，但还没有覆盖这一段控制循环。
+当前 [`CUDAGPT.decode()`](../../src/sakuratts/backends/cuda/gpt.py) 每步用 `state.set()` 上传 token 与位置，再通过 `cp.asnumpy()` 回传 1,025 个 FP32 logits 并同步。随后 [`generate_semantic()`](../../src/sakuratts/_internal/generation.py) 在 NumPy 完成重复惩罚、Top-k、随机抽样和停止判断。单步图已经覆盖 Transformer，但还没有覆盖这一段控制循环。
 
 先增加独立实验路径，将重复惩罚、温度、Top-k、softmax、采样和停止标志放进同一设备执行路径，只取回 token 与摘要。诊断时仍可按需回传完整 logits。第一阶段即使只回传一个 token，也仍有逐步同步；不能把传输字节变少称为同步已经消失。随后才试固定少量步骤或 conditional graph 循环，测主机调用次数和实际等待时间是否下降。
 
-必须保留 [`sampling.py`](../../src/sakuratts/sampling.py) 的具体行为：相同历史 token 只处罚一次，Top-k 阈值处保留并列项，前 11 步屏蔽 EOS，停止判断使用处罚后、过滤前的 argmax，随机抽样使用 `argmax(probabilities / exponential_noise)`。FlashInfer 的 inverse/rejection sampler 即使分布正确，也不意味着共享噪声下输出相同。先上传已有固定噪声回放，之后再评估设备 RNG；批量预生成噪声还需核对早停后 RNG 消耗是否改变。
+必须保留 [`sampling.py`](../../src/sakuratts/_internal/sampling.py) 的具体行为：相同历史 token 只处罚一次，Top-k 阈值处保留并列项，前 11 步屏蔽 EOS，停止判断使用处罚后、过滤前的 argmax，随机抽样使用 `argmax(probabilities / exponential_noise)`。FlashInfer 的 inverse/rejection sampler 即使分布正确，也不意味着共享噪声下输出相同。先上传已有固定噪声回放，之后再评估设备 RNG；批量预生成噪声还需核对早停后 RNG 消耗是否改变。
 
 验收至少包括固定 logits/噪声的 token 与停止等价、短句/长句和 worker 生命周期回归，再测完整请求。连续多步图还要处理取消：目前取消回调在每步边界检查，不能为了少一次主机参与而默默延后这一边界。小词表上若融合内核和状态维护比现有 NumPy 更慢，就保留当前路径。
 
 ### 3. 固定整句 latent，验证 vocoder 的带重叠分块
 
-[`export_sovits_onnx.py`](../../scripts/export_sovits_onnx.py) 已明确区分 `flow_output`、`decoder_input` 和最终 waveform；现有独立 [vocoder 实现](../../src/sakuratts/mlx_sovits_decoder.py) 展示了卷积、转置卷积和局部残差结构。这提供了一个可验证的子图边界，但 Mac 实现的布局和内存结论不能直接当作 Windows ORT 结果。
+[`export_sovits_onnx.py`](../../src/sakuratts/_internal/conversion/export_sovits_onnx.py) 已明确区分 `flow_output`、`decoder_input` 和最终 waveform；现有独立 [vocoder 实现](../../src/sakuratts/backends/mlx/decoder.py) 展示了卷积、转置卷积和局部残差结构。这提供了一个可验证的子图边界，但 Mac 实现的布局和内存结论不能直接当作 Windows ORT 结果。
 
 先保留完整非因果编码器和 reverse flow，在相同语义、参考和噪声下固定整句 `decoder_input`。从这份模型的卷积参数推导左右感受野和各级步幅，再导出独立 vocoder 子图，按重叠区域计算并裁去边界。对照整句 PCM、各块接缝、整段时长、峰值工作区和总耗时，特别检查最后短块与转置卷积的相位对齐。不能先拍一个 overlap 长度，再用淡入淡出掩盖数值差异。
 

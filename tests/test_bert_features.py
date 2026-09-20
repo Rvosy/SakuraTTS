@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import torch
 from transformers import BertConfig, BertForMaskedLM
 
-from sakuratts.bert_features import BertFeatures, feature_config
+from sakuratts.frontend.bert_features import BertFeatures, feature_config
 
 
 class BertFeaturesTests(unittest.TestCase):

@@ -13,7 +13,7 @@ import wave
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path[:0] = [str(ROOT / "harness"), str(ROOT / "src")]
+sys.path[:0] = [str(ROOT / "research/tools"), str(ROOT / "src")]
 import windows_nvidia_benchmark as benchmark
 
 
@@ -83,7 +83,7 @@ class WindowsNvidiaBenchmarkTests(unittest.TestCase):
             args = ["windows_nvidia_benchmark.py", "--config", str(config), "--output", str(root / "output"),
                     "--replay-captures", str(mapping), "--only-case", "short", "--skip-reference-switch", "--skip-random"]
             with patch.object(sys, "argv", args), patch.dict(sys.modules, {
-                    "sakuratts.nvidia": SimpleNamespace(NVIDIAEngine=engine, write_wav=Mock())}):
+                    "sakuratts.backends.cuda.engine": SimpleNamespace(NVIDIAEngine=engine, write_wav=Mock())}):
                 with self.assertRaisesRegex(ValueError, "prepared reference arrays differ"):
                     benchmark.main()
             engine.assert_not_called()

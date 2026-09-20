@@ -4,7 +4,9 @@ import argparse
 from importlib import import_module, metadata
 import json
 import platform
+from pathlib import Path
 import shutil
+import subprocess
 import sys
 import warnings
 
@@ -40,7 +42,7 @@ def doctor(*, japanese=False, cuda=False, nvidia=False, config=None):
     if japanese or nvidia:
         modules.update(JAPANESE_MODULES)
     if nvidia:
-        from .cuda_runtime import configure_cuda, validate_gpt_cuda_include_paths
+        from sakuratts.backends.cuda.runtime import configure_cuda, import_cupy, validate_gpt_cuda_include_paths
         configure_cuda()
         try:
             report["gpt_cuda_headers"] = {"status": "passed", "include_paths": validate_gpt_cuda_include_paths()}
@@ -58,7 +60,10 @@ def doctor(*, japanese=False, cuda=False, nvidia=False, config=None):
         try:
             with warnings.catch_warnings(record=True) as caught:
                 warnings.simplefilter("always")
-                import_module(module)
+                if module == "cupy":
+                    import_cupy()
+                else:
+                    import_module(module)
             report["packages"][distribution] = {"version": metadata.version(distribution), "import": "ok"}
             if caught:
                 report["packages"][distribution]["warnings"] = [str(item.message) for item in caught]
@@ -81,7 +86,7 @@ def doctor(*, japanese=False, cuda=False, nvidia=False, config=None):
     if config is not None:
         report["synthesis"]["models_checked"] = True
         try:
-            from .diagnostics import check_windows_packages
+            from sakuratts._internal.diagnostics import check_windows_packages
             report["resource_check"] = check_windows_packages(config)
             report["synthesis"]["packages_ready"] = True
         except KeyError as exc:
@@ -118,7 +123,7 @@ def main(argv=None):
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="replace")
-    parser = argparse.ArgumentParser(description="SakuraTTS diagnostics and independent Japanese CUDA synthesis")
+    parser = argparse.ArgumentParser(description="SakuraTTS: convert models, synthesize speech, and run a local service")
     try:
         version = metadata.version("sakuratts")
     except metadata.PackageNotFoundError:
@@ -126,11 +131,12 @@ def main(argv=None):
     parser.add_argument("--version", action="version", version="%(prog)s " + version)
     subparsers = parser.add_subparsers(dest="command", required=True)
     check = subparsers.add_parser("doctor", help="Check imports and optional CUDA development execution")
+    check.add_argument("model", nargs="?", help="Model directory or legacy runtime configuration")
     check.add_argument("--japanese", action="store_true", help="Check Japanese frontend libraries")
     check.add_argument("--cuda", action="store_true", help="Run a small PyTorch CUDA development check")
     check.add_argument("--nvidia", action="store_true", help="Check Windows runtime dependencies without GPU execution")
     check.add_argument("--config", help="Check Windows package hashes, identities and worker imports; implies --nvidia")
-    speech = subparsers.add_parser("synthesize", help="Synthesize Japanese using prepared Windows/NVIDIA model packages")
+    speech = subparsers.add_parser("synthesize", help="Legacy preview command with experimental backend controls")
     speech.add_argument("--config", required=True)
     speech.add_argument("--text", required=True)
     speech.add_argument("--output", required=True)
@@ -157,17 +163,106 @@ def main(argv=None):
                         help="KV tokens per chunk when using split-kv attention")
     speech.add_argument("--model-policy", choices=("resident","release-state","staged"), default="resident")
     speech.add_argument("--no-cuda-graph", action="store_true")
+    for command, help_text in (("tts", "Generate a WAV from a model directory"),
+                               ("serve", "Start the local HTTP API"),
+                               ("benchmark", "Measure complete requests with explicit experimental options")):
+        entry = subparsers.add_parser(command, help=help_text)
+        entry.add_argument("model", nargs="?" if command == "serve" else None,
+                           help="Model directory, model.json, or legacy runtime.json")
+        entry.add_argument("--experimental", type=Path, help="Explicit JSON backend options; defaults remain FP32")
+        if command == "serve":
+            entry.add_argument("--log-level", choices=("debug", "info", "warning", "error"), default="info",
+                               help="Terminal detail; the log file always keeps full diagnostics")
+            entry.add_argument("--log-file", type=Path, default=Path("logs/sakuratts.log"),
+                               help="UTF-8 diagnostic log with size-based rotation")
+            entry.add_argument("-a", "--host", "--bind_addr", default="127.0.0.1")
+            entry.add_argument("-p", "--port", type=int, default=9880)
+            entry.add_argument("-c", "--tts-config", "--tts_config", type=Path,
+                               help="GPT-SoVITS YAML with optional sakuratts deployment settings")
+        else:
+            entry.add_argument("--text", required=True)
+            entry.add_argument("--reference")
+            entry.add_argument("--seed", type=int, default=1234)
+            entry.add_argument("--output", type=Path, required=True)
+        if command == "benchmark":
+            entry.add_argument("--repeats", type=int, default=3)
+    conversion = subparsers.add_parser("convert", help="Convert V2ProPlus checkpoints or package prepared resources")
+    conversion.add_argument("--config", type=Path, help="Package an existing prepared runtime.json")
+    for name in ("gpt", "sovits", "reference", "official-source", "python", "acoustic-python", "language-model"):
+        conversion.add_argument("--" + name, type=Path)
+    conversion.add_argument("--reference-text")
+    conversion.add_argument("--name")
+    conversion.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
+    if args.command in ("tts", "serve", "convert", "benchmark"):
+        try:
+            return run_product_command(args)
+        except (ValueError, TypeError, KeyError, OSError, RuntimeError, ImportError, subprocess.CalledProcessError) as exc:
+            parser.exit(1, f"SakuraTTS: {exc}\n")
     if args.command == "synthesize":
         try:
-            from .diagnostics import read_windows_config
+            from sakuratts._internal.diagnostics import read_windows_config
             read_windows_config(args.config)
-            from .nvidia import run_cli
+            from sakuratts.backends.cuda.engine import run_cli
             return run_cli(args)
         except KeyError as exc:
             parser.exit(1, f"SakuraTTS: incomplete model configuration or manifest: missing field {exc.args[0]!r}\n")
         except (ValueError, TypeError, OSError, RuntimeError, ImportError) as exc:
             parser.exit(1, f"SakuraTTS: {exc}\n")
-    report = doctor(japanese=args.japanese, cuda=args.cuda, nvidia=args.nvidia, config=args.config)
+    if args.model and args.config:
+        parser.error("Use either a model argument or --config")
+    report = doctor(japanese=args.japanese, cuda=args.cuda, nvidia=args.nvidia, config=args.model or args.config)
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0 if report["checks_passed"] else 1
+
+
+def run_product_command(args):
+    if args.command == "convert":
+        from .converter import convert, package_model
+        raw = (args.gpt, args.sovits, args.reference, args.reference_text, args.official_source)
+        if args.config:
+            if any(raw) or any((args.python, args.acoustic_python, args.language_model)):
+                raise ValueError("--config cannot be combined with raw conversion options")
+            model = package_model(args.config, args.output, name=args.name)
+        else:
+            if not all((args.gpt, args.sovits, args.official_source)):
+                raise ValueError("Provide --config, or --gpt, --sovits and --official-source")
+            model = convert(gpt=args.gpt, sovits=args.sovits, reference=args.reference,
+                reference_text=args.reference_text, official_source=args.official_source,
+                output=args.output, name=args.name, python=args.python,
+                acoustic_python=args.acoustic_python, language_model=args.language_model)
+        print(json.dumps({"model": str(model.path), **model.info()}, ensure_ascii=False))
+        return 0
+    experimental = None
+    if args.experimental:
+        experimental = json.loads(args.experimental.read_text(encoding="utf-8"))
+        if not isinstance(experimental, dict):
+            raise ValueError("Experimental options must be a JSON object")
+    if args.command == "serve":
+        if not 1 <= args.port <= 65535:
+            raise ValueError("Port must be between 1 and 65535")
+        try:
+            from .server import start_server
+        except ImportError as exc:
+            raise ImportError('Install HTTP dependencies with: pip install "sakuratts[server]"') from exc
+        config = args.tts_config
+        if config is None and args.model is None and Path("configs/tts_infer.yaml").is_file():
+            config = Path("configs/tts_infer.yaml")
+        start_server(args.model, host=args.host, port=args.port, tts_config=config, experimental=experimental,
+                     log_file=args.log_file, log_level=args.log_level)
+        return 0
+    if args.command == "benchmark":
+        from ._internal.benchmark import run
+        return run(args, experimental=experimental)
+    from .engine import Engine
+    output = args.output.resolve()
+    record = output.with_suffix(".json")
+    if output.suffix.lower() != ".wav" or output.exists() or record.exists():
+        raise ValueError("Choose a new .wav output path; neither WAV nor JSON may already exist")
+    with Engine.load(args.model, experimental=experimental) as engine:
+        audio = engine.synthesize(args.text, reference=args.reference, seed=args.seed)
+        audio.save(output)
+        with record.open("x", encoding="utf-8") as stream:
+            json.dump(audio.report, stream, ensure_ascii=False, indent=2)
+    print(json.dumps({"status": audio.report["status"], "audio": str(output), "record": str(record)}, ensure_ascii=False))
+    return 0 if audio.report["status"] == "completed" else 2

@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path[:0] = [str(ROOT / "harness"), str(ROOT / "scripts"), str(ROOT / "src")]
+sys.path[:0] = [str(ROOT / "research/tools"), str(ROOT / "tools"), str(ROOT / "src")]
 from windows_device_latent import CudaCopies, copy_layout
 
 

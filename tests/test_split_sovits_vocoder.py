@@ -8,7 +8,7 @@ import numpy as np
 import onnx
 import onnxruntime as ort
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from split_sovits_vocoder import INPUT_NAMES, save_partition, split_models
 
 

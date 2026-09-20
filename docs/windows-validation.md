@@ -4,7 +4,7 @@
 
 ## 当前交接状态
 
-2026-09-20 已具备转到 Windows 继续研发的条件。现有生产原型依赖 MLX / Metal，Windows 自有 CUDA 后端尚待实现；不应在 Windows 安装 `requirements-mlx-japanese.txt` 来假定引擎可运行。已完成的模型包、参考条件、文本规则和 NumPy 验收格式可继续使用。
+2026-09-20 已具备转到 Windows 继续研发的条件。现有生产原型依赖 MLX / Metal，Windows 自有 CUDA 后端尚待实现；不应在 Windows 安装 `requirements/mlx-japanese.txt` 来假定引擎可运行。已完成的模型包、参考条件、文本规则和 NumPy 验收格式可继续使用。
 
 交接时保留 `feat/reference-parity` 的最新提交。若没有推送，可从参考目录的离线 Git bundle 在新目录检出该分支；不覆盖另一台电脑已有修改。还需携带：
 
@@ -14,11 +14,11 @@
 
 首次操作先记录 `nvidia-smi` 的 GPU、显存和驱动，核验包身份，再建立官方 CUDA / FP32 对照和一条自有 CUDA 候选。普通 FP32 数值通过后再独立测 FP16 与其他近似，不能直接跳到最低内存配置。
 
-自然 590 字长文仍有内容检查异常；新增 `cut2` 仅为实验入口，官方 MPS 全请求对照未完成。样例已入库，原文和所有失败记录保留，见[长文与交接记录](experiments/2026-09-20-natural-long-handoff.md)。到 Windows 后应优先完成同条件官方捕获，不能仅靠换分句方式宣布问题解决。
+自然 590 字长文仍有内容检查异常；新增 `cut2` 仅为实验入口，官方 MPS 全请求对照未完成。样例已入库，原文和所有失败记录保留，见[长文与交接记录](../research/experiments/2026-09-20-natural-long-handoff.md)。到 Windows 后应优先完成同条件官方捕获，不能仅靠换分句方式宣布问题解决。
 
 ## 可搬迁的数据包
 
-`harness/export_validation_bundle.py` 从已有官方运行记录导出四条日文样例：原报告、短句、长句、标点。它不加载推理模型，不修改历史记录，也不复制原始模型。每例保存原文、规范化文本、音素、采样参数及以下数组：
+`research/tools/export_validation_bundle.py` 从已有官方运行记录导出四条日文样例：原报告、短句、长句、标点。它不加载推理模型，不修改历史记录，也不复制原始模型。每例保存原文、规范化文本、音素、采样参数及以下数组：
 
 | 数据 | 用途 |
 |---|---|
@@ -48,7 +48,7 @@ python verify.py compare --bundle <bundle目录> --candidate <候选目录> --ou
 
 第一条仅验证包本身，结果会明确外部模型未检查。第二条同时核对权重身份。比较入口退出码 0 表示通过、1 表示数值或生成结果不一致、2 表示文件或格式错误；已有报告不会覆盖。
 
-`harness/portable_mlx_candidate.py` 是 Mac 的执行适配器。它用同一个包分别执行固定历史 GPT、自行采样、固定输入声学与自行生成波形。后续 CUDA 实现写出同格式的候选 NPZ 和 manifest，再交给同一 NumPy 比较入口判断，不需要建立多后端框架。
+`research/tools/portable_mlx_candidate.py` 是 Mac 的执行适配器。它用同一个包分别执行固定历史 GPT、自行采样、固定输入声学与自行生成波形。后续 CUDA 实现写出同格式的候选 NPZ 和 manifest，再交给同一 NumPy 比较入口判断，不需要建立多后端框架。
 
 候选格式为 `sakuratts.validation-candidate.v1`，绑定数据包 manifest 哈希、模型身份、参数、源码和各例数组。缺少输出、shape 或 dtype 不符、文件哈希错误不能计为通过。
 
@@ -64,4 +64,4 @@ python verify.py compare --bundle <bundle目录> --candidate <候选目录> --ou
 
 这些运行含逐步捕获与数组复制，只用于诊断。速度与资源测量继续使用无捕获的完整请求 Harness；ASR、人工试听与 CUDA 实机结果也独立保存。
 
-实际导出、目录搬迁和两种精度的复跑结果见[本轮记录](experiments/2026-09-20-portable-validation.md)。
+实际导出、目录搬迁和两种精度的复跑结果见[本轮记录](../research/experiments/2026-09-20-portable-validation.md)。

@@ -9,7 +9,7 @@ import subprocess
 import sys
 from unittest.mock import patch
 
-SCRIPT = Path(__file__).resolve().parents[1] / "scripts/prepare_windows_resources.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "src/sakuratts/_internal/conversion/prepare_windows_resources.py"
 spec = importlib.util.spec_from_file_location("windows_resource_preparation", SCRIPT)
 prepare = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prepare)

@@ -24,3 +24,7 @@ __pycache__/
 /data/
 /models/
 /outputs/
+/artifacts/
+/results/
+/.cache/
+/configs/tts_infer.yaml

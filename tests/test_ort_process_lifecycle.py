@@ -12,10 +12,10 @@ from unittest.mock import Mock, patch
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts.array_protocol import read_message, write_message
-from sakuratts.ort_process import ORTProcessSoVITS
-from sakuratts import ort_worker
-from sakuratts.reference_condition import sha256_file
+from sakuratts._internal.protocol import read_message, write_message
+from sakuratts.backends.onnx.process import ORTProcessSoVITS
+import sakuratts._internal.ort_worker as ort_worker
+from sakuratts._internal.reference_condition import sha256_file
 from test_ort_sovits import manifest
 
 
@@ -77,12 +77,12 @@ class ORTProcessLifecycleTests(unittest.TestCase):
         self.transport = {"chunks": 2, "plans": [{"core_start": 0}, {"core_start": 2}],
                           "latent_dtype": "float16"}
         self.reply = {"status": "ok", "compute_ms": 1., "acoustic_transport": self.transport}
-        patched = patch("sakuratts.ort_process.read_manifest", return_value=(self.manifest, None))
+        patched = patch("sakuratts.backends.onnx.process.read_manifest", return_value=(self.manifest, None))
         self.read_manifest = patched.start()
         self.addCleanup(patched.stop)
 
     def load(self, child, *, chunk_frames=256, diagnostic=False):
-        with patch("sakuratts.ort_process.subprocess.Popen", return_value=child) as launch:
+        with patch("sakuratts.backends.onnx.process.subprocess.Popen", return_value=child) as launch:
             model = ORTProcessSoVITS(self.package, self.python, diagnostic=diagnostic,
                 allow_experimental_fp16=True, acoustic_arena_shrink=True, acoustic_chunk_frames=chunk_frames)
         self.addCleanup(model.close)

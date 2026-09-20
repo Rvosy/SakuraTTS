@@ -1,6 +1,6 @@
 # 模型与功能验证矩阵
 
-更新日期：2026-09-20。证据包括 [Mac 上游功能冒烟](../experiments/2026-09-19-macos-reference-smoke.md)、[调用链与固定历史对照](../experiments/2026-09-19-parity-and-lifecycle.md)、后续自有日文运行记录和用户试听反馈，以及独立的 [Windows / RTX 5060 实测](../experiments/2026-09-20-windows-nvidia-backend.md)。自有运行时仍未完成产品验收；表中的上游生成结果不能作为自有引擎的兼容声明。
+更新日期：2026-09-20。证据包括 [Mac 上游功能冒烟](../../research/experiments/2026-09-19-macos-reference-smoke.md)、[调用链与固定历史对照](../../research/experiments/2026-09-19-parity-and-lifecycle.md)、后续自有日文运行记录和用户试听反馈，以及独立的 [Windows / RTX 5060 实测](../../research/experiments/2026-09-20-windows-nvidia-backend.md)。自有运行时仍未完成产品验收；表中的上游生成结果不能作为自有引擎的兼容声明。
 
 ## Mac 固定对照
 
@@ -11,7 +11,7 @@
 | 模型 | “朱雀院红叶”V2Pro，GPT SHA-256 `010197bfc30b04d991f2bf060f962549932a8278b98c137d92f980e9cca8c0e9`，SoVITS SHA-256 `f8bd92196175f435ae9df2bc01e87b0119a5d94c0af81ada4573a9720536ab38` |
 | 参考条件 | “开心”条目 `VO02_0204.OGG`；日文参考文本 `じゃあ、私、もっと悪い子になっちゃおうな〜` |
 | 平台与精度 | Apple M4、16 GiB 统一内存；官方 MPS / FP32，自有 MLX / FP32，明确指定的 CPU FP64 GPT Prefill |
-| 固定样例 | [speech_regressions.json](../../harness/cases/speech_regressions.json) 中的 `ja-reported-intro` 和 `zh-reported-greeting` |
+| 固定样例 | [speech_regressions.json](../../benchmarks/cases/speech_regressions.json) 中的 `ja-reported-intro` 和 `zh-reported-greeting` |
 
 具体环境、采样参数、原始产物路径和首次运行的限制见上述实验记录。每次新增运行仍需保存实际提交、权重和参考音频哈希，不能只引用这张表。
 
@@ -25,7 +25,7 @@
 |---|---|---|---|---|---|
 | V2Pro：“朱雀院红叶” | 10 条中日及混合输入已生成，已保存中间结果 | 中、日固定样例多次生成，已保存中间结果 | Lite 有 3 项用户报告的失败；官方 / official_text 及后来两条自有整链回归的指定样音经用户确认；后者覆盖全文和音色，其余八例待验 | 十例 prepared 整链 token、停止、最终波形通过；独立诊断有 3 个概率值及 1 个 MRTE 中间值超差，整体仍未通过；四条日文原始目标 + 参考包已通过固定随机输入下的整链对照 | 暂缓，未验证 |
 | V2Pro：其他权重 | 未验证 | 未验证 | 未验证 | 未验证 | 暂缓，未验证 |
-| V2ProPlus：Sakura | 本轮未在 MPS 运行 | 本轮未运行 | Windows 已完成 24 条保存音频的辅助 ASR；内容疑点与人工听音待验，见 [ASR 记录](../experiments/2026-09-20-windows-asr.md) | 已按真实 ProPlus 结构转换并接通原始日文到 WAV；数值和性能的通过项、失败项见 Windows 记录 | RTX 5060 8 GB 已执行官方与自有链路，限该组权重及记录中的输入，不代表家族全面兼容 |
+| V2ProPlus：Sakura | 本轮未在 MPS 运行 | 本轮未运行 | Windows 已完成 24 条保存音频的辅助 ASR；内容疑点与人工听音待验，见 [ASR 记录](../../research/experiments/2026-09-20-windows-asr.md) | 已按真实 ProPlus 结构转换并接通原始日文到 WAV；数值和性能的通过项、失败项见 Windows 记录 | RTX 5060 8 GB 已执行官方与自有链路，限该组权重及记录中的输入，不代表家族全面兼容 |
 | V2ProPlus：其他权重 | 未验证 | 未验证 | 未验证 | 未验证 | 未验证 |
 | V2 | 未验证 | 未验证 | 未验证 | 未验证 | 暂缓，未验证 |
 | V1 | 未验证 | 未验证 | 未验证 | 未验证 | 暂缓，未验证 |
@@ -44,13 +44,13 @@
 | `ja-reported-intro` | “今日はいい天気ですね。”中的助词“は”听起来读成 ha，预期为 wa | 两边音素均为 w a；用户确认官方与 official_text 候选正常，ASR 不用于证明发音 |
 | `zh-reported-greeting` | 开头的“你好”听起来像“哼哼” | 确认前导停顿与 BERT 标点差异；用户确认官方与 official_text 候选开头正常 |
 
-后续自有整链的两条原始回归已有独立复听，用户对指定的四个官方 / 自有 WAV 回复“四条都正常，未听出明显差异”，覆盖上述三项问题、全文及音色。具体文件与哈希见 [整链记录](../experiments/2026-09-19-native-prepared-speech.md)，不覆盖未听过的扩展样例。
+后续自有整链的两条原始回归已有独立复听，用户对指定的四个官方 / 自有 WAV 回复“四条都正常，未听出明显差异”，覆盖上述三项问题、全文及音色。具体文件与哈希见 [整链记录](../../research/experiments/2026-09-19-native-prepared-speech.md)，不覆盖未听过的扩展样例。
 
 两条原始输入保持不变。短句等新增输入用于缩小触发范围，不能替代原始样例的回归验收。排查范围包括规范化、分句、音素与 BERT 对齐、参考和目标拼接、生成历史、停止与语义切片，以及音频后处理；当前不预设根因。
 
 ## Windows / NVIDIA 已执行范围
 
-以下结果仅适用于 Sakura V2ProPlus、RTX 5060 8 GB 和记录中的日文输入，见 [Windows 实测](../experiments/2026-09-20-windows-nvidia-backend.md)。
+以下结果仅适用于 Sakura V2ProPlus、RTX 5060 8 GB 和记录中的日文输入，见 [Windows 实测](../../research/experiments/2026-09-20-windows-nvidia-backend.md)。
 
 | 链路 | 当前证据 | 未验收内容 |
 |---|---|---|
@@ -65,13 +65,13 @@
 
 | 语言或功能 | 当前证据 | 待验证内容 |
 |---|---|---|
-| 可搬迁的日文后端验收 | 四例 NumPy 包改名搬迁后通过校验，731 步历史与四条最终波形通过；概率与默认 MRTE 失败保留，见[验收包](../experiments/2026-09-20-portable-validation.md) | Windows / CUDA 执行、完整前端、参考准备与质量验收；离线格式通过不等于后端兼容 |
-| 日文包的 UTF-8 元数据 | 模拟 CP932 / CP936 默认编码下四个真实包内容一致，真实日文 CLI 均退出 0；见[编码回归](../experiments/2026-09-20-utf8-package-portability.md) | 测试仍在 Mac；Windows 文件系统、依赖与 CUDA 待验 |
-| 声学参考投影复用实验 | 四例固定 semantic 的 A/B 参考探针，48 次诊断 / 264 次正常调用的阶段与 PCM 位一致；见[热缓存](../experiments/2026-09-20-reference-projection-cache.md) | 小幅声学速度收益，切换有代价、常驻增加；未加入产品，未覆盖 B 自然整链、其他模型或 CUDA |
-| 声学参考绑定与条件权重省载 | 独立 Harness 的 A→B→A 四例阶段 / PCM 位一致，空闲 active 少 26.023 MiB；真实 GPT 四例历史与音频保持，见[绑定实验](../experiments/2026-09-20-bound-reference-projection.md) | 该数值只属于独立 Harness，产品结果见下行；B 为声学探针，原有 MRTE 超差保留；不代表安装体积或 CUDA 显存改善 |
-| 日文参考绑定产品选项 | `--bind-reference` 的四例 112 次完整请求、8 次失败恢复及 4 次 CLI 通过；24 组绑定阶段 / PCM 位一致，参考错配、取消、半加载失败恢复通过；见[产品对照](../experiments/2026-09-20-bound-reference-runtime.md) | 三例整请求 MLX peak 少 25.992 MiB、短句不变；RSS 与安装体积未改善。默认完整权重保留，B 仍为声学探针，CUDA 待验 |
-| 日文前端进程隔离实验 | 112 次成功请求、8 次失败恢复、60 个前端子进程保持条件与音频；见[隔离实验](../experiments/2026-09-20-frontend-process-isolation.md) | RSS 采样最大值少约 230 MiB，但请求慢 158–172 ms、MLX 峰值不变；未接入产品默认路径，Windows 启动代价和 CUDA 未验 |
-| Mac 日文运行目录独立部署 | 捆绑 Python 后四例基线与两轮隔离共 12 CLI 通过；[分离安装工具](../experiments/2026-09-20-runtime-install-tools.md)后的另四例也保持 WAV；拒绝旧代码 / 环境 / 模型 / 历史记录、用户缓存与网络，见[部署验证](../experiments/2026-09-20-runtime-relocation.md) | 含解释器和清单从 1.070 降到 1.047 GiB；需 macOS 系统库与 Metal，venv 再搬迁须重建；首轮启动较慢，性能、系统服务缓存、Windows 与新试听未验 |
+| 可搬迁的日文后端验收 | 四例 NumPy 包改名搬迁后通过校验，731 步历史与四条最终波形通过；概率与默认 MRTE 失败保留，见[验收包](../../research/experiments/2026-09-20-portable-validation.md) | Windows / CUDA 执行、完整前端、参考准备与质量验收；离线格式通过不等于后端兼容 |
+| 日文包的 UTF-8 元数据 | 模拟 CP932 / CP936 默认编码下四个真实包内容一致，真实日文 CLI 均退出 0；见[编码回归](../../research/experiments/2026-09-20-utf8-package-portability.md) | 测试仍在 Mac；Windows 文件系统、依赖与 CUDA 待验 |
+| 声学参考投影复用实验 | 四例固定 semantic 的 A/B 参考探针，48 次诊断 / 264 次正常调用的阶段与 PCM 位一致；见[热缓存](../../research/experiments/2026-09-20-reference-projection-cache.md) | 小幅声学速度收益，切换有代价、常驻增加；未加入产品，未覆盖 B 自然整链、其他模型或 CUDA |
+| 声学参考绑定与条件权重省载 | 独立 Harness 的 A→B→A 四例阶段 / PCM 位一致，空闲 active 少 26.023 MiB；真实 GPT 四例历史与音频保持，见[绑定实验](../../research/experiments/2026-09-20-bound-reference-projection.md) | 该数值只属于独立 Harness，产品结果见下行；B 为声学探针，原有 MRTE 超差保留；不代表安装体积或 CUDA 显存改善 |
+| 日文参考绑定产品选项 | `--bind-reference` 的四例 112 次完整请求、8 次失败恢复及 4 次 CLI 通过；24 组绑定阶段 / PCM 位一致，参考错配、取消、半加载失败恢复通过；见[产品对照](../../research/experiments/2026-09-20-bound-reference-runtime.md) | 三例整请求 MLX peak 少 25.992 MiB、短句不变；RSS 与安装体积未改善。默认完整权重保留，B 仍为声学探针，CUDA 待验 |
+| 日文前端进程隔离实验 | 112 次成功请求、8 次失败恢复、60 个前端子进程保持条件与音频；见[隔离实验](../../research/experiments/2026-09-20-frontend-process-isolation.md) | RSS 采样最大值少约 230 MiB，但请求慢 158–172 ms、MLX 峰值不变；未接入产品默认路径，Windows 启动代价和 CUDA 未验 |
+| Mac 日文运行目录独立部署 | 捆绑 Python 后四例基线与两轮隔离共 12 CLI 通过；[分离安装工具](../../research/experiments/2026-09-20-runtime-install-tools.md)后的另四例也保持 WAV；拒绝旧代码 / 环境 / 模型 / 历史记录、用户缓存与网络，见[部署验证](../../research/experiments/2026-09-20-runtime-relocation.md) | 含解释器和清单从 1.070 降到 1.047 GiB；需 macOS 系统库与 Metal，venv 再搬迁须重建；首轮启动较慢，性能、系统服务缓存、Windows 与新试听未验 |
 | 日文多句 | 官方和 Lite 均生成文件；Lite 有漏句和助词读音反馈 | 固定历史 121 步 Lite logits 完全一致；指定官方 / official_text 的开头和助词经确认；后续官方 / 自有整链两条对应日文样音的全文和音色也获确认，扩展样例待验 |
 | 中文多句，BERT 启用 | 官方和 Lite 均生成文件；Lite 有开头发音反馈 | 固定历史 147 步 Lite logits 完全一致；BERT 输入差异已定位；指定官方 / official_text 的“你好”经确认；后续官方 / 自有整链两条对应中文样音的全文和音色也获确认，扩展样例待验 |
 | 中、日文单独短句与长句 | 官方均已生成并保存 trace；纯 FP32 MLX 日文长句第 329 步超差，高精度 Prefill 通过原容差 | prepared 整链最终波形已通过；采样概率 / 声学中间量的已知失败保留，扩展语音质量待验 |
@@ -80,40 +80,40 @@
 | 纯英文及其他官方语言 | 未建立样例，未验证 | 先核对模型家族和官方语言前端 |
 | 当前日文参考条件 | 两端已用于生成；官方准备后释放辅助模型和复用 embedding 保持固定样例 WAV | 单参考持久包已独立重载；其他参考与音色验证 |
 | 中文 BERT 第 22 层 | CPU/MPS 裁剪后特征完全一致；独立 MLX CPU 的 5 段、120 项对照通过，正常计时和卸载已测 | MLX GPU 仍有 1 个中间元素超差；独立路径接入音频、其他语料与分发待验 |
-| 两个真实日文参考的切换 | A→B→A 与隔离运行 57 项对照相同；独立官方 B 五数组相同，生成历史与最终波形通过；两条新自由样音 ASR 识别完整；见 [切换记录](../experiments/2026-09-19-japanese-reference-switch.md) | 限当前 V2Pro、一条原始目标和两个单参考；新音频人工试听待反馈，不等于同时多参考或其他语言支持 |
+| 两个真实日文参考的切换 | A→B→A 与隔离运行 57 项对照相同；独立官方 B 五数组相同，生成历史与最终波形通过；两条新自由样音 ASR 识别完整；见 [切换记录](../../research/experiments/2026-09-19-japanese-reference-switch.md) | 限当前 V2Pro、一条原始目标和两个单参考；新音频人工试听待反馈，不等于同时多参考或其他语言支持 |
 | 其他参考语言、无参考文本、多参考条件 | 未验证 | 逐项核对官方支持范围和条件语义 |
-| 自有 NumPy 采样与非流式停止 | 十条 Top-p 1 请求的 1805 步 token、停止和语义切片与官方相同；logits 通过，2 例 3 个概率值超差，整轮仍失败 | GPT 误差传播、其他 seed、独立 RNG、Top-p 小于 1 及 GPU 采样；见 [十例生成](../experiments/2026-09-19-expanded-native-generation.md) |
-| 日文原始目标文本与独立环境 | 四例目标 phones / BERT、生成 token / 停止 / 语义切片相同，波形通过；正常 32 请求通过；日文原报告 WAV 与已试听文件逐字节相同；见 [原文到 PCM](../experiments/2026-09-19-native-japanese-text-speech.md) | 该轮限单个 cut0 片段和 top_p=1；独立 RNG 质量、其余三例人工试听与 Windows 待验 |
-| 日文 cut0 多片完整请求 | 三行与 550 字符两例共五片、814 步的独立前端、token / 历史 / 停止 / 切片及原容差数值通过；CLI 原四例 WAV 不变、三种加载方式 WAV 相同，限额继续和后片失败行为通过；见[多片验证](../experiments/2026-09-20-japanese-multifragment.md) | 完整离线 WAV，非流式；长例显式容量 4096，默认 1024 仍可能不足；三句 ASR 识别完整，重复长例未获内容验收，新样音试听待反馈；原 MRTE / 概率失败保留，Windows 待验 |
-| 自然长文与 cut2 实验 | 同一 590 字原文保留；44 项官方分句规则对照通过，CLI 显式方法、七片执行、限额继续和默认四例回归通过；见[交接记录](../experiments/2026-09-20-natural-long-handoff.md) | cut0 / cut2 ASR 均有内容不匹配；官方 MPS 全请求捕获中断，cut2 固定随机数数值与音质未验收，不计入正式支持范围 |
-| 普通日文独立随机生成 | 新参考包、原始三句、NumPy seed 0 / 1 / 0 三个独立进程正常 EOS；重复 seed WAV 字节相同；两条新 WAV 的离线 ASR 均识别到三句和开头；见 [CLI 验证](../experiments/2026-09-19-japanese-cli-free-sampling.md) | 新 WAV 未经人工试听；ASR 不判断 wa、音色或自然度，不继承旧随机回放的音质结论 |
-| 日文原始参考准备 | 固定官方 MPS / FP32 重算同一参考，五数组逐字相同；独立 reader 无 Torch 读取通过；见 [准备工具](../experiments/2026-09-19-japanese-reference-preparation.md) | 开发准备依赖 Torch；实际更换参考、多参考、CPU 准备及 Windows 未验，新包连同来源元数据约 2.3 MiB |
-| 准备好条件的自有语音链 | 十例自有 GPT → 语义 → 声学 → PCM 的 token、停止和最终波形通过；原始两例 WAV 与用户确认的四样音逐字节相同 | 既有概率及 MRTE 超差仍保留；原始文本和参考准备、独立 RNG、扩展质量及完整延迟；见 [十例整链](../experiments/2026-09-19-expanded-prepared-speech.md) |
-| 自有完整声学链 | 650 张量解码包严格重载通过；CPU encoder + GPU flow/decoder 的十例波形通过，119/120 阶段通过 | 日文标点 MRTE 单元素超差；全 GPU 两例仍有中文波形超差；见 [扩展声学](../experiments/2026-09-19-expanded-acoustic.md) |
-| 声学 CPU softmax 高精度累积 | 显式 `encoder_softmax=fp64-accumulation` 的十例 120 阶段通过原容差；源码输出逐位复现候选；默认 FP32 保留原行为 | 编码器时间与工作区增加；新输出的整链、试听待验，其他模型与 GPU 不覆盖；见 [精度与成本](../experiments/2026-09-19-softmax-candidates.md) |
-| 声学速度与缓存 | 调度优化前两条正常声学请求比官方慢约 29%–41%；后续缓存、工作区和整链取舍单列 | 各条件的数据不可混用；MLX 统计仅适用于 Apple 统一内存，见 [原声学实验](../experiments/2026-09-19-mlx-sovits-complete.md) 与 [工作区实验](../experiments/2026-09-19-decoder-workspace.md) |
-| 声码器工作区 | 新 pair 求值方式的十例波形逐位保持；两条 decoder-only 峰值少约 45%，慢约 10%–14%；整链已复核 | 长句降幅较小；完整文本路径的峰值与部署成本；见 [工作区实验](../experiments/2026-09-19-decoder-workspace.md) |
-| 中文 tokenizer | 自有接口与官方词元及 G2PW 所需基础数组一致，600 字 BERT 输入保持 602 tokens | 完整中文规范化、G2PW 推理和音素/BERT 对齐；见 [tokenizer 实验](../experiments/2026-09-19-tokenizer-runtime.md) |
-| G2PW 输入准备 | 自有纯 NumPy 实现的 18 映射、366 组输入与官方一致；保留官方请求内分词与实例静态表复用 | 同源 ONNX 概率已另行对照；正在连接多音字前后处理，>510 异质长文本的官方去重边界保留；见 [G2PW 输入实验](../experiments/2026-09-19-g2pw-inputs.md) |
-| G2PW 文本准备 | 25 组与固定官方函数对照一致，含 23 组完整输出和 2 组相同域外异常；保留 OpenCC / PyPinyin / 上下文 | 完整拼音与音素链尚未验收；见 [文本准备](../experiments/2026-09-19-g2pw-text.md) |
-| G2PW CPU 模型推理 | 自有 ORT 接口 8 组输入、16 组概率及标签/置信度与官方逐位一致，无 Torch/Transformers | 文本接口仍在组合；>510 异质词元的官方去重边界保留；三轮关闭后 RSS 约 380 MiB 趋稳，长期情况未验；见 [ONNX](../experiments/2026-09-19-g2pw-onnx.md) 与 [生命周期](../experiments/2026-09-19-g2pw-lifecycle.md) |
-| G2PW 完整拼音接口 | 规范化中文片段经 Text → Inputs → Session → 拼音填回，27 组输出 / 异常一致，353 数组逐位相同，无 Torch/Transformers；原边界保留 | 中文段规则已另行接通，完整请求待验；见 [拼音闭环](../experiments/2026-09-19-g2pw-pinyin.md) |
-| 中文 V2 语言段 | 10 组真实 G2PW 后规范化、音素、ID、word2ph 全同；27 组规范化和 45,050 词典检查一致；五组 MLX CPU BERT 通过原阈值 | 上层语言路由与原始文本到音频仍待接入；见 [中文前端](../experiments/2026-09-19-chinese-phones.md) |
-| 日文语言段 | 26 组完整 NJD、labels、韵律和音素 ID 与官方一致，实际覆盖 Nani、Sudachi 与用户词典，无 Torch；[原始目标入口](../experiments/2026-09-19-japanese-target-frontend.md)及四例整链已另行通过 | 扩展语料和新试听待验；见 [日文前端](../experiments/2026-09-19-japanese-g2p.md) |
-| 日文零特征单次分配 | 六例规范化文本、音素、完整 FP32 BERT 及 WAV 与原实现相同，路由拒绝与短音素重试保持；见[分配实验](../experiments/2026-09-20-japanese-zero-features.md) | 只减少前端临时分配；未证明 RSS、GPU 或安装体积下降，中文规则不适用 |
-| 独立日文资源导出 | 不依赖历史 Harness；三资源与已验证包逐字相同，完整语言模型保留，14 项检查通过；见 [资源导出](../experiments/2026-09-19-japanese-resource-export.md) | 当前包约 145.53 MiB，不含安装包内主词典 / Nani / Sudachi；最终分发材料与 Windows 待验 |
-| G2PW 映射 ORT 包 | 实际接口 27 组 / 353 数组逐位一致；同条件 OS 最高 RSS 约 1357→851 MiB | Mac CPU 数据；Windows 需重建包，完整 TTS 资源未测；见 [映射实验](../experiments/2026-09-19-g2pw-mapped-ort.md) |
-| 单参考持久包 | 五数组新进程逐字节相同，12 项身份 / 损坏拒绝检查通过；完整包约 203 KiB | 不含无 Torch 的新参考准备，历史缺失身份已明列；见 [参考包](../experiments/2026-09-19-reference-condition-package.md) |
-| 静态 WeightNorm 折叠 | 显式选项下 131 权重、十例 330 阶段逐位相同；Flow 峰值少约 105–107 MB，完整声学收益较小 | 加载后缓存增加、完整速度有波动，默认关闭；Mac GPU 数据，见 [预计算取舍](../experiments/2026-09-19-sovits-static-weights.md) |
-| 声学共享归档 | 650 权重与十例 120 阶段逐位相同；整包校验 / 打开从三次变一次；五新进程加载中位 231→155 ms | 权重常驻不变，Mac 加载数据不代表 CUDA；见 [共享加载](../experiments/2026-09-19-sovits-shared-loading.md) |
-| 权重无损存储 | 三归档少 801.37 MiB；加载恢复的 1,303 张量逐位相同；复用已加载权重收回 Prefill 重复读取代价 | 加载成本和最终分发仍需衡量；不代表运行权重减少，见 [存储实验](../experiments/2026-09-19-lossless-weight-storage.md) |
-| GPT 按阶段释放 | 两条 prepared 请求的 GPT/KV 可在声学生成前释放，输出逐位保持；结合 pair 调度与缓存设置，本轮 allocator peak 为 622.05 MiB | 每次重载增加延迟；不含文本/参考准备、不推广到长句与其他模型；见 [生命周期](../experiments/2026-09-19-gpt-lifecycle.md) 与 [工作区](../experiments/2026-09-19-decoder-workspace.md) |
-| 日文模型复用与请求状态释放 | 四例三策略共 240 成功请求及 12 预期失败通过；公开 API 另有 16 成功 / 4 失败恢复，WAV 字节相同；空闲 active 少 96 MiB，复用比每次重载省约 0.41–0.44 s；见 [对照](../experiments/2026-09-19-native-model-lifecycle.md) | MLX 统一内存数据；本轮生成峰值与 RSS 未下降，长期泄漏、其他模型和 Windows 待验；声学前释放另轮记录 |
-| 日文声学前释放请求状态 | 四例两策略 112 成功请求及 8 预期失败恢复通过；token / 波形 / PCM 相同，请求分配器峰值少约 96 MiB；见 [提前释放](../experiments/2026-09-19-gpt-state-before-acoustic.md) | 耗时本轮增加 2–16 ms；释放块可能仍在 cache，RSS 峰值未降，Windows 与其他模型未验 |
-| 日文按阶段加载权重 | 两策略 112 成功请求及 8 预期失败通过；四例 WAV 相同；长句请求分配器峰值少约 304 MiB，正常耗时多约 51 ms；见 [分阶段对照](../experiments/2026-09-19-native-staged-loading.md) | Mac 统一内存与当前四例，不能替代 Windows 显存或权重常驻策略测量；未新增试听 |
+| 自有 NumPy 采样与非流式停止 | 十条 Top-p 1 请求的 1805 步 token、停止和语义切片与官方相同；logits 通过，2 例 3 个概率值超差，整轮仍失败 | GPT 误差传播、其他 seed、独立 RNG、Top-p 小于 1 及 GPU 采样；见 [十例生成](../../research/experiments/2026-09-19-expanded-native-generation.md) |
+| 日文原始目标文本与独立环境 | 四例目标 phones / BERT、生成 token / 停止 / 语义切片相同，波形通过；正常 32 请求通过；日文原报告 WAV 与已试听文件逐字节相同；见 [原文到 PCM](../../research/experiments/2026-09-19-native-japanese-text-speech.md) | 该轮限单个 cut0 片段和 top_p=1；独立 RNG 质量、其余三例人工试听与 Windows 待验 |
+| 日文 cut0 多片完整请求 | 三行与 550 字符两例共五片、814 步的独立前端、token / 历史 / 停止 / 切片及原容差数值通过；CLI 原四例 WAV 不变、三种加载方式 WAV 相同，限额继续和后片失败行为通过；见[多片验证](../../research/experiments/2026-09-20-japanese-multifragment.md) | 完整离线 WAV，非流式；长例显式容量 4096，默认 1024 仍可能不足；三句 ASR 识别完整，重复长例未获内容验收，新样音试听待反馈；原 MRTE / 概率失败保留，Windows 待验 |
+| 自然长文与 cut2 实验 | 同一 590 字原文保留；44 项官方分句规则对照通过，CLI 显式方法、七片执行、限额继续和默认四例回归通过；见[交接记录](../../research/experiments/2026-09-20-natural-long-handoff.md) | cut0 / cut2 ASR 均有内容不匹配；官方 MPS 全请求捕获中断，cut2 固定随机数数值与音质未验收，不计入正式支持范围 |
+| 普通日文独立随机生成 | 新参考包、原始三句、NumPy seed 0 / 1 / 0 三个独立进程正常 EOS；重复 seed WAV 字节相同；两条新 WAV 的离线 ASR 均识别到三句和开头；见 [CLI 验证](../../research/experiments/2026-09-19-japanese-cli-free-sampling.md) | 新 WAV 未经人工试听；ASR 不判断 wa、音色或自然度，不继承旧随机回放的音质结论 |
+| 日文原始参考准备 | 固定官方 MPS / FP32 重算同一参考，五数组逐字相同；独立 reader 无 Torch 读取通过；见 [准备工具](../../research/experiments/2026-09-19-japanese-reference-preparation.md) | 开发准备依赖 Torch；实际更换参考、多参考、CPU 准备及 Windows 未验，新包连同来源元数据约 2.3 MiB |
+| 准备好条件的自有语音链 | 十例自有 GPT → 语义 → 声学 → PCM 的 token、停止和最终波形通过；原始两例 WAV 与用户确认的四样音逐字节相同 | 既有概率及 MRTE 超差仍保留；原始文本和参考准备、独立 RNG、扩展质量及完整延迟；见 [十例整链](../../research/experiments/2026-09-19-expanded-prepared-speech.md) |
+| 自有完整声学链 | 650 张量解码包严格重载通过；CPU encoder + GPU flow/decoder 的十例波形通过，119/120 阶段通过 | 日文标点 MRTE 单元素超差；全 GPU 两例仍有中文波形超差；见 [扩展声学](../../research/experiments/2026-09-19-expanded-acoustic.md) |
+| 声学 CPU softmax 高精度累积 | 显式 `encoder_softmax=fp64-accumulation` 的十例 120 阶段通过原容差；源码输出逐位复现候选；默认 FP32 保留原行为 | 编码器时间与工作区增加；新输出的整链、试听待验，其他模型与 GPU 不覆盖；见 [精度与成本](../../research/experiments/2026-09-19-softmax-candidates.md) |
+| 声学速度与缓存 | 调度优化前两条正常声学请求比官方慢约 29%–41%；后续缓存、工作区和整链取舍单列 | 各条件的数据不可混用；MLX 统计仅适用于 Apple 统一内存，见 [原声学实验](../../research/experiments/2026-09-19-mlx-sovits-complete.md) 与 [工作区实验](../../research/experiments/2026-09-19-decoder-workspace.md) |
+| 声码器工作区 | 新 pair 求值方式的十例波形逐位保持；两条 decoder-only 峰值少约 45%，慢约 10%–14%；整链已复核 | 长句降幅较小；完整文本路径的峰值与部署成本；见 [工作区实验](../../research/experiments/2026-09-19-decoder-workspace.md) |
+| 中文 tokenizer | 自有接口与官方词元及 G2PW 所需基础数组一致，600 字 BERT 输入保持 602 tokens | 完整中文规范化、G2PW 推理和音素/BERT 对齐；见 [tokenizer 实验](../../research/experiments/2026-09-19-tokenizer-runtime.md) |
+| G2PW 输入准备 | 自有纯 NumPy 实现的 18 映射、366 组输入与官方一致；保留官方请求内分词与实例静态表复用 | 同源 ONNX 概率已另行对照；正在连接多音字前后处理，>510 异质长文本的官方去重边界保留；见 [G2PW 输入实验](../../research/experiments/2026-09-19-g2pw-inputs.md) |
+| G2PW 文本准备 | 25 组与固定官方函数对照一致，含 23 组完整输出和 2 组相同域外异常；保留 OpenCC / PyPinyin / 上下文 | 完整拼音与音素链尚未验收；见 [文本准备](../../research/experiments/2026-09-19-g2pw-text.md) |
+| G2PW CPU 模型推理 | 自有 ORT 接口 8 组输入、16 组概率及标签/置信度与官方逐位一致，无 Torch/Transformers | 文本接口仍在组合；>510 异质词元的官方去重边界保留；三轮关闭后 RSS 约 380 MiB 趋稳，长期情况未验；见 [ONNX](../../research/experiments/2026-09-19-g2pw-onnx.md) 与 [生命周期](../../research/experiments/2026-09-19-g2pw-lifecycle.md) |
+| G2PW 完整拼音接口 | 规范化中文片段经 Text → Inputs → Session → 拼音填回，27 组输出 / 异常一致，353 数组逐位相同，无 Torch/Transformers；原边界保留 | 中文段规则已另行接通，完整请求待验；见 [拼音闭环](../../research/experiments/2026-09-19-g2pw-pinyin.md) |
+| 中文 V2 语言段 | 10 组真实 G2PW 后规范化、音素、ID、word2ph 全同；27 组规范化和 45,050 词典检查一致；五组 MLX CPU BERT 通过原阈值 | 上层语言路由与原始文本到音频仍待接入；见 [中文前端](../../research/experiments/2026-09-19-chinese-phones.md) |
+| 日文语言段 | 26 组完整 NJD、labels、韵律和音素 ID 与官方一致，实际覆盖 Nani、Sudachi 与用户词典，无 Torch；[原始目标入口](../../research/experiments/2026-09-19-japanese-target-frontend.md)及四例整链已另行通过 | 扩展语料和新试听待验；见 [日文前端](../../research/experiments/2026-09-19-japanese-g2p.md) |
+| 日文零特征单次分配 | 六例规范化文本、音素、完整 FP32 BERT 及 WAV 与原实现相同，路由拒绝与短音素重试保持；见[分配实验](../../research/experiments/2026-09-20-japanese-zero-features.md) | 只减少前端临时分配；未证明 RSS、GPU 或安装体积下降，中文规则不适用 |
+| 独立日文资源导出 | 不依赖历史 Harness；三资源与已验证包逐字相同，完整语言模型保留，14 项检查通过；见 [资源导出](../../research/experiments/2026-09-19-japanese-resource-export.md) | 当前包约 145.53 MiB，不含安装包内主词典 / Nani / Sudachi；最终分发材料与 Windows 待验 |
+| G2PW 映射 ORT 包 | 实际接口 27 组 / 353 数组逐位一致；同条件 OS 最高 RSS 约 1357→851 MiB | Mac CPU 数据；Windows 需重建包，完整 TTS 资源未测；见 [映射实验](../../research/experiments/2026-09-19-g2pw-mapped-ort.md) |
+| 单参考持久包 | 五数组新进程逐字节相同，12 项身份 / 损坏拒绝检查通过；完整包约 203 KiB | 不含无 Torch 的新参考准备，历史缺失身份已明列；见 [参考包](../../research/experiments/2026-09-19-reference-condition-package.md) |
+| 静态 WeightNorm 折叠 | 显式选项下 131 权重、十例 330 阶段逐位相同；Flow 峰值少约 105–107 MB，完整声学收益较小 | 加载后缓存增加、完整速度有波动，默认关闭；Mac GPU 数据，见 [预计算取舍](../../research/experiments/2026-09-19-sovits-static-weights.md) |
+| 声学共享归档 | 650 权重与十例 120 阶段逐位相同；整包校验 / 打开从三次变一次；五新进程加载中位 231→155 ms | 权重常驻不变，Mac 加载数据不代表 CUDA；见 [共享加载](../../research/experiments/2026-09-19-sovits-shared-loading.md) |
+| 权重无损存储 | 三归档少 801.37 MiB；加载恢复的 1,303 张量逐位相同；复用已加载权重收回 Prefill 重复读取代价 | 加载成本和最终分发仍需衡量；不代表运行权重减少，见 [存储实验](../../research/experiments/2026-09-19-lossless-weight-storage.md) |
+| GPT 按阶段释放 | 两条 prepared 请求的 GPT/KV 可在声学生成前释放，输出逐位保持；结合 pair 调度与缓存设置，本轮 allocator peak 为 622.05 MiB | 每次重载增加延迟；不含文本/参考准备、不推广到长句与其他模型；见 [生命周期](../../research/experiments/2026-09-19-gpt-lifecycle.md) 与 [工作区](../../research/experiments/2026-09-19-decoder-workspace.md) |
+| 日文模型复用与请求状态释放 | 四例三策略共 240 成功请求及 12 预期失败通过；公开 API 另有 16 成功 / 4 失败恢复，WAV 字节相同；空闲 active 少 96 MiB，复用比每次重载省约 0.41–0.44 s；见 [对照](../../research/experiments/2026-09-19-native-model-lifecycle.md) | MLX 统一内存数据；本轮生成峰值与 RSS 未下降，长期泄漏、其他模型和 Windows 待验；声学前释放另轮记录 |
+| 日文声学前释放请求状态 | 四例两策略 112 成功请求及 8 预期失败恢复通过；token / 波形 / PCM 相同，请求分配器峰值少约 96 MiB；见 [提前释放](../../research/experiments/2026-09-19-gpt-state-before-acoustic.md) | 耗时本轮增加 2–16 ms；释放块可能仍在 cache，RSS 峰值未降，Windows 与其他模型未验 |
+| 日文按阶段加载权重 | 两策略 112 成功请求及 8 预期失败通过；四例 WAV 相同；长句请求分配器峰值少约 304 MiB，正常耗时多约 51 ms；见 [分阶段对照](../../research/experiments/2026-09-19-native-staged-loading.md) | Mac 统一内存与当前四例，不能替代 Windows 显存或权重常驻策略测量；未新增试听 |
 | 当前单参考声学条件预计算 | ge/ge512 与官方实际条件相同；10 条 WAV 逐字节保持；请求后 allocated 少 148.99 MiB | RSS 峰值未降、通用持久化与多参考；仅显式实验选项 |
 | 模型卸载 | 官方单进程卸载后 MPS allocated / driver 边界已记录 | 多轮泄漏、空闲恢复与角色切换 |
-| 非流式 Python 合作式取消 | 16 次成功 / 恢复、8 次真实计算边界取消通过；同模型恢复，取消无 PCM；另 40 次未启用谓词的正常请求保持输出，见 [取消记录](../experiments/2026-09-19-native-cancellation.md) | 不中断在途 kernel，未测异步取消延迟；CLI / 宿主播放队列、Windows 待验 |
+| 非流式 Python 合作式取消 | 16 次成功 / 恢复、8 次真实计算边界取消通过；同模型恢复，取消无 PCM；另 40 次未启用谓词的正常请求保持输出，见 [取消记录](../../research/experiments/2026-09-19-native-cancellation.md) | 不中断在途 kernel，未测异步取消延迟；CLI / 宿主播放队列、Windows 待验 |
 | 流式、宿主取消与角色切换 | 未验证 | 输出顺序、跨进程协议、资源释放及宿主后续请求正确性 |
 | FP16、量化、CUDA Graph、FlashAttention | 本轮未验证 | 独立于 MPS / FP32 对照评估数值、质量、性能 |
 
@@ -125,8 +125,8 @@
 
 每次修复后应更新本矩阵对应条目并链接新的实验记录，保留旧失败证据。正式列为支持需要完成 [推理契约](inference-contract.md) 与 [基准协议](benchmark-protocol.md) 的相关验证。MPS 统一内存值与 NVIDIA 独立显存分开报告，执行边界快照不称为峰值；当前没有可用于全部模型版本的 0.8 GB 承诺。
 
-指定样音的人工检查见 [ASR 与复听记录](../experiments/2026-09-19-asr-review.md)。另有 [自有整链四样音的独立复听](../experiments/2026-09-19-native-prepared-speech.md)。这些通过结果不代表原 Lite 已修复，也不代表原始文本到音频或扩展模型全部通过。
+指定样音的人工检查见 [ASR 与复听记录](../../research/experiments/2026-09-19-asr-review.md)。另有 [自有整链四样音的独立复听](../../research/experiments/2026-09-19-native-prepared-speech.md)。这些通过结果不代表原 Lite 已修复，也不代表原始文本到音频或扩展模型全部通过。
 
-参考资源释放与 BERT 裁剪的组合已通过 10 条扩展输入的逐字节 WAV 对照，见 [扩展回归](../experiments/2026-09-19-expanded-regression.md)。这批扩展音频尚无新增 ASR 或人工检查。
+参考资源释放与 BERT 裁剪的组合已通过 10 条扩展输入的逐字节 WAV 对照，见 [扩展回归](../../research/experiments/2026-09-19-expanded-regression.md)。这批扩展音频尚无新增 ASR 或人工检查。
 
-长句误差的逐层定位与通用高精度候选见 [MLX 数值实验](../experiments/2026-09-19-mlx-numerics.md)。固定条件下的官方 / Lite 声学中间数组与波形对照见 [SoVITS 实验](../experiments/2026-09-19-sovits-fixed-conditions.md)。
+长句误差的逐层定位与通用高精度候选见 [MLX 数值实验](../../research/experiments/2026-09-19-mlx-numerics.md)。固定条件下的官方 / Lite 声学中间数组与波形对照见 [SoVITS 实验](../../research/experiments/2026-09-19-sovits-fixed-conditions.md)。

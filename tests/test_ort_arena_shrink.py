@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts.ort_sovits import INPUT_NAMES, ORTSoVITS
+from sakuratts.backends.onnx.sovits import INPUT_NAMES, ORTSoVITS
 from test_ort_sovits import manifest
 
 
@@ -23,7 +23,7 @@ class RunOptions:
 
 class ORTArenaShrinkTests(unittest.TestCase):
     def test_cpu_rejects_shrink_before_reading_package_or_loading_session(self):
-        with patch("sakuratts.ort_sovits.read_manifest") as read:
+        with patch("sakuratts.backends.onnx.sovits.read_manifest") as read:
             with self.assertRaisesRegex(ValueError, "requires CUDA"):
                 ORTSoVITS.load("unused", device="cpu", acoustic_arena_shrink=True)
             read.assert_not_called()
@@ -42,8 +42,8 @@ class ORTArenaShrinkTests(unittest.TestCase):
         inputs = (np.zeros((1, 1, 3), np.int64), np.zeros((1, 4), np.int64),
                   np.zeros((1, 1024, 1), np.float32), np.zeros((1, 512, 1), np.float32),
                   np.zeros((1, 192, 6), np.float32))
-        with patch("sakuratts.ort_sovits.read_manifest", return_value=(manifest(), Path("unused"))), \
-             patch.dict(sys.modules, {"onnxruntime": ort, "sakuratts.cuda_runtime": SimpleNamespace(configure_cuda=Mock())}):
+        with patch("sakuratts.backends.onnx.sovits.read_manifest", return_value=(manifest(), Path("unused"))), \
+             patch.dict(sys.modules, {"onnxruntime": ort, "sakuratts.backends.cuda.runtime": SimpleNamespace(configure_cuda=Mock())}):
             baseline = ORTSoVITS.load("unused", device_id=2)
             off_options = ort.InferenceSession.call_args.kwargs
             self.assertIs(baseline.decode(*inputs), waveform)
@@ -66,7 +66,7 @@ class ORTArenaShrinkTests(unittest.TestCase):
             ORTSoVITS(manifest(), session, acoustic_arena_shrink=True)
 
     def test_worker_forwards_shrink_and_reports_effective_policy(self):
-        from sakuratts import ort_worker
+        import sakuratts._internal.ort_worker as ort_worker
         model = Mock()
         model.providers = ["CUDAExecutionProvider"]
         model.provider_options = {}

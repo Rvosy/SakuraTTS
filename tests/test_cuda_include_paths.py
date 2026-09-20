@@ -7,13 +7,15 @@ import importlib.util
 from pathlib import Path
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
+import warnings
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 cli = importlib.import_module("sakuratts.cli")
-cuda_runtime = importlib.import_module("sakuratts.cuda_runtime")
+cuda_runtime = importlib.import_module("sakuratts.backends.cuda.runtime")
 
 
 def distribution(root, name, header):
@@ -68,7 +70,7 @@ class CudaIncludePathTests(unittest.TestCase):
                 cuda_runtime.validate_gpt_cuda_include_paths()
 
     def test_gpt_import_rejects_bad_headers_before_importing_cupy(self):
-        path = ROOT / "src/sakuratts/cuda_gpt.py"
+        path = ROOT / "src/sakuratts/backends/cuda/gpt.py"
         spec = importlib.util.spec_from_file_location("sakuratts._include_path_test", path)
         module = importlib.util.module_from_spec(spec)
         original_import = builtins.__import__
@@ -92,6 +94,7 @@ class CudaIncludePathTests(unittest.TestCase):
                 patch.object(cli.metadata, "version", return_value="test"), \
                 patch.object(cli.platform, "system", return_value="Windows"), \
                 patch.object(cuda_runtime, "configure_cuda"), \
+                patch.object(cuda_runtime, "import_cupy"), \
                 patch.object(cuda_runtime, "validate_gpt_cuda_include_paths", side_effect=RuntimeError("ASCII-only fixture")):
             result = cli.doctor(nvidia=True)
         self.assertEqual(result["gpt_cuda_headers"], {"status": "failed", "error": "ASCII-only fixture"})
@@ -108,6 +111,66 @@ class CudaIncludePathTests(unittest.TestCase):
         validate.assert_not_called()
         self.assertTrue(result["checks_passed"])
         self.assertNotIn("gpt_cuda_headers", result)
+
+
+class CudaImportWarningTests(unittest.TestCase):
+    warning = "CUDA path could not be detected. Set CUDA_PATH environment variable if CuPy fails to load."
+
+    def import_fixture(self, *, found_via="site-packages", missing_nvrtc=False, import_error=False):
+        class MissingLibrary(RuntimeError):
+            pass
+
+        def load_library(name):
+            self.assertEqual(name, "nvrtc")
+            if missing_nvrtc:
+                raise MissingLibrary("NVRTC missing")
+            return SimpleNamespace(found_via=found_via,
+                abs_path=str(Path("nvidia/cuda_nvrtc/bin/nvrtc64_120_0.dll").absolute()))
+
+        original_import = builtins.__import__
+        cupy = SimpleNamespace()
+
+        def importing(name, *args, **kwargs):
+            if name != "cupy":
+                return original_import(name, *args, **kwargs)
+            warnings.warn_explicit(self.warning, UserWarning, "_environment.py", 286, module="cupy._environment")
+            warnings.warn_explicit("Another CUDA warning", UserWarning, "_environment.py", 287, module="cupy._environment")
+            if import_error:
+                raise ImportError("CUDA DLL could not be loaded")
+            return cupy
+
+        pathfinder = SimpleNamespace(load_nvidia_dynamic_lib=load_library, DynamicLibNotFoundError=MissingLibrary)
+        with patch.dict(sys.modules, {"cuda.pathfinder": pathfinder}), \
+                patch.object(sys, "platform", "win32"), \
+                patch.object(cuda_runtime, "configure_cuda") as configure, \
+                patch("builtins.__import__", side_effect=importing):
+            sys.modules.pop("cupy", None)
+            self.assertIs(cuda_runtime.import_cupy(), cupy)
+            configure.assert_called_once_with()
+
+    def test_split_wheel_filters_only_toolkit_warning_and_restores_filters(self):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            self.import_fixture()
+            self.assertEqual([str(item.message) for item in caught], ["Another CUDA warning"])
+            warnings.warn_explicit(self.warning, UserWarning, "_environment.py", 286, module="cupy._environment")
+            self.assertEqual(str(caught[-1].message), self.warning)
+
+    def test_missing_nvrtc_keeps_the_warning(self):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            self.import_fixture(missing_nvrtc=True)
+        self.assertIn(self.warning, [str(item.message) for item in caught])
+
+    def test_system_toolkit_keeps_its_warnings(self):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            self.import_fixture(found_via="system")
+        self.assertIn(self.warning, [str(item.message) for item in caught])
+
+    def test_real_import_failures_propagate(self):
+        with warnings.catch_warnings(record=True), self.assertRaisesRegex(ImportError, "CUDA DLL"):
+            self.import_fixture(import_error=True)
 
 
 if __name__ == "__main__":

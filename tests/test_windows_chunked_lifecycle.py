@@ -1,4 +1,4 @@
-"""CPU-only checks of the experimental worker lifecycle harness."""
+"""CPU-only checks of the experimental worker lifecycle research.tools."""
 from copy import deepcopy
 import io
 import json
@@ -12,10 +12,10 @@ from contextlib import redirect_stderr, redirect_stdout
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "harness"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "research/tools"))
 import windows_chunked_lifecycle as probe
-from sakuratts.generation import check_cancelled
-from sakuratts.nvidia import NVIDIAEngine
+from sakuratts._internal.generation import check_cancelled
+from sakuratts.backends.cuda.engine import NVIDIAEngine
 
 
 class Process:
@@ -119,7 +119,7 @@ class EngineFactory:
         check_cancelled(cancel_requested, "before_prefill")
         gpt.keys = gpt.values = gpt.graph = object()
         check_cancelled(cancel_requested, "after_prefill")
-        return object()
+        return SimpleNamespace(generation=SimpleNamespace(semantic=np.asarray([[[1, 2]]], np.int64)))
 
     def acoustic(self, *args, sovits, cancel_requested=None, **kwargs):
         check_cancelled(cancel_requested, "before_acoustic")
@@ -128,7 +128,7 @@ class EngineFactory:
         self.acoustic_calls += 1
         delta = self.pcm_delta if self.acoustic_calls > 1 else 0
         return SimpleNamespace(pcm=np.asarray([1 + delta, 2, 3, 4, 5, 6, 0, 0, 0], np.int16), sample_rate=10,
-            waveform=np.asarray([.1, .2, .3, .4, .5, .6], np.float32), timings={}, generation=SimpleNamespace(
+            waveform=np.asarray([.1, .2, .3, .4, .5, .6], np.float32), timings={"acoustic_seconds": 0.}, generation=SimpleNamespace(
                 sampled_tokens=np.asarray([1, 2, 1024], np.int64), semantic=np.asarray([[[1, 2]]], np.int64),
                 stop=SimpleNamespace(reasons=("sample_eos",), returned_index=2)))
 
@@ -136,9 +136,9 @@ class EngineFactory:
 class ChunkedLifecycleTests(unittest.TestCase):
     def run_fake_suite(self, output, *, pcm_delta=0, chunks=3):
         factory, result = EngineFactory(pcm_delta=pcm_delta, chunks=chunks), record()
-        with patch("sakuratts.nvidia.prepare_text_request", side_effect=factory.prepare), \
-                patch("sakuratts.nvidia.generate_prepared_semantic", side_effect=factory.semantic), \
-                patch("sakuratts.nvidia.synthesize_acoustic", side_effect=factory.acoustic):
+        with patch("sakuratts.backends.cuda.engine.prepare_text_request", side_effect=factory.prepare), \
+                patch("sakuratts.backends.cuda.engine.generate_prepared_semantic", side_effect=factory.semantic), \
+                patch("sakuratts.backends.cuda.engine.synthesize_acoustic", side_effect=factory.acoustic):
             probe.run_checks(factory, output, result)
         return factory, result
 
@@ -178,9 +178,9 @@ class ChunkedLifecycleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             factory, result = EngineFactory(), record()
             result.update(entrypoint="public-package", loads=[])
-            with patch("sakuratts.nvidia.prepare_text_request", side_effect=factory.prepare), \
-                    patch("sakuratts.nvidia.generate_prepared_semantic", side_effect=factory.semantic), \
-                    patch("sakuratts.nvidia.synthesize_acoustic", side_effect=factory.acoustic):
+            with patch("sakuratts.backends.cuda.engine.prepare_text_request", side_effect=factory.prepare), \
+                    patch("sakuratts.backends.cuda.engine.generate_prepared_semantic", side_effect=factory.semantic), \
+                    patch("sakuratts.backends.cuda.engine.synthesize_acoustic", side_effect=factory.acoustic):
                 probe.run_checks(factory, Path(directory), result)
         self.assertTrue(probe.aggregate(result["cases"], result["cleanup"])["lifecycle_passed"])
         self.assertEqual({row["worker_pid"] for row in result["loads"]}, {worker.pid for worker in factory.workers})
@@ -275,7 +275,7 @@ class ChunkedLifecycleTests(unittest.TestCase):
                     self.assertEqual(actual_output, output)
                     self.assertEqual(result["entrypoint"], "public-package")
                     self.assertEqual(result["provenance"]["sample_ratio"], 3)
-                    self.assertIn("src/sakuratts/ort_chunked.py", result["sources_sha256"])
+                    self.assertIn("src/sakuratts/backends/onnx/chunked.py", result["sources_sha256"])
                     result["cases"].append({"checks": {"completed": True}})
                     result["cleanup"].append({"passed": True})
 

@@ -6,7 +6,7 @@ import unittest
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "harness"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "research/tools"))
 from windows_acoustic_arena import KEY, output_checks, run_options
 
 

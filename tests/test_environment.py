@@ -12,8 +12,8 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from sakuratts.cli import doctor, main
-from sakuratts.diagnostics import checked_file
-from sakuratts.reference_condition import sha256_file
+from sakuratts._internal.diagnostics import checked_file
+from sakuratts._internal.reference_condition import sha256_file
 
 
 class EnvironmentTests(unittest.TestCase):
@@ -43,9 +43,10 @@ class EnvironmentTests(unittest.TestCase):
         with patch("sakuratts.cli.JAPANESE_MODULES", {}), patch("sakuratts.cli.import_module"), \
                 patch("sakuratts.cli.metadata.version", return_value="test"), \
                 patch("sakuratts.cli.platform.system", return_value="Windows"), \
-                patch("sakuratts.cuda_runtime.configure_cuda"), \
-                patch("sakuratts.cuda_runtime.validate_gpt_cuda_include_paths", return_value={}), \
-                patch("sakuratts.diagnostics.check_windows_packages", side_effect=ValueError("reference identity mismatch")):
+                patch("sakuratts.backends.cuda.runtime.configure_cuda"), \
+                patch("sakuratts.backends.cuda.runtime.import_cupy"), \
+                patch("sakuratts.backends.cuda.runtime.validate_gpt_cuda_include_paths", return_value={}), \
+                patch("sakuratts._internal.diagnostics.check_windows_packages", side_effect=ValueError("reference identity mismatch")):
             report = doctor(config="runtime.json")
         self.assertTrue(report["synthesis"]["dependencies_ready"])
         self.assertTrue(report["synthesis"]["models_checked"])
@@ -84,7 +85,7 @@ class EnvironmentTests(unittest.TestCase):
                                     ({"format": "sakuratts-windows-config-v1"}, "'gpt' package path")):
                 config.write_text(json.dumps(value), encoding="utf-8")
                 stderr = io.StringIO()
-                with patch("sakuratts.nvidia.run_cli") as run, contextlib.redirect_stderr(stderr):
+                with patch("sakuratts.backends.cuda.engine.run_cli") as run, contextlib.redirect_stderr(stderr):
                     with self.assertRaises(SystemExit) as caught:
                         main(["synthesize", "--config", str(config), "--text", "test", "--output", str(output)])
                 self.assertEqual(caught.exception.code, 1)
@@ -95,7 +96,7 @@ class EnvironmentTests(unittest.TestCase):
 
     @unittest.skipIf(sys.platform == "darwin", "Non-Mac startup diagnostic")
     def test_synthesis_reports_missing_backend_before_writing_outputs(self):
-        script = Path(__file__).resolve().parents[1] / "scripts/synthesize_japanese.py"
+        script = Path(__file__).resolve().parents[1] / "tools/synthesize_japanese.py"
         with tempfile.TemporaryDirectory() as folder:
             output = Path(folder) / "new-output/speech.wav"
             command = [sys.executable, str(script), "--text", "test", "--output", str(output)]

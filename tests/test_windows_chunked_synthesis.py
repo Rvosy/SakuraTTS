@@ -14,7 +14,7 @@ import weakref
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "harness"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "research/tools"))
 from windows_chunked_synthesis import SplitAcousticAdapter
 import windows_chunked_synthesis as experiment
 from vocoder_receptive_field import TemporalOperation, VocoderReceptiveField
@@ -200,7 +200,7 @@ class ExperimentEvidenceTests(unittest.TestCase):
             with self.subTest(prior_status=prior_status), tempfile.TemporaryDirectory() as directory:
                 output = Path(directory)
                 (output / "results.json").write_text(json.dumps({"status": prior_status}), encoding="utf-8")
-                record = {"sources_sha256": {"scripts/vocoder_receptive_field.py": "before"},
+                record = {"sources_sha256": {"tools/vocoder_receptive_field.py": "before"},
                           "benchmark_exit_code": prior_code}
                 fake_psutil = SimpleNamespace(Process=lambda: SimpleNamespace(memory_maps=lambda: []))
                 with patch.dict(sys.modules, {"psutil": fake_psutil}), \
@@ -251,7 +251,7 @@ class ExperimentEvidenceTests(unittest.TestCase):
             argv = ["chunk-test", "--split-package", directory, "--rf-spec", directory,
                     "--chunk-frames", "256", "--ort-root", directory, "--cuda-dir", directory,
                     "--config", directory, "--output", str(output), "--acoustic-arena-shrink"]
-            with patch.dict(sys.modules, {"sakuratts.nvidia": SimpleNamespace(NVIDIAEngine=fake_engine),
+            with patch.dict(sys.modules, {"sakuratts.backends.cuda.engine": SimpleNamespace(NVIDIAEngine=fake_engine),
                     "windows_nvidia_benchmark": benchmark, "onnxruntime": fake_ort, "psutil": fake_psutil}), \
                     patch.object(experiment, "sha256_file", return_value="unchanged"), \
                     patch.object(experiment.os, "add_dll_directory", return_value=dll, create=True), \

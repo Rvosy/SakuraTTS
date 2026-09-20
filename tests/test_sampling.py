@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts.sampling import exclude_initial_eos, finish_nonstream_step, logits_to_probs, sample
+from sakuratts._internal.sampling import exclude_initial_eos, finish_nonstream_step, logits_to_probs, sample
 
 
 class SamplingTests(unittest.TestCase):

@@ -1,0 +1,12 @@
+{
+  "format": "sakuratts-model-v1",
+  "name": "mika",
+  "languages": ["ja"],
+  "backend": {"preferred": "cuda"},
+  "gpt": "gpt",
+  "acoustic": "acoustic",
+  "frontend": "frontend",
+  "references": {"normal": "references/normal"},
+  "default_reference": "normal",
+  "acoustic_python": "../../data/windows-ort-runtime/python.exe"
+}

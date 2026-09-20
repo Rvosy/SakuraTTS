@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import torch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "harness"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "research/tools"))
 from trace_reference import ReferenceTrace
 
 

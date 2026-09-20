@@ -1,0 +1,17 @@
+# Paths resolve from the launch working directory, as in upstream api_v2.py.
+custom:
+  version: v2ProPlus
+  device: cuda
+  is_half: false
+  t2s_weights_path: D:/Voices/model.ckpt
+  vits_weights_path: D:/Voices/model.pth
+
+sakuratts:
+  official_source: D:/Tools/GPT-SoVITS
+  python: D:/Tools/GPT-SoVITS/runtime/python.exe
+  acoustic_python: D:/Project/SakuraTTS/data/windows-ort-runtime/python.exe
+  cache_dir: .cache/sakuratts
+  # Optional existing deployment package; original weight paths above still apply.
+  # model: models/example/model.json
+  # Optional local full language detector for conversion.
+  # language_model: D:/Resources/lid.176.bin

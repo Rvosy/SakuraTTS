@@ -17,8 +17,8 @@ import tomllib
 import zipfile
 
 
-ROOT_FILES = {"README.md", "LICENSE", "MANIFEST.in", "pyproject.toml", "AGENTS.md"}
-SOURCE_DIRS = ("src/sakuratts", "scripts", "harness", "tests", "docs", "examples")
+ROOT_FILES = {"README.md", "LICENSE", "MANIFEST.in", "pyproject.toml", "AGENTS.md", "uv.lock", "start-server.bat", "api.py"}
+SOURCE_DIRS = ("src/sakuratts", "scripts", "tools", "requirements", "research", "benchmarks", "tests", "docs", "examples")
 TEXT_SUFFIXES = {".py", ".md", ".txt", ".toml", ".json", ".ps1", ".yaml", ".yml", ".rst", ".ini", ".cfg"}
 EXCLUDED_DIRS = {"build", "dist", "__pycache__", "node_modules"}
 
@@ -69,8 +69,8 @@ def stage_source(root, destination):
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(data)
         inventory[relative] = {"bytes": len(data), "sha256": sha256(data)}
-    required = ROOT_FILES - {"AGENTS.md"}
-    required |= {"docs/preview-release.md", "requirements-windows-runtime.txt", "src/sakuratts/__init__.py"}
+    required = ROOT_FILES - {"AGENTS.md", "uv.lock"}
+    required |= {"docs/preview-release.md", "requirements/windows-runtime.txt", "src/sakuratts/__init__.py"}
     missing = sorted(required - inventory.keys())
     if missing:
         raise ValueError("Required preview sources are missing: " + ", ".join(missing))
@@ -164,7 +164,7 @@ def build_preview(root, output, *, offline=False):
         distribution_validation = verify_distributions(wheels[0], sdists[0], inventory)
         payload = {"dist/" + path.name: path.read_bytes() for path in wheels + sdists}
         payload["QUICKSTART.md"] = (source / "docs/preview-release.md").read_bytes()
-        payload["requirements-windows-runtime.txt"] = (source / "requirements-windows-runtime.txt").read_bytes()
+        payload["requirements/windows-runtime.txt"] = (source / "requirements/windows-runtime.txt").read_bytes()
         manifest = {"format": "sakuratts-developer-preview-v1", "version": version,
                     "git": revision, "python": sys.version.split()[0], "uv": uv_version,
                     "offline_build": offline, "source_files": inventory,

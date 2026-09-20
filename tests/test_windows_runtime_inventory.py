@@ -7,7 +7,7 @@ import tempfile
 import unittest
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "harness/windows_runtime_inventory.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "research/tools/windows_runtime_inventory.py"
 spec = importlib.util.spec_from_file_location("windows_runtime_inventory", SCRIPT)
 inventory = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(inventory)

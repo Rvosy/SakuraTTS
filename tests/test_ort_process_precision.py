@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts.ort_process import ORTProcessSoVITS
+from sakuratts.backends.onnx.process import ORTProcessSoVITS
 
 
 class ORTProcessPrecisionTests(unittest.TestCase):
@@ -23,15 +23,15 @@ class ORTProcessPrecisionTests(unittest.TestCase):
             process.pid = 4321
             process.poll.return_value = None
             process.wait.return_value = 0
-            from sakuratts.reference_condition import sha256_file
+            from sakuratts._internal.reference_condition import sha256_file
             ready = {"status": "ready", "acoustic_dtype": "float16", "private_acoustic_process": True,
                 "shared_cuda_process": False, "worker_pid": process.pid, "executable": str(python.resolve()),
                 "package_manifest_sha256": sha256_file(package / "manifest.json"), "acoustic_arena_shrink": True,
                 "diagnostic": True, "chunk_frames": None, "torch_imported": False, "onnx_imported": False,
                 "providers": ["CUDAExecutionProvider"], "provider_options": {}}
-            with patch("sakuratts.ort_process.read_manifest", return_value=(manifest, package / "graph.onnx")) as read, \
-                 patch("sakuratts.ort_process.subprocess.Popen", return_value=process) as launch, \
-                 patch("sakuratts.ort_process.read_message", return_value=(ready, {})):
+            with patch("sakuratts.backends.onnx.process.read_manifest", return_value=(manifest, package / "graph.onnx")) as read, \
+                 patch("sakuratts.backends.onnx.process.subprocess.Popen", return_value=process) as launch, \
+                 patch("sakuratts.backends.onnx.process.read_message", return_value=(ready, {})):
                 model = ORTProcessSoVITS(package, python, diagnostic=True, allow_experimental_fp16=True,
                                          acoustic_arena_shrink=True)
                 read.assert_called_once_with(package.resolve(), diagnostic=True, allow_experimental_fp16=True,
@@ -48,8 +48,8 @@ class ORTProcessPrecisionTests(unittest.TestCase):
             root = Path(temporary)
             python = root / "python.exe"
             python.write_bytes(b"interpreter fixture")
-            with patch("sakuratts.ort_process.read_manifest", side_effect=ValueError("FP16 requires opt-in")) as read, \
-                 patch("sakuratts.ort_process.subprocess.Popen") as launch:
+            with patch("sakuratts.backends.onnx.process.read_manifest", side_effect=ValueError("FP16 requires opt-in")) as read, \
+                 patch("sakuratts.backends.onnx.process.subprocess.Popen") as launch:
                 with self.assertRaisesRegex(ValueError, "opt-in"):
                     ORTProcessSoVITS(root, python)
                 read.assert_called_once_with(root.resolve(), diagnostic=False, allow_experimental_fp16=False,

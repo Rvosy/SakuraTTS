@@ -8,8 +8,8 @@ import unittest
 from unittest.mock import Mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts.array_protocol import read_message, write_message
-from sakuratts.classic_japanese import ClassicJapaneseG2P
+from sakuratts._internal.protocol import read_message, write_message
+from sakuratts.frontend.classic_japanese import ClassicJapaneseG2P
 
 
 def frontend(response):

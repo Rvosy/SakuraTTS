@@ -11,7 +11,7 @@ import unittest
 
 import numpy as np
 
-HARNESS = Path(__file__).resolve().parents[1] / "harness"
+HARNESS = Path(__file__).resolve().parents[1] / "research/tools"
 sys.path.insert(0, str(HARNESS))
 from portable_validation import (ACOUSTIC_STAGES, BUNDLE_FORMAT, CANDIDATE_FORMAT,
                                  array_spec, compare, load_bundle, load_candidate, sha256_file)

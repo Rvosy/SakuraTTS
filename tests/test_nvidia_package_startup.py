@@ -11,8 +11,8 @@ import unittest
 from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts.nvidia import NVIDIAEngine
-from sakuratts.reference_condition import sha256_file
+from sakuratts.backends.cuda.engine import NVIDIAEngine
+from sakuratts._internal.reference_condition import sha256_file
 
 
 def fixture(root):
@@ -46,7 +46,7 @@ class NvidiaPackageStartupTests(unittest.TestCase):
             manifest = json.loads(path.read_text(encoding="utf-8"))
             manifest["dtype"] = "float16"
             path.write_text(json.dumps(manifest), encoding="utf-8")
-            with patch("sakuratts.classic_japanese.ClassicJapaneseG2P") as worker:
+            with patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P") as worker:
                 with self.assertRaisesRegex(ValueError, "allow_experimental_acoustic_fp16"):
                     NVIDIAEngine(config)
                 worker.assert_not_called()
@@ -62,8 +62,8 @@ class NvidiaPackageStartupTests(unittest.TestCase):
                     model.allow_experimental_acoustic_fp16 = allowed
                     model.acoustic_arena_shrink = allowed
                     model.acoustic_chunk_frames = 256 if allowed else None
-                    with patch("sakuratts.ort_process.ORTProcessSoVITS") as process, \
-                            patch("sakuratts.ort_sovits.ORTSoVITS.load") as direct:
+                    with patch("sakuratts.backends.onnx.process.ORTProcessSoVITS") as process, \
+                            patch("sakuratts.backends.onnx.sovits.ORTSoVITS.load") as direct:
                         model._load_sovits()
                     selected, unused = (process, direct) if config else (direct, process)
                     self.assertEqual(selected.call_args.kwargs["allow_experimental_fp16"], allowed)
@@ -89,9 +89,9 @@ class NvidiaPackageStartupTests(unittest.TestCase):
                 acoustic = json.loads(path.read_text(encoding="utf-8"))
                 acoustic["format"] = package_format
                 path.write_text(json.dumps(acoustic), encoding="utf-8")
-                with patch("sakuratts.ort_sovits.read_manifest", side_effect=ValueError("package admission failed")) as read, \
-                        patch("sakuratts.nvidia.PreparedReference.load") as reference, \
-                        patch("sakuratts.classic_japanese.ClassicJapaneseG2P") as frontend:
+                with patch("sakuratts.backends.onnx.sovits.read_manifest", side_effect=ValueError("package admission failed")) as read, \
+                        patch("sakuratts.backends.cuda.engine.PreparedReference.load") as reference, \
+                        patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P") as frontend:
                     with self.assertRaisesRegex(ValueError, "package admission"):
                         NVIDIAEngine(config, acoustic_chunk_frames=chunk, acoustic_arena_shrink=True)
                 read.assert_called_once_with(path.parent.resolve(), allow_experimental_fp16=False,
@@ -107,11 +107,11 @@ class NvidiaPackageStartupTests(unittest.TestCase):
             acoustic["format"] = "sakuratts-sovits-split-onnx-v1"
             acoustic["dtype"] = "float16"
             path.write_text(json.dumps(acoustic), encoding="utf-8")
-            with patch("sakuratts.ort_sovits.read_manifest", return_value=(acoustic, None)), \
-                    patch("sakuratts.nvidia.PreparedReference.load", return_value=object()) as reference, \
-                    patch("sakuratts.classic_japanese.ClassicJapaneseG2P"), \
-                    patch("sakuratts.text_frontend.LanguageSegmenter"), \
-                    patch("sakuratts.text_frontend.TextFrontend"):
+            with patch("sakuratts.backends.onnx.sovits.read_manifest", return_value=(acoustic, None)), \
+                    patch("sakuratts.backends.cuda.engine.PreparedReference.load", return_value=object()) as reference, \
+                    patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P"), \
+                    patch("sakuratts.frontend.text_frontend.LanguageSegmenter"), \
+                    patch("sakuratts.frontend.text_frontend.TextFrontend"):
                 model = NVIDIAEngine(config, acoustic_chunk_frames=256, acoustic_arena_shrink=True,
                                      allow_experimental_acoustic_fp16=True)
                 self.assertEqual(model.acoustic_chunk_frames, 256)
@@ -129,21 +129,21 @@ class NvidiaPackageStartupTests(unittest.TestCase):
 
     def test_selected_precision_reaches_gpt_loader(self):
         from types import ModuleType
-        backend = ModuleType("sakuratts.cuda_gpt")
+        backend = ModuleType("sakuratts.backends.cuda.gpt")
         backend.CUDAGPT = Mock()
         model = object.__new__(NVIDIAEngine)
         model.gpt = None
         model.packages = {"gpt": Path("model")}
         model.capacity, model.use_graph, model.gpt_precision = 2048, True, "fp16"
         model.gpt_attention, model.gpt_attention_chunk_size = "split-kv", 512
-        with patch.dict(sys.modules, {"sakuratts.cuda_gpt": backend}):
+        with patch.dict(sys.modules, {"sakuratts.backends.cuda.gpt": backend}):
             model._load_gpt()
         backend.CUDAGPT.load.assert_called_once_with(
             Path("model"), capacity=2048, use_graph=True, precision="fp16",
             attention="split-kv", attention_chunk_size=512)
         model.sovits = None
         model.unload()
-        with patch.dict(sys.modules, {"sakuratts.cuda_gpt": backend}):
+        with patch.dict(sys.modules, {"sakuratts.backends.cuda.gpt": backend}):
             model._load_gpt()
         self.assertEqual(backend.CUDAGPT.load.call_count, 2)
         self.assertEqual(backend.CUDAGPT.load.call_args.kwargs["attention"], "split-kv")
@@ -156,8 +156,8 @@ class NvidiaPackageStartupTests(unittest.TestCase):
             with self.subTest(attention=attention), tempfile.TemporaryDirectory() as directory:
                 runtime = Mock()
                 runtime.synthesize.side_effect = RuntimeError("stop before inference")
-                with patch("sakuratts.diagnostics.read_windows_config"), \
-                        patch("sakuratts.nvidia.NVIDIAEngine", return_value=runtime) as constructor, \
+                with patch("sakuratts._internal.diagnostics.read_windows_config"), \
+                        patch("sakuratts.backends.cuda.engine.NVIDIAEngine", return_value=runtime) as constructor, \
                         contextlib.redirect_stderr(io.StringIO()):
                     with self.assertRaises(SystemExit):
                         main(["synthesize", "--config", "unused.json", "--text", "test",
@@ -175,8 +175,8 @@ class NvidiaPackageStartupTests(unittest.TestCase):
             with self.subTest(chunk=chunk), tempfile.TemporaryDirectory() as directory:
                 runtime = Mock()
                 runtime.synthesize.side_effect = RuntimeError("stop before inference")
-                with patch("sakuratts.diagnostics.read_windows_config"), \
-                        patch("sakuratts.nvidia.NVIDIAEngine", return_value=runtime) as constructor, \
+                with patch("sakuratts._internal.diagnostics.read_windows_config"), \
+                        patch("sakuratts.backends.cuda.engine.NVIDIAEngine", return_value=runtime) as constructor, \
                         contextlib.redirect_stderr(io.StringIO()):
                     with self.assertRaises(SystemExit):
                         main(["synthesize", "--config", "unused.json", "--text", "test",
@@ -196,8 +196,8 @@ class NvidiaPackageStartupTests(unittest.TestCase):
                 with self.subTest(key=key):
                     manifest["japanese_g2p"] = dict(profile, **{key: "../outside"})
                     path.write_text(json.dumps(manifest), encoding="utf-8")
-                    with patch("sakuratts.nvidia.PreparedReference.load", return_value=object()), \
-                            patch("sakuratts.classic_japanese.ClassicJapaneseG2P") as worker:
+                    with patch("sakuratts.backends.cuda.engine.PreparedReference.load", return_value=object()), \
+                            patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P") as worker:
                         with self.assertRaisesRegex(ValueError, "inside their package"):
                             NVIDIAEngine(config)
                     worker.assert_not_called()
@@ -208,9 +208,9 @@ class NvidiaPackageStartupTests(unittest.TestCase):
             worker = Mock()
             worker.close.side_effect = RuntimeError("cleanup failure")
             failed = RuntimeError("language resources unavailable")
-            with patch("sakuratts.nvidia.PreparedReference.load", return_value=object()), \
-                    patch("sakuratts.classic_japanese.ClassicJapaneseG2P", return_value=worker), \
-                    patch("sakuratts.text_frontend.LanguageSegmenter", side_effect=failed):
+            with patch("sakuratts.backends.cuda.engine.PreparedReference.load", return_value=object()), \
+                    patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P", return_value=worker), \
+                    patch("sakuratts.frontend.text_frontend.LanguageSegmenter", side_effect=failed):
                 with self.assertRaises(RuntimeError) as caught:
                     NVIDIAEngine(config)
             self.assertIs(caught.exception, failed)
@@ -221,11 +221,11 @@ class NvidiaPackageStartupTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             config, _, _ = fixture(Path(directory))
             worker, segmenter = Mock(), Mock()
-            with patch("sakuratts.nvidia.PreparedReference.load", return_value=object()), \
-                    patch("sakuratts.nvidia.metadata.distribution", side_effect=AssertionError("classic must not resolve plus")), \
-                    patch("sakuratts.classic_japanese.ClassicJapaneseG2P", return_value=worker), \
-                    patch("sakuratts.text_frontend.LanguageSegmenter", return_value=segmenter), \
-                    patch("sakuratts.text_frontend.TextFrontend", side_effect=ValueError("bad symbol table")):
+            with patch("sakuratts.backends.cuda.engine.PreparedReference.load", return_value=object()), \
+                    patch("sakuratts.backends.cuda.engine.metadata.distribution", side_effect=AssertionError("classic must not resolve plus")), \
+                    patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P", return_value=worker), \
+                    patch("sakuratts.frontend.text_frontend.LanguageSegmenter", return_value=segmenter), \
+                    patch("sakuratts.frontend.text_frontend.TextFrontend", side_effect=ValueError("bad symbol table")):
                 with self.assertRaisesRegex(ValueError, "bad symbol table"):
                     NVIDIAEngine(config)
             worker.close.assert_called_once()

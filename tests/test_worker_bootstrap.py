@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
-from sakuratts import diagnostics
+import sakuratts._internal.diagnostics as diagnostics
 
 
 class WorkerBootstrapTests(unittest.TestCase):
@@ -49,25 +49,25 @@ before=list(sys.path)
 runpy.run_path(sys.argv[1],run_name='worker_import_test')
 import sakuratts.witness,numpy
 assert sakuratts.witness.ORIGIN=='selected'
-assert Path(sakuratts.__file__).resolve().parent==Path(sys.argv[1]).resolve().parent
+assert Path(sakuratts.__file__).resolve().parent==Path(sys.argv[1]).resolve().parents[1]
 assert sys.path==before
-assert str(Path(sys.argv[1]).resolve().parent.parent) not in sys.path
-assert Path(sys.argv[1]).resolve().parent.parent not in Path(numpy.__file__).resolve().parents
+assert str(Path(sys.argv[1]).resolve().parents[2]) not in sys.path
+assert Path(sys.argv[1]).resolve().parents[2] not in Path(numpy.__file__).resolve().parents
 print(json.dumps({'package':sakuratts.__file__,'numpy':numpy.__file__,'origin':sakuratts.witness.ORIGIN}))
 """
         for name in ("ort_worker.py", "classic_japanese_worker.py", "diagnostics.py"):
             with self.subTest(entry=name):
-                report = self.isolated(code, self.package / name, self.other_site)
+                report = self.isolated(code, self.package / "_internal" / name, self.other_site)
                 self.assertEqual(report["origin"], "selected")
 
     def test_ordinary_module_imports_preserve_package_and_search_path(self):
         code = """import importlib,json,runpy,sys
 from pathlib import Path
 before=list(sys.path)
-load=runpy.run_path(str(Path(sys.argv[1])/'_worker_bootstrap.py'))['load_package']
+load=runpy.run_path(str(Path(sys.argv[1])/'_internal/worker.py'))['load_package']
 package=load(sys.argv[1])
 for name in ('ort_worker','classic_japanese_worker','diagnostics'):
-    importlib.import_module('sakuratts.'+name)
+    importlib.import_module('sakuratts._internal.'+name)
 assert load(sys.argv[1]) is package
 assert sys.modules['sakuratts'] is package
 assert sys.path==before
@@ -79,7 +79,7 @@ print(json.dumps({'same_package':True,'search_path_unchanged':True}))
     def test_worker_script_help_uses_its_interpreter_numpy(self):
         for name in ("ort_worker.py", "classic_japanese_worker.py"):
             with self.subTest(entry=name):
-                result = subprocess.run([sys.executable, "-I", "-B", str(self.package / name), "--help"],
+                result = subprocess.run([sys.executable, "-I", "-B", str(self.package / "_internal" / name), "--help"],
                     cwd=self.root, capture_output=True, text=True, encoding="utf-8", timeout=30)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertIn("usage:", result.stdout)
@@ -107,7 +107,7 @@ assert 'sakuratts.partial' not in sys.modules
 assert sys.path==before
 print(json.dumps({'restored':True}))
 """
-        self.assertTrue(self.isolated(code, self.package / "_worker_bootstrap.py", self.other_site, broken)["restored"])
+        self.assertTrue(self.isolated(code, self.package / "_internal/worker.py", self.other_site, broken)["restored"])
 
     def test_diagnostic_child_loads_own_numpy_and_ort_without_host_site(self):
         worker_site = self.root / "worker-abi-packages"
@@ -121,7 +121,7 @@ print(json.dumps({'restored':True}))
             code = "import sys\nsys.path.insert(0," + repr(str(worker_site)) + ")\n" + command[3]
             return actual_run([command[0], "-I", *command[1:3], code, *command[4:]], **kwargs)
 
-        with patch.object(diagnostics, "__file__", str(self.package / "diagnostics.py")), \
+        with patch.object(diagnostics, "__file__", str(self.package / "_internal/diagnostics.py")), \
                 patch.object(diagnostics.subprocess, "run", side_effect=isolated_child):
             report = diagnostics.check_worker_imports(Path(sys.executable), {})
         self.assertEqual(report["onnxruntime"], "worker-ort-test")

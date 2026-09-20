@@ -9,8 +9,8 @@ from unittest.mock import patch
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
-from sakuratts.sovits_package import SoVITSPackage, sha256
-from sakuratts.weight_storage import LOSSLESS_STORAGE, array_sha256, read_fp32
+from sakuratts.backends.mlx.sovits_package import SoVITSPackage, sha256
+from sakuratts._internal.weight_storage import LOSSLESS_STORAGE, array_sha256, read_fp32
 
 
 class SoVITSPackageTests(unittest.TestCase):
@@ -61,7 +61,7 @@ class SoVITSPackageTests(unittest.TestCase):
                       'flow.other': np.array([2], dtype=np.float32),
                       'dec.condition': np.array([3], dtype=np.float32)})
         with SoVITSPackage.open(self.path) as source:
-            with patch('sakuratts.sovits_package.read_fp32', wraps=read_fp32) as read:
+            with patch('sakuratts.backends.mlx.sovits_package.read_fp32', wraps=read_fp32) as read:
                 selected = dict(source.tensors('flow.', names=('flow.condition', 'dec.condition'),
                                                exclude=('flow.condition', 'dec.condition')))
         self.assertEqual(set(selected), {'flow.other'})

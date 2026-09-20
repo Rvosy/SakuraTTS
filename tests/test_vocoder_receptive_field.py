@@ -13,7 +13,7 @@ import numpy as np
 import onnx
 from onnx import TensorProto, helper, numpy_helper
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from vocoder_receptive_field import (
     VocoderReceptiveField, conv_input_interval, transpose_input_interval,
 )
@@ -301,7 +301,7 @@ class VocoderReceptiveFieldTests(unittest.TestCase):
                 "assert p.plan_chunks(37, 5)[-1]['input_end'] == 37\n"
             )
             result = subprocess.run([sys.executable, "-I", "-c", script,
-                                     str(Path(__file__).resolve().parents[1] / "scripts"), str(spec)],
+                                     str(Path(__file__).resolve().parents[1] / "tools"), str(spec)],
                                     capture_output=True, text=True, timeout=20)
             self.assertEqual(result.returncode, 0, result.stderr)
 

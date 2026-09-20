@@ -14,7 +14,7 @@ from unittest.mock import Mock, patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("windows_wddm_synthesis", ROOT / "harness/windows_wddm_synthesis.py")
+spec = importlib.util.spec_from_file_location("windows_wddm_synthesis", ROOT / "research/tools/windows_wddm_synthesis.py")
 probe = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(probe)
 
@@ -52,7 +52,7 @@ def environment(root, engine, *, shared=False, ort_mismatch=False):
     argv = ["windows_wddm_synthesis.py", "--config", str(config), "--output", str(root / "result")]
     dll = Mock()
     constructor = Mock(return_value=engine)
-    modules = {"sakuratts.nvidia": SimpleNamespace(NVIDIAEngine=constructor),
+    modules = {"sakuratts.backends.cuda.engine": SimpleNamespace(NVIDIAEngine=constructor),
                "psutil": SimpleNamespace(Process=lambda pid: SimpleNamespace(
                    memory_info=lambda: SimpleNamespace(rss=1234)), Error=LookupError),
                "cupy": SimpleNamespace(get_default_memory_pool=lambda: SimpleNamespace(
@@ -139,7 +139,7 @@ class WDDMSynthesisTests(unittest.TestCase):
             calls = 0
             def digest(path):
                 nonlocal calls
-                if Path(path).name == "cuda_gpt.py":
+                if Path(path).name == "gpt.py":
                     calls += 1
                     if calls == 2:
                         raise FileNotFoundError("source disappeared")
@@ -149,8 +149,8 @@ class WDDMSynthesisTests(unittest.TestCase):
                 report = json.loads(state.output.read_text(encoding="utf-8"))
                 self.assertEqual(report["status"], "failed")
                 self.assertEqual(len(report["snapshots"]), 8)
-                self.assertEqual(report["source_sha256"]["src/sakuratts/cuda_gpt.py"], original(ROOT / "src/sakuratts/cuda_gpt.py"))
-                self.assertEqual(report["source_check_errors"][0]["path"], "src/sakuratts/cuda_gpt.py")
+                self.assertEqual(report["source_sha256"]["src/sakuratts/backends/cuda/gpt.py"], original(ROOT / "src/sakuratts/backends/cuda/gpt.py"))
+                self.assertEqual(report["source_check_errors"][0]["path"], "src/sakuratts/backends/cuda/gpt.py")
 
     def test_existing_evidence_is_not_overwritten(self):
         with tempfile.TemporaryDirectory() as temporary:

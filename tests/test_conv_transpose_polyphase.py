@@ -8,7 +8,7 @@ import numpy as np
 import onnx
 import onnxruntime as ort
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from conv_transpose_polyphase import lower_conv_transpose_polyphase
 from test_conv_transpose_lowering import make_graph, scatter_reference
 

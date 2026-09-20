@@ -11,11 +11,11 @@ from unittest.mock import patch
 import weakref
 
 sys.path[:0] = [str(Path(__file__).resolve().parents[1] / "src"), str(Path(__file__).resolve().parent)]
-from sakuratts.chunked_package import (FORMAT, SCREEN_FORMAT, SCREEN_CHECKS, CHUNK_LIMITS,
+from sakuratts.backends.onnx.chunked_package import (FORMAT, SCREEN_FORMAT, SCREEN_CHECKS, CHUNK_LIMITS,
     ORIGINAL_TOLERANCE, identity_sha256, read_chunked_manifest)
-from sakuratts.ort_sovits import ORTSoVITS, FP16_EXECUTION_OPTIONS, read_manifest
-from sakuratts.reference_condition import sha256_file
-from sakuratts.vocoder_receptive_field import TemporalOperation, VocoderReceptiveField
+from sakuratts.backends.onnx.sovits import ORTSoVITS, FP16_EXECUTION_OPTIONS, read_manifest
+from sakuratts._internal.reference_condition import sha256_file
+from sakuratts.backends.onnx.vocoder_receptive_field import TemporalOperation, VocoderReceptiveField
 
 
 def file_spec(path):
@@ -160,7 +160,7 @@ class ChunkedPackageTests(unittest.TestCase):
             GraphOptimizationLevel=SimpleNamespace(ORT_ENABLE_ALL=1), InferenceSession=Session,
             RunOptions=lambda: SimpleNamespace(add_run_config_entry=lambda *args: None),
             get_available_providers=lambda: ["CUDAExecutionProvider"])
-        with patch.dict(sys.modules, {"onnxruntime": runtime}), patch("sakuratts.cuda_runtime.configure_cuda"):
+        with patch.dict(sys.modules, {"onnxruntime": runtime}), patch("sakuratts.backends.cuda.runtime.configure_cuda"):
             model = ORTSoVITS.load(self.root, **OPTIONS)
         self.assertEqual([s.kind for s in sessions], ["latent", "vocoder"])
         self.assertEqual(model.runtime["package_format"], FORMAT)
@@ -206,7 +206,7 @@ class ChunkedPackageTests(unittest.TestCase):
             RunOptions=lambda: SimpleNamespace(add_run_config_entry=lambda *args: None),
             get_available_providers=lambda: ["CUDAExecutionProvider"])
         caught = None
-        with patch.dict(sys.modules, {"onnxruntime": runtime}), patch("sakuratts.cuda_runtime.configure_cuda"):
+        with patch.dict(sys.modules, {"onnxruntime": runtime}), patch("sakuratts.backends.cuda.runtime.configure_cuda"):
             try:
                 ORTSoVITS.load(self.root, **OPTIONS)
             except RuntimeError as error:

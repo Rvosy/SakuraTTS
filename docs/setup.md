@@ -12,7 +12,7 @@ SakuraTTS 是独立推理项目。产品源码在 `src/sakuratts/`，通过根�
 powershell -ExecutionPolicy Bypass -File scripts/setup_windows.ps1
 ```
 
-`Bypass` 只作用于这次脚本进程，不修改系统执行策略。脚本在项目内创建 Python 3.11 的 `.venv`，安装 CUDA 12.8 版 PyTorch / torchaudio 2.7.1，再按 `requirements-windows-dev.txt` 安装日文前端与开发依赖，并将当前项目安装为可编辑包。已存在的非 3.11 环境会被拒绝，不会被删除。
+`Bypass` 只作用于这次脚本进程，不修改系统执行策略。脚本在项目内创建 Python 3.11 的 `.venv`，安装 CUDA 12.8 版 PyTorch / torchaudio 2.7.1，再按 `requirements/windows-dev.txt` 安装日文前端与开发依赖，并将当前项目安装为可编辑包。已存在的非 3.11 环境会被拒绝，不会被删除。
 
 脚本只使用本机 uv 缓存，所有 uv 命令带 `--offline`；缺少 Python 或依赖缓存时停止。它不修改系统 Python，不安装官方或 Lite 软件包，也不下载角色模型。PyTorch 用于模型转换、回归测试和 CUDA 开发，日常运行另用独立环境。Windows 的声学解码使用 ORT CUDA；使用预编译运行库不需要额外安装完整 CUDA Toolkit。
 
@@ -30,16 +30,16 @@ powershell -ExecutionPolicy Bypass -File scripts/setup_windows.ps1
 `pyproject.toml` 声明直接依赖；Windows 清单固定本轮解析的传递依赖。更新直接依赖后，用下面的命令重新生成清单并复验：
 
 ```powershell
-uv --offline pip compile pyproject.toml --extra japanese --extra dev --python-version 3.11 --python-platform windows --output-file requirements-windows-dev.txt
+uv --offline pip compile pyproject.toml --extra japanese --extra dev --python-version 3.11 --python-platform windows --output-file requirements/windows-dev.txt
 ```
 
-CUDA 包由安装脚本单独从 PyTorch 官方 cu128 索引安装，再安装其余依赖；清单中的 `torch==2.7.1` 接受对应的 `2.7.1+cu128` 构建。不要在 Windows 使用 `requirements-mlx-japanese.txt`。
+CUDA 包由安装脚本单独从 PyTorch 官方 cu128 索引安装，再安装其余依赖；清单中的 `torch==2.7.1` 接受对应的 `2.7.1+cu128` 构建。不要在 Windows 使用 `requirements/mlx-japanese.txt`。
 
 ### 本机验证
 
 2026-09-20 在 Windows / RTX 5060 上运行安装脚本成功：Python 3.11.15、Torch / torchaudio 2.7.1+cu128，CUDA 矩阵运算通过，日文依赖与 Nani 会话可用；另外实际执行了 OpenJTalk 音素转换和 Sudachi 分词。`uv pip check` 未发现依赖冲突。
 
-最初环境准备阶段运行 64 项单元测试，63 项通过，符号链接权限测试跳过；独立 wheel 在只有 NumPy 的新环境中完成基础检查。这些是当时的环境记录。后续 Sakura V2ProPlus 的真实转换、官方对照与 Windows 运行结果单列在 [Windows 实测记录](experiments/2026-09-20-windows-nvidia-backend.md)，不能用旧测试数量代替本轮验收。Mac 路径未在本机复验。
+最初环境准备阶段运行 64 项单元测试，63 项通过，符号链接权限测试跳过；独立 wheel 在只有 NumPy 的新环境中完成基础检查。这些是当时的环境记录。后续 Sakura V2ProPlus 的真实转换、官方对照与 Windows 运行结果单列在 [Windows 实测记录](../research/experiments/2026-09-20-windows-nvidia-backend.md)，不能用旧测试数量代替本轮验收。Mac 路径未在本机复验。
 
 ## Apple Silicon 日文运行环境
 
@@ -47,7 +47,7 @@ CUDA 包由安装脚本单独从 PyTorch 官方 cu128 索引安装，再安装�
 
 ```sh
 uv --offline venv --python 3.11 .venv
-uv --offline pip install --python .venv/bin/python -r requirements-mlx-japanese.txt
+uv --offline pip install --python .venv/bin/python -r requirements/mlx-japanese.txt
 uv --offline pip install --python .venv/bin/python --no-deps -e .
 .venv/bin/python -m sakuratts doctor --japanese
 ```
@@ -59,15 +59,15 @@ uv --offline pip install --python .venv/bin/python --no-deps -e .
 ```text
 SakuraTTS/
 ├── pyproject.toml                 # 自有 Python 包、命令与依赖
-├── requirements-windows-dev.txt  # Windows 开发依赖清单
-├── requirements-windows-runtime.txt # 无 Torch 的 Windows 日常环境
-├── requirements-mlx-japanese.txt # 已验证的 Mac 日文依赖
+├── requirements/windows-dev.txt  # Windows 开发依赖清单
+├── requirements/windows-runtime.txt # 无 Torch 的 Windows 日常环境
+├── requirements/mlx-japanese.txt # 已验证的 Mac 日文依赖
 ├── src/sakuratts/                # 推理、文本、模型包与环境检查
 ├── scripts/                     # 安装、模型转换、参考准备、合成入口
 ├── models/                      # 本地权重与资源包，自行准备，不入 Git
 ├── outputs/                     # 生成音频与报告，不入 Git
 ├── tests/                       # 无需真实角色模型的回归测试
-├── harness/                     # 上游对照、数值与性能实验
+├── research/tools/                     # 上游对照、数值与性能实验
 └── docs/                        # 使用说明、契约与实验记录
 ```
 

@@ -6,24 +6,24 @@
 
 ## 当前状态
 
-- [Windows 自有后端](experiments/2026-09-20-windows-nvidia-backend.md)已有原地 KV、共享权重、单步 CUDA Graph 与日文完整 PCM。[split-KV](experiments/2026-09-20-windows-split-kv.md)的 FP32 256 候选经后续 1182 步固定历史、104 项边界和 192 组 Prefill/首步检查；正确 CUDA 参考下，两组各 15 个完整请求通过官方原容差。首次 256 Prefill 异常仍保留，GPT FP16 split-KV 未通过同精度严格检查。
-- [声学 FP16](experiments/2026-09-20-windows-acoustic-fp16.md)通过独立 screen v2；转置卷积改写解决了候选的重复执行波动。GPT FP32 + split-KV 256 + 声学 FP16 的固定回放中，27.30 秒完整音频为 1592.30 ms，2.02 秒为 122.23 ms；原 FP32 baseline 分别为 3045.15 / 168.94 ms。组合通过工程筛查，未通过原 FP32 波形严格容差，也未做听音或 ASR。公共入口须显式允许已筛查的声学包，见 [Windows 使用说明](setup-windows-nvidia.md)。
-- 同固定输入的早期资源轮，全卡峰值减首个空载样本为 1804→1624 MiB；它包含桌面负载，不是进程独占显存。[GPT 混合精度](experiments/2026-09-20-windows-gpt-fp16.md)的权重/KV 减少 247.93 MiB 是另一项候选，不能加总成组合实测。[Lite 本机对照](experiments/2026-09-20-windows-lite-baseline.md)与[依赖清点](experiments/2026-09-20-windows-runtime-inventory.md)继续作为资源和分发优化依据。后续分块配置已测到约 800 MiB 的全卡采样增量，但测量口径和能力范围还不能与 Lite 的 0.8 GB 直接等同；200 MB 运行包尚未实现。下面的 Mac 记录保留各次实验当时的范围。
-- [WDDM 归因](experiments/2026-09-20-windows-wddm-memory.md)把长句后主要保留量定位到声学进程。[arena 回收](experiments/2026-09-20-windows-acoustic-arena.md)已接入 `--acoustic-arena-shrink`，原 FP32 配置的 7 次官方回放通过原容差；声学 FP16 回收前后完整输出逐位一致。[相位重排](experiments/2026-09-20-windows-acoustic-polyphase.md)消除声码器补零大张量，完整 FP32 图改写通过 48 个阶段检查，但同 FP16 的新旧声学波形未通过原严格容差，仍是单独筛查的实验包。
+- [Windows 自有后端](../research/experiments/2026-09-20-windows-nvidia-backend.md)已有原地 KV、共享权重、单步 CUDA Graph 与日文完整 PCM。[split-KV](../research/experiments/2026-09-20-windows-split-kv.md)的 FP32 256 候选经后续 1182 步固定历史、104 项边界和 192 组 Prefill/首步检查；正确 CUDA 参考下，两组各 15 个完整请求通过官方原容差。首次 256 Prefill 异常仍保留，GPT FP16 split-KV 未通过同精度严格检查。
+- [声学 FP16](../research/experiments/2026-09-20-windows-acoustic-fp16.md)通过独立 screen v2；转置卷积改写解决了候选的重复执行波动。GPT FP32 + split-KV 256 + 声学 FP16 的固定回放中，27.30 秒完整音频为 1592.30 ms，2.02 秒为 122.23 ms；原 FP32 baseline 分别为 3045.15 / 168.94 ms。组合通过工程筛查，未通过原 FP32 波形严格容差，也未做听音或 ASR。公共入口须显式允许已筛查的声学包，见 [Windows 使用说明](setup-windows-nvidia.md)。
+- 同固定输入的早期资源轮，全卡峰值减首个空载样本为 1804→1624 MiB；它包含桌面负载，不是进程独占显存。[GPT 混合精度](../research/experiments/2026-09-20-windows-gpt-fp16.md)的权重/KV 减少 247.93 MiB 是另一项候选，不能加总成组合实测。[Lite 本机对照](../research/experiments/2026-09-20-windows-lite-baseline.md)与[依赖清点](../research/experiments/2026-09-20-windows-runtime-inventory.md)继续作为资源和分发优化依据。后续分块配置已测到约 800 MiB 的全卡采样增量，但测量口径和能力范围还不能与 Lite 的 0.8 GB 直接等同；200 MB 运行包尚未实现。下面的 Mac 记录保留各次实验当时的范围。
+- [WDDM 归因](../research/experiments/2026-09-20-windows-wddm-memory.md)把长句后主要保留量定位到声学进程。[arena 回收](../research/experiments/2026-09-20-windows-acoustic-arena.md)已接入 `--acoustic-arena-shrink`，原 FP32 配置的 7 次官方回放通过原容差；声学 FP16 回收前后完整输出逐位一致。[相位重排](../research/experiments/2026-09-20-windows-acoustic-polyphase.md)消除声码器补零大张量，完整 FP32 图改写通过 48 个阶段检查，但同 FP16 的新旧声学波形未通过原严格容差，仍是单独筛查的实验包。
 - 相位重排加回收的完整请求中，GPT FP32 split-KV 的固定长句为 1597.12 ms / 27.30 秒 PCM，同配置独立资源轮的全卡峰值增量为 1508 MiB；双 FP16 自然长句为 2390.18 ms / 25.46 秒 PCM，工作量不同。双 FP16 独立 worker 资源轮全卡峰值增量为 1180 MiB，共享进程实验为 1078 MiB；两轮 7 对 PCM 逐位一致。另一轮完整引擎 WDDM 边界中，声学请求后保持 259.52 MiB，长句后的全卡增量为 689 MiB。峰值与请求后保留量分别计量，不能把 689 MiB 宣称为生成峰值。
-- [声码器分块](experiments/2026-09-20-windows-vocoder-chunks.md)保留完整编码器/flow，只按 11 帧真实上下文拆分局部声码器。FP32 分块通过原容差；FP16 通过独立波形/接缝筛查，严格差异保留。共享进程中，双 FP16 长句为 2390→2361 ms，全卡采样峰值减初值为 1057→701 MiB；FP32 GPT split-KV 固定回放为 1588→1570 ms，1407→1011 MiB。每组有自身的原整图对照，不能混合速度和显存数字。
-- [独立分块工作进程](experiments/2026-09-20-windows-vocoder-worker.md)最初在开发 harness 中接通。双 FP16 自然长句为 2392→2423 ms，全卡采样增量 1153→800 MiB；FP32 GPT split-KV 固定回放为 1591→1567 ms、1578→1126 MiB。两组均通过实际多块长句的工作进程终止后恢复、重复卸载，以及三个阶段的取消 / 重试；同候选重试 PCM 逐位一致。[GPU latent 传递](experiments/2026-09-20-windows-vocoder-device.md)保持逐位一致，但声学耗时和采样显存没有改善，工作进程沿用主机传递。
-- [正式分块入口](experiments/2026-09-20-windows-vocoder-public.md)已使用独立 7 文件声学包接通 CLI / Python API。双 FP16 自然长句为 2373 ms / 25.46 秒音频、全卡采样增量 799 MiB；FP32 GPT split-KV 固定回放为 1580 ms / 27.30 秒、1124 MiB。41 对公开 / 私有请求 PCM 逐位一致，原 FP32 整图的 5 次官方回放通过；两种公开配置的故障、卸载及取消后恢复也通过。候选仍保留原严格波形失败，听音与 ASR 待验。
+- [声码器分块](../research/experiments/2026-09-20-windows-vocoder-chunks.md)保留完整编码器/flow，只按 11 帧真实上下文拆分局部声码器。FP32 分块通过原容差；FP16 通过独立波形/接缝筛查，严格差异保留。共享进程中，双 FP16 长句为 2390→2361 ms，全卡采样峰值减初值为 1057→701 MiB；FP32 GPT split-KV 固定回放为 1588→1570 ms，1407→1011 MiB。每组有自身的原整图对照，不能混合速度和显存数字。
+- [独立分块工作进程](../research/experiments/2026-09-20-windows-vocoder-worker.md)最初在开发 harness 中接通。双 FP16 自然长句为 2392→2423 ms，全卡采样增量 1153→800 MiB；FP32 GPT split-KV 固定回放为 1591→1567 ms、1578→1126 MiB。两组均通过实际多块长句的工作进程终止后恢复、重复卸载，以及三个阶段的取消 / 重试；同候选重试 PCM 逐位一致。[GPU latent 传递](../research/experiments/2026-09-20-windows-vocoder-device.md)保持逐位一致，但声学耗时和采样显存没有改善，工作进程沿用主机传递。
+- [正式分块入口](../research/experiments/2026-09-20-windows-vocoder-public.md)已使用独立 7 文件声学包接通 CLI / Python API。双 FP16 自然长句为 2373 ms / 25.46 秒音频、全卡采样增量 799 MiB；FP32 GPT split-KV 固定回放为 1580 ms / 27.30 秒、1124 MiB。41 对公开 / 私有请求 PCM 逐位一致，原 FP32 整图的 5 次官方回放通过；两种公开配置的故障、卸载及取消后恢复也通过。候选仍保留原严格波形失败，听音与 ASR 待验。
 
 ## Windows 下一步
 
 用户已确认当前性能足够进入开发者预览发布。当前优先完成 `0.1.0a1` 的源码、wheel / sdist、独立安装和使用说明，GitHub 保存源码，手动压缩的发行包上传 ModelScope；不新增自动发布流程，也不把现有实验候选直接改成默认。步骤见[开发者预览版](preview-release.md)。后续内核优化暂停扩展，保留下面的候选方向供下一版使用。
 
-[24 条 ASR 检查](experiments/2026-09-20-windows-asr.md)已完成，部分内容仍需复听；速度配置自然生成长句为 1557 ms / 25.90 秒 PCM，独立资源轮全卡增量 1108 MiB。[完整历史 GEMV 实验](experiments/2026-09-20-windows-gemv-replay.md)保留 attention-output 的严格失败；通过项也没有得到稳定完整请求加速证据，生产继续使用 cuBLAS。
+[24 条 ASR 检查](../research/experiments/2026-09-20-windows-asr.md)已完成，部分内容仍需复听；速度配置自然生成长句为 1557 ms / 25.90 秒 PCM，独立资源轮全卡增量 1108 MiB。[完整历史 GEMV 实验](../research/experiments/2026-09-20-windows-gemv-replay.md)保留 attention-output 的严格失败；通过项也没有得到稳定完整请求加速证据，生产继续使用 cuBLAS。
 
-声码器分块已接入可回收的声学工作进程及公开入口，GPU latent 传递也已测量，当前没有净收益。[正式分块入口](experiments/2026-09-20-windows-vocoder-public.md)使用独立的 7 文件模型包，继续显式选择 256 帧和 arena 回收。分块主要改善峰值，不能仅按最低显存选默认。下一步速度优化针对 GPT 单步的小矩阵和 `head_dim=32` 注意力；[GEMV 探针](experiments/2026-09-20-windows-gemv.md)已有局部计时与数值失败，尚未进入生产执行。
+声码器分块已接入可回收的声学工作进程及公开入口，GPU latent 传递也已测量，当前没有净收益。[正式分块入口](../research/experiments/2026-09-20-windows-vocoder-public.md)使用独立的 7 文件模型包，继续显式选择 256 帧和 arena 回收。分块主要改善峰值，不能仅按最低显存选默认。下一步速度优化针对 GPT 单步的小矩阵和 `head_dim=32` 注意力；[GEMV 探针](../research/experiments/2026-09-20-windows-gemv.md)已有局部计时与数值失败，尚未进入生产执行。
 
-先补组合候选的内容、听感和更广的长文检查，并保留 FP32 baseline 的独立对照。两种组合已各完成 19 个自然请求，覆盖五参考和第二个 seed；各自三项真实故障恢复也通过，重试 PCM 逐位一致。声学 FP16 只能加载通过 screen v2 的 lowered 包，公开入口为 `--allow-experimental-acoustic-fp16`；具体转换和筛查流程以[声学实验](experiments/2026-09-20-windows-acoustic-fp16.md#使用与证据)为准。旧 GPT FP16 生命周期报告在 staged 路径漏传精度的问题已更正，新恢复记录明确采用同一精度，旧记录仍保留其边界。
+先补组合候选的内容、听感和更广的长文检查，并保留 FP32 baseline 的独立对照。两种组合已各完成 19 个自然请求，覆盖五参考和第二个 seed；各自三项真实故障恢复也通过，重试 PCM 逐位一致。声学 FP16 只能加载通过 screen v2 的 lowered 包，公开入口为 `--allow-experimental-acoustic-fp16`；具体转换和筛查流程以[声学实验](../research/experiments/2026-09-20-windows-acoustic-fp16.md#使用与证据)为准。旧 GPT FP16 生命周期报告在 staged 路径漏传精度的问题已更正，新恢复记录明确采用同一精度，旧记录仍保留其边界。
 
 固定官方回放使用 `runtime-validation.json` 中的 CUDA 参考；日常 `runtime.json` 使用 CPU 参考，不能混作同输入验收。早期错误参考及首次 Prefill 异常继续保留，后续检查若再出现差异，按原阈值定位，不能用新通过记录覆盖。
 
@@ -36,37 +36,37 @@
 - 已完成聊天记录整理、三个主仓库的定点源码核对和部分论文题录 / 摘要核对。
 - 已形成范围、架构提案、研究记录和验收协议。
 - 已在独立目录固定三个上游仓库、两个 Python 环境和模型来源，新增参考 Harness。
-- 使用用户选定的“朱雀院红叶”V2Pro，在 Apple M4 的 MPS / FP32 路径完成官方与 Lite 的中、日文合成，保存 8 个 WAV 及原始结果。详见 [Mac 首轮验证](experiments/2026-09-19-macos-reference-smoke.md)。
-- 已建立 10 条回归语料，追踪官方与 Lite 前端、参考、采样与切片差异；相同官方历史下，日文 121 步、中文 147 步 GPT logits 完全一致。参考辅助模型释放实验保持既有 WAV 哈希。见 [调用链与资源实验](experiments/2026-09-19-parity-and-lifecycle.md)。
+- 使用用户选定的“朱雀院红叶”V2Pro，在 Apple M4 的 MPS / FP32 路径完成官方与 Lite 的中、日文合成，保存 8 个 WAV 及原始结果。详见 [Mac 首轮验证](../research/experiments/2026-09-19-macos-reference-smoke.md)。
+- 已建立 10 条回归语料，追踪官方与 Lite 前端、参考、采样与切片差异；相同官方历史下，日文 121 步、中文 147 步 GPT logits 完全一致。参考辅助模型释放实验保持既有 WAV 哈希。见 [调用链与资源实验](../research/experiments/2026-09-19-parity-and-lifecycle.md)。
 - 用户已确认指定官方与 official_text 候选的开头和助词正常；后续两条原始回归的自有整链样音也获确认“四条都正常，未听出明显差异”，覆盖全文和音色。其余八例仍无人工验收。生产面向 Windows / NVIDIA CUDA；具体 GPU、最低显存与性能预算尚未固定，实机验证待切换设备。
-- 参考资源释放与 BERT 无依赖层裁剪已通过 10 条中日文及混合输入的逐文件波形回归，请求结束 allocated 边界少约 698 MiB；独立内存采样仍显示较高瞬态 driver 占用。见 [资源实验](experiments/2026-09-19-bert-and-reference-memory.md)。
-- 已实现 GPT FP32 模型包转换和独立 MLX / Metal Prefill、Decode，固定两条历史的全部 logits 在预设容差内，运行环境未安装 PyTorch。见 [MLX 实验](experiments/2026-09-19-mlx-gpt.md)。
-- 扩展固定历史暴露日文长句第 329 步 MLX 数值超差，未放宽容差；CPU FP64 Prefill + MLX FP32 Decode 的 10 条、1805 步 logits 全部通过。正常测量中 8 条更快、两条短句更慢，详见 [数值与成本](experiments/2026-09-19-mlx-numerics.md)。[十例自有历史生成](experiments/2026-09-19-expanded-native-generation.md)的 token、停止和切片相同，但两例三个采样概率值超差，整体仍按失败记录。
-- 独立 MLX 中文 BERT 的 CPU 路径通过 5 段逐层对照，空闲 RSS 少约 109 MiB；短句慢约 2%–7%，GPU 仍有一个中间元素超差。见 [BERT 实验](experiments/2026-09-19-mlx-bert.md)。
-- 自有 MLX 码本、声学编码器、reverse flow 和声码器已接通。CPU encoder + GPU flow/decoder 下，十例最终波形通过；日文标点的一个 MRTE 中间元素超差。已将首层差异追到 [softmax 舍入](experiments/2026-09-19-attention-softmax-numerics.md)；统一 FP64 LayerNorm 因长句波形退化被否决。此前正常声学生成比官方慢约 29%–41%，后续调度结果单独记录，不混用实验条件。
-- 进一步的 [MLX FP64 softmax 累积](experiments/2026-09-19-softmax-candidates.md)已通过十例 120 阶段并迁入显式 CPU 选项，默认 FP32 保留。编码器慢约 2.5%–10.9%、工作区略增，完整声学峰值基本不变；这是正确性改动，尚未补该路径的整链试听。NumPy 全 FP64 softmax 因两条波形退化被否决。
-- 单参考声学条件预计算保持 10 条 WAV，请求后 allocated 再减少 148.99 MiB；独立采样复测的生命周期 RSS 峰值基本不变，原先的大幅上升未重现。请求区间观察到的 allocated 最大值少约 143 MiB，driver 下降有限。见 [声学生命周期](experiments/2026-09-19-acoustic-lifecycle.md)。
-- 三个权重包采用逐张量无损存储后，归档少 801.37 MiB，运行时恢复原 FP32 权重。[复用已加载权重](experiments/2026-09-19-gpt-prefill-weight-reuse.md)去掉高精度 Prefill 重复读取与校验，在相同紧凑包的两条请求中快约 17%；十条固定历史 logits 逐位保持。不把磁盘收益算成运行内存收益。
-- 中文 tokenizer 已移除 Transformers；G2PW 文本、输入打包和 CPU ONNX Session 已接成[完整拼音接口](experiments/2026-09-19-g2pw-pinyin.md)，27 组输出对照和 353 数组逐位通过。三轮单独 Session 创建、关闭后的 RSS 在约 380 MiB 趋稳，尚不能据此判断长期泄漏。[中文音素与 BERT](experiments/2026-09-19-chinese-phones.md)、[日文韵律与词典](experiments/2026-09-19-japanese-g2p.md)已完成独立语言段对照；中文成果保留，新增整链接入暂缓。
-- 准备好官方文本和参考条件后的自有 GPT → 声学 → PCM 已扩展到十例，token、停止和最终波形对照通过；仍保留独立概率和 MRTE 超差。见 [十例整链](experiments/2026-09-19-expanded-prepared-speech.md)。该路径不包含原始文本和参考准备，也不等于独立 RNG 验收。
-- [声码器逐残差对求值](experiments/2026-09-19-decoder-workspace.md)保持十例波形逐位不变，两条短句的 decoder 分配器峰值约降 45%，decoder 耗时增加约 10%–14%。结合可选 GPT 按请求释放，两条准备条件的短请求测到 622.05 MiB MLX 高水位；十例常驻策略轮则为 1,989.12 MiB。这些数据含义和条件不同，不代表完整 TTS 或统一的模型显存指标。
-- [日文原始目标文本 + 独立参考包](experiments/2026-09-19-native-japanese-text-speech.md)已接入自有生成，四例 32 次正常请求对照通过。新日文环境未安装 Torch、Transformers 或中文前端包；原始日文 WAV 与已获用户确认的样音逐字节相同。[新参考准备](experiments/2026-09-19-japanese-reference-preparation.md)已从原始音频重算出相同的五组条件，[普通日文入口](experiments/2026-09-19-japanese-cli-free-sampling.md)的两个新 seed 均正常生成。其他日文样例、新随机样音质量、更换参考和 Windows 交付继续验收。
-- [模型复用与状态释放](experiments/2026-09-19-native-model-lifecycle.md)已完成三策略对照与公开 API 回归。保留权重、释放请求 KV 相对每次重载省约 0.41–0.44 秒；相对保留旧 KV，空闲 MLX active 少 96 MiB。生成峰值和 RSS 未改善，按请求卸载仍保留。
-- 随后的[声学前释放](experiments/2026-09-19-gpt-state-before-acoustic.md)保持四例 WAV，逐请求 MLX allocator peak 少约 96 MiB；长句从 1721.21 降至 1625.21 MiB，正常请求本轮增加 2–16 ms。RSS 峰值没有改善，不能当作 NVIDIA 或系统峰值结论。
-- [日文分阶段加载](experiments/2026-09-19-native-staged-loading.md)保持四例 WAV，完整请求内长句 MLX allocator peak 从 1625.21 降到 1321.32 MiB；正常长句多约 51 ms。CLI 默认先完成并卸载 GPT，再加载 SoVITS；保留同时加载和 Python 权重常驻方式，未增加后端框架。
-- [实际参考切换](experiments/2026-09-19-japanese-reference-switch.md)已验证第二条原始日文录音，A→B→A 与隔离运行的 57 项结果相同；独立官方 B 的五参考数组、生成历史和最终波形通过。新两条自由样音 ASR 识别完整，新的官方 / 自有 B 对照仍待试听。
-- [非流式 Python 取消](experiments/2026-09-19-native-cancellation.md)已验证 16 次成功 / 恢复和 8 次取消，无取消音频输出、同模型后续请求恢复；另 40 次正常请求保持输出，默认路径未见耗时退化。
-- [可搬迁验收包](experiments/2026-09-20-portable-validation.md)已导出四例日文，搬迁后只用 NumPy 完成校验。两种精度候选均保持 731 步生成历史及四条最终波形，长句概率与默认声学 MRTE 超差按原阈值重现，未豁免；Windows 后端可使用同格式输出比较。
-- [包文本编码](experiments/2026-09-20-utf8-package-portability.md)已修复依赖系统默认编码的问题，CP932 / CP936 模拟下现有四包内容保持，两个真实日文 CLI 进程正常结束。Windows 的安装、依赖与 GPU 执行仍待实机。
-- [声学参考投影热缓存](experiments/2026-09-20-reference-projection-cache.md)通过 48 次诊断及 264 次正常声学调用的位一致检查；同参考省 0.67–2.82 ms，切换 B 慢 0.42–2.46 ms，常驻增加 26 KiB。收益有限，未加入产品默认路径；下一步检验预计算后不加载对应权重的实际内存收益。
-- [绑定参考后跳过条件权重](experiments/2026-09-20-bound-reference-projection.md)已在独立 Harness 实测：声学常驻少 26.023 MiB，长句声学峰值同样下降；四例 A→B→A 阶段及 PCM 位一致，真实 GPT 生成历史保持。产品入口另行验证，短句声学收益不直接外推完整请求，原模型包体积不变。
-- [参考绑定产品入口](experiments/2026-09-20-bound-reference-runtime.md)已提供可选 `--bind-reference`。调用方清理投影加载缓存后，声学入口 active 少 25.992 MiB；三条较长日文的整请求峰值下降同样大小，短句峰值不变。112 次成功请求、8 次失败恢复、4 次 CLI 及逐层 / 参考切换 / 取消补验通过；RSS 峰值与安装体积未改善，默认仍保留完整权重。
-- [日文前端进程隔离](experiments/2026-09-20-frontend-process-isolation.md)完成 112 次成功请求和 8 次失败恢复，音频保持。进程树 RSS 采样最大值约少 230 MiB，但每请求慢 158–172 ms、短句 RTF 升至 1.015，MLX 峰值不变；只保留实验，未改产品默认路径。
-- [完整运行目录隔离](experiments/2026-09-20-runtime-relocation.md)已通过四例基线和两轮隔离共 12 个 CLI 进程。旧源码、模型、环境、历史实验、用户缓存 / 临时目录及网络被拒后，WAV 仍逐字节相同；含 Python 与清单为 1.070 GiB。初次隔离启动较慢，性能和系统服务缓存另验；Windows 包尚未实现。
-- [分离安装工具](experiments/2026-09-20-runtime-install-tools.md)后，默认推理目录为 1.047 GiB，含清单净少 23.865 MiB；另四个严格隔离 CLI 保持日文 WAV。pip / setuptools 和捆绑 ensurepip 不再随推理包复制，模型及语言资源不变，未宣称运行内存或速度改善。
-- [日文多片完整请求](experiments/2026-09-20-japanese-multifragment.md)已补齐：换行与 510 字符规则得到的所有片段顺序生成，同一请求共用 RNG。两例五片、814 步官方对照通过原容差；原四条 WAV 保持。三片热请求 staged 约 2.65 s、simultaneous 约 1.77 s，对应 MLX 高水位约 417 / 627 MiB，重复加载的延迟代价单列。新长样例使用容量 4096，内容质量待验。
-- [日文零特征](experiments/2026-09-20-japanese-zero-features.md)去掉逐段分配后再拼接的副本，六例特征和 WAV 保持。550 字符前端受跟踪分配峰值少 3.936 MiB，准备结果大小不变；未宣称速度或 GPU 峰值改善。
-- [自然长文与 Windows 交接](experiments/2026-09-20-natural-long-handoff.md)保留 590 字原文的内容检查异常。显式 `cut2` 分句规则通过，但官方 MPS 全请求诊断在资源压力下中断，完整数值与音质尚未验收；默认 `cut0` 不变。CLI / Harness 的中断状态已补齐，下一阶段优先在 Windows 补同条件官方基线。
+- 参考资源释放与 BERT 无依赖层裁剪已通过 10 条中日文及混合输入的逐文件波形回归，请求结束 allocated 边界少约 698 MiB；独立内存采样仍显示较高瞬态 driver 占用。见 [资源实验](../research/experiments/2026-09-19-bert-and-reference-memory.md)。
+- 已实现 GPT FP32 模型包转换和独立 MLX / Metal Prefill、Decode，固定两条历史的全部 logits 在预设容差内，运行环境未安装 PyTorch。见 [MLX 实验](../research/experiments/2026-09-19-mlx-gpt.md)。
+- 扩展固定历史暴露日文长句第 329 步 MLX 数值超差，未放宽容差；CPU FP64 Prefill + MLX FP32 Decode 的 10 条、1805 步 logits 全部通过。正常测量中 8 条更快、两条短句更慢，详见 [数值与成本](../research/experiments/2026-09-19-mlx-numerics.md)。[十例自有历史生成](../research/experiments/2026-09-19-expanded-native-generation.md)的 token、停止和切片相同，但两例三个采样概率值超差，整体仍按失败记录。
+- 独立 MLX 中文 BERT 的 CPU 路径通过 5 段逐层对照，空闲 RSS 少约 109 MiB；短句慢约 2%–7%，GPU 仍有一个中间元素超差。见 [BERT 实验](../research/experiments/2026-09-19-mlx-bert.md)。
+- 自有 MLX 码本、声学编码器、reverse flow 和声码器已接通。CPU encoder + GPU flow/decoder 下，十例最终波形通过；日文标点的一个 MRTE 中间元素超差。已将首层差异追到 [softmax 舍入](../research/experiments/2026-09-19-attention-softmax-numerics.md)；统一 FP64 LayerNorm 因长句波形退化被否决。此前正常声学生成比官方慢约 29%–41%，后续调度结果单独记录，不混用实验条件。
+- 进一步的 [MLX FP64 softmax 累积](../research/experiments/2026-09-19-softmax-candidates.md)已通过十例 120 阶段并迁入显式 CPU 选项，默认 FP32 保留。编码器慢约 2.5%–10.9%、工作区略增，完整声学峰值基本不变；这是正确性改动，尚未补该路径的整链试听。NumPy 全 FP64 softmax 因两条波形退化被否决。
+- 单参考声学条件预计算保持 10 条 WAV，请求后 allocated 再减少 148.99 MiB；独立采样复测的生命周期 RSS 峰值基本不变，原先的大幅上升未重现。请求区间观察到的 allocated 最大值少约 143 MiB，driver 下降有限。见 [声学生命周期](../research/experiments/2026-09-19-acoustic-lifecycle.md)。
+- 三个权重包采用逐张量无损存储后，归档少 801.37 MiB，运行时恢复原 FP32 权重。[复用已加载权重](../research/experiments/2026-09-19-gpt-prefill-weight-reuse.md)去掉高精度 Prefill 重复读取与校验，在相同紧凑包的两条请求中快约 17%；十条固定历史 logits 逐位保持。不把磁盘收益算成运行内存收益。
+- 中文 tokenizer 已移除 Transformers；G2PW 文本、输入打包和 CPU ONNX Session 已接成[完整拼音接口](../research/experiments/2026-09-19-g2pw-pinyin.md)，27 组输出对照和 353 数组逐位通过。三轮单独 Session 创建、关闭后的 RSS 在约 380 MiB 趋稳，尚不能据此判断长期泄漏。[中文音素与 BERT](../research/experiments/2026-09-19-chinese-phones.md)、[日文韵律与词典](../research/experiments/2026-09-19-japanese-g2p.md)已完成独立语言段对照；中文成果保留，新增整链接入暂缓。
+- 准备好官方文本和参考条件后的自有 GPT → 声学 → PCM 已扩展到十例，token、停止和最终波形对照通过；仍保留独立概率和 MRTE 超差。见 [十例整链](../research/experiments/2026-09-19-expanded-prepared-speech.md)。该路径不包含原始文本和参考准备，也不等于独立 RNG 验收。
+- [声码器逐残差对求值](../research/experiments/2026-09-19-decoder-workspace.md)保持十例波形逐位不变，两条短句的 decoder 分配器峰值约降 45%，decoder 耗时增加约 10%–14%。结合可选 GPT 按请求释放，两条准备条件的短请求测到 622.05 MiB MLX 高水位；十例常驻策略轮则为 1,989.12 MiB。这些数据含义和条件不同，不代表完整 TTS 或统一的模型显存指标。
+- [日文原始目标文本 + 独立参考包](../research/experiments/2026-09-19-native-japanese-text-speech.md)已接入自有生成，四例 32 次正常请求对照通过。新日文环境未安装 Torch、Transformers 或中文前端包；原始日文 WAV 与已获用户确认的样音逐字节相同。[新参考准备](../research/experiments/2026-09-19-japanese-reference-preparation.md)已从原始音频重算出相同的五组条件，[普通日文入口](../research/experiments/2026-09-19-japanese-cli-free-sampling.md)的两个新 seed 均正常生成。其他日文样例、新随机样音质量、更换参考和 Windows 交付继续验收。
+- [模型复用与状态释放](../research/experiments/2026-09-19-native-model-lifecycle.md)已完成三策略对照与公开 API 回归。保留权重、释放请求 KV 相对每次重载省约 0.41–0.44 秒；相对保留旧 KV，空闲 MLX active 少 96 MiB。生成峰值和 RSS 未改善，按请求卸载仍保留。
+- 随后的[声学前释放](../research/experiments/2026-09-19-gpt-state-before-acoustic.md)保持四例 WAV，逐请求 MLX allocator peak 少约 96 MiB；长句从 1721.21 降至 1625.21 MiB，正常请求本轮增加 2–16 ms。RSS 峰值没有改善，不能当作 NVIDIA 或系统峰值结论。
+- [日文分阶段加载](../research/experiments/2026-09-19-native-staged-loading.md)保持四例 WAV，完整请求内长句 MLX allocator peak 从 1625.21 降到 1321.32 MiB；正常长句多约 51 ms。CLI 默认先完成并卸载 GPT，再加载 SoVITS；保留同时加载和 Python 权重常驻方式，未增加后端框架。
+- [实际参考切换](../research/experiments/2026-09-19-japanese-reference-switch.md)已验证第二条原始日文录音，A→B→A 与隔离运行的 57 项结果相同；独立官方 B 的五参考数组、生成历史和最终波形通过。新两条自由样音 ASR 识别完整，新的官方 / 自有 B 对照仍待试听。
+- [非流式 Python 取消](../research/experiments/2026-09-19-native-cancellation.md)已验证 16 次成功 / 恢复和 8 次取消，无取消音频输出、同模型后续请求恢复；另 40 次正常请求保持输出，默认路径未见耗时退化。
+- [可搬迁验收包](../research/experiments/2026-09-20-portable-validation.md)已导出四例日文，搬迁后只用 NumPy 完成校验。两种精度候选均保持 731 步生成历史及四条最终波形，长句概率与默认声学 MRTE 超差按原阈值重现，未豁免；Windows 后端可使用同格式输出比较。
+- [包文本编码](../research/experiments/2026-09-20-utf8-package-portability.md)已修复依赖系统默认编码的问题，CP932 / CP936 模拟下现有四包内容保持，两个真实日文 CLI 进程正常结束。Windows 的安装、依赖与 GPU 执行仍待实机。
+- [声学参考投影热缓存](../research/experiments/2026-09-20-reference-projection-cache.md)通过 48 次诊断及 264 次正常声学调用的位一致检查；同参考省 0.67–2.82 ms，切换 B 慢 0.42–2.46 ms，常驻增加 26 KiB。收益有限，未加入产品默认路径；下一步检验预计算后不加载对应权重的实际内存收益。
+- [绑定参考后跳过条件权重](../research/experiments/2026-09-20-bound-reference-projection.md)已在独立 Harness 实测：声学常驻少 26.023 MiB，长句声学峰值同样下降；四例 A→B→A 阶段及 PCM 位一致，真实 GPT 生成历史保持。产品入口另行验证，短句声学收益不直接外推完整请求，原模型包体积不变。
+- [参考绑定产品入口](../research/experiments/2026-09-20-bound-reference-runtime.md)已提供可选 `--bind-reference`。调用方清理投影加载缓存后，声学入口 active 少 25.992 MiB；三条较长日文的整请求峰值下降同样大小，短句峰值不变。112 次成功请求、8 次失败恢复、4 次 CLI 及逐层 / 参考切换 / 取消补验通过；RSS 峰值与安装体积未改善，默认仍保留完整权重。
+- [日文前端进程隔离](../research/experiments/2026-09-20-frontend-process-isolation.md)完成 112 次成功请求和 8 次失败恢复，音频保持。进程树 RSS 采样最大值约少 230 MiB，但每请求慢 158–172 ms、短句 RTF 升至 1.015，MLX 峰值不变；只保留实验，未改产品默认路径。
+- [完整运行目录隔离](../research/experiments/2026-09-20-runtime-relocation.md)已通过四例基线和两轮隔离共 12 个 CLI 进程。旧源码、模型、环境、历史实验、用户缓存 / 临时目录及网络被拒后，WAV 仍逐字节相同；含 Python 与清单为 1.070 GiB。初次隔离启动较慢，性能和系统服务缓存另验；Windows 包尚未实现。
+- [分离安装工具](../research/experiments/2026-09-20-runtime-install-tools.md)后，默认推理目录为 1.047 GiB，含清单净少 23.865 MiB；另四个严格隔离 CLI 保持日文 WAV。pip / setuptools 和捆绑 ensurepip 不再随推理包复制，模型及语言资源不变，未宣称运行内存或速度改善。
+- [日文多片完整请求](../research/experiments/2026-09-20-japanese-multifragment.md)已补齐：换行与 510 字符规则得到的所有片段顺序生成，同一请求共用 RNG。两例五片、814 步官方对照通过原容差；原四条 WAV 保持。三片热请求 staged 约 2.65 s、simultaneous 约 1.77 s，对应 MLX 高水位约 417 / 627 MiB，重复加载的延迟代价单列。新长样例使用容量 4096，内容质量待验。
+- [日文零特征](../research/experiments/2026-09-20-japanese-zero-features.md)去掉逐段分配后再拼接的副本，六例特征和 WAV 保持。550 字符前端受跟踪分配峰值少 3.936 MiB，准备结果大小不变；未宣称速度或 GPU 峰值改善。
+- [自然长文与 Windows 交接](../research/experiments/2026-09-20-natural-long-handoff.md)保留 590 字原文的内容检查异常。显式 `cut2` 分句规则通过，但官方 MPS 全请求诊断在资源压力下中断，完整数值与音质尚未验收；默认 `cut0` 不变。CLI / Harness 的中断状态已补齐，下一阶段优先在 Windows 补同条件官方基线。
 - 自有轻量运行时仍在研发，流式、宿主取消接入、同时多参考 / 新模型和 Windows 干净部署未验收。
 
 ## 当前实施顺序：先完成可迁移的运行链
@@ -74,9 +74,9 @@
 2026-09-19 根据用户最新确认，先支持日文；中文待日文运行链、通用优化和目标平台基础完成后再单独恢复。Windows / NVIDIA CUDA 是生产重点；Mac 用来验证模型语义和可迁移的运行时结构。已有 MLX 路径继续作为可执行对照，不再把深挖 Metal 特性当作主线。严格数值失败仍保存并区分阶段；没有新证据时，不为消除个别舍入差异反复扩展 Mac 专用诊断。
 
 1. 原始日文、真实语言路由、独立参考包到自有 GPT / SoVITS / PCM 已接通，多片完整 WAV 与逐片停止边界已补齐。继续补新随机样音质量、长文内容完整性和宿主播放边界；不把字符切分当作容量保证。日文按官方规则提供零 BERT，不导入中文 BERT / G2PW；遇到尚未实现的语言段明确报告不支持，不删掉文本。
-2. [离线参考准备工具](experiments/2026-09-19-japanese-reference-preparation.md)已验证同一参考重算。已补两个真实日文参考的切换、身份绑定和独立官方对照；取消及后续请求恢复已有模型验证。开发工具依赖 Torch，普通请求不常驻辅助模型。
-3. [共享声学加载](experiments/2026-09-19-sovits-shared-loading.md)已减少重复校验，WeightNorm 折叠因完整收益不稳定保留为显式选项。权重常驻与请求状态释放已实测并提供公开接口，保留原模型及高精度对照。
-4. 声学前释放 GPT 状态、按阶段加载 / 卸载、参考绑定省载均已有产品验证。[日文验收数据包](windows-validation.md)已解除旧绝对路径和 MLX 导入依赖，默认文本编码和 [CLI 源码漏记](experiments/2026-09-20-cli-source-inventory.md)已修复。前端隔离因延迟代价保留为实验；完整运行目录已脱离旧资源通过四例，安装体积包含解释器。原有 [G2PW 映射权重](experiments/2026-09-19-g2pw-mapped-ort.md)成果保留，新增中文工作继续暂缓。
+2. [离线参考准备工具](../research/experiments/2026-09-19-japanese-reference-preparation.md)已验证同一参考重算。已补两个真实日文参考的切换、身份绑定和独立官方对照；取消及后续请求恢复已有模型验证。开发工具依赖 Torch，普通请求不常驻辅助模型。
+3. [共享声学加载](../research/experiments/2026-09-19-sovits-shared-loading.md)已减少重复校验，WeightNorm 折叠因完整收益不稳定保留为显式选项。权重常驻与请求状态释放已实测并提供公开接口，保留原模型及高精度对照。
+4. 声学前释放 GPT 状态、按阶段加载 / 卸载、参考绑定省载均已有产品验证。[日文验收数据包](windows-validation.md)已解除旧绝对路径和 MLX 导入依赖，默认文本编码和 [CLI 源码漏记](../research/experiments/2026-09-20-cli-source-inventory.md)已修复。前端隔离因延迟代价保留为实验；完整运行目录已脱离旧资源通过四例，安装体积包含解释器。原有 [G2PW 映射权重](../research/experiments/2026-09-19-g2pw-mapped-ort.md)成果保留，新增中文工作继续暂缓。
 5. Windows / RTX 5060 已完成同条件官方回放、CUDA Graph、GPT 精度、split-KV 和声学 FP16 的分项及组合实测。后续围绕尚未通过的质量、首次异常、剩余设备热点与完整分发成本推进；量化、TensorRT tactic 和更多模型仍单独评估，不继续深挖 Metal 专用调优。
 
 当剩余收益只能由 CUDA 硬件或 Metal 专用实现验证时，收尾当前证据并列出 Windows 接续事项；不为维持 Mac 工作而搭建多后端框架。最终兼容、速度、质量、常驻与峰值结论仍按同能力实验判断。

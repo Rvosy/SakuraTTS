@@ -10,7 +10,7 @@ import numpy as np
 import onnx
 import onnxruntime as ort
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from convert_sovits_onnx_fp16 import convert, lower_conv_transpose_1d
 
 

@@ -12,7 +12,7 @@ import unittest
 from unittest.mock import Mock, patch
 import wave
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "harness"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "research/tools"))
 import windows_asr_review as review
 
 

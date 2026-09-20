@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "harness"))
+sys.path.insert(0, str(ROOT / "research/tools"))
 import windows_gemv_replay as harness
 
 
@@ -77,7 +77,7 @@ class GemvReplayTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             args = fixture(directory)
-            run = subprocess.run([sys.executable, str(ROOT / "harness/windows_gemv_replay.py"), *args],
+            run = subprocess.run([sys.executable, str(ROOT / "research/tools/windows_gemv_replay.py"), *args],
                 cwd=ROOT, capture_output=True, text=True)
             self.assertEqual(run.returncode, 0, run.stderr)
             report = json.loads((directory / "result/result.json").read_text(encoding="utf-8"))
@@ -257,7 +257,7 @@ class GemvReplayTests(unittest.TestCase):
         histories = {"short": {"raw_logits": np.ones((3, 17), np.float32)}}
         invalid = np.full((3, 17), np.nan, np.float32)
         outputs, report = {}, {"variants": {}}
-        with patch.dict(sys.modules, {"sakuratts.cuda_gpt": SimpleNamespace(CUDAGPT=SimpleNamespace(load=Mock(return_value=model))),
+        with patch.dict(sys.modules, {"sakuratts.backends.cuda.gpt": SimpleNamespace(CUDAGPT=SimpleNamespace(load=Mock(return_value=model))),
                 "cupy": SimpleNamespace(RawKernel=Mock(return_value=Mock()))}), \
                 patch.object(harness.probe, "gpu_environment", return_value={}), \
                 patch.object(harness, "memory", return_value={}), \

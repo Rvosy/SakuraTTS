@@ -13,7 +13,7 @@ import numpy as np
 
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("windows_gpt_precision", ROOT / "harness/windows_gpt_precision.py")
+spec = importlib.util.spec_from_file_location("windows_gpt_precision", ROOT / "research/tools/windows_gpt_precision.py")
 harness = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(harness)
 
@@ -64,7 +64,7 @@ class WindowsGptPrecisionTests(unittest.TestCase):
                     model = Mock()
                     replay = lambda *_: (logits.copy(), {"prefill_ms": 1, "decode_ms": 1, "total_ms": 2, "steps": 1})
                     with patch.object(sys, "argv", args), patch.dict(sys.modules, {
-                            "sakuratts.cuda_gpt": SimpleNamespace(CUDAGPT=SimpleNamespace(load=Mock(return_value=model))),
+                            "sakuratts.backends.cuda.gpt": SimpleNamespace(CUDAGPT=SimpleNamespace(load=Mock(return_value=model))),
                             "cupy": SimpleNamespace(cuda=SimpleNamespace(runtime=runtime))}), \
                             patch.object(harness, "memory", return_value={}), \
                             patch.object(harness, "replay", side_effect=replay), patch("builtins.print"):
@@ -103,7 +103,7 @@ class WindowsGptPrecisionTests(unittest.TestCase):
             model_class = Mock()
             model_class.load.side_effect = failure
             with patch.object(sys, "argv", args), patch.dict(sys.modules, {
-                    "sakuratts.cuda_gpt": SimpleNamespace(CUDAGPT=model_class), "cupy": SimpleNamespace()}):
+                    "sakuratts.backends.cuda.gpt": SimpleNamespace(CUDAGPT=model_class), "cupy": SimpleNamespace()}):
                 with self.assertRaises(RuntimeError) as caught:
                     harness.main()
             self.assertIs(caught.exception, failure)
@@ -124,7 +124,7 @@ class WindowsGptPrecisionTests(unittest.TestCase):
             failure = ValueError("device information unavailable")
             runtime = SimpleNamespace(getDeviceProperties=Mock(side_effect=failure))
             with patch.object(sys, "argv", args), patch.dict(sys.modules, {
-                    "sakuratts.cuda_gpt": SimpleNamespace(CUDAGPT=SimpleNamespace(load=Mock(return_value=model))),
+                    "sakuratts.backends.cuda.gpt": SimpleNamespace(CUDAGPT=SimpleNamespace(load=Mock(return_value=model))),
                     "cupy": SimpleNamespace(cuda=SimpleNamespace(runtime=runtime))}):
                 with self.assertRaises(ValueError) as caught:
                     harness.main()

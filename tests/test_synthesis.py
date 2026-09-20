@@ -2,6 +2,8 @@
 
 from pathlib import Path
 import gc
+import io
+import logging
 import sys
 from threading import Event
 from types import SimpleNamespace
@@ -12,11 +14,11 @@ import weakref
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts.reference_condition import PreparedReference
-from sakuratts.generation import SynthesisCancelled
-from sakuratts.synthesis import (generate_prepared_semantic, prepare_text, prepare_text_request, synthesize,
+from sakuratts._internal.reference_condition import PreparedReference
+from sakuratts._internal.generation import SynthesisCancelled
+from sakuratts._internal.synthesis import (generate_prepared_semantic, prepare_text, prepare_text_request, synthesize,
                                  synthesize_acoustic, synthesize_prepared)
-from sakuratts.text_frontend import TextFrontend
+from sakuratts.frontend.text_frontend import TextFrontend
 
 
 class Frontend:
@@ -86,6 +88,20 @@ class SynthesisTests(unittest.TestCase):
         np.testing.assert_array_equal(result.pcm[:4], [0, 16384, -16384, 0])
         self.assertEqual(result.pcm.size, 4 + 9600)
         self.assertTrue(np.all(result.pcm[4:] == 0))
+
+    def test_progress_logging_preserves_tokens_audio_and_rng_state(self):
+        from sakuratts._internal.generation import logger
+        quiet_rng = np.random.default_rng(1234)
+        verbose_rng = np.random.default_rng(1234)
+        with patch.object(logger, "level", logging.WARNING):
+            quiet = self.request(rng=quiet_rng)
+        with self.assertLogs("sakuratts.inference", level="INFO"), \
+                patch("sakuratts._internal.generation.sys.stderr", io.StringIO()):
+            verbose = self.request(rng=verbose_rng)
+        np.testing.assert_array_equal(quiet.generation.sampled_tokens, verbose.generation.sampled_tokens)
+        np.testing.assert_array_equal(quiet.pcm, verbose.pcm)
+        np.testing.assert_array_equal(quiet.waveform, verbose.waveform)
+        self.assertEqual(quiet_rng.bit_generator.state, verbose_rng.bit_generator.state)
 
     def test_loaded_model_identity_mismatch_is_rejected_before_frontend(self):
         self.reference.manifest["identity"]["sovits_checkpoint_sha256"] = "another-model"
@@ -160,8 +176,8 @@ class SynthesisTests(unittest.TestCase):
         prepare_text_request(text, "all_ja", self.frontend, split_method="cut2")
         self.assertEqual(self.frontend.request, (text, "all_ja", "cut2"))
         frontend = Frontend()
-        with self.assertRaisesRegex(ValueError, "cut0/cut2"):
-            prepare_text_request(text, "ja", frontend, split_method="cut1")
+        with self.assertRaisesRegex(ValueError, "cut0 through cut5"):
+            prepare_text_request(text, "ja", frontend, split_method="cut6")
         with self.assertRaises(TypeError):
             prepare_text_request(text, "ja", frontend, "cut2")
         self.assertFalse(hasattr(frontend, "request"))
@@ -360,7 +376,7 @@ class SynthesisTests(unittest.TestCase):
             return result
 
         self.sovits.decode = decode
-        with patch("sakuratts.synthesis.single_fragment_pcm") as make_pcm:
+        with patch("sakuratts._internal.synthesis.single_fragment_pcm") as make_pcm:
             with self.assertRaises(SynthesisCancelled) as caught:
                 self.request(cancel_requested=cancelled.is_set, release_gpt_state=True,
                              rng=np.random.default_rng(12))

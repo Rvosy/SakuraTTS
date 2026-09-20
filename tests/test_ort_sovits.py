@@ -9,8 +9,8 @@ import unittest
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts.ort_sovits import ORTSoVITS, read_manifest
-from sakuratts.reference_condition import sha256_file
+from sakuratts.backends.onnx.sovits import ORTSoVITS, read_manifest
+from sakuratts._internal.reference_condition import sha256_file
 
 
 class FakeSession:

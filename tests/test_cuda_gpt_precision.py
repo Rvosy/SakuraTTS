@@ -13,7 +13,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts.reference_condition import sha256_file
+from sakuratts._internal.reference_condition import sha256_file
 
 
 def load_module():
@@ -24,11 +24,11 @@ def load_module():
         cuda=SimpleNamespace(Stream=Mock(return_value=Mock()),
                              get_current_stream=Mock(return_value=Mock())),
         get_default_memory_pool=Mock(return_value=Mock()))
-    path = Path(__file__).resolve().parents[1] / "src/sakuratts/cuda_gpt.py"
+    path = Path(__file__).resolve().parents[1] / "src/sakuratts/backends/cuda/gpt.py"
     spec = importlib.util.spec_from_file_location("sakuratts._test_cuda_gpt_precision", path)
     module = importlib.util.module_from_spec(spec)
-    with patch.dict(sys.modules, {"cupy": cupy}), patch("sakuratts.cuda_runtime.configure_cuda"), \
-            patch("sakuratts.cuda_runtime.validate_gpt_cuda_include_paths", return_value={}):
+    with patch.dict(sys.modules, {"cupy": cupy}), patch("sakuratts.backends.cuda.runtime.configure_cuda"), \
+            patch("sakuratts.backends.cuda.runtime.validate_gpt_cuda_include_paths", return_value={}):
         spec.loader.exec_module(module)
     return module
 

@@ -23,7 +23,7 @@ try {
     # cu128 supports the RTX 50 series. PyTorch is for conversion and validation.
     & uv --offline pip install --python $environmentPython 'torch==2.7.1+cu128' 'torchaudio==2.7.1+cu128' --index-url https://download.pytorch.org/whl/cu128
     if ($LASTEXITCODE -ne 0) { throw 'CUDA development dependencies could not be installed.' }
-    & uv --offline pip install --python $environmentPython --requirement requirements-windows-dev.txt --editable '.[japanese,nvidia,dev]'
+    & uv --offline pip install --python $environmentPython --requirement requirements/windows-dev.txt --editable '.[japanese,nvidia,dev]'
     if ($LASTEXITCODE -ne 0) { throw 'SakuraTTS dependencies could not be installed.' }
     & uv --offline pip check --python $environmentPython
     if ($LASTEXITCODE -ne 0) { throw 'Dependency consistency check failed.' }

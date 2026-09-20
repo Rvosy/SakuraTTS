@@ -20,7 +20,7 @@ Windows 采用自有 CuPy CUDA GPT 执行器与 ORT CUDA SoVITS 子图。GPT 复
 
 本机离线可用的 ORT CUDA 1.19.2 属于 CPython 3.9 ABI，主环境为 Python 3.11，因此暂用独立、持久的声学工作进程承载该运行库。经典日文前端也使用包内 `pyopenjtalk 0.3.4` 与原主字典，通过单独 CPU 工作进程执行；开发环境的 plus 版本在部分文本上输出不同，不能静默替换。两个组件均复制为项目自己的资源，普通运行不读取原 g50。不同 Python ABI 的进程安排是本轮离线部署取舍，后续可在同一计算路径下整合运行环境，无需建立多后端框架。
 
-代价包括工作进程的 CPU 内存、数组传输和较大的运行库体积。这些成本必须计入完整请求、冷启动与卸载测量。当前组件由本机文件离线组装，其他干净机器安装和完整再分发材料尚待验收。具体版本、来源和结果见 [Windows 指南](../setup-windows-nvidia.md) 与 [实测记录](../experiments/2026-09-20-windows-nvidia-backend.md)。后文的 C++、TensorRT 和量化内容仍是候选方向。
+代价包括工作进程的 CPU 内存、数组传输和较大的运行库体积。这些成本必须计入完整请求、冷启动与卸载测量。当前组件由本机文件离线组装，其他干净机器安装和完整再分发材料尚待验收。具体版本、来源和结果见 [Windows 指南](../setup-windows-nvidia.md) 与 [实测记录](../../research/experiments/2026-09-20-windows-nvidia-backend.md)。后文的 C++、TensorRT 和量化内容仍是候选方向。
 
 ## Mac 研发与 Windows 交付边界
 
@@ -84,7 +84,7 @@ SoVITS 单独安排工作区和阶段复用。文本编码与参考投影仅在�
 
 ## 后端选择实验
 
-Mac 研发阶段已有 [MLX / Metal GPT 实验](../experiments/2026-09-19-mlx-gpt.md)、[自有历史采样](../experiments/2026-09-19-native-gpt-generation.md)和[完整声学计算](../experiments/2026-09-19-mlx-sovits-complete.md)，用于验证独立模型包、非 PyTorch 运行依赖和算子语义。随后已接通[原始日文到 PCM](../experiments/2026-09-19-native-japanese-text-speech.md)，并将原始参考准备放入独立开发工具；扩展中间结果仍有数值失败。生产后端继续依据 Windows 实测选择。
+Mac 研发阶段已有 [MLX / Metal GPT 实验](../../research/experiments/2026-09-19-mlx-gpt.md)、[自有历史采样](../../research/experiments/2026-09-19-native-gpt-generation.md)和[完整声学计算](../../research/experiments/2026-09-19-mlx-sovits-complete.md)，用于验证独立模型包、非 PyTorch 运行依赖和算子语义。随后已接通[原始日文到 PCM](../../research/experiments/2026-09-19-native-japanese-text-speech.md)，并将原始参考准备放入独立开发工具；扩展中间结果仍有数值失败。生产后端继续依据 Windows 实测选择。
 
 | 候选 | 选择理由 | 首轮必须回答的问题 |
 |---|---|---|

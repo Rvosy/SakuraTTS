@@ -11,9 +11,9 @@ from unittest.mock import Mock, patch
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path[:0] = [str(ROOT / "src"), str(ROOT / "harness")]
-from sakuratts.ort_sovits import FP16_EXECUTION_OPTIONS, FP16_SCREEN_VERSION, INPUT_NAMES, ORTSoVITS, STAGES, read_manifest
-from sakuratts.reference_condition import sha256_file
+sys.path[:0] = [str(ROOT / "src"), str(ROOT / "research/tools")]
+from sakuratts.backends.onnx.sovits import FP16_EXECUTION_OPTIONS, FP16_SCREEN_VERSION, INPUT_NAMES, ORTSoVITS, STAGES, read_manifest
+from sakuratts._internal.reference_condition import sha256_file
 from windows_acoustic_precision import compare, engineering_screen_passed, waveform_metrics, worker
 
 
@@ -72,7 +72,7 @@ class AcousticPrecisionTests(unittest.TestCase):
                 args = SimpleNamespace(output=root / "output", package=package, inputs=root / "inputs.json",
                                        diagnostic=True, profile=False, repeats=2)
                 with patch.dict(sys.modules, {"onnxruntime": ort,
-                    "sakuratts.cuda_runtime": SimpleNamespace(configure_cuda=Mock())}):
+                    "sakuratts.backends.cuda.runtime": SimpleNamespace(configure_cuda=Mock())}):
                     worker(args)
                 row = json.loads((root / "output/report.json").read_text(encoding="utf-8"))["cases"]["short"]
                 self.assertFalse(row["repeat_stage_original_tolerance"][changed_stage]["passed"])
@@ -83,7 +83,7 @@ class AcousticPrecisionTests(unittest.TestCase):
         for name, value in (("device_id", 1), ("arena_extend_strategy", "kNextPowerOfTwo"),
                 ("cudnn_conv_algo_search", "EXHAUSTIVE"), ("cudnn_conv_use_max_workspace", True),
                 ("enable_mem_pattern", True), ("intra_op_num_threads", 8)):
-            with self.subTest(name=name), patch("sakuratts.ort_sovits.read_manifest", return_value=({"dtype": "float16"}, Path("unused"))):
+            with self.subTest(name=name), patch("sakuratts.backends.onnx.sovits.read_manifest", return_value=({"dtype": "float16"}, Path("unused"))):
                 with self.assertRaisesRegex(ValueError, "screened CUDA/session options"):
                     ORTSoVITS.load("unused", allow_experimental_fp16=True, **{name: value})
 
@@ -94,8 +94,8 @@ class AcousticPrecisionTests(unittest.TestCase):
         session.get_outputs.return_value = [SimpleNamespace(name="waveform")]
         ort = SimpleNamespace(SessionOptions=SimpleNamespace, GraphOptimizationLevel=SimpleNamespace(ORT_ENABLE_ALL=1),
             InferenceSession=Mock(return_value=session), get_available_providers=lambda: ["CUDAExecutionProvider"])
-        with patch("sakuratts.ort_sovits.read_manifest", return_value=({"dtype": "float32", "config": {"sample_rate": 32000}}, Path("unused"))), \
-             patch.dict(sys.modules, {"onnxruntime": ort, "sakuratts.cuda_runtime": SimpleNamespace(configure_cuda=Mock())}):
+        with patch("sakuratts.backends.onnx.sovits.read_manifest", return_value=({"dtype": "float32", "config": {"sample_rate": 32000}}, Path("unused"))), \
+             patch.dict(sys.modules, {"onnxruntime": ort, "sakuratts.backends.cuda.runtime": SimpleNamespace(configure_cuda=Mock())}):
             ORTSoVITS.load("unused", cudnn_conv_algo_search="EXHAUSTIVE", cudnn_conv_use_max_workspace=True,
                           enable_mem_pattern=True, intra_op_num_threads=8)
         options = ort.InferenceSession.call_args.kwargs

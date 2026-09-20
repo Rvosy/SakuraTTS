@@ -10,7 +10,7 @@ SakuraTTS `0.1.0a1` 提供 Python 包和源码，当前重点是 Windows / NVIDI
 
 - `dist/sakuratts-0.1.0a1-py3-none-any.whl`：安装到 Python 环境的运行代码。
 - `dist/sakuratts-0.1.0a1.tar.gz`：源码包，含转换脚本、测试、验证工具及文档。
-- `requirements-windows-runtime.txt`：本轮 Windows 主环境的固定依赖。
+- `requirements/windows-runtime.txt`：本轮 Windows 主环境的固定依赖。
 - `QUICKSTART.md`：本说明；源码包中的 `docs/` 含详细指南。
 - `release-manifest.json`、`SHA256SUMS`：构建版本、源码身份及包内文件校验。
 
@@ -22,7 +22,7 @@ ZIP 旁的 `.sha256` 文件用于下载后的完整性核对。PowerShell 可用
 
 ```powershell
 uv venv --python 3.11 .venv
-uv pip install --python .venv/Scripts/python.exe -r requirements-windows-runtime.txt
+uv pip install --python .venv/Scripts/python.exe -r requirements/windows-runtime.txt
 uv pip install --python .venv/Scripts/python.exe --no-deps dist/sakuratts-0.1.0a1-py3-none-any.whl
 uv pip check --python .venv/Scripts/python.exe
 .venv/Scripts/sakuratts.exe --version
@@ -46,7 +46,7 @@ uv pip check --python .venv/Scripts/python.exe
 | 声学工作进程 | 目前使用 CPython 3.9、NumPy 1.23.4、ORT CUDA 1.19.2 及匹配的 CUDA DLL |
 | `runtime.json` | 填写上述资源路径，路径相对配置文件解析 |
 
-当前 `scripts/prepare_ort_worker_runtime.py` 从已有官方运行目录及本地 NVIDIA wheel 文件导出独立组件，不是一个从空机器自动安装全部资源的工具。首次使用者仍需这些准备输入；它们不在本次开发者 ZIP 中。导出完成后，普通推理读取独立组件与包内资源，不读取原官方项目。
+当前 `tools/prepare_ort_worker_runtime.py` 从已有官方运行目录及本地 NVIDIA wheel 文件导出独立组件，不是一个从空机器自动安装全部资源的工具。首次使用者仍需这些准备输入；它们不在本次开发者 ZIP 中。导出完成后，普通推理读取独立组件与包内资源，不读取原官方项目。
 
 `examples/runtime.windows.example.json` 提供配置格式。示例中的路径和 `neutral` 只是占位，必须指向自己的真实产物。不要沿用文档中开发机的绝对路径。开发转换依赖按 Windows 指南安装 `.[japanese,nvidia,dev]`；日常主环境只装 runtime 清单。
 
@@ -65,7 +65,7 @@ uv pip check --python .venv/Scripts/python.exe
 连续请求应在同一进程内复用引擎：
 
 ```python
-from sakuratts.nvidia import NVIDIAEngine, write_wav
+from sakuratts.backends.cuda.engine import NVIDIAEngine, write_wav
 
 engine = NVIDIAEngine("runtime.json")
 try:
@@ -85,7 +85,7 @@ finally:
 
 已在本机验证 Sakura V2ProPlus、日文单请求、完整 WAV 和模型生命周期。速度配置自然生成 25.90 秒完整 PCM 的热请求中位数为 1557.08 ms；低显存配置生成 25.46 秒 PCM 为 2373.28 ms。两者工作量不同，不作为严格横向加速比。资源轮测得的全卡增量分别为 1108 MiB 和 799 MiB，包含桌面负载，也可能漏采瞬时峰值，不是进程独占显存。
 
-预览版尚未承诺其他 GPU、最低显存或其他模型家族兼容；不提供中文整链、量化、流式播放、并发服务或 Sakura 宿主集成。声学 FP16 保留相对官方 FP32 的严格数值失败。24 条保存音频已做辅助 ASR 检查，部分内容仍待复听，音色和自然度未获人工验收。详见源码包中 `docs/experiments/` 下的 ASR 和分块入口记录，或 GitHub 上的 [ASR 记录](https://github.com/Rvosy/SakuraTTS/blob/feat/reference-parity/docs/experiments/2026-09-20-windows-asr.md) 与 [分块入口记录](https://github.com/Rvosy/SakuraTTS/blob/feat/reference-parity/docs/experiments/2026-09-20-windows-vocoder-public.md)。
+预览版尚未承诺其他 GPU、最低显存或其他模型家族兼容；不提供中文整链、量化、流式播放、并发服务或 Sakura 宿主集成。声学 FP16 保留相对官方 FP32 的严格数值失败。24 条保存音频已做辅助 ASR 检查，部分内容仍待复听，音色和自然度未获人工验收。详见源码包中 `research/experiments/` 下的 ASR 和分块入口记录，或 GitHub 上的 [ASR 记录](https://github.com/Rvosy/SakuraTTS/blob/feat/reference-parity/research/experiments/2026-09-20-windows-asr.md) 与 [分块入口记录](https://github.com/Rvosy/SakuraTTS/blob/feat/reference-parity/research/experiments/2026-09-20-windows-vocoder-public.md)。
 
 ## 手动构建和上传
 

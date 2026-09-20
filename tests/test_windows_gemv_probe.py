@@ -10,7 +10,7 @@ import unittest
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "harness"))
+sys.path.insert(0, str(ROOT / "research/tools"))
 import windows_gemv_probe as probe
 
 
@@ -58,7 +58,7 @@ def input_fixture(directory, model_identity, *, dtype="float16"):
         info[name] = {"input_sha256": probe.array_sha256(x), "output_sha256": probe.array_sha256(output)}
     np.savez(directory / "inputs.npz", **arrays)
     record = {"format": "sakuratts-gemv-inputs-v1", "status": "captured", "model": deepcopy(model_identity),
-        "sources_sha256": {"src/sakuratts/cuda_gpt.py": probe.sha256_file(ROOT / "src/sakuratts/cuda_gpt.py")},
+        "sources_sha256": {"src/sakuratts/backends/cuda/gpt.py": probe.sha256_file(ROOT / "src/sakuratts/backends/cuda/gpt.py")},
         "archive_sha256": probe.sha256_file(directory / "inputs.npz"), "arrays": info}
     write_json(directory / "inputs.json", record)
     write_json(directory / "result.json", {"status": "captured", "sources_changed": [],
@@ -154,14 +154,14 @@ class GEMVProbeTests(unittest.TestCase):
             code = """import builtins,runpy,sys
 original=builtins.__import__
 def blocked(name,*args,**kwargs):
- if name=='cupy' or name.startswith('cupy.') or name=='sakuratts.cuda_gpt':
+ if name=='cupy' or name.startswith('cupy.') or name=='sakuratts.backends.cuda.gpt':
   raise AssertionError('CPU-only CLI tried to import CUDA: '+name)
  return original(name,*args,**kwargs)
 builtins.__import__=blocked
 sys.argv=sys.argv[1:]
 runpy.run_path(sys.argv[0],run_name='__main__')
 """
-            command = [sys.executable, "-c", code, str(ROOT / "harness/windows_gemv_probe.py"), "--mode", "record",
+            command = [sys.executable, "-c", code, str(ROOT / "research/tools/windows_gemv_probe.py"), "--mode", "record",
                 "--gpt", str(package), "--reference", str(reference), "--capture", str(capture),
                 "--output", str(output), "--check-only", "--capacity", "16", "--decode-step", "2"]
             result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8")

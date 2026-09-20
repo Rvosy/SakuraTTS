@@ -65,7 +65,7 @@ GitHub Releases 的资产是另一种交付物：
 
 Genie v2.0.2 的说明称整合包适合 Windows 10/11、无需 GPU、预装三组角色模型，模型一项标为 963 MB。README 则将约 200 MB 运行时、约 230 MB 角色模型和首次约 391 MB 资源分别描述，未给出可重建的 200 MB 文件清单。当前源码的资源下载还增加了可选 RoBERTa，所以旧 README 的资源数字也不能覆盖所有当前下载路径。
 
-因此首版应分别报告 Python 包大小、资源包大小和用户准备好的环境大小。SakuraTTS 的 wheel 小，不会自动把现有 Windows 双解释器环境变成几百 MB；此前的 [4.314 GiB 运行环境清点](../experiments/2026-09-20-windows-runtime-inventory.md)继续有效，不能从安装成本中删去未随 wheel 分发的依赖。
+因此首版应分别报告 Python 包大小、资源包大小和用户准备好的环境大小。SakuraTTS 的 wheel 小，不会自动把现有 Windows 双解释器环境变成几百 MB；此前的 [4.314 GiB 运行环境清点](../../research/experiments/2026-09-20-windows-runtime-inventory.md)继续有效，不能从安装成本中删去未随 wheel 分发的依赖。
 
 ## SakuraTTS 首版应交付什么
 

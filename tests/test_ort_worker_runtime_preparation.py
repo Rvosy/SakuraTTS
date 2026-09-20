@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-SCRIPT = Path(__file__).resolve().parents[1] / "scripts/prepare_ort_worker_runtime.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "tools/prepare_ort_worker_runtime.py"
 spec = importlib.util.spec_from_file_location("ort_worker_runtime_preparation", SCRIPT)
 prepare = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prepare)

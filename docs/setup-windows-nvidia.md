@@ -4,7 +4,7 @@
 
 SakuraTTS 的 Windows 路径使用自己的日文前端、GPT CUDA 执行器、采样与请求控制，再由独立 ONNX Runtime 工作进程执行 SoVITS。普通发声不导入 PyTorch，也不读取 g50、Lite、Genie 或 `SakuraTTS-References` 目录。原始权重和官方源码只在模型转换、参考准备及开发对照时使用。
 
-当前范围是 Windows / NVIDIA、日文、单模型组合、单请求、完整 WAV。默认保留 GPT/声学 FP32 和 baseline attention；split-KV 与声学 FP16 已提供显式候选，使用条件见下文。量化、中文及混合语言、流式播放和宿主集成尚未交付。V2ProPlus 的具体权重、数值和性能结果见 [Windows 实测记录](experiments/2026-09-20-windows-nvidia-backend.md)；不能把模型家族标签当作其他权重已验证的结论。
+当前范围是 Windows / NVIDIA、日文、单模型组合、单请求、完整 WAV。默认保留 GPT/声学 FP32 和 baseline attention；split-KV 与声学 FP16 已提供显式候选，使用条件见下文。量化、中文及混合语言、流式播放和宿主集成尚未交付。V2ProPlus 的具体权重、数值和性能结果见 [Windows 实测记录](../research/experiments/2026-09-20-windows-nvidia-backend.md)；不能把模型家族标签当作其他权重已验证的结论。
 
 以下命令都在取得的 SakuraTTS 仓库根目录执行。安装命令默认使用 `--offline`，只读取本机 uv 缓存；缓存不完整时停止并报告缺失项，不自动联网。
 
@@ -14,13 +14,13 @@ SakuraTTS 的 Windows 路径使用自己的日文前端、GPT CUDA 执行器、�
 
 ```powershell
 uv --offline venv .venv-windows-runtime --python 3.11
-uv --offline pip install --python .venv-windows-runtime\Scripts\python.exe -r requirements-windows-runtime.txt
+uv --offline pip install --python .venv-windows-runtime\Scripts\python.exe -r requirements/windows-runtime.txt
 uv --offline pip install --python .venv-windows-runtime\Scripts\python.exe --no-deps -e .
 uv --offline pip check --python .venv-windows-runtime\Scripts\python.exe
 .venv-windows-runtime\Scripts\sakuratts.exe doctor --japanese
 ```
 
-已有这个目录时直接使用，不要为重跑示例而删除或重建环境。固定依赖清单见 [requirements-windows-runtime.txt](../requirements-windows-runtime.txt)。主环境保留 plus 前端所需的 CPU ORT 1.30.0；本机官方对照使用下面打包的经典日文前端。声学部分使用下一节的 ORT CUDA 1.19.2 组件。主环境不安装重复的 cuDNN。
+已有这个目录时直接使用，不要为重跑示例而删除或重建环境。固定依赖清单见 [requirements/windows-runtime.txt](../requirements/windows-runtime.txt)。主环境保留 plus 前端所需的 CPU ORT 1.30.0；本机官方对照使用下面打包的经典日文前端。声学部分使用下一节的 ORT CUDA 1.19.2 组件。主环境不安装重复的 cuDNN。
 
 `doctor --japanese` 检查前端依赖；模型准备完成后运行 `doctor --nvidia --config models/windows-sakura/runtime.json`，可检查运行依赖、资源哈希、参考身份和独立工作进程导入。检查不会创建 TTS Session 或执行 GPU 推理，`inference_tested` 和 `quality_validated` 仍为 `false`。ORT 声明 CUDA provider 可用也不证明该设备能完成推理。`doctor --cuda` 是 PyTorch 开发环境检查，不适用于这个无 Torch 的日常环境；实际请求使用下面的 `synthesize` 入口。
 
@@ -107,7 +107,7 @@ uv --offline pip check --python .venv-windows-runtime\Scripts\python.exe
 
 本机已准备 `frontend-classic` 供官方前端对照，原 `frontend` 包仍保留。本机已有的 `models/windows-sakura/runtime.json` 使用 `sovits-onnx-v1` 声学包和 CPU 准备的参考条件；专用 `runtime-validation.json` 使用同模型的 `references-cuda`，用于保持官方 CUDA 对照条件相同。将前端切换为经典版时，配置中的 `frontend` 应指向 `frontend-classic`。两份配置用途不同，不要为了重跑示例而互相覆盖。
 
-自然生成可以使用 `runtime.json`；官方固定随机回放必须使用 `runtime-validation.json` 的 CUDA 参考。CPU/CUDA 准备的文本身份相同也可能得到不同 `ge/ge512`，不能混作同条件。回放 Harness 已在运行前检查参考数组一致性；早期错误参考的记录及修正结果见 [split-KV 实验](experiments/2026-09-20-windows-split-kv.md)。
+自然生成可以使用 `runtime.json`；官方固定随机回放必须使用 `runtime-validation.json` 的 CUDA 参考。CPU/CUDA 准备的文本身份相同也可能得到不同 `ge/ge512`，不能混作同条件。回放 Harness 已在运行前检查参考数组一致性；早期错误参考的记录及修正结果见 [split-KV 实验](../research/experiments/2026-09-20-windows-split-kv.md)。
 
 正常运行需要 GPT 包、声学包、前端包、所选参考包及两个运行环境。模型包中保留的原始路径只描述来源；校验和推理读取的是包内文件，不要求原 g50 或角色目录仍存在。
 
@@ -134,15 +134,15 @@ uv --offline pip check --python .venv-windows-runtime\Scripts\python.exe
 
 长句结束后希望回收声学空闲显存时，可显式加上 `--acoustic-arena-shrink`；Python 对应 `NVIDIAEngine(..., acoustic_arena_shrink=True)`。默认关闭。启用后，每次声学 Decode 返回前，ORT 会尝试归还当前 CUDA 设备上完全空闲的 arena 区域，模型权重继续常驻。它主要减少长句后保留的内存，不是显存硬上限，也不能保证降低生成中的活动峰值；下一句重新分配工作区可能增加延迟。
 
-这个选项只支持 CUDA，直接调用 `ORTSoVITS.load(..., device="cpu", acoustic_arena_shrink=True)` 会报错。它不改变 Session/Provider 的数值配置，也不替代 FP16 包准入：使用声学 FP16 时仍需 `--allow-experimental-acoustic-fp16`。原 FP16 screen v2 没有覆盖这项 RunOptions 策略，回收后的完整波形和 PCM 使用独立 arena 探针与同包默认路径对照。请求 JSON 和 worker 就绪信息都会记录 `acoustic_arena_shrink`，资源分析见 [WDDM 记录](experiments/2026-09-20-windows-wddm-memory.md)。
+这个选项只支持 CUDA，直接调用 `ORTSoVITS.load(..., device="cpu", acoustic_arena_shrink=True)` 会报错。它不改变 Session/Provider 的数值配置，也不替代 FP16 包准入：使用声学 FP16 时仍需 `--allow-experimental-acoustic-fp16`。原 FP16 screen v2 没有覆盖这项 RunOptions 策略，回收后的完整波形和 PCM 使用独立 arena 探针与同包默认路径对照。请求 JSON 和 worker 就绪信息都会记录 `acoustic_arena_shrink`，资源分析见 [WDDM 记录](../research/experiments/2026-09-20-windows-wddm-memory.md)。
 
-`--gpt-precision fp16` 可试用 GPT 混合精度：权重和 KV 使用半精度，主要累积与采样输入保留 FP32；只设置此参数时，声学仍为 FP32。GPT 模型包无需重新转换。默认 `fp32` 保留原数值对照；半精度会改变 logits，内容和听感尚待验收。资源与耗时见 [GPT 混合精度实验](experiments/2026-09-20-windows-gpt-fp16.md)。
+`--gpt-precision fp16` 可试用 GPT 混合精度：权重和 KV 使用半精度，主要累积与采样输入保留 FP32；只设置此参数时，声学仍为 FP32。GPT 模型包无需重新转换。默认 `fp32` 保留原数值对照；半精度会改变 logits，内容和听感尚待验收。资源与耗时见 [GPT 混合精度实验](../research/experiments/2026-09-20-windows-gpt-fp16.md)。
 
 ### split-KV 与声学 FP16 候选
 
 `--gpt-attention split-kv --gpt-attention-chunk-size 256` 启用分块 Decode 注意力，块长也可选 512。GPT FP32 的后续固定历史、边界和正确参考回放通过原容差，但首次 256 运行的 Prefill 异常尚未找到根因；GPT FP16 加 split-KV 未通过同精度严格检查。默认仍为 `--gpt-attention baseline`，不能把两个 GPT 精度的结果互相替代。
 
-声学 FP16 需要独立转换并通过 screen v2 的模型包。本机通过的包是 `outputs/windows-acoustic/fp16-candidate-lowered`，其中转置卷积已改写为零插值与普通卷积，以解决重复执行波动。配置中的 `sovits` 必须指向这个已筛查包，随后显式加入 `--allow-experimental-acoustic-fp16`。该参数只允许加载候选，不会在运行时转换模型，也不会跳过绑定图、权重及 Session 设置的筛查结果。转换和筛查命令使用 [声学 FP16 实验](experiments/2026-09-20-windows-acoustic-fp16.md#使用与证据)中已验证的流程，不覆盖原 FP32 包。
+声学 FP16 需要独立转换并通过 screen v2 的模型包。本机通过的包是 `outputs/windows-acoustic/fp16-candidate-lowered`，其中转置卷积已改写为零插值与普通卷积，以解决重复执行波动。配置中的 `sovits` 必须指向这个已筛查包，随后显式加入 `--allow-experimental-acoustic-fp16`。该参数只允许加载候选，不会在运行时转换模型，也不会跳过绑定图、权重及 Session 设置的筛查结果。转换和筛查命令使用 [声学 FP16 实验](../research/experiments/2026-09-20-windows-acoustic-fp16.md#使用与证据)中已验证的流程，不覆盖原 FP32 包。
 
 本机已准备的组合配置可这样试用，GPT 仍选 FP32：
 
@@ -159,7 +159,7 @@ uv --offline pip check --python .venv-windows-runtime\Scripts\python.exe
 
 该配置引用 CUDA 参考和已筛查的 lowered 声学包。本机四类固定回放的完整请求热中位数（各三次，不含写盘）中，27.30 秒长句从原 FP32 baseline 的 3045.15 ms 降到 1592.30 ms，2.02 秒短句从 168.94 ms 降到 122.23 ms。组合候选通过预设工程筛查，仍不满足原 FP32 波形容差；未做人工听音或 ASR，也没有测流式首包。自然生成 CLI 已执行，但单次 CLI 的加载成本不能与上述热请求混比。
 
-独立资源轮使用同一固定输入，测得全卡峰值减首个空载样本从 1804 MiB 降到 1624 MiB；包含桌面负载且可能漏采短峰值，不是进程独占显存。组合同时改变 attention 和声学路径，不能把全部收益归到单项。详细单项与组合对照见 [split-KV](experiments/2026-09-20-windows-split-kv.md)及[声学 FP16](experiments/2026-09-20-windows-acoustic-fp16.md)。
+独立资源轮使用同一固定输入，测得全卡峰值减首个空载样本从 1804 MiB 降到 1624 MiB；包含桌面负载且可能漏采短峰值，不是进程独占显存。组合同时改变 attention 和声学路径，不能把全部收益归到单项。详细单项与组合对照见 [split-KV](../research/experiments/2026-09-20-windows-split-kv.md)及[声学 FP16](../research/experiments/2026-09-20-windows-acoustic-fp16.md)。
 
 声学默认使用 `HEURISTIC` 卷积算法搜索并关闭最大 cuDNN 工作区。较大工作区的候选在实测中可以更快，但会超过这张 8 GB 显卡的可用显存预算；默认限制有速度代价，不能称为免费优化。工作区、加载策略和完整请求的具体取舍见实测记录，不根据单个算子的计时改变默认配置。
 
@@ -181,7 +181,7 @@ uv --offline pip check --python .venv-windows-runtime\Scripts\python.exe
 
 GPT FP16 + baseline attention 是本轮低显存配置。速度配置使用 `--gpt-precision fp32 --gpt-attention split-kv --gpt-attention-chunk-size 256`；两者的自然采样输出可能不同，各自与同条件基线比较。Python 对应 `NVIDIAEngine(config, acoustic_chunk_frames=256, acoustic_arena_shrink=True, allow_experimental_acoustic_fp16=True, ...)`。
 
-分块包只含两张图、两份互不重复的权重、感受野说明、筛查报告和 manifest，共 7 个文件。运行时校验这些包内文件及报告绑定关系，不读取原整图、拆图实验目录或验证输入。报告目前标记 `quality_accepted=false`；它证明已有波形与接缝工程检查，未替代人工听音和内容验收。具体结果及从保存证据生成新包的命令见[正式分块入口实验](experiments/2026-09-20-windows-vocoder-public.md)。
+分块包只含两张图、两份互不重复的权重、感受野说明、筛查报告和 manifest，共 7 个文件。运行时校验这些包内文件及报告绑定关系，不读取原整图、拆图实验目录或验证输入。报告目前标记 `quality_accepted=false`；它证明已有波形与接缝工程检查，未替代人工听音和内容验收。具体结果及从保存证据生成新包的命令见[正式分块入口实验](../research/experiments/2026-09-20-windows-vocoder-public.md)。
 
 分块包必须显式选择块长并启用 arena 回收；FP16 仍需精度许可参数。整图包不接受块长参数，分块包不支持中间层诊断捕获。`doctor --nvidia` 当前只覆盖原有 FP32 整图配置，尚不接受声学 FP16 或分块包；上述候选通过实际 `synthesize` 和专用 harness 验证，不能用 doctor 代替。干净机器部署仍待验收。
 
@@ -191,8 +191,8 @@ GPT FP16 + baseline attention 是本轮低显存配置。速度配置使用 `--g
 
 独立 ORT 组件的复制清单为 3,069,259,906 字节，约 2.86 GiB。以上安装阶段两项合计约 4.31 GiB，尚未包含模型、参考包、共享基础 Python、编译缓存和保留的开发环境；当前目录还包含随后离线安装的测量依赖。双进程带来的 CPU 内存与传输成本也要计量，不能仅报告较小的主环境体积。
 
-后续[逐文件清点](experiments/2026-09-20-windows-runtime-inventory.md)把共享 Python、选中资源与缓存分开计量，并确认两环境有 828.58 MiB 的相同 CUDA DLL。当前加载路径仍各自依赖这些文件，尚未实际删减，也未把潜在收益从安装量中扣除。
+后续[逐文件清点](../research/experiments/2026-09-20-windows-runtime-inventory.md)把共享 Python、选中资源与缓存分开计量，并确认两环境有 828.58 MiB 的相同 CUDA DLL。当前加载路径仍各自依赖这些文件，尚未实际删减，也未把潜在收益从安装量中扣除。
 
 完整进程 CPU 内存测量使用 `psutil==7.2.2`，已声明在开发依赖中，普通合成无需安装。若在日常环境执行测量 Harness，可从已有缓存离线安装该包，并将增加的文件计入测量环境体积；本轮没有为它联网下载。
 
-上述检查证明本机离线安装和依赖隔离，未替代另一台干净机器的验收。后续已完成 [24 条保存音频的 ASR 检查](experiments/2026-09-20-windows-asr.md)，部分内容疑点与人工听音仍待验；数值对照和正常停止也不能单独证明文本完整或音质合格。实际运行过的文本、参考切换、显存、冷启动、热请求和已知问题统一记录在 [Windows 实测记录](experiments/2026-09-20-windows-nvidia-backend.md)。本页不使用 Mac 或社区性能数字推断 RTX 5060 的结果。
+上述检查证明本机离线安装和依赖隔离，未替代另一台干净机器的验收。后续已完成 [24 条保存音频的 ASR 检查](../research/experiments/2026-09-20-windows-asr.md)，部分内容疑点与人工听音仍待验；数值对照和正常停止也不能单独证明文本完整或音质合格。实际运行过的文本、参考切换、显存、冷启动、热请求和已知问题统一记录在 [Windows 实测记录](../research/experiments/2026-09-20-windows-nvidia-backend.md)。本页不使用 Mac 或社区性能数字推断 RTX 5060 的结果。

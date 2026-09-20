@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts.reference_condition import BoundAcousticReference, PreparedReference
+from sakuratts._internal.reference_condition import BoundAcousticReference, PreparedReference
 
 
 class BoundReferenceTests(unittest.TestCase):
