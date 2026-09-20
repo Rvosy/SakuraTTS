@@ -1,6 +1,6 @@
 # 实施路线
 
-状态：Windows / RTX 5060 已接通 Sakura V2ProPlus 的日文独立推理，FP32 split-KV 和声学 FP16 候选已完成固定输入及完整请求实测。默认保留 GPT/声学 FP32、baseline attention；候选的内容与听感尚未验收。现有 MLX 路径保留为 Mac 对照；中文整链与专项优化暂缓，完整产品仍未验收。更新日期：2026-09-20。
+状态：Windows / RTX 5060 已接通 Sakura V2ProPlus 的日文独立推理，FP32 split-KV、声学 FP16、相位重排和请求后 arena 回收已完成实机验证。默认保留 GPT/声学 FP32、baseline attention，arena 回收默认关闭；精度与图改写候选的内容和听感尚未验收。现有 MLX 路径保留为 Mac 对照；中文整链与专项优化暂缓，完整产品仍未验收。更新日期：2026-09-20。
 
 目标与行为约束见 [推理契约](specs/inference-contract.md)，架构选择见 [ADR 0001](adr/0001-native-gpu-runtime.md)，测量规则见 [基准协议](specs/benchmark-protocol.md)。各阶段按证据推进，不按预估加速倍数或日历日期宣布完成。
 
@@ -9,6 +9,8 @@
 - [Windows 自有后端](experiments/2026-09-20-windows-nvidia-backend.md)已有原地 KV、共享权重、单步 CUDA Graph 与日文完整 PCM。[split-KV](experiments/2026-09-20-windows-split-kv.md)的 FP32 256 候选经后续 1182 步固定历史、104 项边界和 192 组 Prefill/首步检查；正确 CUDA 参考下，两组各 15 个完整请求通过官方原容差。首次 256 Prefill 异常仍保留，GPT FP16 split-KV 未通过同精度严格检查。
 - [声学 FP16](experiments/2026-09-20-windows-acoustic-fp16.md)通过独立 screen v2；转置卷积改写解决了候选的重复执行波动。GPT FP32 + split-KV 256 + 声学 FP16 的固定回放中，27.30 秒完整音频为 1592.30 ms，2.02 秒为 122.23 ms；原 FP32 baseline 分别为 3045.15 / 168.94 ms。组合通过工程筛查，未通过原 FP32 波形严格容差，也未做听音或 ASR。公共入口须显式允许已筛查的声学包，见 [Windows 使用说明](setup-windows-nvidia.md)。
 - 同固定输入的资源轮，全卡峰值减首个空载样本为 1804→1624 MiB；它包含桌面负载，不是进程独占显存。[GPT 混合精度](experiments/2026-09-20-windows-gpt-fp16.md)的权重/KV 减少 247.93 MiB 是另一项候选，不能加总成组合实测。[Lite 本机对照](experiments/2026-09-20-windows-lite-baseline.md)与[依赖清点](experiments/2026-09-20-windows-runtime-inventory.md)继续作为资源和分发优化依据；0.8 GB 显存、200 MB 运行包尚未实现。下面的 Mac 记录保留各次实验当时的范围。
+- [WDDM 归因](experiments/2026-09-20-windows-wddm-memory.md)把长句后主要保留量定位到声学进程。[arena 回收](experiments/2026-09-20-windows-acoustic-arena.md)已接入 `--acoustic-arena-shrink`，原 FP32 配置的 7 次官方回放通过原容差；声学 FP16 回收前后完整输出逐位一致。[相位重排](experiments/2026-09-20-windows-acoustic-polyphase.md)消除声码器补零大张量，完整 FP32 图改写通过 48 个阶段检查，但同 FP16 的新旧声学波形未通过原严格容差，仍是单独筛查的实验包。
+- 相位重排加回收的完整请求中，GPT FP32 split-KV 的固定长句为 1597.12 ms / 27.30 秒 PCM，同配置独立资源轮的全卡峰值增量为 1508 MiB；双 FP16 自然长句为 2390.18 ms / 25.46 秒 PCM，工作量不同。双 FP16 独立 worker 资源轮全卡峰值增量为 1180 MiB，共享进程实验为 1078 MiB；两轮 7 对 PCM 逐位一致。另一轮完整引擎 WDDM 边界中，声学请求后保持 259.52 MiB，长句后的全卡增量为 689 MiB。峰值与请求后保留量分别计量，不能把 689 MiB 宣称为生成峰值。
 
 ## Windows 下一步
 
@@ -16,7 +18,9 @@
 
 固定官方回放使用 `runtime-validation.json` 中的 CUDA 参考；日常 `runtime.json` 使用 CPU 参考，不能混作同输入验收。早期错误参考及首次 Prefill 异常继续保留，后续检查若再出现差异，按原阈值定位，不能用新通过记录覆盖。
 
-固定历史 Profiler 中，不含采样的 Decode 时间主要在 GPU Graph，逐 token 主机与回传约占 2%；这不是整个生成循环的 CPU 占比。下一项执行优化应按剩余设备热点选择，不预设 GPU 采样一定带来明显收益。约 198 MiB 的 GPT FP16 主存增量主要出现在首次 cuBLAS 运算后的私有常驻分配，具体内部缓存仍待确认。共享 CUDA 进程已得到相同 PCM 的实验结果，继续核对按进程的显存、卸载与部署成本，再决定是否接入公共入口。运行依赖清点确认了 828.58 MiB 的重复 CUDA DLL，尚未实际删减。分句级 PCM 输出先于句内声学分块，逐项保留精度、采样和分块的独立对照。
+固定历史 Profiler 中，不含采样的 Decode 时间主要在 GPU Graph，逐 token 主机与回传约占 2%；这不是整个生成循环的 CPU 占比。下一项执行优化应按剩余设备热点选择，不预设 GPU 采样一定带来明显收益。显存继续针对长句活动峰值：先定位改写后声学激活及工作区，再验证固定整句 latent 的有限感受野 vocoder 分块；请求后回收已经落实，不再把它当作未做的方向。
+
+约 198 MiB 的 GPT FP16 主存增量主要出现在首次 cuBLAS 运算后的私有常驻分配，具体内部缓存仍待确认。共享 CUDA 进程的峰值较低，但卸载后的主存仍较高，故障隔离和部署边界未定，暂不接入公共入口。运行依赖清点确认了 828.58 MiB 的重复 CUDA DLL，尚未实际删减。分句级 PCM 输出先于句内声学分块，逐项保留精度、采样和分块的独立对照。
 
 ## 既有实验记录
 

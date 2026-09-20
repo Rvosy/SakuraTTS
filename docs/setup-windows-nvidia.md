@@ -130,6 +130,10 @@ uv --offline pip check --python .venv-windows-runtime\Scripts\python.exe
 
 默认 `--model-policy resident` 在当前进程内保留模型。`release-state` 和 `staged` 是可选生命周期策略，`--no-cuda-graph` 可关闭 GPT 图执行用于对照；是否值得使用以完整请求测量为准。每次 CLI 命令都会启动新进程，不能把多次 CLI 调用称作同进程热请求。
 
+长句结束后希望回收声学空闲显存时，可显式加上 `--acoustic-arena-shrink`；Python 对应 `NVIDIAEngine(..., acoustic_arena_shrink=True)`。默认关闭。启用后，每次声学 Decode 返回前，ORT 会尝试归还当前 CUDA 设备上完全空闲的 arena 区域，模型权重继续常驻。它主要减少长句后保留的内存，不是显存硬上限，也不能保证降低生成中的活动峰值；下一句重新分配工作区可能增加延迟。
+
+这个选项只支持 CUDA，直接调用 `ORTSoVITS.load(..., device="cpu", acoustic_arena_shrink=True)` 会报错。它不改变 Session/Provider 的数值配置，也不替代 FP16 包准入：使用声学 FP16 时仍需 `--allow-experimental-acoustic-fp16`。原 FP16 screen v2 没有覆盖这项 RunOptions 策略，回收后的完整波形和 PCM 使用独立 arena 探针与同包默认路径对照。请求 JSON 和 worker 就绪信息都会记录 `acoustic_arena_shrink`，资源分析见 [WDDM 记录](experiments/2026-09-20-windows-wddm-memory.md)。
+
 `--gpt-precision fp16` 可试用 GPT 混合精度：权重和 KV 使用半精度，主要累积与采样输入保留 FP32；只设置此参数时，声学仍为 FP32。GPT 模型包无需重新转换。默认 `fp32` 保留原数值对照；半精度会改变 logits，内容和听感尚待验收。资源与耗时见 [GPT 混合精度实验](experiments/2026-09-20-windows-gpt-fp16.md)。
 
 ### split-KV 与声学 FP16 候选

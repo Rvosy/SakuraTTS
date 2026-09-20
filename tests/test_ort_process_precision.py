@@ -23,10 +23,13 @@ class ORTProcessPrecisionTests(unittest.TestCase):
             with patch("sakuratts.ort_process.read_manifest", return_value=(manifest, package / "graph.onnx")) as read, \
                  patch("sakuratts.ort_process.subprocess.Popen", return_value=process) as launch, \
                  patch("sakuratts.ort_process.read_message", return_value=({"status": "ready", "acoustic_dtype": "float16"}, {})):
-                model = ORTProcessSoVITS(package, python, diagnostic=True, allow_experimental_fp16=True)
+                model = ORTProcessSoVITS(package, python, diagnostic=True, allow_experimental_fp16=True,
+                                         acoustic_arena_shrink=True)
                 read.assert_called_once_with(package.resolve(), diagnostic=True, allow_experimental_fp16=True)
                 self.assertIn("--allow-experimental-fp16", launch.call_args.args[0])
                 self.assertIn("--diagnostic", launch.call_args.args[0])
+                self.assertIn("--acoustic-arena-shrink", launch.call_args.args[0])
+                self.assertTrue(model.acoustic_arena_shrink)
                 self.assertEqual(model.encoder.manifest["dtype"], "float16")
                 model.close()
 

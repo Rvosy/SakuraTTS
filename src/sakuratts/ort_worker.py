@@ -16,15 +16,18 @@ def main():
     parser.add_argument("--package",required=True)
     parser.add_argument("--diagnostic",action="store_true")
     parser.add_argument("--allow-experimental-fp16",action="store_true")
+    parser.add_argument("--acoustic-arena-shrink",action="store_true")
     args=parser.parse_args()
     model=None
     try:
         model=ORTSoVITS.load(args.package,diagnostic=args.diagnostic,
-                            allow_experimental_fp16=args.allow_experimental_fp16)
+                            allow_experimental_fp16=args.allow_experimental_fp16,
+                            acoustic_arena_shrink=args.acoustic_arena_shrink)
         import onnxruntime
         write_message(sys.stdout.buffer,{"status":"ready","providers":model.providers,
             "provider_options":model.provider_options,"python":sys.version,
             "acoustic_dtype":model.encoder.manifest["dtype"],
+            "acoustic_arena_shrink":model.acoustic_arena_shrink,
             "onnxruntime":onnxruntime.__version__,"torch_imported":"torch" in sys.modules})
         while True:
             meta,arrays=read_message(sys.stdin.buffer)

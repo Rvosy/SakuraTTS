@@ -43,10 +43,12 @@ def main():
             if args.acoustic_python:
                 from sakuratts.ort_process import ORTProcessSoVITS
                 engine.sovits = ORTProcessSoVITS(engine.packages["sovits"], args.acoustic_python,
-                    allow_experimental_fp16=engine.allow_experimental_acoustic_fp16)
+                    allow_experimental_fp16=engine.allow_experimental_acoustic_fp16,
+                    acoustic_arena_shrink=engine.acoustic_arena_shrink)
             else:
                 engine.sovits = ORTSoVITS.load(engine.packages["sovits"],
-                    allow_experimental_fp16=engine.allow_experimental_acoustic_fp16)
+                    allow_experimental_fp16=engine.allow_experimental_acoustic_fp16,
+                    acoustic_arena_shrink=engine.acoustic_arena_shrink)
 
     NVIDIAEngine._load_sovits = load_in_process
     sys.argv = [str(Path(windows_nvidia_benchmark.__file__)), *remaining]

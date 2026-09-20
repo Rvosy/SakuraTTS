@@ -60,11 +60,13 @@ class NvidiaPackageStartupTests(unittest.TestCase):
                 with self.subTest(config=config, allowed=allowed):
                     model.config, model.sovits = config, None
                     model.allow_experimental_acoustic_fp16 = allowed
+                    model.acoustic_arena_shrink = allowed
                     with patch("sakuratts.ort_process.ORTProcessSoVITS") as process, \
                             patch("sakuratts.ort_sovits.ORTSoVITS.load") as direct:
                         model._load_sovits()
                     selected, unused = (process, direct) if config else (direct, process)
                     self.assertEqual(selected.call_args.kwargs["allow_experimental_fp16"], allowed)
+                    self.assertEqual(selected.call_args.kwargs["acoustic_arena_shrink"], allowed)
                     unused.assert_not_called()
 
     def test_unknown_precision_is_rejected_before_loading_resources(self):
@@ -103,7 +105,7 @@ class NvidiaPackageStartupTests(unittest.TestCase):
     def test_cli_attention_selection_reaches_engine(self):
         from sakuratts.cli import main
         for options, attention, chunk in (([], "baseline", 256),
-                (["--gpt-attention", "split-kv", "--gpt-attention-chunk-size", "512"], "split-kv", 512)):
+                (["--gpt-attention", "split-kv", "--gpt-attention-chunk-size", "512", "--acoustic-arena-shrink"], "split-kv", 512)):
             with self.subTest(attention=attention), tempfile.TemporaryDirectory() as directory:
                 runtime = Mock()
                 runtime.synthesize.side_effect = RuntimeError("stop before inference")
@@ -116,6 +118,7 @@ class NvidiaPackageStartupTests(unittest.TestCase):
                 self.assertEqual(constructor.call_args.kwargs["gpt_attention"], attention)
                 self.assertEqual(constructor.call_args.kwargs["gpt_attention_chunk_size"], chunk)
                 self.assertFalse(constructor.call_args.kwargs["allow_experimental_acoustic_fp16"])
+                self.assertEqual(constructor.call_args.kwargs["acoustic_arena_shrink"], bool(options))
                 runtime.close.assert_called_once()
 
     def test_classic_profile_cannot_load_module_or_dictionary_outside_package(self):

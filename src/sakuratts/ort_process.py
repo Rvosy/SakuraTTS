@@ -11,7 +11,9 @@ from .ort_sovits import ORTSoVITS, read_manifest
 
 
 class ORTProcessSoVITS:
-    def __init__(self,package,python,*,diagnostic=False,allow_experimental_fp16=False):
+    def __init__(self,package,python,*,diagnostic=False,allow_experimental_fp16=False,acoustic_arena_shrink=False):
+        if not isinstance(acoustic_arena_shrink, bool):
+            raise ValueError("acoustic_arena_shrink must be a bool")
         package=Path(package).resolve(strict=True)
         python=Path(python).resolve(strict=True)
         manifest,_=read_manifest(package,diagnostic=diagnostic,
@@ -20,11 +22,14 @@ class ORTProcessSoVITS:
         self.sample_rate=manifest["config"]["sample_rate"]
         self.last_transfer=None
         self.diagnostic=diagnostic
+        self.acoustic_arena_shrink=acoustic_arena_shrink
         command=[str(python),"-B",str(Path(__file__).with_name("ort_worker.py")),"--package",str(package)]
         if diagnostic:
             command.append("--diagnostic")
         if allow_experimental_fp16:
             command.append("--allow-experimental-fp16")
+        if acoustic_arena_shrink:
+            command.append("--acoustic-arena-shrink")
         environment=dict(os.environ,PYTHONDONTWRITEBYTECODE="1",PYTHONUTF8="1")
         environment.pop("PYTHONPATH",None)
         self.process=subprocess.Popen(command,stdin=subprocess.PIPE,stdout=subprocess.PIPE,env=environment,

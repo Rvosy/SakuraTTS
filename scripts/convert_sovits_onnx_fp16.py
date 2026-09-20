@@ -146,6 +146,8 @@ def graph_inventory(model):
 
 def convert(source, output, *, extra_block_ops=(), block_nodes=(), optimization_level="all", deterministic_compute=False,
             lower_transpose=False):
+    if lower_transpose not in (False, True, "zero-insert", "polyphase"):
+        raise ValueError("Unknown ConvTranspose lowering method")
     source, output = Path(source).resolve(), Path(output).resolve()
     if source == output or source in output.parents:
         raise ValueError("Candidate output must be separate from its FP32 source package")
@@ -163,7 +165,11 @@ def convert(source, output, *, extra_block_ops=(), block_nodes=(), optimization_
         raise ValueError("FP32 ConvTranspose exclusions cannot be combined with --lower-conv-transpose: "
                          "the selected operators/nodes are removed by lowering. Omit lowering or remove those exclusions.")
     original_inventory = graph_inventory(original)
-    lowering = lower_conv_transpose_1d(original) if lower_transpose else []
+    if lower_transpose == "polyphase":
+        from conv_transpose_polyphase import lower_conv_transpose_polyphase
+        lowering = lower_conv_transpose_polyphase(original)
+    else:
+        lowering = lower_conv_transpose_1d(original) if lower_transpose else []
     if lower_transpose and not lowering:
         raise ValueError("Source graph contains no ConvTranspose nodes to lower")
     lowering_validation = validate_lowered_fp32(original, source) if lower_transpose else None
@@ -213,6 +219,8 @@ def convert(source, output, *, extra_block_ops=(), block_nodes=(), optimization_
                                                   "disabled": "ORT_DISABLE_ALL"}[optimization_level],
                  "ort_use_deterministic_compute": bool(deterministic_compute),
                  "conv_transpose_lowering": lowering,
+                 "conv_transpose_lowering_method": ("polyphase" if lower_transpose == "polyphase"
+                    else "zero-insert" if lower_transpose else None),
                  "source_manifest_sha256": source_manifest_hash,
                  "source_graphs": manifest["graphs"], "source_weights": manifest["weights"]}
     report = {"status": "converted_not_screened", "precision": precision,
@@ -230,6 +238,9 @@ def convert(source, output, *, extra_block_ops=(), block_nodes=(), optimization_
         fp16_conversion={"onnx": onnx.__version__, "onnxruntime": ort.__version__,
                          "script_sha256": sha256_file(Path(__file__)),
                          "source_validation": manifest["validation"]})
+    if lower_transpose == "polyphase":
+        new_manifest["conversion"]["fp16_conversion"]["polyphase_script_sha256"] = sha256_file(
+            Path(__file__).with_name("conv_transpose_polyphase.py"))
     for name in ("GPT-SoVITS-LICENSE",):
         if (source / name).is_file():
             shutil.copy2(source / name, output / name)
@@ -251,7 +262,8 @@ def main():
     parser.add_argument("--keep-fp32-node", action="append", default=[])
     parser.add_argument("--optimization-level", choices=("all", "basic", "disabled"), default="all")
     parser.add_argument("--deterministic-compute", action="store_true")
-    parser.add_argument("--lower-conv-transpose", action="store_true")
+    parser.add_argument("--lower-conv-transpose", nargs="?", const="zero-insert", default=False,
+                        choices=("zero-insert", "polyphase"))
     args = parser.parse_args()
     print(json.dumps(convert(args.source, args.output,
         extra_block_ops=args.keep_fp32_op, block_nodes=args.keep_fp32_node,

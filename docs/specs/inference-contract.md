@@ -145,6 +145,8 @@ Windows `CUDAGPT.load(..., precision="fp16")`、`NVIDIAEngine(..., gpt_precision
 
 卸载后应释放模型、图和工作区持有的资源，报告进程实际剩余占用。驱动上下文仍可能有基础开销，不能据此承诺显存归零。空闲保留模型与卸载模型的下一句延迟分别测试。
 
+Windows CUDA 声学支持显式的 `acoustic_arena_shrink=True`，CLI 为 `--acoustic-arena-shrink`，默认关闭。启用后在每次声学 Decode 结束时尝试释放完全空闲的 ORT arena 区域，不卸载模型、不裁剪输出，也不改变 Session/Provider 的数值配置；CPU 路径明确拒绝。运行报告记录该选项，完整输出等价和资源收益单独验证，不将默认 RunOptions 下的 FP16 筛查结果解释为已覆盖回收策略。回收针对请求后保留的区域，不是显存硬上限或活动峰值承诺。
+
 ## 完成条件
 
 兼容范围内的模型能完成转换、加载、生成和取消；正确性、质量、资源与部署检查均按 [基准协议](benchmark-protocol.md) 提供证据。没有实测的模型、语言和硬件继续标为未验证。

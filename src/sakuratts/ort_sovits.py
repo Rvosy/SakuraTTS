@@ -79,21 +79,36 @@ def read_manifest(package, *, diagnostic=False, allow_experimental_fp16=False):
 
 
 class ORTSoVITS:
-    def __init__(self, manifest, session, *, diagnostic=False):
+    def __init__(self, manifest, session, *, diagnostic=False, acoustic_arena_shrink=False, device_id=0):
+        if not isinstance(acoustic_arena_shrink, bool):
+            raise ValueError("acoustic_arena_shrink must be a bool")
         self.encoder = SimpleNamespace(manifest=manifest)
         self.sample_rate = manifest["config"]["sample_rate"]
         self.session = session
         self.diagnostic = diagnostic
         self.provider_options = session.get_provider_options()
         self.providers = session.get_providers()
+        self.acoustic_arena_shrink = acoustic_arena_shrink
+        self._run_options = None
+        if acoustic_arena_shrink:
+            if not self.providers or self.providers[0] != "CUDAExecutionProvider":
+                raise ValueError("Acoustic arena shrinkage requires CUDA execution")
+            import onnxruntime as ort
+            self._run_options = ort.RunOptions()
+            self._run_options.add_run_config_entry("memory.enable_memory_arena_shrinkage", f"gpu:{device_id}")
 
     @classmethod
     def load(cls, package, *, device="cuda", device_id=0, diagnostic=False,
              arena_extend_strategy="kSameAsRequested", cudnn_conv_algo_search="HEURISTIC",
              cudnn_conv_use_max_workspace=False, enable_mem_pattern=False,
-             intra_op_num_threads=4, profile_prefix=None, allow_experimental_fp16=False):
+             intra_op_num_threads=4, profile_prefix=None, allow_experimental_fp16=False,
+             acoustic_arena_shrink=False):
         if device not in ("cuda", "cpu"):
             raise ValueError("Acoustic device must be cuda or cpu")
+        if not isinstance(acoustic_arena_shrink, bool):
+            raise ValueError("acoustic_arena_shrink must be a bool")
+        if acoustic_arena_shrink and device != "cuda":
+            raise ValueError("Acoustic arena shrinkage requires CUDA execution")
         manifest, graph = read_manifest(package, diagnostic=diagnostic,
                                         allow_experimental_fp16=allow_experimental_fp16)
         if manifest["dtype"] == "float16" and device != "cuda":
@@ -147,7 +162,8 @@ class ORTSoVITS:
             if (tuple(item.type for item in session.get_inputs()) != expected_types
                     or any(item.type != "tensor(float)" for item in session.get_outputs())):
                 raise ValueError("FP16 acoustic graph does not preserve FP32 public tensors")
-        return cls(manifest, session, diagnostic=diagnostic)
+        return cls(manifest, session, diagnostic=diagnostic,
+                   acoustic_arena_shrink=acoustic_arena_shrink, device_id=device_id)
 
     def validate_reference(self, reference):
         source = self.encoder.manifest["source"]
@@ -192,7 +208,10 @@ class ORTSoVITS:
             raise ValueError("Intermediate capture requires loading the diagnostic graph explicitly")
         feeds = self._inputs(codes, phones, ge, ge512, noise, noise_scale, speed)
         names = list(STAGES) if capture else ["waveform"]
-        values = self.session.run(names, feeds)
+        if self._run_options is None:
+            values = self.session.run(names, feeds)
+        else:
+            values = self.session.run(names, feeds, run_options=self._run_options)
         waveform = values[0]
         if not np.isfinite(waveform).all():
             raise RuntimeError("Acoustic decoder produced non-finite samples")

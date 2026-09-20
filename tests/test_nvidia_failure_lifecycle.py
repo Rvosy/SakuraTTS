@@ -40,6 +40,7 @@ def engine(policy):
     model.use_graph, model.capacity = True, 2048
     model.gpt_precision = "fp32"
     model.acoustic_precision = "fp32"
+    model.acoustic_arena_shrink = False
     model.gpt_attention, model.gpt_attention_chunk_size = "baseline", 256
     model.gpt = model.sovits = None
     model.created_gpt, model.created_sovits, model.overlap_at_gpt_load = [], [], []

@@ -39,6 +39,7 @@ def main():
     parser.add_argument("--gpt-precision", choices=("fp32", "fp16"), default="fp32")
     parser.add_argument("--gpt-attention", choices=("baseline", "split-kv"), default="baseline")
     parser.add_argument("--allow-experimental-acoustic-fp16", action="store_true")
+    parser.add_argument("--acoustic-arena-shrink", action="store_true")
     parser.add_argument("--ort-root", type=Path, help="Optional isolated cp311 ORT for the shared-process experiment")
     parser.add_argument("--cuda-dir", type=Path)
     args = parser.parse_args()
@@ -51,7 +52,8 @@ def main():
               "source_sha256": {}, "cleanup_errors": [],
               "gpt_precision": args.gpt_precision, "gpt_attention": args.gpt_attention,
               "allow_experimental_acoustic_fp16": args.allow_experimental_acoustic_fp16,
-              "shared_process": bool(args.ort_root), "snapshots": [], "requests": [],
+              "shared_process": bool(args.ort_root), "acoustic_arena_shrink": args.acoustic_arena_shrink,
+              "snapshots": [], "requests": [],
               "scope": "Boundary samples after 150 ms settling. WDDM process-attributed counters may double-count shared allocations; no cross-PID sum or residency claim. Request durations are diagnostic only; transient peaks are not captured."}
     roles = {"main": os.getpid()}
     def save():
@@ -109,13 +111,15 @@ def main():
 
             snapshot("before_engine")
             engine = NVIDIAEngine(args.config, gpt_precision=args.gpt_precision, gpt_attention=args.gpt_attention,
-                                  allow_experimental_acoustic_fp16=args.allow_experimental_acoustic_fp16)
+                                  allow_experimental_acoustic_fp16=args.allow_experimental_acoustic_fp16,
+                                  acoustic_arena_shrink=args.acoustic_arena_shrink)
             if args.ort_root:
                 from sakuratts.ort_sovits import ORTSoVITS
                 def load_shared():
                     if engine.sovits is None:
                         engine.sovits = ORTSoVITS.load(engine.packages["sovits"],
-                            allow_experimental_fp16=engine.allow_experimental_acoustic_fp16)
+                            allow_experimental_fp16=engine.allow_experimental_acoustic_fp16,
+                            acoustic_arena_shrink=engine.acoustic_arena_shrink)
                 engine._load_sovits = load_shared
             snapshot("frontend_ready")
             engine.load()

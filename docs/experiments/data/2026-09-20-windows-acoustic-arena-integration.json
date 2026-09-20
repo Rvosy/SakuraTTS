@@ -1,0 +1,4641 @@
+{
+  "date": "2026-09-20",
+  "scope": "Public acoustic_arena_shrink integration. Resource runs have continuous global nvidia-smi and CPU RSS sampling and are not timing evidence. Polyphase + shrink differs from the prior zero-insert graph in two ways. No GPU execution during report assembly.",
+  "engineering_limits": {
+    "max_abs_error": 0.05,
+    "rmse": 0.005,
+    "minimum_snr_db": 25.0,
+    "max_peak_ratio": 1.05,
+    "peak_absolute_allowance": 0.0001,
+    "max_spectral_convergence": 0.05,
+    "max_active_log_spectral_rms_db": 1.0,
+    "stft_window": 1024,
+    "stft_hop": 256,
+    "active_magnitude_floor_db": -60.0
+  },
+  "sources": {
+    "prior_worker": {
+      "results.json": "babea83f59cb7bd632dd09b85390f3b6443f4e366382aba94402d57d6d5555f4",
+      "run-config.json": "a657577e481704ea04c682315760921c200860691f33cd7d0072d05c4fe4c4e3",
+      "environment.json": "c0c41dfb78125ed83cfcdc6e4309b814a04cddd68087870c5f373af49dc95640",
+      "memory-samples.json": "889baeef58cba051a332a3d4da27b59303c9f5e4cd1164f160548b2e84460150"
+    },
+    "prior_shared": {
+      "results.json": "25c065db72dd716cf2d8e799ab179d50241672ee823a39d542ddc6f303c997fa",
+      "run-config.json": "a657577e481704ea04c682315760921c200860691f33cd7d0072d05c4fe4c4e3",
+      "environment.json": "9205b6bdfc02919da63cb2825cd24b138bf38ab8d42deafd99479b4ddd559d08",
+      "memory-samples.json": "520e9ec939670657e9911469a6f2629a2e7768721a0042e894382ac3a6e6633a"
+    },
+    "worker": {
+      "results.json": "4ed581d0e8233f40455a3d03346bc8fdc9f86fce4c669396f169b01187aba830",
+      "run-config.json": "7fc9f0e4bfdf375428fcb233431afa4827137aef1479416f7082959fedb2e767",
+      "environment.json": "188334b326ac5807bf1b7bf85b9c6d286e0bf5aa9553fb81ae86e637c6a3ecf2",
+      "memory-samples.json": "e93eefe0be4bcc734ac097f51c64f4326f0f2ba53523b577e0bd14d46ca6d08d"
+    },
+    "shared": {
+      "results.json": "a56a3b1d44e704e4a340b59d59e3881c39353e90dd4022cf5353421ca1c66a81",
+      "run-config.json": "7fc9f0e4bfdf375428fcb233431afa4827137aef1479416f7082959fedb2e767",
+      "environment.json": "ad4da37038d2ac575f93fcb74dff1da87d1169280e623ab7f804d89ded7e4285",
+      "memory-samples.json": "65031d7e374641ab423f69f622022a9ee44f39c4c741678b547fb268c43685bb",
+      "shared-process-experiment.json": "4845dae2d1129d0958856ea521002e02901890b6c54506f6d7d289835a3511e3"
+    },
+    "timing": {
+      "results.json": "49ffd50f13a6ca423bc872d3a66ed04dfefddd4a44baa4f9351e7c1e940aca2d",
+      "run-config.json": "ae137058466a89d7f0f453891560626b2465b2022243f77d0c7f61b010d1a635",
+      "environment.json": "cac76bf4a1a3207689c87dd7cb1d1f9a308cf0e3ba7b16adc1b430aeda13f059",
+      "memory-samples.json": "a5338d955b09046ec0b16f3a9625b7955c763aae07dc722e474e6078745f932f"
+    }
+  },
+  "runs": {
+    "prior_worker": {
+      "directory": "outputs/windows-acoustic/both-fp16-memory",
+      "status": "completed",
+      "request_count": 7,
+      "torch_imported_main": false,
+      "source_files_changed_during_run": [],
+      "sources_sha256": {
+        "harness/windows_nvidia_benchmark.py": "7c3b94d8b81eb6bb006640f247f9365124f4f9272c6504c1d39d6d603305ec43",
+        "scripts/windows_official_baseline.py": "e648462f9cd053fbe63d83730ab999428a865bac3f225eaef8444578c1978a27",
+        "src/sakuratts/nvidia.py": "350a93ee96d94a9c6b3e97b00ff7e502ef531a778d3a6844cd93b4e8209a85fd",
+        "src/sakuratts/cuda_gpt.py": "30666267ba9d92969ecf5bbbdf14879f47e197b6c9ea78726972165ed370f358",
+        "src/sakuratts/ort_sovits.py": "7ade156b55b32e2b3b98f90ee2c4ab8821772e29bd27e4a5c84673f6cdd17a26",
+        "src/sakuratts/ort_process.py": "0caba3ac92296f82eabb3f63263ed37b4e737caa053f94720ae74d3834105996",
+        "src/sakuratts/ort_worker.py": "7ccb190f1ad9310927fcb1df5bab83a9e2dd1b7ae2d9e5fc856b425e8de5c2c5",
+        "src/sakuratts/synthesis.py": "c3c5217e10ca234e2e4fe193c3f8b967bff290f84560400e37d990cbdc6a8e69",
+        "src/sakuratts/generation.py": "6e73ce32d56c51d48a98922ebbc9056a1d4c736f9e442423cbec87936ab8477b",
+        "src/sakuratts/sampling.py": "7df53036344bc5396f666b7c743a7a596707c4524a5a501f2866d442db14804e",
+        "src/sakuratts/text_frontend.py": "ef15a611e35020cc03830b7cecf7f2257723df6de6f0ac0b4752e6aed37f53a9",
+        "src/sakuratts/japanese.py": "5aafbda8cc06408e2344b39ae40da4e8b6daa2d9382cdc336a0b73756ef750d9",
+        "src/sakuratts/classic_japanese.py": "eb6d50a9febb17c04ca46a9ad811ffc8e93f481f88a179dc4dd4781d41318296",
+        "src/sakuratts/classic_japanese_worker.py": "669e3dc50688b61d0a8caefb0ab1a400a85d02ccf4ea3e5dd4de614bd233e0d9",
+        "src/sakuratts/cuda_runtime.py": "d9fbcfbfebeccf6b4c16570167c1712d3496806d1409542a1061672d36a1f107",
+        "src/sakuratts/array_protocol.py": "71cae8a55fecf3bf2d03a06e3646c22995951995fa29e4e6f06c41710e540eac",
+        "src/sakuratts/reference_condition.py": "672f6bafe6b23aaadc7bd9c5eb8a7ff4f4072cdfb598794a6cbcf8ad55676df6",
+        "src/sakuratts/weight_storage.py": "7ff939a4e627be161ee06baf711bf690a9e22fd4e4164a90753247a7bccd5234"
+      },
+      "configuration": {
+        "config_path": "D:\\Project\\SakuraTTS\\outputs\\windows-acoustic\\runtime-fp16-lowered.json",
+        "config_sha256": "84a62fcd604a30d6db4f845f93340333e533cafa5d4fee8f8822bb46a653dedf",
+        "policy": "resident",
+        "cuda_graph": true,
+        "capacity": 2048,
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "acoustic_arena_shrink": null,
+        "gpt_attention": "baseline",
+        "gpt_attention_chunk_size": 256,
+        "seed": 1234
+      },
+      "requests": [
+        {
+          "name": "first-neutral-short",
+          "case": "short",
+          "kind": "first",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "first-neutral-short.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": false
+        },
+        {
+          "name": "hot-neutral-short-00",
+          "case": "short",
+          "kind": "hot",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "hot-neutral-short-00.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": false
+        },
+        {
+          "name": "hot-neutral-long-00",
+          "case": "long",
+          "kind": "hot",
+          "semantic_token_count": 629,
+          "sampled_token_count": 630,
+          "semantic_sha256": "74c5c5e7752cecbcd8bbb3bb5e061d9ada666614e9731224c276e7c3a4eb3d74",
+          "pcm_sha256": "7a47db5136a1b09ef11fc9122ee0fa58ee8be5377e3314ea6a8154169d150ac9",
+          "pcm_seconds": 25.46,
+          "wav": "hot-neutral-long-00.wav",
+          "wav_sha256": "25eb387ad64dece522a86c1f702ff9e4aabda242ee84d4a3dc2c0c8111952faa",
+          "waveform_samples": 805120,
+          "pcm_samples": 814720,
+          "phones_sha256": "20a5fcb404e7ffed2bc096042cddd092d37f009e1662f4bcdd1df866fdbd6c4e",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 629,
+          "acoustic_arena_shrink": false
+        },
+        {
+          "name": "hot-neutral-multi-00",
+          "case": "multi",
+          "kind": "hot",
+          "semantic_token_count": 349,
+          "sampled_token_count": 350,
+          "semantic_sha256": "a64b7459b426bdf3b156f774422711ceb68779bd4d0bc3a6ea6845f9e9b91243",
+          "pcm_sha256": "ac42407ed1358bec35cc1c95da9274f6063477ad19f011e700a875526b4e5f02",
+          "pcm_seconds": 14.26,
+          "wav": "hot-neutral-multi-00.wav",
+          "wav_sha256": "d91772ec91fe1fdcba956ff77cd8a0ad360be69bbe8fb8256cc8efb3c611010c",
+          "waveform_samples": 446720,
+          "pcm_samples": 456320,
+          "phones_sha256": "67c4c943e63c7929da4769257f184e80e1923d32dec57f400ddefcd3d4393fcb",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 349,
+          "acoustic_arena_shrink": false
+        },
+        {
+          "name": "hot-neutral-punctuation-00",
+          "case": "punctuation",
+          "kind": "hot",
+          "semantic_token_count": 184,
+          "sampled_token_count": 185,
+          "semantic_sha256": "b15ff4818d5b27a27c4f72c6d4213da1dc1fe2b34119492a60f0b43b40e5b636",
+          "pcm_sha256": "3873ba451721edcc0fedda5724df49f18d5a86654fa8f5019ffc6cb032b4ac9f",
+          "pcm_seconds": 7.66,
+          "wav": "hot-neutral-punctuation-00.wav",
+          "wav_sha256": "79d690a2553ba70e46f29732688469781d0c87ec0912b10d3a9e93b34f0632d5",
+          "waveform_samples": 235520,
+          "pcm_samples": 245120,
+          "phones_sha256": "6b5d2cd1f9cc01a270432f04232ac99a6911a0c0ce905afd93edeb64006c3137",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 184,
+          "acoustic_arena_shrink": false
+        },
+        {
+          "name": "after-idle-unload-first",
+          "case": "short",
+          "kind": "reload",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "after-idle-unload-first.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": false
+        },
+        {
+          "name": "after-idle-unload-hot",
+          "case": "short",
+          "kind": "reload_hot",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "after-idle-unload-hot.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": false
+        }
+      ],
+      "memory": {
+        "samples": 179,
+        "global_device_peak_mib": 3523.0,
+        "cpu_tree_peak_rss_bytes": 2245320704,
+        "cpu_parent_peak_rss_bytes": 968163328,
+        "cupy_observed_peak_used_bytes": 267315200,
+        "cupy_observed_peak_total_bytes": 330963456,
+        "global_initial_mib": 2196.0,
+        "global_sampled_peak_minus_initial_mib": 1327.0,
+        "initial_sample": {
+          "elapsed_s": 0.047735599997395184,
+          "phase": "imports",
+          "nvidia_smi": [
+            "2026/09/20 07:55:03.721",
+            "2196",
+            "8151",
+            "3",
+            "19.07"
+          ],
+          "cpu_rss_bytes": 34250752,
+          "cpu_tree_rss_bytes": 46419968,
+          "cpu_processes": [
+            {
+              "pid": 2804,
+              "ppid": 30092,
+              "rss_bytes": 34250752
+            },
+            {
+              "pid": 46948,
+              "ppid": 45336,
+              "rss_bytes": 12169216
+            }
+          ],
+          "cpu_sampling_errors": [],
+          "extra": {
+            "cupy_imported": false
+          }
+        },
+        "boundaries": [
+          {
+            "label": "idle_before_unload",
+            "cpu_rss_bytes": 965992448,
+            "cpu_tree_rss_bytes": 2245304320,
+            "cupy": {
+              "cupy_imported": true,
+              "pool_used_bytes": 259989504,
+              "pool_total_bytes": 330963456,
+              "pool_free_bytes": 70973952,
+              "pinned_free_blocks": 12
+            },
+            "last_global_gpu_sample": {
+              "elapsed_s": 13.011800199994468,
+              "phase": "idle_resident",
+              "nvidia_smi": [
+                "2026/09/20 07:55:16.688",
+                "3523",
+                "8151",
+                "3",
+                "50.90"
+              ],
+              "cpu_rss_bytes": 965992448,
+              "cpu_tree_rss_bytes": 2245304320,
+              "cpu_processes": [
+                {
+                  "pid": 2804,
+                  "ppid": 30092,
+                  "rss_bytes": 965992448
+                },
+                {
+                  "pid": 47520,
+                  "ppid": 2804,
+                  "rss_bytes": 38109184
+                },
+                {
+                  "pid": 47560,
+                  "ppid": 2804,
+                  "rss_bytes": 1204457472
+                },
+                {
+                  "pid": 37840,
+                  "ppid": 47560,
+                  "rss_bytes": 12288000
+                },
+                {
+                  "pid": 44108,
+                  "ppid": 47520,
+                  "rss_bytes": 12288000
+                },
+                {
+                  "pid": 46948,
+                  "ppid": 45336,
+                  "rss_bytes": 12169216
+                }
+              ],
+              "cpu_sampling_errors": [],
+              "extra": {
+                "cupy_imported": true,
+                "pool_used_bytes": 259989504,
+                "pool_total_bytes": 330963456,
+                "pool_free_bytes": 70973952,
+                "pinned_free_blocks": 12
+              }
+            }
+          },
+          {
+            "label": "idle_after_unload",
+            "cpu_rss_bytes": 966033408,
+            "cpu_tree_rss_bytes": 1028599808,
+            "cupy": {
+              "cupy_imported": true,
+              "pool_used_bytes": 0,
+              "pool_total_bytes": 0,
+              "pool_free_bytes": 0,
+              "pinned_free_blocks": 12
+            },
+            "last_global_gpu_sample": {
+              "elapsed_s": 13.81648850000056,
+              "phase": "idle_unloading",
+              "nvidia_smi": [
+                "2026/09/20 07:55:17.493",
+                "2306",
+                "8151",
+                "3",
+                "41.24"
+              ],
+              "cpu_rss_bytes": 966033408,
+              "cpu_tree_rss_bytes": 1028599808,
+              "cpu_processes": [
+                {
+                  "pid": 2804,
+                  "ppid": 30092,
+                  "rss_bytes": 966033408
+                },
+                {
+                  "pid": 47520,
+                  "ppid": 2804,
+                  "rss_bytes": 38109184
+                },
+                {
+                  "pid": 44108,
+                  "ppid": 47520,
+                  "rss_bytes": 12288000
+                },
+                {
+                  "pid": 46948,
+                  "ppid": 45336,
+                  "rss_bytes": 12169216
+                }
+              ],
+              "cpu_sampling_errors": [],
+              "extra": {
+                "cupy_imported": true,
+                "pool_used_bytes": 0,
+                "pool_total_bytes": 0,
+                "pool_free_bytes": 0,
+                "pinned_free_blocks": 12
+              }
+            }
+          },
+          {
+            "label": "closed",
+            "cpu_rss_bytes": 832978944,
+            "cpu_tree_rss_bytes": 845148160,
+            "cupy": {
+              "cupy_imported": true,
+              "pool_used_bytes": 0,
+              "pool_total_bytes": 0,
+              "pool_free_bytes": 0,
+              "pinned_free_blocks": 13
+            },
+            "last_global_gpu_sample": {
+              "elapsed_s": 17.935833299998194,
+              "phase": "closing_engine",
+              "nvidia_smi": [
+                "2026/09/20 07:55:21.612",
+                "2299",
+                "8151",
+                "3",
+                "41.63"
+              ],
+              "cpu_rss_bytes": 832978944,
+              "cpu_tree_rss_bytes": 845148160,
+              "cpu_processes": [
+                {
+                  "pid": 2804,
+                  "ppid": 30092,
+                  "rss_bytes": 832978944
+                },
+                {
+                  "pid": 46948,
+                  "ppid": 45336,
+                  "rss_bytes": 12169216
+                }
+              ],
+              "cpu_sampling_errors": [],
+              "extra": {
+                "cupy_imported": true,
+                "pool_used_bytes": 0,
+                "pool_total_bytes": 0,
+                "pool_free_bytes": 0,
+                "pinned_free_blocks": 13
+              }
+            }
+          }
+        ]
+      }
+    },
+    "prior_shared": {
+      "directory": "outputs/windows-unified/both-fp16-shared-memory",
+      "status": "completed",
+      "request_count": 7,
+      "torch_imported_main": false,
+      "source_files_changed_during_run": [],
+      "sources_sha256": {
+        "harness/windows_nvidia_benchmark.py": "7c3b94d8b81eb6bb006640f247f9365124f4f9272c6504c1d39d6d603305ec43",
+        "scripts/windows_official_baseline.py": "e648462f9cd053fbe63d83730ab999428a865bac3f225eaef8444578c1978a27",
+        "src/sakuratts/nvidia.py": "350a93ee96d94a9c6b3e97b00ff7e502ef531a778d3a6844cd93b4e8209a85fd",
+        "src/sakuratts/cuda_gpt.py": "30666267ba9d92969ecf5bbbdf14879f47e197b6c9ea78726972165ed370f358",
+        "src/sakuratts/ort_sovits.py": "7ade156b55b32e2b3b98f90ee2c4ab8821772e29bd27e4a5c84673f6cdd17a26",
+        "src/sakuratts/ort_process.py": "0caba3ac92296f82eabb3f63263ed37b4e737caa053f94720ae74d3834105996",
+        "src/sakuratts/ort_worker.py": "7ccb190f1ad9310927fcb1df5bab83a9e2dd1b7ae2d9e5fc856b425e8de5c2c5",
+        "src/sakuratts/synthesis.py": "c3c5217e10ca234e2e4fe193c3f8b967bff290f84560400e37d990cbdc6a8e69",
+        "src/sakuratts/generation.py": "6e73ce32d56c51d48a98922ebbc9056a1d4c736f9e442423cbec87936ab8477b",
+        "src/sakuratts/sampling.py": "7df53036344bc5396f666b7c743a7a596707c4524a5a501f2866d442db14804e",
+        "src/sakuratts/text_frontend.py": "ef15a611e35020cc03830b7cecf7f2257723df6de6f0ac0b4752e6aed37f53a9",
+        "src/sakuratts/japanese.py": "5aafbda8cc06408e2344b39ae40da4e8b6daa2d9382cdc336a0b73756ef750d9",
+        "src/sakuratts/classic_japanese.py": "eb6d50a9febb17c04ca46a9ad811ffc8e93f481f88a179dc4dd4781d41318296",
+        "src/sakuratts/classic_japanese_worker.py": "669e3dc50688b61d0a8caefb0ab1a400a85d02ccf4ea3e5dd4de614bd233e0d9",
+        "src/sakuratts/cuda_runtime.py": "d9fbcfbfebeccf6b4c16570167c1712d3496806d1409542a1061672d36a1f107",
+        "src/sakuratts/array_protocol.py": "71cae8a55fecf3bf2d03a06e3646c22995951995fa29e4e6f06c41710e540eac",
+        "src/sakuratts/reference_condition.py": "672f6bafe6b23aaadc7bd9c5eb8a7ff4f4072cdfb598794a6cbcf8ad55676df6",
+        "src/sakuratts/weight_storage.py": "7ff939a4e627be161ee06baf711bf690a9e22fd4e4164a90753247a7bccd5234"
+      },
+      "configuration": {
+        "config_path": "D:\\Project\\SakuraTTS\\outputs\\windows-acoustic\\runtime-fp16-lowered.json",
+        "config_sha256": "84a62fcd604a30d6db4f845f93340333e533cafa5d4fee8f8822bb46a653dedf",
+        "policy": "resident",
+        "cuda_graph": true,
+        "capacity": 2048,
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "acoustic_arena_shrink": null,
+        "gpt_attention": "baseline",
+        "gpt_attention_chunk_size": 256,
+        "seed": 1234
+      },
+      "requests": [
+        {
+          "name": "first-neutral-short",
+          "case": "short",
+          "kind": "first",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "first-neutral-short.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": false
+        },
+        {
+          "name": "hot-neutral-short-00",
+          "case": "short",
+          "kind": "hot",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "hot-neutral-short-00.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": false
+        },
+        {
+          "name": "hot-neutral-long-00",
+          "case": "long",
+          "kind": "hot",
+          "semantic_token_count": 629,
+          "sampled_token_count": 630,
+          "semantic_sha256": "74c5c5e7752cecbcd8bbb3bb5e061d9ada666614e9731224c276e7c3a4eb3d74",
+          "pcm_sha256": "7a47db5136a1b09ef11fc9122ee0fa58ee8be5377e3314ea6a8154169d150ac9",
+          "pcm_seconds": 25.46,
+          "wav": "hot-neutral-long-00.wav",
+          "wav_sha256": "25eb387ad64dece522a86c1f702ff9e4aabda242ee84d4a3dc2c0c8111952faa",
+          "waveform_samples": 805120,
+          "pcm_samples": 814720,
+          "phones_sha256": "20a5fcb404e7ffed2bc096042cddd092d37f009e1662f4bcdd1df866fdbd6c4e",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 629,
+          "acoustic_arena_shrink": false
+        },
+        {
+          "name": "hot-neutral-multi-00",
+          "case": "multi",
+          "kind": "hot",
+          "semantic_token_count": 349,
+          "sampled_token_count": 350,
+          "semantic_sha256": "a64b7459b426bdf3b156f774422711ceb68779bd4d0bc3a6ea6845f9e9b91243",
+          "pcm_sha256": "ac42407ed1358bec35cc1c95da9274f6063477ad19f011e700a875526b4e5f02",
+          "pcm_seconds": 14.26,
+          "wav": "hot-neutral-multi-00.wav",
+          "wav_sha256": "d91772ec91fe1fdcba956ff77cd8a0ad360be69bbe8fb8256cc8efb3c611010c",
+          "waveform_samples": 446720,
+          "pcm_samples": 456320,
+          "phones_sha256": "67c4c943e63c7929da4769257f184e80e1923d32dec57f400ddefcd3d4393fcb",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 349,
+          "acoustic_arena_shrink": false
+        },
+        {
+          "name": "hot-neutral-punctuation-00",
+          "case": "punctuation",
+          "kind": "hot",
+          "semantic_token_count": 184,
+          "sampled_token_count": 185,
+          "semantic_sha256": "b15ff4818d5b27a27c4f72c6d4213da1dc1fe2b34119492a60f0b43b40e5b636",
+          "pcm_sha256": "3873ba451721edcc0fedda5724df49f18d5a86654fa8f5019ffc6cb032b4ac9f",
+          "pcm_seconds": 7.66,
+          "wav": "hot-neutral-punctuation-00.wav",
+          "wav_sha256": "79d690a2553ba70e46f29732688469781d0c87ec0912b10d3a9e93b34f0632d5",
+          "waveform_samples": 235520,
+          "pcm_samples": 245120,
+          "phones_sha256": "6b5d2cd1f9cc01a270432f04232ac99a6911a0c0ce905afd93edeb64006c3137",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 184,
+          "acoustic_arena_shrink": false
+        },
+        {
+          "name": "after-idle-unload-first",
+          "case": "short",
+          "kind": "reload",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "after-idle-unload-first.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": false
+        },
+        {
+          "name": "after-idle-unload-hot",
+          "case": "short",
+          "kind": "reload_hot",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "after-idle-unload-hot.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": false
+        }
+      ],
+      "memory": {
+        "samples": 146,
+        "global_device_peak_mib": 3419.0,
+        "cpu_tree_peak_rss_bytes": 1633632256,
+        "cpu_parent_peak_rss_bytes": 1570889728,
+        "cupy_observed_peak_used_bytes": 283311616,
+        "cupy_observed_peak_total_bytes": 330963456,
+        "global_initial_mib": 2201.0,
+        "global_sampled_peak_minus_initial_mib": 1218.0,
+        "initial_sample": {
+          "elapsed_s": 0.041224499997042585,
+          "phase": "constructing_engine",
+          "nvidia_smi": [
+            "2026/09/20 07:58:19.705",
+            "2201",
+            "8151",
+            "4",
+            "18.95"
+          ],
+          "cpu_rss_bytes": 52674560,
+          "cpu_tree_rss_bytes": 64839680,
+          "cpu_processes": [
+            {
+              "pid": 37808,
+              "ppid": 48356,
+              "rss_bytes": 52674560
+            },
+            {
+              "pid": 6672,
+              "ppid": 45564,
+              "rss_bytes": 12165120
+            }
+          ],
+          "cpu_sampling_errors": [],
+          "extra": {
+            "cupy_imported": false
+          }
+        },
+        "boundaries": [
+          {
+            "label": "idle_before_unload",
+            "cpu_rss_bytes": 1570873344,
+            "cpu_tree_rss_bytes": 1633615872,
+            "cupy": {
+              "cupy_imported": true,
+              "pool_used_bytes": 259989504,
+              "pool_total_bytes": 330963456,
+              "pool_free_bytes": 70973952,
+              "pinned_free_blocks": 12
+            },
+            "last_global_gpu_sample": {
+              "elapsed_s": 10.890723799995612,
+              "phase": "idle_resident",
+              "nvidia_smi": [
+                "2026/09/20 07:58:30.556",
+                "3419",
+                "8151",
+                "3",
+                "50.60"
+              ],
+              "cpu_rss_bytes": 1570873344,
+              "cpu_tree_rss_bytes": 1633615872,
+              "cpu_processes": [
+                {
+                  "pid": 37808,
+                  "ppid": 48356,
+                  "rss_bytes": 1570873344
+                },
+                {
+                  "pid": 43652,
+                  "ppid": 37808,
+                  "rss_bytes": 38281216
+                },
+                {
+                  "pid": 47824,
+                  "ppid": 43652,
+                  "rss_bytes": 12296192
+                },
+                {
+                  "pid": 6672,
+                  "ppid": 45564,
+                  "rss_bytes": 12165120
+                }
+              ],
+              "cpu_sampling_errors": [],
+              "extra": {
+                "cupy_imported": true,
+                "pool_used_bytes": 259989504,
+                "pool_total_bytes": 330963456,
+                "pool_free_bytes": 70973952,
+                "pinned_free_blocks": 12
+              }
+            }
+          },
+          {
+            "label": "idle_after_unload",
+            "cpu_rss_bytes": 1548668928,
+            "cpu_tree_rss_bytes": 1611411456,
+            "cupy": {
+              "cupy_imported": true,
+              "pool_used_bytes": 0,
+              "pool_total_bytes": 0,
+              "pool_free_bytes": 0,
+              "pinned_free_blocks": 12
+            },
+            "last_global_gpu_sample": {
+              "elapsed_s": 11.493929500000377,
+              "phase": "idle_unloading",
+              "nvidia_smi": [
+                "2026/09/20 07:58:31.159",
+                "2313",
+                "8151",
+                "2",
+                "41.27"
+              ],
+              "cpu_rss_bytes": 1548668928,
+              "cpu_tree_rss_bytes": 1611411456,
+              "cpu_processes": [
+                {
+                  "pid": 37808,
+                  "ppid": 48356,
+                  "rss_bytes": 1548668928
+                },
+                {
+                  "pid": 43652,
+                  "ppid": 37808,
+                  "rss_bytes": 38281216
+                },
+                {
+                  "pid": 47824,
+                  "ppid": 43652,
+                  "rss_bytes": 12296192
+                },
+                {
+                  "pid": 6672,
+                  "ppid": 45564,
+                  "rss_bytes": 12165120
+                }
+              ],
+              "cpu_sampling_errors": [],
+              "extra": {
+                "cupy_imported": true,
+                "pool_used_bytes": 0,
+                "pool_total_bytes": 0,
+                "pool_free_bytes": 0,
+                "pinned_free_blocks": 12
+              }
+            }
+          },
+          {
+            "label": "closed",
+            "cpu_rss_bytes": 1415884800,
+            "cpu_tree_rss_bytes": 1428049920,
+            "cupy": {
+              "cupy_imported": true,
+              "pool_used_bytes": 0,
+              "pool_total_bytes": 0,
+              "pool_free_bytes": 0,
+              "pinned_free_blocks": 13
+            },
+            "last_global_gpu_sample": {
+              "elapsed_s": 14.607402000001457,
+              "phase": "closing_engine",
+              "nvidia_smi": [
+                "2026/09/20 07:58:34.273",
+                "2314",
+                "8151",
+                "3",
+                "43.60"
+              ],
+              "cpu_rss_bytes": 1415884800,
+              "cpu_tree_rss_bytes": 1428049920,
+              "cpu_processes": [
+                {
+                  "pid": 37808,
+                  "ppid": 48356,
+                  "rss_bytes": 1415884800
+                },
+                {
+                  "pid": 6672,
+                  "ppid": 45564,
+                  "rss_bytes": 12165120
+                }
+              ],
+              "cpu_sampling_errors": [],
+              "extra": {
+                "cupy_imported": true,
+                "pool_used_bytes": 0,
+                "pool_total_bytes": 0,
+                "pool_free_bytes": 0,
+                "pinned_free_blocks": 13
+              }
+            }
+          }
+        ]
+      }
+    },
+    "worker": {
+      "directory": "outputs/windows-acoustic/polyphase-shrink-both-fp16-memory",
+      "status": "completed",
+      "request_count": 7,
+      "torch_imported_main": false,
+      "source_files_changed_during_run": [],
+      "sources_sha256": {
+        "harness/windows_nvidia_benchmark.py": "ec15a149d2d92db960509bf21b8fc1506cc6d416936ec0b388b42d528ac2d6d8",
+        "scripts/windows_official_baseline.py": "e648462f9cd053fbe63d83730ab999428a865bac3f225eaef8444578c1978a27",
+        "src/sakuratts/nvidia.py": "b1e7daabbed17142b9f6ed4aa3b379532da3673623bb4a8a8a588e597d7e6acf",
+        "src/sakuratts/cuda_gpt.py": "30666267ba9d92969ecf5bbbdf14879f47e197b6c9ea78726972165ed370f358",
+        "src/sakuratts/ort_sovits.py": "2e709e3a8b3d81bc29368725270cbc77568ebd3a59b4f2abb2f1e1a0efbb795c",
+        "src/sakuratts/ort_process.py": "03a512a26eb824ae6a82c391a9adaa5bfeb2101040f62bece3f3c8df1b03d297",
+        "src/sakuratts/ort_worker.py": "876dcefb2660c8203c8384832f1fb0649802b2c1ca4a4ac96f5e750974dc4a75",
+        "src/sakuratts/synthesis.py": "c3c5217e10ca234e2e4fe193c3f8b967bff290f84560400e37d990cbdc6a8e69",
+        "src/sakuratts/generation.py": "6e73ce32d56c51d48a98922ebbc9056a1d4c736f9e442423cbec87936ab8477b",
+        "src/sakuratts/sampling.py": "7df53036344bc5396f666b7c743a7a596707c4524a5a501f2866d442db14804e",
+        "src/sakuratts/text_frontend.py": "ef15a611e35020cc03830b7cecf7f2257723df6de6f0ac0b4752e6aed37f53a9",
+        "src/sakuratts/japanese.py": "5aafbda8cc06408e2344b39ae40da4e8b6daa2d9382cdc336a0b73756ef750d9",
+        "src/sakuratts/classic_japanese.py": "eb6d50a9febb17c04ca46a9ad811ffc8e93f481f88a179dc4dd4781d41318296",
+        "src/sakuratts/classic_japanese_worker.py": "669e3dc50688b61d0a8caefb0ab1a400a85d02ccf4ea3e5dd4de614bd233e0d9",
+        "src/sakuratts/cuda_runtime.py": "d9fbcfbfebeccf6b4c16570167c1712d3496806d1409542a1061672d36a1f107",
+        "src/sakuratts/array_protocol.py": "71cae8a55fecf3bf2d03a06e3646c22995951995fa29e4e6f06c41710e540eac",
+        "src/sakuratts/reference_condition.py": "672f6bafe6b23aaadc7bd9c5eb8a7ff4f4072cdfb598794a6cbcf8ad55676df6",
+        "src/sakuratts/weight_storage.py": "7ff939a4e627be161ee06baf711bf690a9e22fd4e4164a90753247a7bccd5234"
+      },
+      "configuration": {
+        "config_path": "D:\\Project\\SakuraTTS\\outputs\\windows-acoustic\\runtime-fp16-polyphase-deterministic.json",
+        "config_sha256": "151f4c332bda28f2568c8a3659acc853c8a89811107113215d4c0a34647d1128",
+        "policy": "resident",
+        "cuda_graph": true,
+        "capacity": 2048,
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "acoustic_arena_shrink": true,
+        "gpt_attention": "baseline",
+        "gpt_attention_chunk_size": 256,
+        "seed": 1234
+      },
+      "requests": [
+        {
+          "name": "first-neutral-short",
+          "case": "short",
+          "kind": "first",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "first-neutral-short.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-short-00",
+          "case": "short",
+          "kind": "hot",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "hot-neutral-short-00.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-long-00",
+          "case": "long",
+          "kind": "hot",
+          "semantic_token_count": 629,
+          "sampled_token_count": 630,
+          "semantic_sha256": "74c5c5e7752cecbcd8bbb3bb5e061d9ada666614e9731224c276e7c3a4eb3d74",
+          "pcm_sha256": "535fb45b1aefc6179b9ca4863e995c0cb486b8a936627c3ef50933cab2dd2049",
+          "pcm_seconds": 25.46,
+          "wav": "hot-neutral-long-00.wav",
+          "wav_sha256": "89bcc6d65346dbd0f33d92bd74e5070f2711f244771c1a9f98e31dc0b0932d5c",
+          "waveform_samples": 805120,
+          "pcm_samples": 814720,
+          "phones_sha256": "20a5fcb404e7ffed2bc096042cddd092d37f009e1662f4bcdd1df866fdbd6c4e",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 629,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-multi-00",
+          "case": "multi",
+          "kind": "hot",
+          "semantic_token_count": 349,
+          "sampled_token_count": 350,
+          "semantic_sha256": "a64b7459b426bdf3b156f774422711ceb68779bd4d0bc3a6ea6845f9e9b91243",
+          "pcm_sha256": "2ce4d9da50fff0fd87efdd9174e3e4794d7165a803049cef49775463d9fdb0d8",
+          "pcm_seconds": 14.26,
+          "wav": "hot-neutral-multi-00.wav",
+          "wav_sha256": "ca1755c50b90448ae75bdb2d2d3cba472b4a2d8e1b9f1ddeca89360ee6b55202",
+          "waveform_samples": 446720,
+          "pcm_samples": 456320,
+          "phones_sha256": "67c4c943e63c7929da4769257f184e80e1923d32dec57f400ddefcd3d4393fcb",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 349,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-punctuation-00",
+          "case": "punctuation",
+          "kind": "hot",
+          "semantic_token_count": 184,
+          "sampled_token_count": 185,
+          "semantic_sha256": "b15ff4818d5b27a27c4f72c6d4213da1dc1fe2b34119492a60f0b43b40e5b636",
+          "pcm_sha256": "4c07a84f6e8ccdba12abedb3d6e06514bc5a2343c5e417c62b14984687bd7811",
+          "pcm_seconds": 7.66,
+          "wav": "hot-neutral-punctuation-00.wav",
+          "wav_sha256": "3d57b5170a21e7260f44bd2e5d3e8ad14c034ec6ccb1a857b7bb6ec932601cfe",
+          "waveform_samples": 235520,
+          "pcm_samples": 245120,
+          "phones_sha256": "6b5d2cd1f9cc01a270432f04232ac99a6911a0c0ce905afd93edeb64006c3137",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 184,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "after-idle-unload-first",
+          "case": "short",
+          "kind": "reload",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "after-idle-unload-first.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "after-idle-unload-hot",
+          "case": "short",
+          "kind": "reload_hot",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "after-idle-unload-hot.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": true
+        }
+      ],
+      "memory": {
+        "samples": 186,
+        "global_device_peak_mib": 3358.0,
+        "cpu_tree_peak_rss_bytes": 2234028032,
+        "cpu_parent_peak_rss_bytes": 969748480,
+        "cupy_observed_peak_used_bytes": 287069184,
+        "cupy_observed_peak_total_bytes": 330963456,
+        "global_initial_mib": 2178.0,
+        "global_sampled_peak_minus_initial_mib": 1180.0,
+        "initial_sample": {
+          "elapsed_s": 0.04403140000067651,
+          "phase": "imports",
+          "nvidia_smi": [
+            "2026/09/20 08:31:33.725",
+            "2178",
+            "8151",
+            "3",
+            "19.34"
+          ],
+          "cpu_rss_bytes": 34267136,
+          "cpu_tree_rss_bytes": 46432256,
+          "cpu_processes": [
+            {
+              "pid": 43624,
+              "ppid": 45524,
+              "rss_bytes": 34267136
+            },
+            {
+              "pid": 47824,
+              "ppid": 46888,
+              "rss_bytes": 12165120
+            }
+          ],
+          "cpu_sampling_errors": [],
+          "extra": {
+            "cupy_imported": false
+          }
+        },
+        "boundaries": [
+          {
+            "label": "idle_before_unload",
+            "cpu_rss_bytes": 966246400,
+            "cpu_tree_rss_bytes": 2234028032,
+            "cupy": {
+              "cupy_imported": true,
+              "pool_used_bytes": 259989504,
+              "pool_total_bytes": 330963456,
+              "pool_free_bytes": 70973952,
+              "pinned_free_blocks": 12
+            },
+            "last_global_gpu_sample": {
+              "elapsed_s": 13.41250559999753,
+              "phase": "idle_resident",
+              "nvidia_smi": [
+                "2026/09/20 08:31:47.095",
+                "2865",
+                "8151",
+                "3",
+                "52.31"
+              ],
+              "cpu_rss_bytes": 966246400,
+              "cpu_tree_rss_bytes": 2234028032,
+              "cpu_processes": [
+                {
+                  "pid": 43624,
+                  "ppid": 45524,
+                  "rss_bytes": 966246400
+                },
+                {
+                  "pid": 19436,
+                  "ppid": 43624,
+                  "rss_bytes": 37801984
+                },
+                {
+                  "pid": 49060,
+                  "ppid": 43624,
+                  "rss_bytes": 1193222144
+                },
+                {
+                  "pid": 47216,
+                  "ppid": 49060,
+                  "rss_bytes": 12283904
+                },
+                {
+                  "pid": 18924,
+                  "ppid": 19436,
+                  "rss_bytes": 12308480
+                },
+                {
+                  "pid": 47824,
+                  "ppid": 46888,
+                  "rss_bytes": 12165120
+                }
+              ],
+              "cpu_sampling_errors": [],
+              "extra": {
+                "cupy_imported": true,
+                "pool_used_bytes": 259989504,
+                "pool_total_bytes": 330963456,
+                "pool_free_bytes": 70973952,
+                "pinned_free_blocks": 12
+              }
+            }
+          },
+          {
+            "label": "idle_after_unload",
+            "cpu_rss_bytes": 966291456,
+            "cpu_tree_rss_bytes": 1028567040,
+            "cupy": {
+              "cupy_imported": true,
+              "pool_used_bytes": 0,
+              "pool_total_bytes": 0,
+              "pool_free_bytes": 0,
+              "pinned_free_blocks": 12
+            },
+            "last_global_gpu_sample": {
+              "elapsed_s": 14.117146700002195,
+              "phase": "idle_unloading",
+              "nvidia_smi": [
+                "2026/09/20 08:31:47.799",
+                "2276",
+                "8151",
+                "3",
+                "34.90"
+              ],
+              "cpu_rss_bytes": 966291456,
+              "cpu_tree_rss_bytes": 1028567040,
+              "cpu_processes": [
+                {
+                  "pid": 43624,
+                  "ppid": 45524,
+                  "rss_bytes": 966291456
+                },
+                {
+                  "pid": 19436,
+                  "ppid": 43624,
+                  "rss_bytes": 37801984
+                },
+                {
+                  "pid": 18924,
+                  "ppid": 19436,
+                  "rss_bytes": 12308480
+                },
+                {
+                  "pid": 47824,
+                  "ppid": 46888,
+                  "rss_bytes": 12165120
+                }
+              ],
+              "cpu_sampling_errors": [],
+              "extra": {
+                "cupy_imported": true,
+                "pool_used_bytes": 0,
+                "pool_total_bytes": 0,
+                "pool_free_bytes": 0,
+                "pinned_free_blocks": 12
+              }
+            }
+          },
+          {
+            "label": "closed",
+            "cpu_rss_bytes": 833560576,
+            "cpu_tree_rss_bytes": 845725696,
+            "cupy": {
+              "cupy_imported": true,
+              "pool_used_bytes": 0,
+              "pool_total_bytes": 0,
+              "pool_free_bytes": 0,
+              "pinned_free_blocks": 13
+            },
+            "last_global_gpu_sample": {
+              "elapsed_s": 18.643998100000317,
+              "phase": "closing_engine",
+              "nvidia_smi": [
+                "2026/09/20 08:31:52.326",
+                "2272",
+                "8151",
+                "3",
+                "41.62"
+              ],
+              "cpu_rss_bytes": 833560576,
+              "cpu_tree_rss_bytes": 845725696,
+              "cpu_processes": [
+                {
+                  "pid": 43624,
+                  "ppid": 45524,
+                  "rss_bytes": 833560576
+                },
+                {
+                  "pid": 47824,
+                  "ppid": 46888,
+                  "rss_bytes": 12165120
+                }
+              ],
+              "cpu_sampling_errors": [],
+              "extra": {
+                "cupy_imported": true,
+                "pool_used_bytes": 0,
+                "pool_total_bytes": 0,
+                "pool_free_bytes": 0,
+                "pinned_free_blocks": 13
+              }
+            }
+          }
+        ]
+      }
+    },
+    "shared": {
+      "directory": "outputs/windows-unified/polyphase-shrink-both-fp16-memory",
+      "status": "completed",
+      "request_count": 7,
+      "torch_imported_main": false,
+      "source_files_changed_during_run": [],
+      "sources_sha256": {
+        "harness/windows_nvidia_benchmark.py": "ec15a149d2d92db960509bf21b8fc1506cc6d416936ec0b388b42d528ac2d6d8",
+        "scripts/windows_official_baseline.py": "e648462f9cd053fbe63d83730ab999428a865bac3f225eaef8444578c1978a27",
+        "src/sakuratts/nvidia.py": "b1e7daabbed17142b9f6ed4aa3b379532da3673623bb4a8a8a588e597d7e6acf",
+        "src/sakuratts/cuda_gpt.py": "30666267ba9d92969ecf5bbbdf14879f47e197b6c9ea78726972165ed370f358",
+        "src/sakuratts/ort_sovits.py": "2e709e3a8b3d81bc29368725270cbc77568ebd3a59b4f2abb2f1e1a0efbb795c",
+        "src/sakuratts/ort_process.py": "03a512a26eb824ae6a82c391a9adaa5bfeb2101040f62bece3f3c8df1b03d297",
+        "src/sakuratts/ort_worker.py": "876dcefb2660c8203c8384832f1fb0649802b2c1ca4a4ac96f5e750974dc4a75",
+        "src/sakuratts/synthesis.py": "c3c5217e10ca234e2e4fe193c3f8b967bff290f84560400e37d990cbdc6a8e69",
+        "src/sakuratts/generation.py": "6e73ce32d56c51d48a98922ebbc9056a1d4c736f9e442423cbec87936ab8477b",
+        "src/sakuratts/sampling.py": "7df53036344bc5396f666b7c743a7a596707c4524a5a501f2866d442db14804e",
+        "src/sakuratts/text_frontend.py": "ef15a611e35020cc03830b7cecf7f2257723df6de6f0ac0b4752e6aed37f53a9",
+        "src/sakuratts/japanese.py": "5aafbda8cc06408e2344b39ae40da4e8b6daa2d9382cdc336a0b73756ef750d9",
+        "src/sakuratts/classic_japanese.py": "eb6d50a9febb17c04ca46a9ad811ffc8e93f481f88a179dc4dd4781d41318296",
+        "src/sakuratts/classic_japanese_worker.py": "669e3dc50688b61d0a8caefb0ab1a400a85d02ccf4ea3e5dd4de614bd233e0d9",
+        "src/sakuratts/cuda_runtime.py": "d9fbcfbfebeccf6b4c16570167c1712d3496806d1409542a1061672d36a1f107",
+        "src/sakuratts/array_protocol.py": "71cae8a55fecf3bf2d03a06e3646c22995951995fa29e4e6f06c41710e540eac",
+        "src/sakuratts/reference_condition.py": "672f6bafe6b23aaadc7bd9c5eb8a7ff4f4072cdfb598794a6cbcf8ad55676df6",
+        "src/sakuratts/weight_storage.py": "7ff939a4e627be161ee06baf711bf690a9e22fd4e4164a90753247a7bccd5234"
+      },
+      "configuration": {
+        "config_path": "D:\\Project\\SakuraTTS\\outputs\\windows-acoustic\\runtime-fp16-polyphase-deterministic.json",
+        "config_sha256": "151f4c332bda28f2568c8a3659acc853c8a89811107113215d4c0a34647d1128",
+        "policy": "resident",
+        "cuda_graph": true,
+        "capacity": 2048,
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "acoustic_arena_shrink": true,
+        "gpt_attention": "baseline",
+        "gpt_attention_chunk_size": 256,
+        "seed": 1234
+      },
+      "requests": [
+        {
+          "name": "first-neutral-short",
+          "case": "short",
+          "kind": "first",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "first-neutral-short.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-short-00",
+          "case": "short",
+          "kind": "hot",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "hot-neutral-short-00.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-long-00",
+          "case": "long",
+          "kind": "hot",
+          "semantic_token_count": 629,
+          "sampled_token_count": 630,
+          "semantic_sha256": "74c5c5e7752cecbcd8bbb3bb5e061d9ada666614e9731224c276e7c3a4eb3d74",
+          "pcm_sha256": "535fb45b1aefc6179b9ca4863e995c0cb486b8a936627c3ef50933cab2dd2049",
+          "pcm_seconds": 25.46,
+          "wav": "hot-neutral-long-00.wav",
+          "wav_sha256": "89bcc6d65346dbd0f33d92bd74e5070f2711f244771c1a9f98e31dc0b0932d5c",
+          "waveform_samples": 805120,
+          "pcm_samples": 814720,
+          "phones_sha256": "20a5fcb404e7ffed2bc096042cddd092d37f009e1662f4bcdd1df866fdbd6c4e",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 629,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-multi-00",
+          "case": "multi",
+          "kind": "hot",
+          "semantic_token_count": 349,
+          "sampled_token_count": 350,
+          "semantic_sha256": "a64b7459b426bdf3b156f774422711ceb68779bd4d0bc3a6ea6845f9e9b91243",
+          "pcm_sha256": "2ce4d9da50fff0fd87efdd9174e3e4794d7165a803049cef49775463d9fdb0d8",
+          "pcm_seconds": 14.26,
+          "wav": "hot-neutral-multi-00.wav",
+          "wav_sha256": "ca1755c50b90448ae75bdb2d2d3cba472b4a2d8e1b9f1ddeca89360ee6b55202",
+          "waveform_samples": 446720,
+          "pcm_samples": 456320,
+          "phones_sha256": "67c4c943e63c7929da4769257f184e80e1923d32dec57f400ddefcd3d4393fcb",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 349,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-punctuation-00",
+          "case": "punctuation",
+          "kind": "hot",
+          "semantic_token_count": 184,
+          "sampled_token_count": 185,
+          "semantic_sha256": "b15ff4818d5b27a27c4f72c6d4213da1dc1fe2b34119492a60f0b43b40e5b636",
+          "pcm_sha256": "4c07a84f6e8ccdba12abedb3d6e06514bc5a2343c5e417c62b14984687bd7811",
+          "pcm_seconds": 7.66,
+          "wav": "hot-neutral-punctuation-00.wav",
+          "wav_sha256": "3d57b5170a21e7260f44bd2e5d3e8ad14c034ec6ccb1a857b7bb6ec932601cfe",
+          "waveform_samples": 235520,
+          "pcm_samples": 245120,
+          "phones_sha256": "6b5d2cd1f9cc01a270432f04232ac99a6911a0c0ce905afd93edeb64006c3137",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 184,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "after-idle-unload-first",
+          "case": "short",
+          "kind": "reload",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "after-idle-unload-first.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "after-idle-unload-hot",
+          "case": "short",
+          "kind": "reload_hot",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "after-idle-unload-hot.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": true
+        }
+      ],
+      "memory": {
+        "samples": 146,
+        "global_device_peak_mib": 3246.0,
+        "cpu_tree_peak_rss_bytes": 1615904768,
+        "cpu_parent_peak_rss_bytes": 1553379328,
+        "cupy_observed_peak_used_bytes": 270955520,
+        "cupy_observed_peak_total_bytes": 330963456,
+        "global_initial_mib": 2168.0,
+        "global_sampled_peak_minus_initial_mib": 1078.0,
+        "initial_sample": {
+          "elapsed_s": 0.0464436000038404,
+          "phase": "constructing_engine",
+          "nvidia_smi": [
+            "2026/09/20 08:32:22.946",
+            "2168",
+            "8151",
+            "3",
+            "19.37"
+          ],
+          "cpu_rss_bytes": 54550528,
+          "cpu_tree_rss_bytes": 66711552,
+          "cpu_processes": [
+            {
+              "pid": 32880,
+              "ppid": 48776,
+              "rss_bytes": 54550528
+            },
+            {
+              "pid": 44472,
+              "ppid": 39248,
+              "rss_bytes": 12161024
+            }
+          ],
+          "cpu_sampling_errors": [],
+          "extra": {
+            "cupy_imported": false
+          }
+        },
+        "boundaries": [
+          {
+            "label": "idle_before_unload",
+            "cpu_rss_bytes": 1553362944,
+            "cpu_tree_rss_bytes": 1615888384,
+            "cupy": {
+              "cupy_imported": true,
+              "pool_used_bytes": 259989504,
+              "pool_total_bytes": 330963456,
+              "pool_free_bytes": 70973952,
+              "pinned_free_blocks": 11
+            },
+            "last_global_gpu_sample": {
+              "elapsed_s": 10.901879400000325,
+              "phase": "idle_resident",
+              "nvidia_smi": [
+                "2026/09/20 08:32:33.802",
+                "2760",
+                "8151",
+                "3",
+                "54.86"
+              ],
+              "cpu_rss_bytes": 1553362944,
+              "cpu_tree_rss_bytes": 1615888384,
+              "cpu_processes": [
+                {
+                  "pid": 32880,
+                  "ppid": 48776,
+                  "rss_bytes": 1553362944
+                },
+                {
+                  "pid": 39744,
+                  "ppid": 32880,
+                  "rss_bytes": 38072320
+                },
+                {
+                  "pid": 41528,
+                  "ppid": 39744,
+                  "rss_bytes": 12292096
+                },
+                {
+                  "pid": 44472,
+                  "ppid": 39248,
+                  "rss_bytes": 12161024
+                }
+              ],
+              "cpu_sampling_errors": [],
+              "extra": {
+                "cupy_imported": true,
+                "pool_used_bytes": 259989504,
+                "pool_total_bytes": 330963456,
+                "pool_free_bytes": 70973952,
+                "pinned_free_blocks": 11
+              }
+            }
+          },
+          {
+            "label": "idle_after_unload",
+            "cpu_rss_bytes": 1544163328,
+            "cpu_tree_rss_bytes": 1606688768,
+            "cupy": {
+              "cupy_imported": true,
+              "pool_used_bytes": 0,
+              "pool_total_bytes": 0,
+              "pool_free_bytes": 0,
+              "pinned_free_blocks": 11
+            },
+            "last_global_gpu_sample": {
+              "elapsed_s": 11.506219399998372,
+              "phase": "idle_unloading",
+              "nvidia_smi": [
+                "2026/09/20 08:32:34.407",
+                "2278",
+                "8151",
+                "2",
+                "42.89"
+              ],
+              "cpu_rss_bytes": 1544163328,
+              "cpu_tree_rss_bytes": 1606688768,
+              "cpu_processes": [
+                {
+                  "pid": 32880,
+                  "ppid": 48776,
+                  "rss_bytes": 1544163328
+                },
+                {
+                  "pid": 39744,
+                  "ppid": 32880,
+                  "rss_bytes": 38072320
+                },
+                {
+                  "pid": 41528,
+                  "ppid": 39744,
+                  "rss_bytes": 12292096
+                },
+                {
+                  "pid": 44472,
+                  "ppid": 39248,
+                  "rss_bytes": 12161024
+                }
+              ],
+              "cpu_sampling_errors": [],
+              "extra": {
+                "cupy_imported": true,
+                "pool_used_bytes": 0,
+                "pool_total_bytes": 0,
+                "pool_free_bytes": 0,
+                "pinned_free_blocks": 11
+              }
+            }
+          },
+          {
+            "label": "closed",
+            "cpu_rss_bytes": 1412116480,
+            "cpu_tree_rss_bytes": 1424277504,
+            "cupy": {
+              "cupy_imported": true,
+              "pool_used_bytes": 0,
+              "pool_total_bytes": 0,
+              "pool_free_bytes": 0,
+              "pinned_free_blocks": 12
+            },
+            "last_global_gpu_sample": {
+              "elapsed_s": 14.622531300003175,
+              "phase": "closing_engine",
+              "nvidia_smi": [
+                "2026/09/20 08:32:37.523",
+                "2284",
+                "8151",
+                "3",
+                "43.36"
+              ],
+              "cpu_rss_bytes": 1412116480,
+              "cpu_tree_rss_bytes": 1424277504,
+              "cpu_processes": [
+                {
+                  "pid": 32880,
+                  "ppid": 48776,
+                  "rss_bytes": 1412116480
+                },
+                {
+                  "pid": 44472,
+                  "ppid": 39248,
+                  "rss_bytes": 12161024
+                }
+              ],
+              "cpu_sampling_errors": [],
+              "extra": {
+                "cupy_imported": true,
+                "pool_used_bytes": 0,
+                "pool_total_bytes": 0,
+                "pool_free_bytes": 0,
+                "pinned_free_blocks": 12
+              }
+            }
+          }
+        ]
+      },
+      "shared_process_experiment": {
+        "experiment": "CuPy and ORT share the main Python/CUDA process; classic frontend worker retained",
+        "acoustic_python": null,
+        "ort_path": "D:\\Project\\SakuraTTS\\outputs\\windows-unified\\ort-python311\\onnxruntime\\__init__.py",
+        "ort_version": "1.19.2",
+        "cuda_directory": "D:\\Project\\SakuraTTS\\data\\windows-ort-runtime\\cuda",
+        "wrapper_sha256": "87127331ad63dddc9e80d4c44e16eaf66eda648bf2ec3bb1611d62fdf8809264",
+        "loaded_native_maps": [
+          "D:\\Project\\SakuraTTS\\data\\windows-ort-runtime\\cuda\\cudnn_engines_runtime_compiled64_9.dll",
+          "D:\\Project\\SakuraTTS\\data\\windows-ort-runtime\\cuda\\cudnn_heuristic64_9.dll",
+          "D:\\Project\\SakuraTTS\\data\\windows-ort-runtime\\cuda\\cudnn_engines_precompiled64_9.dll",
+          "D:\\Project\\SakuraTTS\\data\\windows-ort-runtime\\cuda\\cudnn_ops64_9.dll",
+          "D:\\Project\\SakuraTTS\\data\\windows-ort-runtime\\cuda\\cudnn_graph64_9.dll",
+          "D:\\Project\\SakuraTTS\\data\\windows-ort-runtime\\cuda\\cufft64_11.dll",
+          "D:\\Project\\SakuraTTS\\outputs\\windows-unified\\ort-python311\\onnxruntime\\capi\\onnxruntime_providers_cuda.dll",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\nvidia\\cublas\\bin\\cublas64_12.dll",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy\\cuda\\thrust.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy\\cuda\\cub.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\nvidia\\cublas\\bin\\cublasLt64_12.dll",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\nvidia\\cuda_nvrtc\\bin\\nvrtc64_120_0.dll",
+          "D:\\Project\\SakuraTTS\\data\\windows-ort-runtime\\cuda\\cudnn_cnn64_9.dll",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\nvidia\\cuda_nvrtc\\bin\\nvrtc-builtins64_129.dll",
+          "D:\\Project\\SakuraTTS\\outputs\\windows-unified\\ort-python311\\onnxruntime\\capi\\onnxruntime_pybind11_state.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\nvidia\\cuda_runtime\\bin\\cudart64_12.dll",
+          "D:\\Project\\SakuraTTS\\data\\windows-ort-runtime\\cuda\\cudnn64_9.dll",
+          "D:\\Project\\SakuraTTS\\data\\windows-ort-runtime\\cuda\\cudnn_engines_tensor_ir64_9.dll",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy\\cuda\\pinned_memory.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy_backends\\cuda\\libs\\nvrtc.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy_backends\\cuda\\api\\runtime.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy\\cuda\\memory.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy\\cuda\\texture.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy_backends\\cuda\\api\\driver.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy\\cuda\\graph.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy\\cuda\\stream.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy\\cuda\\memory_hook.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy\\cuda\\function.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy_backends\\cuda\\_softlink.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy\\cuda\\device.cp311-win_amd64.pyd",
+          "C:\\Windows\\System32\\DriverStore\\FileRepository\\nv_dispi.inf_amd64_6f3cfb7117944855\\nvcuda64.dll",
+          "C:\\Windows\\System32\\nvcuda.dll",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy_backends\\cuda\\libs\\nvtx.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy\\cuda\\common.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy_backends\\cuda\\api\\_driver_enum.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy_backends\\cuda\\stream.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\.venv-windows-runtime\\Lib\\site-packages\\cupy_backends\\cuda\\api\\_runtime_enum.cp311-win_amd64.pyd",
+          "D:\\Project\\SakuraTTS\\outputs\\windows-unified\\ort-python311\\onnxruntime\\capi\\onnxruntime_providers_shared.dll"
+        ]
+      }
+    },
+    "timing": {
+      "directory": "outputs/windows-acoustic/polyphase-shrink-both-fp16-timing",
+      "status": "completed",
+      "request_count": 15,
+      "torch_imported_main": false,
+      "source_files_changed_during_run": [],
+      "sources_sha256": {
+        "harness/windows_nvidia_benchmark.py": "ec15a149d2d92db960509bf21b8fc1506cc6d416936ec0b388b42d528ac2d6d8",
+        "scripts/windows_official_baseline.py": "e648462f9cd053fbe63d83730ab999428a865bac3f225eaef8444578c1978a27",
+        "src/sakuratts/nvidia.py": "b1e7daabbed17142b9f6ed4aa3b379532da3673623bb4a8a8a588e597d7e6acf",
+        "src/sakuratts/cuda_gpt.py": "30666267ba9d92969ecf5bbbdf14879f47e197b6c9ea78726972165ed370f358",
+        "src/sakuratts/ort_sovits.py": "2e709e3a8b3d81bc29368725270cbc77568ebd3a59b4f2abb2f1e1a0efbb795c",
+        "src/sakuratts/ort_process.py": "03a512a26eb824ae6a82c391a9adaa5bfeb2101040f62bece3f3c8df1b03d297",
+        "src/sakuratts/ort_worker.py": "876dcefb2660c8203c8384832f1fb0649802b2c1ca4a4ac96f5e750974dc4a75",
+        "src/sakuratts/synthesis.py": "c3c5217e10ca234e2e4fe193c3f8b967bff290f84560400e37d990cbdc6a8e69",
+        "src/sakuratts/generation.py": "6e73ce32d56c51d48a98922ebbc9056a1d4c736f9e442423cbec87936ab8477b",
+        "src/sakuratts/sampling.py": "7df53036344bc5396f666b7c743a7a596707c4524a5a501f2866d442db14804e",
+        "src/sakuratts/text_frontend.py": "ef15a611e35020cc03830b7cecf7f2257723df6de6f0ac0b4752e6aed37f53a9",
+        "src/sakuratts/japanese.py": "5aafbda8cc06408e2344b39ae40da4e8b6daa2d9382cdc336a0b73756ef750d9",
+        "src/sakuratts/classic_japanese.py": "eb6d50a9febb17c04ca46a9ad811ffc8e93f481f88a179dc4dd4781d41318296",
+        "src/sakuratts/classic_japanese_worker.py": "669e3dc50688b61d0a8caefb0ab1a400a85d02ccf4ea3e5dd4de614bd233e0d9",
+        "src/sakuratts/cuda_runtime.py": "d9fbcfbfebeccf6b4c16570167c1712d3496806d1409542a1061672d36a1f107",
+        "src/sakuratts/array_protocol.py": "71cae8a55fecf3bf2d03a06e3646c22995951995fa29e4e6f06c41710e540eac",
+        "src/sakuratts/reference_condition.py": "672f6bafe6b23aaadc7bd9c5eb8a7ff4f4072cdfb598794a6cbcf8ad55676df6",
+        "src/sakuratts/weight_storage.py": "7ff939a4e627be161ee06baf711bf690a9e22fd4e4164a90753247a7bccd5234"
+      },
+      "configuration": {
+        "config_path": "D:\\Project\\SakuraTTS\\outputs\\windows-acoustic\\runtime-fp16-polyphase-deterministic.json",
+        "config_sha256": "151f4c332bda28f2568c8a3659acc853c8a89811107113215d4c0a34647d1128",
+        "policy": "resident",
+        "cuda_graph": true,
+        "capacity": 2048,
+        "gpt_precision": "fp16",
+        "acoustic_precision": "fp16",
+        "acoustic_arena_shrink": true,
+        "gpt_attention": "baseline",
+        "gpt_attention_chunk_size": 256,
+        "seed": 1234
+      },
+      "requests": [
+        {
+          "name": "first-neutral-short",
+          "case": "short",
+          "kind": "first",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "first-neutral-short.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-short-00",
+          "case": "short",
+          "kind": "hot",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "hot-neutral-short-00.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-short-01",
+          "case": "short",
+          "kind": "hot",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "hot-neutral-short-01.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-short-02",
+          "case": "short",
+          "kind": "hot",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "hot-neutral-short-02.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-long-00",
+          "case": "long",
+          "kind": "hot",
+          "semantic_token_count": 629,
+          "sampled_token_count": 630,
+          "semantic_sha256": "74c5c5e7752cecbcd8bbb3bb5e061d9ada666614e9731224c276e7c3a4eb3d74",
+          "pcm_sha256": "535fb45b1aefc6179b9ca4863e995c0cb486b8a936627c3ef50933cab2dd2049",
+          "pcm_seconds": 25.46,
+          "wav": "hot-neutral-long-00.wav",
+          "wav_sha256": "89bcc6d65346dbd0f33d92bd74e5070f2711f244771c1a9f98e31dc0b0932d5c",
+          "waveform_samples": 805120,
+          "pcm_samples": 814720,
+          "phones_sha256": "20a5fcb404e7ffed2bc096042cddd092d37f009e1662f4bcdd1df866fdbd6c4e",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 629,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-long-01",
+          "case": "long",
+          "kind": "hot",
+          "semantic_token_count": 629,
+          "sampled_token_count": 630,
+          "semantic_sha256": "74c5c5e7752cecbcd8bbb3bb5e061d9ada666614e9731224c276e7c3a4eb3d74",
+          "pcm_sha256": "535fb45b1aefc6179b9ca4863e995c0cb486b8a936627c3ef50933cab2dd2049",
+          "pcm_seconds": 25.46,
+          "wav": "hot-neutral-long-01.wav",
+          "wav_sha256": "89bcc6d65346dbd0f33d92bd74e5070f2711f244771c1a9f98e31dc0b0932d5c",
+          "waveform_samples": 805120,
+          "pcm_samples": 814720,
+          "phones_sha256": "20a5fcb404e7ffed2bc096042cddd092d37f009e1662f4bcdd1df866fdbd6c4e",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 629,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-long-02",
+          "case": "long",
+          "kind": "hot",
+          "semantic_token_count": 629,
+          "sampled_token_count": 630,
+          "semantic_sha256": "74c5c5e7752cecbcd8bbb3bb5e061d9ada666614e9731224c276e7c3a4eb3d74",
+          "pcm_sha256": "535fb45b1aefc6179b9ca4863e995c0cb486b8a936627c3ef50933cab2dd2049",
+          "pcm_seconds": 25.46,
+          "wav": "hot-neutral-long-02.wav",
+          "wav_sha256": "89bcc6d65346dbd0f33d92bd74e5070f2711f244771c1a9f98e31dc0b0932d5c",
+          "waveform_samples": 805120,
+          "pcm_samples": 814720,
+          "phones_sha256": "20a5fcb404e7ffed2bc096042cddd092d37f009e1662f4bcdd1df866fdbd6c4e",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 629,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-multi-00",
+          "case": "multi",
+          "kind": "hot",
+          "semantic_token_count": 349,
+          "sampled_token_count": 350,
+          "semantic_sha256": "a64b7459b426bdf3b156f774422711ceb68779bd4d0bc3a6ea6845f9e9b91243",
+          "pcm_sha256": "2ce4d9da50fff0fd87efdd9174e3e4794d7165a803049cef49775463d9fdb0d8",
+          "pcm_seconds": 14.26,
+          "wav": "hot-neutral-multi-00.wav",
+          "wav_sha256": "ca1755c50b90448ae75bdb2d2d3cba472b4a2d8e1b9f1ddeca89360ee6b55202",
+          "waveform_samples": 446720,
+          "pcm_samples": 456320,
+          "phones_sha256": "67c4c943e63c7929da4769257f184e80e1923d32dec57f400ddefcd3d4393fcb",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 349,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-multi-01",
+          "case": "multi",
+          "kind": "hot",
+          "semantic_token_count": 349,
+          "sampled_token_count": 350,
+          "semantic_sha256": "a64b7459b426bdf3b156f774422711ceb68779bd4d0bc3a6ea6845f9e9b91243",
+          "pcm_sha256": "2ce4d9da50fff0fd87efdd9174e3e4794d7165a803049cef49775463d9fdb0d8",
+          "pcm_seconds": 14.26,
+          "wav": "hot-neutral-multi-01.wav",
+          "wav_sha256": "ca1755c50b90448ae75bdb2d2d3cba472b4a2d8e1b9f1ddeca89360ee6b55202",
+          "waveform_samples": 446720,
+          "pcm_samples": 456320,
+          "phones_sha256": "67c4c943e63c7929da4769257f184e80e1923d32dec57f400ddefcd3d4393fcb",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 349,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-multi-02",
+          "case": "multi",
+          "kind": "hot",
+          "semantic_token_count": 349,
+          "sampled_token_count": 350,
+          "semantic_sha256": "a64b7459b426bdf3b156f774422711ceb68779bd4d0bc3a6ea6845f9e9b91243",
+          "pcm_sha256": "2ce4d9da50fff0fd87efdd9174e3e4794d7165a803049cef49775463d9fdb0d8",
+          "pcm_seconds": 14.26,
+          "wav": "hot-neutral-multi-02.wav",
+          "wav_sha256": "ca1755c50b90448ae75bdb2d2d3cba472b4a2d8e1b9f1ddeca89360ee6b55202",
+          "waveform_samples": 446720,
+          "pcm_samples": 456320,
+          "phones_sha256": "67c4c943e63c7929da4769257f184e80e1923d32dec57f400ddefcd3d4393fcb",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 349,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-punctuation-00",
+          "case": "punctuation",
+          "kind": "hot",
+          "semantic_token_count": 184,
+          "sampled_token_count": 185,
+          "semantic_sha256": "b15ff4818d5b27a27c4f72c6d4213da1dc1fe2b34119492a60f0b43b40e5b636",
+          "pcm_sha256": "4c07a84f6e8ccdba12abedb3d6e06514bc5a2343c5e417c62b14984687bd7811",
+          "pcm_seconds": 7.66,
+          "wav": "hot-neutral-punctuation-00.wav",
+          "wav_sha256": "3d57b5170a21e7260f44bd2e5d3e8ad14c034ec6ccb1a857b7bb6ec932601cfe",
+          "waveform_samples": 235520,
+          "pcm_samples": 245120,
+          "phones_sha256": "6b5d2cd1f9cc01a270432f04232ac99a6911a0c0ce905afd93edeb64006c3137",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 184,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-punctuation-01",
+          "case": "punctuation",
+          "kind": "hot",
+          "semantic_token_count": 184,
+          "sampled_token_count": 185,
+          "semantic_sha256": "b15ff4818d5b27a27c4f72c6d4213da1dc1fe2b34119492a60f0b43b40e5b636",
+          "pcm_sha256": "4c07a84f6e8ccdba12abedb3d6e06514bc5a2343c5e417c62b14984687bd7811",
+          "pcm_seconds": 7.66,
+          "wav": "hot-neutral-punctuation-01.wav",
+          "wav_sha256": "3d57b5170a21e7260f44bd2e5d3e8ad14c034ec6ccb1a857b7bb6ec932601cfe",
+          "waveform_samples": 235520,
+          "pcm_samples": 245120,
+          "phones_sha256": "6b5d2cd1f9cc01a270432f04232ac99a6911a0c0ce905afd93edeb64006c3137",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 184,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "hot-neutral-punctuation-02",
+          "case": "punctuation",
+          "kind": "hot",
+          "semantic_token_count": 184,
+          "sampled_token_count": 185,
+          "semantic_sha256": "b15ff4818d5b27a27c4f72c6d4213da1dc1fe2b34119492a60f0b43b40e5b636",
+          "pcm_sha256": "4c07a84f6e8ccdba12abedb3d6e06514bc5a2343c5e417c62b14984687bd7811",
+          "pcm_seconds": 7.66,
+          "wav": "hot-neutral-punctuation-02.wav",
+          "wav_sha256": "3d57b5170a21e7260f44bd2e5d3e8ad14c034ec6ccb1a857b7bb6ec932601cfe",
+          "waveform_samples": 235520,
+          "pcm_samples": 245120,
+          "phones_sha256": "6b5d2cd1f9cc01a270432f04232ac99a6911a0c0ce905afd93edeb64006c3137",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 184,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "after-idle-unload-first",
+          "case": "short",
+          "kind": "reload",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "after-idle-unload-first.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": true
+        },
+        {
+          "name": "after-idle-unload-hot",
+          "case": "short",
+          "kind": "reload_hot",
+          "semantic_token_count": 79,
+          "sampled_token_count": 80,
+          "semantic_sha256": "bc581f2ee56ebf66c911fe7f9ca4f037dd68d71513a0f79603a89891744836b8",
+          "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+          "pcm_seconds": 3.46,
+          "wav": "after-idle-unload-hot.wav",
+          "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+          "waveform_samples": 101120,
+          "pcm_samples": 110720,
+          "phones_sha256": "3ecd4393fa6398a09e3ccbe97588af55a170679afa1bce9c31f1609bcc9ea8ad",
+          "stop_reasons": [
+            "argmax_eos",
+            "sample_eos"
+          ],
+          "returned_index": 79,
+          "acoustic_arena_shrink": true
+        }
+      ],
+      "hot_summary": {
+        "short": {
+          "n": 3,
+          "p50_ms": 183.43540000205394,
+          "min_ms": 179.68850000033854,
+          "max_ms": 201.39729999937117,
+          "rtf_pcm_p50": 0.05301601156128727,
+          "audio_seconds": [
+            3.46,
+            3.46,
+            3.46
+          ],
+          "semantic_token_counts": [
+            79,
+            79,
+            79
+          ],
+          "all_completed": true
+        },
+        "long": {
+          "n": 3,
+          "p50_ms": 2390.1820999963093,
+          "min_ms": 2382.7450000026147,
+          "max_ms": 2405.724900003406,
+          "rtf_pcm_p50": 0.09387989395115119,
+          "audio_seconds": [
+            25.46,
+            25.46,
+            25.46
+          ],
+          "semantic_token_counts": [
+            629,
+            629,
+            629
+          ],
+          "all_completed": true
+        },
+        "multi": {
+          "n": 3,
+          "p50_ms": 995.7118999955128,
+          "min_ms": 993.1485999986762,
+          "max_ms": 1007.0935999974608,
+          "rtf_pcm_p50": 0.06982551893376668,
+          "audio_seconds": [
+            14.26,
+            14.26,
+            14.26
+          ],
+          "semantic_token_counts": [
+            349,
+            349,
+            349
+          ],
+          "all_completed": true
+        },
+        "punctuation": {
+          "n": 3,
+          "p50_ms": 461.06650000001537,
+          "min_ms": 460.6275000041933,
+          "max_ms": 462.93639999930747,
+          "rtf_pcm_p50": 0.06019144908616388,
+          "audio_seconds": [
+            7.66,
+            7.66,
+            7.66
+          ],
+          "semantic_token_counts": [
+            184,
+            184,
+            184
+          ],
+          "all_completed": true
+        }
+      }
+    }
+  },
+  "comparisons": {
+    "worker_to_shared": [
+      {
+        "name": "first-neutral-short",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "hot-neutral-short-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "hot-neutral-long-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "535fb45b1aefc6179b9ca4863e995c0cb486b8a936627c3ef50933cab2dd2049",
+        "right_pcm_sha256": "535fb45b1aefc6179b9ca4863e995c0cb486b8a936627c3ef50933cab2dd2049",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 814720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "hot-neutral-multi-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "2ce4d9da50fff0fd87efdd9174e3e4794d7165a803049cef49775463d9fdb0d8",
+        "right_pcm_sha256": "2ce4d9da50fff0fd87efdd9174e3e4794d7165a803049cef49775463d9fdb0d8",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 456320,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "hot-neutral-punctuation-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "4c07a84f6e8ccdba12abedb3d6e06514bc5a2343c5e417c62b14984687bd7811",
+        "right_pcm_sha256": "4c07a84f6e8ccdba12abedb3d6e06514bc5a2343c5e417c62b14984687bd7811",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 245120,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "after-idle-unload-first",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "after-idle-unload-hot",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      }
+    ],
+    "prior_worker_to_worker": [
+      {
+        "name": "first-neutral-short",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "engineering_full_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 110720,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "snr_db": 280.1214223215931,
+          "peak": 0.5751953125,
+          "reference_peak": 0.5751953125,
+          "rms": 0.10140774281568729,
+          "reference_rms": 0.10140774281568729,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0,
+          "active_log_spectral_rms_db": 0.0,
+          "active_spectral_bins": 67450,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        },
+        "engineering_speech_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 101120,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "snr_db": 280.5153124833368,
+          "peak": 0.5751953125,
+          "reference_peak": 0.5751953125,
+          "rms": 0.10611227462177354,
+          "reference_rms": 0.10611227462177354,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0,
+          "active_log_spectral_rms_db": 0.0,
+          "active_spectral_bins": 67450,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        }
+      },
+      {
+        "name": "hot-neutral-short-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "engineering_full_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 110720,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "snr_db": 280.1214223215931,
+          "peak": 0.5751953125,
+          "reference_peak": 0.5751953125,
+          "rms": 0.10140774281568729,
+          "reference_rms": 0.10140774281568729,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0,
+          "active_log_spectral_rms_db": 0.0,
+          "active_spectral_bins": 67450,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        },
+        "engineering_speech_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 101120,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "snr_db": 280.5153124833368,
+          "peak": 0.5751953125,
+          "reference_peak": 0.5751953125,
+          "rms": 0.10611227462177354,
+          "reference_rms": 0.10611227462177354,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0,
+          "active_log_spectral_rms_db": 0.0,
+          "active_spectral_bins": 67450,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        }
+      },
+      {
+        "name": "hot-neutral-long-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": false,
+        "left_pcm_sha256": "7a47db5136a1b09ef11fc9122ee0fa58ee8be5377e3314ea6a8154169d150ac9",
+        "right_pcm_sha256": "535fb45b1aefc6179b9ca4863e995c0cb486b8a936627c3ef50933cab2dd2049",
+        "max_abs_lsb": 8,
+        "different_samples": 3729,
+        "original_tolerance": {
+          "passed": false,
+          "max_abs_error": 0.000244140625,
+          "rmse": 4.4833713658421866e-06,
+          "outside_tolerance": 495,
+          "elements": 814720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "engineering_full_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 814720,
+          "max_abs_error": 0.000244140625,
+          "rmse": 4.4833713658421866e-06,
+          "snr_db": 86.52783402896543,
+          "peak": 0.63330078125,
+          "reference_peak": 0.63330078125,
+          "rms": 0.0950597053961697,
+          "reference_rms": 0.09505969471255937,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 3.347742716166502e-05,
+          "active_log_spectral_rms_db": 0.0034374109445328106,
+          "active_spectral_bins": 558968,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        },
+        "engineering_speech_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 805120,
+          "max_abs_error": 0.000244140625,
+          "rmse": 4.510021321369258e-06,
+          "snr_db": 86.52783402896543,
+          "peak": 0.63330078125,
+          "reference_peak": 0.63330078125,
+          "rms": 0.095624757165141,
+          "reference_rms": 0.0956247464180254,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 3.347742716169899e-05,
+          "active_log_spectral_rms_db": 0.0034374109445328106,
+          "active_spectral_bins": 558968,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        }
+      },
+      {
+        "name": "hot-neutral-multi-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": false,
+        "left_pcm_sha256": "ac42407ed1358bec35cc1c95da9274f6063477ad19f011e700a875526b4e5f02",
+        "right_pcm_sha256": "2ce4d9da50fff0fd87efdd9174e3e4794d7165a803049cef49775463d9fdb0d8",
+        "max_abs_lsb": 32,
+        "different_samples": 143225,
+        "original_tolerance": {
+          "passed": false,
+          "max_abs_error": 0.0009765625,
+          "rmse": 6.78255958457468e-05,
+          "outside_tolerance": 56147,
+          "elements": 456320,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "engineering_full_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 456320,
+          "max_abs_error": 0.0009765625,
+          "rmse": 6.78255958457468e-05,
+          "snr_db": 62.87612875838123,
+          "peak": 0.685546875,
+          "reference_peak": 0.685546875,
+          "rms": 0.0944500984955216,
+          "reference_rms": 0.09444958534972399,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0004972105165003117,
+          "active_log_spectral_rms_db": 0.0381646470893124,
+          "active_spectral_bins": 242287,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        },
+        "engineering_speech_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 446720,
+          "max_abs_error": 0.0009765625,
+          "rmse": 6.855050702304356e-05,
+          "snr_db": 62.87612875838123,
+          "peak": 0.685546875,
+          "reference_peak": 0.685546875,
+          "rms": 0.09545956890624821,
+          "reference_rms": 0.09545905027601483,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.000497210516501224,
+          "active_log_spectral_rms_db": 0.0381646470893124,
+          "active_spectral_bins": 242287,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        }
+      },
+      {
+        "name": "hot-neutral-punctuation-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": false,
+        "left_pcm_sha256": "3873ba451721edcc0fedda5724df49f18d5a86654fa8f5019ffc6cb032b4ac9f",
+        "right_pcm_sha256": "4c07a84f6e8ccdba12abedb3d6e06514bc5a2343c5e417c62b14984687bd7811",
+        "max_abs_lsb": 32,
+        "different_samples": 80672,
+        "original_tolerance": {
+          "passed": false,
+          "max_abs_error": 0.0009765625,
+          "rmse": 7.14482585940588e-05,
+          "outside_tolerance": 30805,
+          "elements": 245120,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "engineering_full_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 245120,
+          "max_abs_error": 0.0009765625,
+          "rmse": 7.14482585940588e-05,
+          "snr_db": 61.995622428688044,
+          "peak": 0.59033203125,
+          "reference_peak": 0.58984375,
+          "rms": 0.08990277696485649,
+          "reference_rms": 0.08990270720008187,
+          "absolute_peak_delta": 0.00048828125,
+          "spectral_convergence": 0.0005525847626917368,
+          "active_log_spectral_rms_db": 0.03955863347617174,
+          "active_spectral_bins": 147175,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        },
+        "engineering_speech_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 235520,
+          "max_abs_error": 0.0009765625,
+          "rmse": 7.288986164172813e-05,
+          "snr_db": 61.995622428688044,
+          "peak": 0.59033203125,
+          "reference_peak": 0.58984375,
+          "rms": 0.09171673464299716,
+          "reference_rms": 0.09171666347058696,
+          "absolute_peak_delta": 0.00048828125,
+          "spectral_convergence": 0.000552584550255495,
+          "active_log_spectral_rms_db": 0.03955863347617174,
+          "active_spectral_bins": 147175,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        }
+      },
+      {
+        "name": "after-idle-unload-first",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "engineering_full_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 110720,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "snr_db": 280.1214223215931,
+          "peak": 0.5751953125,
+          "reference_peak": 0.5751953125,
+          "rms": 0.10140774281568729,
+          "reference_rms": 0.10140774281568729,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0,
+          "active_log_spectral_rms_db": 0.0,
+          "active_spectral_bins": 67450,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        },
+        "engineering_speech_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 101120,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "snr_db": 280.5153124833368,
+          "peak": 0.5751953125,
+          "reference_peak": 0.5751953125,
+          "rms": 0.10611227462177354,
+          "reference_rms": 0.10611227462177354,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0,
+          "active_log_spectral_rms_db": 0.0,
+          "active_spectral_bins": 67450,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        }
+      },
+      {
+        "name": "after-idle-unload-hot",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "engineering_full_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 110720,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "snr_db": 280.1214223215931,
+          "peak": 0.5751953125,
+          "reference_peak": 0.5751953125,
+          "rms": 0.10140774281568729,
+          "reference_rms": 0.10140774281568729,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0,
+          "active_log_spectral_rms_db": 0.0,
+          "active_spectral_bins": 67450,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        },
+        "engineering_speech_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 101120,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "snr_db": 280.5153124833368,
+          "peak": 0.5751953125,
+          "reference_peak": 0.5751953125,
+          "rms": 0.10611227462177354,
+          "reference_rms": 0.10611227462177354,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0,
+          "active_log_spectral_rms_db": 0.0,
+          "active_spectral_bins": 67450,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        }
+      }
+    ],
+    "prior_shared_to_shared": [
+      {
+        "name": "first-neutral-short",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "engineering_full_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 110720,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "snr_db": 280.1214223215931,
+          "peak": 0.5751953125,
+          "reference_peak": 0.5751953125,
+          "rms": 0.10140774281568729,
+          "reference_rms": 0.10140774281568729,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0,
+          "active_log_spectral_rms_db": 0.0,
+          "active_spectral_bins": 67450,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        },
+        "engineering_speech_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 101120,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "snr_db": 280.5153124833368,
+          "peak": 0.5751953125,
+          "reference_peak": 0.5751953125,
+          "rms": 0.10611227462177354,
+          "reference_rms": 0.10611227462177354,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0,
+          "active_log_spectral_rms_db": 0.0,
+          "active_spectral_bins": 67450,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        }
+      },
+      {
+        "name": "hot-neutral-short-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "engineering_full_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 110720,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "snr_db": 280.1214223215931,
+          "peak": 0.5751953125,
+          "reference_peak": 0.5751953125,
+          "rms": 0.10140774281568729,
+          "reference_rms": 0.10140774281568729,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0,
+          "active_log_spectral_rms_db": 0.0,
+          "active_spectral_bins": 67450,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        },
+        "engineering_speech_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 101120,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "snr_db": 280.5153124833368,
+          "peak": 0.5751953125,
+          "reference_peak": 0.5751953125,
+          "rms": 0.10611227462177354,
+          "reference_rms": 0.10611227462177354,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0,
+          "active_log_spectral_rms_db": 0.0,
+          "active_spectral_bins": 67450,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        }
+      },
+      {
+        "name": "hot-neutral-long-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": false,
+        "left_pcm_sha256": "7a47db5136a1b09ef11fc9122ee0fa58ee8be5377e3314ea6a8154169d150ac9",
+        "right_pcm_sha256": "535fb45b1aefc6179b9ca4863e995c0cb486b8a936627c3ef50933cab2dd2049",
+        "max_abs_lsb": 8,
+        "different_samples": 3729,
+        "original_tolerance": {
+          "passed": false,
+          "max_abs_error": 0.000244140625,
+          "rmse": 4.4833713658421866e-06,
+          "outside_tolerance": 495,
+          "elements": 814720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "engineering_full_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 814720,
+          "max_abs_error": 0.000244140625,
+          "rmse": 4.4833713658421866e-06,
+          "snr_db": 86.52783402896543,
+          "peak": 0.63330078125,
+          "reference_peak": 0.63330078125,
+          "rms": 0.0950597053961697,
+          "reference_rms": 0.09505969471255937,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 3.347742716166502e-05,
+          "active_log_spectral_rms_db": 0.0034374109445328106,
+          "active_spectral_bins": 558968,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        },
+        "engineering_speech_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 805120,
+          "max_abs_error": 0.000244140625,
+          "rmse": 4.510021321369258e-06,
+          "snr_db": 86.52783402896543,
+          "peak": 0.63330078125,
+          "reference_peak": 0.63330078125,
+          "rms": 0.095624757165141,
+          "reference_rms": 0.0956247464180254,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 3.347742716169899e-05,
+          "active_log_spectral_rms_db": 0.0034374109445328106,
+          "active_spectral_bins": 558968,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        }
+      },
+      {
+        "name": "hot-neutral-multi-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": false,
+        "left_pcm_sha256": "ac42407ed1358bec35cc1c95da9274f6063477ad19f011e700a875526b4e5f02",
+        "right_pcm_sha256": "2ce4d9da50fff0fd87efdd9174e3e4794d7165a803049cef49775463d9fdb0d8",
+        "max_abs_lsb": 32,
+        "different_samples": 143225,
+        "original_tolerance": {
+          "passed": false,
+          "max_abs_error": 0.0009765625,
+          "rmse": 6.78255958457468e-05,
+          "outside_tolerance": 56147,
+          "elements": 456320,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "engineering_full_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 456320,
+          "max_abs_error": 0.0009765625,
+          "rmse": 6.78255958457468e-05,
+          "snr_db": 62.87612875838123,
+          "peak": 0.685546875,
+          "reference_peak": 0.685546875,
+          "rms": 0.0944500984955216,
+          "reference_rms": 0.09444958534972399,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0004972105165003117,
+          "active_log_spectral_rms_db": 0.0381646470893124,
+          "active_spectral_bins": 242287,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        },
+        "engineering_speech_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 446720,
+          "max_abs_error": 0.0009765625,
+          "rmse": 6.855050702304356e-05,
+          "snr_db": 62.87612875838123,
+          "peak": 0.685546875,
+          "reference_peak": 0.685546875,
+          "rms": 0.09545956890624821,
+          "reference_rms": 0.09545905027601483,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.000497210516501224,
+          "active_log_spectral_rms_db": 0.0381646470893124,
+          "active_spectral_bins": 242287,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        }
+      },
+      {
+        "name": "hot-neutral-punctuation-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": false,
+        "left_pcm_sha256": "3873ba451721edcc0fedda5724df49f18d5a86654fa8f5019ffc6cb032b4ac9f",
+        "right_pcm_sha256": "4c07a84f6e8ccdba12abedb3d6e06514bc5a2343c5e417c62b14984687bd7811",
+        "max_abs_lsb": 32,
+        "different_samples": 80672,
+        "original_tolerance": {
+          "passed": false,
+          "max_abs_error": 0.0009765625,
+          "rmse": 7.14482585940588e-05,
+          "outside_tolerance": 30805,
+          "elements": 245120,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "engineering_full_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 245120,
+          "max_abs_error": 0.0009765625,
+          "rmse": 7.14482585940588e-05,
+          "snr_db": 61.995622428688044,
+          "peak": 0.59033203125,
+          "reference_peak": 0.58984375,
+          "rms": 0.08990277696485649,
+          "reference_rms": 0.08990270720008187,
+          "absolute_peak_delta": 0.00048828125,
+          "spectral_convergence": 0.0005525847626917368,
+          "active_log_spectral_rms_db": 0.03955863347617174,
+          "active_spectral_bins": 147175,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        },
+        "engineering_speech_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 235520,
+          "max_abs_error": 0.0009765625,
+          "rmse": 7.288986164172813e-05,
+          "snr_db": 61.995622428688044,
+          "peak": 0.59033203125,
+          "reference_peak": 0.58984375,
+          "rms": 0.09171673464299716,
+          "reference_rms": 0.09171666347058696,
+          "absolute_peak_delta": 0.00048828125,
+          "spectral_convergence": 0.000552584550255495,
+          "active_log_spectral_rms_db": 0.03955863347617174,
+          "active_spectral_bins": 147175,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        }
+      },
+      {
+        "name": "after-idle-unload-first",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "engineering_full_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 110720,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "snr_db": 280.1214223215931,
+          "peak": 0.5751953125,
+          "reference_peak": 0.5751953125,
+          "rms": 0.10140774281568729,
+          "reference_rms": 0.10140774281568729,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0,
+          "active_log_spectral_rms_db": 0.0,
+          "active_spectral_bins": 67450,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        },
+        "engineering_speech_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 101120,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "snr_db": 280.5153124833368,
+          "peak": 0.5751953125,
+          "reference_peak": 0.5751953125,
+          "rms": 0.10611227462177354,
+          "reference_rms": 0.10611227462177354,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0,
+          "active_log_spectral_rms_db": 0.0,
+          "active_spectral_bins": 67450,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        }
+      },
+      {
+        "name": "after-idle-unload-hot",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "engineering_full_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 110720,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "snr_db": 280.1214223215931,
+          "peak": 0.5751953125,
+          "reference_peak": 0.5751953125,
+          "rms": 0.10140774281568729,
+          "reference_rms": 0.10140774281568729,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0,
+          "active_log_spectral_rms_db": 0.0,
+          "active_spectral_bins": 67450,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        },
+        "engineering_speech_pcm": {
+          "shape_equal": true,
+          "finite": true,
+          "samples": 101120,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "snr_db": 280.5153124833368,
+          "peak": 0.5751953125,
+          "reference_peak": 0.5751953125,
+          "rms": 0.10611227462177354,
+          "reference_rms": 0.10611227462177354,
+          "absolute_peak_delta": 0.0,
+          "spectral_convergence": 0.0,
+          "active_log_spectral_rms_db": 0.0,
+          "active_spectral_bins": 67450,
+          "samples_outside_unit_range": 0,
+          "reference_samples_outside_unit_range": 0,
+          "checks": {
+            "max_abs_error": true,
+            "rmse": true,
+            "snr": true,
+            "amplitude": true,
+            "spectral_convergence": true,
+            "active_log_spectral_rms": true
+          },
+          "passed": true
+        }
+      }
+    ],
+    "worker_to_timing": [
+      {
+        "name": "first-neutral-short",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "hot-neutral-short-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "hot-neutral-long-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "535fb45b1aefc6179b9ca4863e995c0cb486b8a936627c3ef50933cab2dd2049",
+        "right_pcm_sha256": "535fb45b1aefc6179b9ca4863e995c0cb486b8a936627c3ef50933cab2dd2049",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 814720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "hot-neutral-multi-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "2ce4d9da50fff0fd87efdd9174e3e4794d7165a803049cef49775463d9fdb0d8",
+        "right_pcm_sha256": "2ce4d9da50fff0fd87efdd9174e3e4794d7165a803049cef49775463d9fdb0d8",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 456320,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "hot-neutral-punctuation-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "4c07a84f6e8ccdba12abedb3d6e06514bc5a2343c5e417c62b14984687bd7811",
+        "right_pcm_sha256": "4c07a84f6e8ccdba12abedb3d6e06514bc5a2343c5e417c62b14984687bd7811",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 245120,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "after-idle-unload-first",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "after-idle-unload-hot",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      }
+    ],
+    "shared_to_timing": [
+      {
+        "name": "first-neutral-short",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "hot-neutral-short-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "hot-neutral-long-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "535fb45b1aefc6179b9ca4863e995c0cb486b8a936627c3ef50933cab2dd2049",
+        "right_pcm_sha256": "535fb45b1aefc6179b9ca4863e995c0cb486b8a936627c3ef50933cab2dd2049",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 814720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "hot-neutral-multi-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "2ce4d9da50fff0fd87efdd9174e3e4794d7165a803049cef49775463d9fdb0d8",
+        "right_pcm_sha256": "2ce4d9da50fff0fd87efdd9174e3e4794d7165a803049cef49775463d9fdb0d8",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 456320,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "hot-neutral-punctuation-00",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "4c07a84f6e8ccdba12abedb3d6e06514bc5a2343c5e417c62b14984687bd7811",
+        "right_pcm_sha256": "4c07a84f6e8ccdba12abedb3d6e06514bc5a2343c5e417c62b14984687bd7811",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 245120,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "after-idle-unload-first",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      },
+      {
+        "name": "after-idle-unload-hot",
+        "parameters_reference_frontend_tokens_stops_shapes_equal": true,
+        "complete_pcm_bytes_equal": true,
+        "left_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "right_pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+        "max_abs_lsb": 0,
+        "different_samples": 0,
+        "original_tolerance": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 110720,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      }
+    ]
+  },
+  "fp32_original_graph": {
+    "directory": "outputs/windows-acoustic/shrink-fp32-original-replay",
+    "status": "completed",
+    "source_files_changed_during_run": [],
+    "sources_sha256": {
+      "harness/windows_nvidia_benchmark.py": "ec15a149d2d92db960509bf21b8fc1506cc6d416936ec0b388b42d528ac2d6d8",
+      "scripts/windows_official_baseline.py": "e648462f9cd053fbe63d83730ab999428a865bac3f225eaef8444578c1978a27",
+      "src/sakuratts/nvidia.py": "b1e7daabbed17142b9f6ed4aa3b379532da3673623bb4a8a8a588e597d7e6acf",
+      "src/sakuratts/cuda_gpt.py": "30666267ba9d92969ecf5bbbdf14879f47e197b6c9ea78726972165ed370f358",
+      "src/sakuratts/ort_sovits.py": "2e709e3a8b3d81bc29368725270cbc77568ebd3a59b4f2abb2f1e1a0efbb795c",
+      "src/sakuratts/ort_process.py": "03a512a26eb824ae6a82c391a9adaa5bfeb2101040f62bece3f3c8df1b03d297",
+      "src/sakuratts/ort_worker.py": "876dcefb2660c8203c8384832f1fb0649802b2c1ca4a4ac96f5e750974dc4a75",
+      "src/sakuratts/synthesis.py": "c3c5217e10ca234e2e4fe193c3f8b967bff290f84560400e37d990cbdc6a8e69",
+      "src/sakuratts/generation.py": "6e73ce32d56c51d48a98922ebbc9056a1d4c736f9e442423cbec87936ab8477b",
+      "src/sakuratts/sampling.py": "7df53036344bc5396f666b7c743a7a596707c4524a5a501f2866d442db14804e",
+      "src/sakuratts/text_frontend.py": "ef15a611e35020cc03830b7cecf7f2257723df6de6f0ac0b4752e6aed37f53a9",
+      "src/sakuratts/japanese.py": "5aafbda8cc06408e2344b39ae40da4e8b6daa2d9382cdc336a0b73756ef750d9",
+      "src/sakuratts/classic_japanese.py": "eb6d50a9febb17c04ca46a9ad811ffc8e93f481f88a179dc4dd4781d41318296",
+      "src/sakuratts/classic_japanese_worker.py": "669e3dc50688b61d0a8caefb0ab1a400a85d02ccf4ea3e5dd4de614bd233e0d9",
+      "src/sakuratts/cuda_runtime.py": "d9fbcfbfebeccf6b4c16570167c1712d3496806d1409542a1061672d36a1f107",
+      "src/sakuratts/array_protocol.py": "71cae8a55fecf3bf2d03a06e3646c22995951995fa29e4e6f06c41710e540eac",
+      "src/sakuratts/reference_condition.py": "672f6bafe6b23aaadc7bd9c5eb8a7ff4f4072cdfb598794a6cbcf8ad55676df6",
+      "src/sakuratts/weight_storage.py": "7ff939a4e627be161ee06baf711bf690a9e22fd4e4164a90753247a7bccd5234"
+    },
+    "config_sha256": "94c7738d29f982b86eac770eef96f22855c4c4367deaa9cb8a75a616070f6d54",
+    "gpt_precision": "fp32",
+    "acoustic_precision": "fp32",
+    "acoustic_arena_shrink": true,
+    "checks": [
+      {
+        "name": "first-neutral-short",
+        "recorded_replay_checks": {
+          "one_fragment": true,
+          "sample_rate_equal": true,
+          "phones_equal": true,
+          "sampled_tokens_equal": true,
+          "semantic_tokens_equal": true,
+          "returned_index_equal": true,
+          "completed_without_limit": true,
+          "pcm_length_equal": true,
+          "pcm_max_abs_lsb": 1,
+          "pcm_different_samples": 518,
+          "pcm_outside_fp32_tolerance": 0,
+          "pcm_within_fp32_tolerance": true,
+          "passed": true
+        },
+        "independent_complete_pcm_check": {
+          "passed": true,
+          "max_abs_error": 3.0517578125e-05,
+          "rmse": 2.731896684239802e-06,
+          "outside_tolerance": 0,
+          "elements": 64640,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "wav_sha256": "43c675c936550966c05d775266456d48189c59309865a7ce2bf769431236fdf7",
+        "capture_wav_sha256": "081e4d7c9616fc8c035cea8d81c1c58718500e0ab7278c392ad5593af75c4918"
+      },
+      {
+        "name": "hot-neutral-short-00",
+        "recorded_replay_checks": {
+          "one_fragment": true,
+          "sample_rate_equal": true,
+          "phones_equal": true,
+          "sampled_tokens_equal": true,
+          "semantic_tokens_equal": true,
+          "returned_index_equal": true,
+          "completed_without_limit": true,
+          "pcm_length_equal": true,
+          "pcm_max_abs_lsb": 1,
+          "pcm_different_samples": 516,
+          "pcm_outside_fp32_tolerance": 0,
+          "pcm_within_fp32_tolerance": true,
+          "passed": true
+        },
+        "independent_complete_pcm_check": {
+          "passed": true,
+          "max_abs_error": 3.0517578125e-05,
+          "rmse": 2.7266176518978393e-06,
+          "outside_tolerance": 0,
+          "elements": 64640,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "wav_sha256": "f990611ab6e18bab4bdf9c7b5e286581be2f9b35f4248cabc2397a4fead5e2fc",
+        "capture_wav_sha256": "081e4d7c9616fc8c035cea8d81c1c58718500e0ab7278c392ad5593af75c4918"
+      },
+      {
+        "name": "hot-neutral-long-00",
+        "recorded_replay_checks": {
+          "one_fragment": true,
+          "sample_rate_equal": true,
+          "phones_equal": true,
+          "sampled_tokens_equal": true,
+          "semantic_tokens_equal": true,
+          "returned_index_equal": true,
+          "completed_without_limit": true,
+          "pcm_length_equal": true,
+          "pcm_max_abs_lsb": 2,
+          "pcm_different_samples": 13441,
+          "pcm_outside_fp32_tolerance": 0,
+          "pcm_within_fp32_tolerance": true,
+          "passed": true
+        },
+        "independent_complete_pcm_check": {
+          "passed": true,
+          "max_abs_error": 6.103515625e-05,
+          "rmse": 3.7862253142277244e-06,
+          "outside_tolerance": 0,
+          "elements": 873600,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "wav_sha256": "b1d5e630e5972209c401ac5e5833b6d02b5b0c34e688eb4993c9a0a4cc260227",
+        "capture_wav_sha256": "87a1a0cf1c2fd3bd7fc0bca4104cd8b381f7f51f8050ce7ae49ddd110c0e27d0"
+      },
+      {
+        "name": "hot-neutral-multi-00",
+        "recorded_replay_checks": {
+          "one_fragment": true,
+          "sample_rate_equal": true,
+          "phones_equal": true,
+          "sampled_tokens_equal": true,
+          "semantic_tokens_equal": true,
+          "returned_index_equal": true,
+          "completed_without_limit": true,
+          "pcm_length_equal": true,
+          "pcm_max_abs_lsb": 3,
+          "pcm_different_samples": 3943,
+          "pcm_outside_fp32_tolerance": 0,
+          "pcm_within_fp32_tolerance": true,
+          "passed": true
+        },
+        "independent_complete_pcm_check": {
+          "passed": true,
+          "max_abs_error": 9.1552734375e-05,
+          "rmse": 3.3499611505227527e-06,
+          "outside_tolerance": 0,
+          "elements": 339840,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "wav_sha256": "2424c92eae90172976df518e49a2e9fe62eae87a963749a4144a4dea18610ff0",
+        "capture_wav_sha256": "85a824f9ad0edeb84088853724d9779ef71391a0441d17d3be1e1ab98149efaa"
+      },
+      {
+        "name": "hot-neutral-punctuation-00",
+        "recorded_replay_checks": {
+          "one_fragment": true,
+          "sample_rate_equal": true,
+          "phones_equal": true,
+          "sampled_tokens_equal": true,
+          "semantic_tokens_equal": true,
+          "returned_index_equal": true,
+          "completed_without_limit": true,
+          "pcm_length_equal": true,
+          "pcm_max_abs_lsb": 1,
+          "pcm_different_samples": 2313,
+          "pcm_outside_fp32_tolerance": 0,
+          "pcm_within_fp32_tolerance": true,
+          "passed": true
+        },
+        "independent_complete_pcm_check": {
+          "passed": true,
+          "max_abs_error": 3.0517578125e-05,
+          "rmse": 2.834267800923869e-06,
+          "outside_tolerance": 0,
+          "elements": 268160,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "wav_sha256": "fdf5373677645fc5552a31a6f86afe894bd7ad49c62aac005dd4149ac8199838",
+        "capture_wav_sha256": "45cfd5b0103bb40ef0d9d561ddac46ae58402862be4e4ac4ebfe53af03bdb11d"
+      },
+      {
+        "name": "after-idle-unload-first",
+        "recorded_replay_checks": {
+          "one_fragment": true,
+          "sample_rate_equal": true,
+          "phones_equal": true,
+          "sampled_tokens_equal": true,
+          "semantic_tokens_equal": true,
+          "returned_index_equal": true,
+          "completed_without_limit": true,
+          "pcm_length_equal": true,
+          "pcm_max_abs_lsb": 1,
+          "pcm_different_samples": 518,
+          "pcm_outside_fp32_tolerance": 0,
+          "pcm_within_fp32_tolerance": true,
+          "passed": true
+        },
+        "independent_complete_pcm_check": {
+          "passed": true,
+          "max_abs_error": 3.0517578125e-05,
+          "rmse": 2.731896684239802e-06,
+          "outside_tolerance": 0,
+          "elements": 64640,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "wav_sha256": "acd98fc2dcfd074055ba7aa370ca7400684eb147a971f170f07fddab657f3eff",
+        "capture_wav_sha256": "081e4d7c9616fc8c035cea8d81c1c58718500e0ab7278c392ad5593af75c4918"
+      },
+      {
+        "name": "after-idle-unload-hot",
+        "recorded_replay_checks": {
+          "one_fragment": true,
+          "sample_rate_equal": true,
+          "phones_equal": true,
+          "sampled_tokens_equal": true,
+          "semantic_tokens_equal": true,
+          "returned_index_equal": true,
+          "completed_without_limit": true,
+          "pcm_length_equal": true,
+          "pcm_max_abs_lsb": 1,
+          "pcm_different_samples": 516,
+          "pcm_outside_fp32_tolerance": 0,
+          "pcm_within_fp32_tolerance": true,
+          "passed": true
+        },
+        "independent_complete_pcm_check": {
+          "passed": true,
+          "max_abs_error": 3.0517578125e-05,
+          "rmse": 2.7266176518978393e-06,
+          "outside_tolerance": 0,
+          "elements": 64640,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "wav_sha256": "afc5b053f469db25cdcd825fbfc6212864154d111bf2c7a011a65b9bf6202e06",
+        "capture_wav_sha256": "081e4d7c9616fc8c035cea8d81c1c58718500e0ab7278c392ad5593af75c4918"
+      }
+    ],
+    "artifacts_sha256": {
+      "results.json": "b52f6698dee46579faefbee41b7625b6b63f9c6efb1af19cb6796354be6b7da3",
+      "run-config.json": "fe0ab968266caf14fcd0a7c63ba586f21d9d1680f2f8862c94205fdb0f70cf50",
+      "environment.json": "ed7aaaef05d38fdea02cb9ebf054c8c6b18d8e66ea2630626a09d0542c05d30d"
+    }
+  },
+  "lifecycle": {
+    "path": "outputs/windows-acoustic/polyphase-shrink-lifecycle/result.json",
+    "sha256": "5001fb267e7a3d2dbb0c95ea85d5a07ea72497d071cc9019803c0992665955c7",
+    "report": {
+      "passed": true,
+      "cases": [
+        {
+          "case": "resident_worker_killed_then_retry",
+          "checks": {
+            "raised": true,
+            "busy_cleared": true,
+            "worker_retired": true,
+            "gpt_weights_preserved": true,
+            "request_state_released": true,
+            "pcm_exact": true,
+            "phones_equal": true,
+            "sampled_tokens_equal": true,
+            "stop_reasons_equal": true,
+            "completed": true,
+            "new_worker_pid": true
+          },
+          "pcm_comparison": {
+            "length_equal": true,
+            "max_abs_lsb": 0,
+            "different_samples": 0,
+            "existing_fp32_atol": 0.0001,
+            "existing_fp32_rtol": 1e-05,
+            "within_existing_fp32_tolerance": true
+          },
+          "error": "OSError(22, 'Invalid argument')",
+          "killed_pid": 27428,
+          "recovered_pid": 12020
+        },
+        {
+          "case": "staged_semantic_cancellation_then_retry",
+          "checks": {
+            "cancelled_at_expected_stage": true,
+            "busy_cleared": true,
+            "gpt_unloaded": true,
+            "sovits_unloaded": true,
+            "pcm_exact": true,
+            "phones_equal": true,
+            "sampled_tokens_equal": true,
+            "stop_reasons_equal": true,
+            "completed": true,
+            "retry_unloaded_all_models": true
+          },
+          "pcm_comparison": {
+            "length_equal": true,
+            "max_abs_lsb": 0,
+            "different_samples": 0,
+            "existing_fp32_atol": 0.0001,
+            "existing_fp32_rtol": 1e-05,
+            "within_existing_fp32_tolerance": true
+          },
+          "cancellation_stage": "after_prefill"
+        },
+        {
+          "case": "staged_acoustic_cancellation_then_retry",
+          "checks": {
+            "cancelled_at_expected_stage": true,
+            "busy_cleared": true,
+            "gpt_unloaded": true,
+            "sovits_unloaded": true,
+            "pcm_exact": true,
+            "phones_equal": true,
+            "sampled_tokens_equal": true,
+            "stop_reasons_equal": true,
+            "completed": true,
+            "retry_unloaded_all_models": true
+          },
+          "pcm_comparison": {
+            "length_equal": true,
+            "max_abs_lsb": 0,
+            "different_samples": 0,
+            "existing_fp32_atol": 0.0001,
+            "existing_fp32_rtol": 1e-05,
+            "within_existing_fp32_tolerance": true
+          },
+          "cancellation_stage": "before_acoustic"
+        }
+      ],
+      "text": "おはよう。今日もよろしくね。",
+      "lifecycle_passed": true,
+      "numerical_within_existing_tolerance": true,
+      "bitwise_equal": true,
+      "seed": 1234,
+      "rng": "numpy.default_rng; same backend retries",
+      "gpt_precision": "fp16",
+      "acoustic_precision": "fp16",
+      "acoustic_arena_shrink": true,
+      "gpt_attention": "baseline",
+      "gpt_attention_chunk_size": 256,
+      "model_config_sha256": "151f4c332bda28f2568c8a3659acc853c8a89811107113215d4c0a34647d1128",
+      "source_sha256": {
+        "nvidia.py": "b1e7daabbed17142b9f6ed4aa3b379532da3673623bb4a8a8a588e597d7e6acf",
+        "cuda_gpt.py": "30666267ba9d92969ecf5bbbdf14879f47e197b6c9ea78726972165ed370f358",
+        "ort_process.py": "03a512a26eb824ae6a82c391a9adaa5bfeb2101040f62bece3f3c8df1b03d297",
+        "ort_sovits.py": "2e709e3a8b3d81bc29368725270cbc77568ebd3a59b4f2abb2f1e1a0efbb795c"
+      },
+      "wall_seconds": 14.19244130000152,
+      "torch_imported": false,
+      "scope": "Real GPU models; one neutral short text; no quality/performance claim"
+    }
+  },
+  "cli": {
+    "path": "outputs/windows-acoustic/polyphase-shrink-cli.json",
+    "report_sha256": "5b30be5da871efe68336789fbe8c8a62f9bf60d11970f6599f2b0521af968dd5",
+    "wav_sha256": "39f29a252507c7a7fa1064601960dc92bd965197d3b101af999b0e9eb4e880f7",
+    "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+    "pcm_samples": 110720,
+    "status": "completed",
+    "config_sha256": "151f4c332bda28f2568c8a3659acc853c8a89811107113215d4c0a34647d1128",
+    "gpt_precision": "fp16",
+    "acoustic_precision": "fp16",
+    "acoustic_arena_shrink": true,
+    "pcm_seconds": 3.46,
+    "matches_worker_first_request_bytes": true,
+    "torch_imported": false,
+    "executed_source_hashes_recorded": false
+  },
+  "wddm_public_flag": {
+    "path": "outputs/windows-wddm-memory/polyphase-shrink-both-fp16-worker/result.json",
+    "sha256": "4d62cb780253b3eec30a5bc096bc670c5a64604ee9d0892f5af357fff2289275",
+    "status": "completed",
+    "source_sha256": {
+      "harness/windows_wddm_synthesis.py": "e8b1d986c79bb2e21ec461857339db8c1c7ae6e0381a59381407d30c1390d0fc",
+      "harness/windows_wddm_memory.py": "299296025cf277f7b20ddf15c1321fce58340ed7654420845026d27a480dfaa2",
+      "src/sakuratts/nvidia.py": "b1e7daabbed17142b9f6ed4aa3b379532da3673623bb4a8a8a588e597d7e6acf",
+      "src/sakuratts/cuda_gpt.py": "30666267ba9d92969ecf5bbbdf14879f47e197b6c9ea78726972165ed370f358",
+      "src/sakuratts/ort_sovits.py": "2e709e3a8b3d81bc29368725270cbc77568ebd3a59b4f2abb2f1e1a0efbb795c",
+      "src/sakuratts/ort_process.py": "03a512a26eb824ae6a82c391a9adaa5bfeb2101040f62bece3f3c8df1b03d297"
+    },
+    "config_sha256": "151f4c332bda28f2568c8a3659acc853c8a89811107113215d4c0a34647d1128",
+    "acoustic_arena_shrink": true,
+    "scope": "Boundary samples after 150 ms settling. WDDM process-attributed counters may double-count shared allocations; no cross-PID sum or residency claim. Request durations are diagnostic only; transient peaks are not captured.",
+    "snapshots": [
+      {
+        "label": "before_engine",
+        "roles": {
+          "main": 8660
+        },
+        "process_rss_bytes": {
+          "main": 44392448
+        },
+        "process_counters": [
+          {
+            "scope": "process",
+            "metric": "dedicated_bytes",
+            "status": "0x00000000",
+            "rows": [],
+            "unparsed_instances": []
+          },
+          {
+            "scope": "process",
+            "metric": "shared_bytes",
+            "status": "0x00000000",
+            "rows": [],
+            "unparsed_instances": []
+          },
+          {
+            "scope": "process",
+            "metric": "committed_bytes",
+            "status": "0x00000000",
+            "rows": [],
+            "unparsed_instances": []
+          }
+        ],
+        "pids_without_instances": [
+          8660
+        ],
+        "cupy_pool": null,
+        "wholecard_uuid_name_used_mib_total_mib": [
+          [
+            "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+            " NVIDIA GeForce RTX 5060",
+            " 2155",
+            " 8151"
+          ]
+        ]
+      },
+      {
+        "label": "frontend_ready",
+        "roles": {
+          "main": 8660,
+          "frontend": 46248
+        },
+        "process_rss_bytes": {
+          "main": 63610880,
+          "frontend": 34344960
+        },
+        "process_counters": [
+          {
+            "scope": "process",
+            "metric": "dedicated_bytes",
+            "status": "0x00000000",
+            "rows": [],
+            "unparsed_instances": []
+          },
+          {
+            "scope": "process",
+            "metric": "shared_bytes",
+            "status": "0x00000000",
+            "rows": [],
+            "unparsed_instances": []
+          },
+          {
+            "scope": "process",
+            "metric": "committed_bytes",
+            "status": "0x00000000",
+            "rows": [],
+            "unparsed_instances": []
+          }
+        ],
+        "pids_without_instances": [
+          8660,
+          46248
+        ],
+        "cupy_pool": null,
+        "wholecard_uuid_name_used_mib_total_mib": [
+          [
+            "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+            " NVIDIA GeForce RTX 5060",
+            " 2155",
+            " 8151"
+          ]
+        ]
+      },
+      {
+        "label": "models_loaded",
+        "roles": {
+          "main": 8660,
+          "frontend": 46248,
+          "acoustic": 8292
+        },
+        "process_rss_bytes": {
+          "main": 382468096,
+          "frontend": 34344960,
+          "acoustic": 389533696
+        },
+        "process_counters": [
+          {
+            "scope": "process",
+            "metric": "dedicated_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8292_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8292,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 259538944,
+                "duplicate_identity": false
+              },
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 276328448,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          },
+          {
+            "scope": "process",
+            "metric": "shared_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8292_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8292,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 79691776,
+                "duplicate_identity": false
+              },
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 85983232,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          },
+          {
+            "scope": "process",
+            "metric": "committed_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8292_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8292,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 339230720,
+                "duplicate_identity": false
+              },
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 362311680,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          }
+        ],
+        "pids_without_instances": [
+          46248
+        ],
+        "cupy_pool": {
+          "used_bytes": 159309824,
+          "total_bytes": 159309824
+        },
+        "wholecard_uuid_name_used_mib_total_mib": [
+          [
+            "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+            " NVIDIA GeForce RTX 5060",
+            " 2665",
+            " 8151"
+          ]
+        ]
+      },
+      {
+        "label": "after_short",
+        "roles": {
+          "main": 8660,
+          "frontend": 46248,
+          "acoustic": 8292
+        },
+        "process_rss_bytes": {
+          "main": 961851392,
+          "frontend": 35102720,
+          "acoustic": 1162698752
+        },
+        "process_counters": [
+          {
+            "scope": "process",
+            "metric": "dedicated_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8292_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8292,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 272121856,
+                "duplicate_identity": false
+              },
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 395866112,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          },
+          {
+            "scope": "process",
+            "metric": "shared_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8292_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8292,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 79691776,
+                "duplicate_identity": false
+              },
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 85983232,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          },
+          {
+            "scope": "process",
+            "metric": "committed_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8292_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8292,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 351813632,
+                "duplicate_identity": false
+              },
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 481849344,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          }
+        ],
+        "pids_without_instances": [
+          46248
+        ],
+        "cupy_pool": {
+          "used_bytes": 259989504,
+          "total_bytes": 277232640
+        },
+        "wholecard_uuid_name_used_mib_total_mib": [
+          [
+            "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+            " NVIDIA GeForce RTX 5060",
+            " 2790",
+            " 8151"
+          ]
+        ]
+      },
+      {
+        "label": "after_long",
+        "roles": {
+          "main": 8660,
+          "frontend": 46248,
+          "acoustic": 8292
+        },
+        "process_rss_bytes": {
+          "main": 964370432,
+          "frontend": 37433344,
+          "acoustic": 1186611200
+        },
+        "process_counters": [
+          {
+            "scope": "process",
+            "metric": "dedicated_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8292_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8292,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 272121856,
+                "duplicate_identity": false
+              },
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 452489216,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          },
+          {
+            "scope": "process",
+            "metric": "shared_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8292_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8292,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 79691776,
+                "duplicate_identity": false
+              },
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 85983232,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          },
+          {
+            "scope": "process",
+            "metric": "committed_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8292_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8292,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 351813632,
+                "duplicate_identity": false
+              },
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 538472448,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          }
+        ],
+        "pids_without_instances": [
+          46248
+        ],
+        "cupy_pool": {
+          "used_bytes": 259989504,
+          "total_bytes": 330963456
+        },
+        "wholecard_uuid_name_used_mib_total_mib": [
+          [
+            "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+            " NVIDIA GeForce RTX 5060",
+            " 2844",
+            " 8151"
+          ]
+        ]
+      },
+      {
+        "label": "after_short",
+        "roles": {
+          "main": 8660,
+          "frontend": 46248,
+          "acoustic": 8292
+        },
+        "process_rss_bytes": {
+          "main": 962969600,
+          "frontend": 37437440,
+          "acoustic": 1186631680
+        },
+        "process_counters": [
+          {
+            "scope": "process",
+            "metric": "dedicated_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8292_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8292,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 272121856,
+                "duplicate_identity": false
+              },
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 452489216,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          },
+          {
+            "scope": "process",
+            "metric": "shared_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8292_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8292,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 79691776,
+                "duplicate_identity": false
+              },
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 85983232,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          },
+          {
+            "scope": "process",
+            "metric": "committed_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8292_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8292,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 351813632,
+                "duplicate_identity": false
+              },
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 538472448,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          }
+        ],
+        "pids_without_instances": [
+          46248
+        ],
+        "cupy_pool": {
+          "used_bytes": 259989504,
+          "total_bytes": 330963456
+        },
+        "wholecard_uuid_name_used_mib_total_mib": [
+          [
+            "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+            " NVIDIA GeForce RTX 5060",
+            " 2844",
+            " 8151"
+          ]
+        ]
+      },
+      {
+        "label": "unloaded",
+        "roles": {
+          "main": 8660,
+          "frontend": 46248,
+          "acoustic": 8292
+        },
+        "process_rss_bytes": {
+          "main": 963047424,
+          "frontend": 37437440,
+          "acoustic": null
+        },
+        "process_counters": [
+          {
+            "scope": "process",
+            "metric": "dedicated_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 106459136,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          },
+          {
+            "scope": "process",
+            "metric": "shared_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 85983232,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          },
+          {
+            "scope": "process",
+            "metric": "committed_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 192442368,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          }
+        ],
+        "pids_without_instances": [
+          8292,
+          46248
+        ],
+        "cupy_pool": {
+          "used_bytes": 0,
+          "total_bytes": 0
+        },
+        "wholecard_uuid_name_used_mib_total_mib": [
+          [
+            "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+            " NVIDIA GeForce RTX 5060",
+            " 2255",
+            " 8151"
+          ]
+        ]
+      },
+      {
+        "label": "closed",
+        "roles": {
+          "main": 8660,
+          "frontend": 46248,
+          "acoustic": 8292
+        },
+        "process_rss_bytes": {
+          "main": 829542400,
+          "frontend": null,
+          "acoustic": null
+        },
+        "process_counters": [
+          {
+            "scope": "process",
+            "metric": "dedicated_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 106459136,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          },
+          {
+            "scope": "process",
+            "metric": "shared_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 85983232,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          },
+          {
+            "scope": "process",
+            "metric": "committed_bytes",
+            "status": "0x00000000",
+            "rows": [
+              {
+                "instance": "pid_8660_luid_0x00000000_0x0001DF70_phys_0",
+                "pid": 8660,
+                "luid": "0x00000000_0x0001df70",
+                "physical_adapter": 0,
+                "duplicate_index": null,
+                "status": "0x00000000",
+                "valid": true,
+                "bytes": 192442368,
+                "duplicate_identity": false
+              }
+            ],
+            "unparsed_instances": []
+          }
+        ],
+        "pids_without_instances": [
+          8292,
+          46248
+        ],
+        "cupy_pool": {
+          "used_bytes": 0,
+          "total_bytes": 0
+        },
+        "wholecard_uuid_name_used_mib_total_mib": [
+          [
+            "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+            " NVIDIA GeForce RTX 5060",
+            " 2255",
+            " 8151"
+          ]
+        ]
+      }
+    ],
+    "request_pcm_hashes_match_worker": true,
+    "requests": [
+      {
+        "case": "short",
+        "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5"
+      },
+      {
+        "case": "long",
+        "pcm_sha256": "535fb45b1aefc6179b9ca4863e995c0cb486b8a936627c3ef50933cab2dd2049"
+      },
+      {
+        "case": "short",
+        "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5"
+      }
+    ]
+  },
+  "verification": {
+    "gpu_rerun_during_assembly": false,
+    "paired_worker_shared_requests": 7,
+    "matched_memory_timing_requests_per_topology": 7,
+    "prior_candidate_pairs_per_topology": 7,
+    "prior_candidate_strict_passes_per_topology": 4,
+    "prior_candidate_engineering_full_and_speech_passes_per_topology": 7,
+    "fp32_original_strict_passes": 7,
+    "lifecycle_cases_passed": 3,
+    "cli_complete_pcm_rechecked": true,
+    "wddm_hash_matches": 3,
+    "quality_acceptance": "Human listening and ASR not run"
+  }
+}

@@ -220,6 +220,7 @@ def main():
     parser.add_argument("--capacity", type=int, default=2048)
     parser.add_argument("--gpt-precision", choices=("fp32", "fp16"), default="fp32")
     parser.add_argument("--allow-experimental-acoustic-fp16", action="store_true")
+    parser.add_argument("--acoustic-arena-shrink", action="store_true")
     parser.add_argument("--gpt-attention", choices=("baseline", "split-kv"), default="baseline")
     parser.add_argument("--gpt-attention-chunk-size", type=int, choices=(256, 512), default=256)
     parser.add_argument("--no-memory-sampler", action="store_true",
@@ -260,6 +261,7 @@ def main():
         "manifests": manifests, "policy": args.policy, "cuda_graph": not args.no_cuda_graph,
         "capacity": args.capacity, "gpt_precision": args.gpt_precision,
         "allow_experimental_acoustic_fp16": args.allow_experimental_acoustic_fp16,
+        "acoustic_arena_shrink": args.acoustic_arena_shrink,
         "acoustic_precision": "fp16" if manifests["sovits"]["value"]["dtype"] == "float16" else "fp32",
         "gpt_attention": args.gpt_attention, "gpt_attention_chunk_size": args.gpt_attention_chunk_size,
         "repeats": args.repeats, "cases": {name: TEXT_CASES[name] for name in selected},
@@ -307,6 +309,7 @@ def main():
             "precision": {"gpt": args.gpt_precision, "acoustic": preparation["acoustic_precision"], "tf32": False,
                           "fp16_status": "experimental, not quality accepted"},
             "gpt_attention": {"mode": args.gpt_attention, "chunk_size": args.gpt_attention_chunk_size},
+            "acoustic_arena_shrink": args.acoustic_arena_shrink,
             "quality": "Human listening and ASR are not run"}})
     result = {"status": "running", "policy": args.policy, "requests": [], "snapshots": [], "load_events": [], "errors": []}
     engine = None
@@ -341,7 +344,8 @@ def main():
         engine = NVIDIAEngine(config_path, policy=args.policy, use_graph=not args.no_cuda_graph,
                               capacity=args.capacity, gpt_precision=args.gpt_precision,
                               gpt_attention=args.gpt_attention, gpt_attention_chunk_size=args.gpt_attention_chunk_size,
-                              allow_experimental_acoustic_fp16=args.allow_experimental_acoustic_fp16)
+                              allow_experimental_acoustic_fp16=args.allow_experimental_acoustic_fp16,
+                              acoustic_arena_shrink=args.acoustic_arena_shrink)
         result["engine_construction_ms"] = (time.perf_counter() - t0) * 1000
 
         def wrap_loader(name, attribute):
