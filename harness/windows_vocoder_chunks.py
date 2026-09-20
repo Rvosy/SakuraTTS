@@ -69,6 +69,8 @@ def main():
                         help="Record original-model shape controls; comparisons then check repeats only")
     parser.add_argument("--split-reference", type=Path)
     parser.add_argument("--profile", action="store_true")
+    parser.add_argument("--gpu-latent", action="store_true")
+    parser.add_argument("--transfer-reference", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--execution", choices=("original", "split", "chunked"), required=True)
     parser.add_argument("--mode", choices=("check", "timing", "memory"), required=True)
@@ -85,6 +87,10 @@ def main():
         parser.error("Chunk execution requires a fresh split-full --split-reference")
     if args.split_reference and args.execution != "chunked":
         parser.error("Split reference is only used for chunked execution")
+    if args.gpu_latent and (args.execution != "chunked" or args.transfer_reference is None):
+        parser.error("GPU latent requires chunked execution and the host-chunk --transfer-reference")
+    if args.transfer_reference and not args.gpu_latent:
+        parser.error("Transfer reference requires --gpu-latent")
     if args.profile and args.mode != "check":
         parser.error("Profiling is restricted to check mode")
     if args.record_baseline:
@@ -114,6 +120,7 @@ def main():
         "reference_sha256": (None if args.record_baseline else
             {name: sha256_file(args.reference_output/f"{name}.npz") for name in mapping}),
         "chunk_frames": args.chunk_frames, "arena_shrink": True, "profile": args.profile, "cases": {},
+        "gpu_latent": args.gpu_latent,
         "scope": "Fixed full-context acoustic inputs. Full encoder/flow, then full or halo-chunked vocoder. No fading or padded artificial latent frames. Resource-run timings are ineligible."}
     monitor, model, sessions, dll_handle = None, None, {}, None
     try:
@@ -139,7 +146,17 @@ def main():
         report.update(onnxruntime=ort.__version__, python=sys.version, numpy=np.__version__, ort_path=ort.__file__)
         run_options = ort.RunOptions()
         run_options.add_run_config_entry("memory.enable_memory_arena_shrinkage", "gpu:0")
-        if args.execution == "original":
+        if args.gpu_latent:
+            from windows_device_latent import DeviceLatentAdapter
+            report["source_sha256"].update({name: sha256_file(ROOT/name) for name in
+                ("harness/windows_device_latent.py", "harness/windows_chunked_synthesis.py")})
+            model = DeviceLatentAdapter.load_split(args.source, args.split_package, args.rf_spec,
+                chunk_frames=args.chunk_frames, allow_experimental_fp16=True, acoustic_arena_shrink=True,
+                profile_prefix=args.output/"device-profile" if args.profile else None)
+            report["providers"] = model.runtime["providers"]
+            report["split_manifest_sha256"] = model.runtime["split_manifest_sha256"]
+            split_manifest = json.loads((args.split_package/"manifest.json").read_text(encoding="utf-8"))
+        elif args.execution == "original":
             model = ORTSoVITS.load(args.source, allow_experimental_fp16=True, acoustic_arena_shrink=True,
                 profile_prefix=args.output/"original-profile" if args.profile else None)
             report["providers"] = model.provider_options
@@ -188,6 +205,15 @@ def main():
                     or split_result["numpy"] != np.__version__ or split_result["python"] != sys.version):
                 raise ValueError("Split-full control identity or acceptance mismatch")
             report["split_reference_sha256"] = {name: sha256_file(args.split_reference/f"{name}.npz") for name in mapping}
+        if args.gpu_latent:
+            transfer_result = json.loads((args.transfer_reference/"result.json").read_text(encoding="utf-8"))
+            for name in ("source_manifest_sha256", "split_manifest_sha256", "input_sha256", "reference_sha256", "chunk_frames", "providers", "onnxruntime", "numpy", "python"):
+                if transfer_result[name] != report[name]:
+                    raise ValueError(f"Host transfer control differs: {name}")
+            if (transfer_result["status"] != "completed" or transfer_result.get("gpu_latent", False)
+                    or transfer_result["execution"] != "chunked"):
+                raise ValueError("Require an accepted host-chunk transfer control")
+            report["transfer_reference_sha256"] = sha256_file(args.transfer_reference/"result.json")
         for case, input_path in mapping.items():
             with np.load(input_path, allow_pickle=False) as archive:
                 feeds = {name: archive[name] for name in INPUT_NAMES}
@@ -202,6 +228,12 @@ def main():
                 if hashlib.sha256(split_expected.tobytes()).hexdigest() != split_result["cases"][case]["rows"][0]["sha256"]:
                     raise ValueError("Split-full waveform differs from the recorded control")
             expected_pcm = single_fragment_pcm(expected, manifest["config"]["sample_rate"]) if expected is not None else None
+            transfer_expected = None
+            if args.gpu_latent:
+                with np.load(args.transfer_reference/f"{case}.npz", allow_pickle=False) as archive:
+                    transfer_expected = archive["waveform"]
+                if hashlib.sha256(transfer_expected.tobytes()).hexdigest() != transfer_result["cases"][case]["rows"][0]["sha256"]:
+                    raise ValueError("Host chunk waveform differs from its recorded hash")
             rows, first = [], None
             for repetition in range(args.repeats+1):
                 if monitor is not None:
@@ -211,6 +243,10 @@ def main():
                 if model is not None:
                     waveform = model.decode(*(feeds[name] for name in INPUT_NAMES[:-1]), noise_scale=float(feeds["noise_scale"]))
                     latent_ms = None
+                    if args.gpu_latent:
+                        plans = model.last_transfer["plans"]
+                        latent_ms = model.last_transfer["latent_ms"]
+                        seams = [plan["core_sample_start"] for plan in plans[1:]]
                 else:
                     latent = sessions["latent"].run(["decoder_input"], feeds, run_options=run_options)[0]
                     latent_ms = (time.perf_counter()-start)*1000
@@ -250,6 +286,9 @@ def main():
                         "sha256": hashlib.sha256(pcm.tobytes()).hexdigest()}})
                 if split_expected is not None:
                     rows[-1]["split_checks"] = check_output(waveform, split_expected, seams)
+                if args.gpu_latent:
+                    rows[-1]["transfer_checks"] = check_output(waveform, transfer_expected, seams)
+                    rows[-1]["transfers"] = dict(model.last_transfer)
                 print(json.dumps({"case": case, "repetition": repetition, "ms": elapsed,
                     "strict": rows[-1]["checks"]["original_tolerance"]["passed"],
                     "engineering": rows[-1]["checks"]["tight_engineering_passed"]}), flush=True)
@@ -262,10 +301,15 @@ def main():
         report["tight_engineering_passed"] = all(check["tight_engineering_passed"] for check in comparisons)
         report["repeats_bitwise_equal"] = all(row["repeat_bitwise_equal"] for row in checks)
         if args.profile:
-            targets = {"original": model.session} if model is not None else sessions
+            targets = ({"latent": model.session, "vocoder": model.vocoder_session} if args.gpu_latent else
+                       {"original": model.session} if model is not None else sessions)
             report["profiles"] = {name: profile_summary(session.end_profiling()) for name, session in targets.items()}
         passed = (report["original_tolerance_passed"] if manifest["dtype"] == "float32"
                   else report["tight_engineering_passed"] and report["repeats_bitwise_equal"])
+        if args.gpu_latent:
+            # A transfer-only optimization must not introduce FP16 waveform drift.
+            report["transfer_bitwise_equal"] = all(row["transfer_checks"]["bitwise_equal"] for row in checks)
+            passed = passed and report["transfer_bitwise_equal"]
         report.update(status="completed" if passed else "numerical_failure", quality_accepted=False)
         if args.profile and any(p["cpu_neural_compute_events"] for p in report["profiles"].values()):
             report["status"] = "cpu_neural_fallback"

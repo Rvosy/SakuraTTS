@@ -94,7 +94,7 @@ class SplitAcousticAdapter(ORTSoVITS):
 
     @classmethod
     def load_split(cls, package, split_package, rf_spec, *, chunk_frames,
-                   allow_experimental_fp16=False, acoustic_arena_shrink=False):
+                   allow_experimental_fp16=False, acoustic_arena_shrink=False, profile_prefix=None):
         if type(chunk_frames) is not int or chunk_frames < 0:
             raise ValueError("Chunk frames must be a nonnegative integer; zero selects the full control")
         if acoustic_arena_shrink is not True:
@@ -112,6 +112,9 @@ class SplitAcousticAdapter(ORTSoVITS):
                 options.enable_mem_pattern = False
                 options.graph_optimization_level = getattr(ort.GraphOptimizationLevel, settings["ort_graph_optimization_level"])
                 options.use_deterministic_compute = settings["ort_use_deterministic_compute"]
+                if profile_prefix is not None:
+                    options.enable_profiling = True
+                    options.profile_file_prefix = str(profile_prefix) + "-" + kind
                 session = ort.InferenceSession(str(Path(split_package) / split["graphs"][kind]["file"]),
                     sess_options=options, providers=[("CUDAExecutionProvider", {"device_id": "0",
                         "arena_extend_strategy": "kSameAsRequested", "cudnn_conv_algo_search": "HEURISTIC",
