@@ -11,7 +11,8 @@
 - 同固定输入的资源轮，全卡峰值减首个空载样本为 1804→1624 MiB；它包含桌面负载，不是进程独占显存。[GPT 混合精度](experiments/2026-09-20-windows-gpt-fp16.md)的权重/KV 减少 247.93 MiB 是另一项候选，不能加总成组合实测。[Lite 本机对照](experiments/2026-09-20-windows-lite-baseline.md)与[依赖清点](experiments/2026-09-20-windows-runtime-inventory.md)继续作为资源和分发优化依据；0.8 GB 显存、200 MB 运行包尚未实现。下面的 Mac 记录保留各次实验当时的范围。
 - [WDDM 归因](experiments/2026-09-20-windows-wddm-memory.md)把长句后主要保留量定位到声学进程。[arena 回收](experiments/2026-09-20-windows-acoustic-arena.md)已接入 `--acoustic-arena-shrink`，原 FP32 配置的 7 次官方回放通过原容差；声学 FP16 回收前后完整输出逐位一致。[相位重排](experiments/2026-09-20-windows-acoustic-polyphase.md)消除声码器补零大张量，完整 FP32 图改写通过 48 个阶段检查，但同 FP16 的新旧声学波形未通过原严格容差，仍是单独筛查的实验包。
 - 相位重排加回收的完整请求中，GPT FP32 split-KV 的固定长句为 1597.12 ms / 27.30 秒 PCM，同配置独立资源轮的全卡峰值增量为 1508 MiB；双 FP16 自然长句为 2390.18 ms / 25.46 秒 PCM，工作量不同。双 FP16 独立 worker 资源轮全卡峰值增量为 1180 MiB，共享进程实验为 1078 MiB；两轮 7 对 PCM 逐位一致。另一轮完整引擎 WDDM 边界中，声学请求后保持 259.52 MiB，长句后的全卡增量为 689 MiB。峰值与请求后保留量分别计量，不能把 689 MiB 宣称为生成峰值。
-- [声码器分块](experiments/2026-09-20-windows-vocoder-chunks.md)保留完整编码器/flow，只按 11 帧真实上下文拆分局部声码器。FP32 分块通过原容差；FP16 通过独立波形/接缝筛查，严格差异保留。共享进程中，双 FP16 长句为 2390→2361 ms，全卡采样峰值减初值为 1057→701 MiB；FP32 GPT split-KV 固定回放为 1588→1570 ms，1407→1011 MiB。每组有自身的原整图对照，不能混合速度和显存数字。分块目前只在开发 harness 中，工作进程集成、听音与 ASR 尚未验收。
+- [声码器分块](experiments/2026-09-20-windows-vocoder-chunks.md)保留完整编码器/flow，只按 11 帧真实上下文拆分局部声码器。FP32 分块通过原容差；FP16 通过独立波形/接缝筛查，严格差异保留。共享进程中，双 FP16 长句为 2390→2361 ms，全卡采样峰值减初值为 1057→701 MiB；FP32 GPT split-KV 固定回放为 1588→1570 ms，1407→1011 MiB。每组有自身的原整图对照，不能混合速度和显存数字。
+- [独立分块工作进程](experiments/2026-09-20-windows-vocoder-worker.md)已在开发 harness 中接通。双 FP16 自然长句为 2392→2423 ms，全卡采样增量 1153→800 MiB；FP32 GPT split-KV 固定回放为 1591→1567 ms、1578→1126 MiB。两组均通过实际多块长句的工作进程终止后恢复、重复卸载，以及三个阶段的取消 / 重试；同候选重试 PCM 逐位一致。分块的主要收益是峰值显存，公开配置、听音与 ASR 尚未验收。[GPU latent 传递](experiments/2026-09-20-windows-vocoder-device.md)保持逐位一致，但声学耗时和采样显存没有改善，工作进程沿用主机传递。
 
 ## Windows 下一步
 
@@ -21,7 +22,7 @@
 
 固定官方回放使用 `runtime-validation.json` 中的 CUDA 参考；日常 `runtime.json` 使用 CPU 参考，不能混作同输入验收。早期错误参考及首次 Prefill 异常继续保留，后续检查若再出现差异，按原阈值定位，不能用新通过记录覆盖。
 
-固定历史 Profiler 中，不含采样的 Decode 时间主要在 GPU Graph，逐 token 主机与回传约占 2%；这不是整个生成循环的 CPU 占比。下一项执行优化应按剩余设备热点选择，不预设 GPU 采样一定带来明显收益。显存继续针对长句活动峰值：先定位改写后声学激活及工作区，再验证固定整句 latent 的有限感受野 vocoder 分块；请求后回收已经落实，不再把它当作未做的方向。
+固定历史 Profiler 中，不含采样的 Decode 时间主要在 GPU Graph，逐 token 主机与回传约占 2%；这不是整个生成循环的 CPU 占比。下一项执行优化应按当前配置重新定位设备热点，不预设 GPU 采样一定带来明显收益。有限感受野 vocoder 分块和请求后回收已经完成实机实验，后续接入分块产物验收与公开运行配置。GPT 继续分项评估单 token FP16 GEMV 和 32 维注意力头专用内核；已有 profiler 不能直接给出最新组合中两者的独立占比。
 
 约 198 MiB 的 GPT FP16 主存增量主要出现在首次 cuBLAS 运算后的私有常驻分配，具体内部缓存仍待确认。共享 CUDA 进程的峰值较低，但卸载后的主存仍较高，故障隔离和部署边界未定，暂不接入公共入口。运行依赖清点确认了 828.58 MiB 的重复 CUDA DLL，尚未实际删减。分句级 PCM 输出先于句内声学分块，逐项保留精度、采样和分块的独立对照。
 
