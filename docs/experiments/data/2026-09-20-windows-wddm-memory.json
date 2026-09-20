@@ -1,0 +1,1417 @@
+{
+  "scope": "CPU-only derivation of completed boundary probes; no GPU rerun, cross-PID byte totals, peak or performance claims",
+  "host_os_followup": {
+    "command": "Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, BuildNumber",
+    "caption": "Microsoft Windows 11 专业工作站版",
+    "version": "10.0.22631",
+    "build_number": "22631",
+    "source": "Read-only host query after the probes; not embedded in original probe reports"
+  },
+  "units": {
+    "bytes_per_mib": 1048576
+  },
+  "runs": {
+    "both-fp16-worker": {
+      "source_report": "outputs/windows-wddm-memory/both-fp16-worker/result.json",
+      "source_report_sha256": "ce307fe1c26808fc944dadfed1c39663a26a63acaf413a0df579f690c327458c",
+      "status": "completed",
+      "config_sha256": "84a62fcd604a30d6db4f845f93340333e533cafa5d4fee8f8822bb46a653dedf",
+      "gpt_precision": "fp16",
+      "gpt_attention": "baseline",
+      "shared_process": false,
+      "recorded_source_sha256": {
+        "harness/windows_wddm_synthesis.py": "adbf6ce55648335de8efb9376bcb92e3b842de2ae6d3cd789629464c88dae112",
+        "harness/windows_wddm_memory.py": "299296025cf277f7b20ddf15c1321fce58340ed7654420845026d27a480dfaa2",
+        "src/sakuratts/nvidia.py": "350a93ee96d94a9c6b3e97b00ff7e502ef531a778d3a6844cd93b4e8209a85fd",
+        "src/sakuratts/cuda_gpt.py": "30666267ba9d92969ecf5bbbdf14879f47e197b6c9ea78726972165ed370f358",
+        "src/sakuratts/ort_sovits.py": "7ade156b55b32e2b3b98f90ee2c4ab8821772e29bd27e4a5c84673f6cdd17a26",
+        "src/sakuratts/ort_process.py": "0caba3ac92296f82eabb3f63263ed37b4e737caa053f94720ae74d3834105996"
+      },
+      "sources_changed_during_run": [],
+      "torch_imported": false,
+      "snapshots": [
+        {
+          "index": 0,
+          "label": "before_engine",
+          "roles": {
+            "main": 46108
+          },
+          "configured_pid_count": 1,
+          "roles_with_process_counter_instance": [],
+          "process_instance_counts_by_luid": {},
+          "pids_without_instances": [
+            46108
+          ],
+          "process_memory_by_role_and_luid": [],
+          "adapter_memory_by_luid": [
+            {
+              "luid": "0x00000000_0x0001f0b9",
+              "physical_adapter": 0,
+              "dedicated_bytes": 43839488,
+              "shared_bytes": 39538688,
+              "committed_bytes": 83382272
+            },
+            {
+              "luid": "0x00000000_0x0001f046",
+              "physical_adapter": 0,
+              "dedicated_bytes": 0,
+              "shared_bytes": 8192,
+              "committed_bytes": 15695872
+            },
+            {
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 2329919488,
+              "shared_bytes": 207695872,
+              "committed_bytes": 3096035328
+            }
+          ],
+          "process_rss_bytes": {
+            "main": 43982848
+          },
+          "cupy_pool": null,
+          "pdh_sample_ms": 1.232700000400655,
+          "collect_status": "0x00000000",
+          "nvidia_smi_inventory": [
+            [
+              "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+              " NVIDIA GeForce RTX 5060",
+              " 2204",
+              " 8151"
+            ]
+          ]
+        },
+        {
+          "index": 1,
+          "label": "frontend_ready",
+          "roles": {
+            "main": 46108,
+            "frontend": 5456
+          },
+          "configured_pid_count": 2,
+          "roles_with_process_counter_instance": [],
+          "process_instance_counts_by_luid": {},
+          "pids_without_instances": [
+            5456,
+            46108
+          ],
+          "process_memory_by_role_and_luid": [],
+          "adapter_memory_by_luid": [
+            {
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 2329919488,
+              "shared_bytes": 207695872,
+              "committed_bytes": 3096035328
+            },
+            {
+              "luid": "0x00000000_0x0001f046",
+              "physical_adapter": 0,
+              "dedicated_bytes": 0,
+              "shared_bytes": 8192,
+              "committed_bytes": 15695872
+            },
+            {
+              "luid": "0x00000000_0x0001f0b9",
+              "physical_adapter": 0,
+              "dedicated_bytes": 43839488,
+              "shared_bytes": 39538688,
+              "committed_bytes": 83382272
+            }
+          ],
+          "process_rss_bytes": {
+            "main": 63217664,
+            "frontend": 34582528
+          },
+          "cupy_pool": null,
+          "pdh_sample_ms": 0.6660999933956191,
+          "collect_status": "0x00000000",
+          "nvidia_smi_inventory": [
+            [
+              "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+              " NVIDIA GeForce RTX 5060",
+              " 2204",
+              " 8151"
+            ]
+          ]
+        },
+        {
+          "index": 2,
+          "label": "models_loaded",
+          "roles": {
+            "main": 46108,
+            "frontend": 5456,
+            "acoustic": 40204
+          },
+          "configured_pid_count": 3,
+          "roles_with_process_counter_instance": [
+            "acoustic",
+            "main"
+          ],
+          "process_instance_counts_by_luid": {
+            "0x00000000_0x0001df70": 2
+          },
+          "pids_without_instances": [
+            5456
+          ],
+          "process_memory_by_role_and_luid": [
+            {
+              "role": "acoustic",
+              "pid": 40204,
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 253247488,
+              "shared_bytes": 79691776,
+              "committed_bytes": 332939264
+            },
+            {
+              "role": "main",
+              "pid": 46108,
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 276328448,
+              "shared_bytes": 85983232,
+              "committed_bytes": 362311680
+            }
+          ],
+          "adapter_memory_by_luid": [
+            {
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 2857857024,
+              "shared_bytes": 373608448,
+              "committed_bytes": 3789754368
+            },
+            {
+              "luid": "0x00000000_0x0001f046",
+              "physical_adapter": 0,
+              "dedicated_bytes": 0,
+              "shared_bytes": 8192,
+              "committed_bytes": 15695872
+            },
+            {
+              "luid": "0x00000000_0x0001f0b9",
+              "physical_adapter": 0,
+              "dedicated_bytes": 43839488,
+              "shared_bytes": 39538688,
+              "committed_bytes": 83382272
+            }
+          ],
+          "process_rss_bytes": {
+            "main": 382443520,
+            "frontend": 34582528,
+            "acoustic": 387948544
+          },
+          "cupy_pool": {
+            "used_bytes": 159309824,
+            "total_bytes": 159309824
+          },
+          "pdh_sample_ms": 0.8087000023806468,
+          "collect_status": "0x00000000",
+          "nvidia_smi_inventory": [
+            [
+              "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+              " NVIDIA GeForce RTX 5060",
+              " 2707",
+              " 8151"
+            ]
+          ]
+        },
+        {
+          "index": 3,
+          "label": "after_short",
+          "roles": {
+            "main": 46108,
+            "frontend": 5456,
+            "acoustic": 40204
+          },
+          "configured_pid_count": 3,
+          "roles_with_process_counter_instance": [
+            "acoustic",
+            "main"
+          ],
+          "process_instance_counts_by_luid": {
+            "0x00000000_0x0001df70": 2
+          },
+          "pids_without_instances": [
+            5456
+          ],
+          "process_memory_by_role_and_luid": [
+            {
+              "role": "acoustic",
+              "pid": 40204,
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 347619328,
+              "shared_bytes": 79691776,
+              "committed_bytes": 427311104
+            },
+            {
+              "role": "main",
+              "pid": 46108,
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 395866112,
+              "shared_bytes": 85983232,
+              "committed_bytes": 481849344
+            }
+          ],
+          "adapter_memory_by_luid": [
+            {
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 3072634880,
+              "shared_bytes": 375529472,
+              "committed_bytes": 4004671488
+            },
+            {
+              "luid": "0x00000000_0x0001f046",
+              "physical_adapter": 0,
+              "dedicated_bytes": 0,
+              "shared_bytes": 8192,
+              "committed_bytes": 15695872
+            },
+            {
+              "luid": "0x00000000_0x0001f0b9",
+              "physical_adapter": 0,
+              "dedicated_bytes": 43839488,
+              "shared_bytes": 39538688,
+              "committed_bytes": 83382272
+            }
+          ],
+          "process_rss_bytes": {
+            "main": 961294336,
+            "frontend": 35307520,
+            "acoustic": 1161281536
+          },
+          "cupy_pool": {
+            "used_bytes": 259989504,
+            "total_bytes": 277232640
+          },
+          "pdh_sample_ms": 0.5220999955781735,
+          "collect_status": "0x00000000",
+          "nvidia_smi_inventory": [
+            [
+              "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+              " NVIDIA GeForce RTX 5060",
+              " 2911",
+              " 8151"
+            ]
+          ]
+        },
+        {
+          "index": 4,
+          "label": "after_long",
+          "roles": {
+            "main": 46108,
+            "frontend": 5456,
+            "acoustic": 40204
+          },
+          "configured_pid_count": 3,
+          "roles_with_process_counter_instance": [
+            "acoustic",
+            "main"
+          ],
+          "process_instance_counts_by_luid": {
+            "0x00000000_0x0001df70": 2
+          },
+          "pids_without_instances": [
+            5456
+          ],
+          "process_memory_by_role_and_luid": [
+            {
+              "role": "acoustic",
+              "pid": 40204,
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 913854464,
+              "shared_bytes": 79691776,
+              "committed_bytes": 993546240
+            },
+            {
+              "role": "main",
+              "pid": 46108,
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 452489216,
+              "shared_bytes": 85983232,
+              "committed_bytes": 538472448
+            }
+          ],
+          "adapter_memory_by_luid": [
+            {
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 3699093504,
+              "shared_bytes": 375439360,
+              "committed_bytes": 4631040000
+            },
+            {
+              "luid": "0x00000000_0x0001f046",
+              "physical_adapter": 0,
+              "dedicated_bytes": 0,
+              "shared_bytes": 8192,
+              "committed_bytes": 15695872
+            },
+            {
+              "luid": "0x00000000_0x0001f0b9",
+              "physical_adapter": 0,
+              "dedicated_bytes": 43839488,
+              "shared_bytes": 39538688,
+              "committed_bytes": 83382272
+            }
+          ],
+          "process_rss_bytes": {
+            "main": 963842048,
+            "frontend": 37572608,
+            "acoustic": 1200357376
+          },
+          "cupy_pool": {
+            "used_bytes": 259989504,
+            "total_bytes": 330963456
+          },
+          "pdh_sample_ms": 0.5123000009916723,
+          "collect_status": "0x00000000",
+          "nvidia_smi_inventory": [
+            [
+              "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+              " NVIDIA GeForce RTX 5060",
+              " 3509",
+              " 8151"
+            ]
+          ]
+        },
+        {
+          "index": 5,
+          "label": "after_short",
+          "roles": {
+            "main": 46108,
+            "frontend": 5456,
+            "acoustic": 40204
+          },
+          "configured_pid_count": 3,
+          "roles_with_process_counter_instance": [
+            "acoustic",
+            "main"
+          ],
+          "process_instance_counts_by_luid": {
+            "0x00000000_0x0001df70": 2
+          },
+          "pids_without_instances": [
+            5456
+          ],
+          "process_memory_by_role_and_luid": [
+            {
+              "role": "acoustic",
+              "pid": 40204,
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 913854464,
+              "shared_bytes": 79691776,
+              "committed_bytes": 993546240
+            },
+            {
+              "role": "main",
+              "pid": 46108,
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 452489216,
+              "shared_bytes": 85983232,
+              "committed_bytes": 538472448
+            }
+          ],
+          "adapter_memory_by_luid": [
+            {
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 3528925184,
+              "shared_bytes": 374804480,
+              "committed_bytes": 4461023232
+            },
+            {
+              "luid": "0x00000000_0x0001f046",
+              "physical_adapter": 0,
+              "dedicated_bytes": 0,
+              "shared_bytes": 8192,
+              "committed_bytes": 15695872
+            },
+            {
+              "luid": "0x00000000_0x0001f0b9",
+              "physical_adapter": 0,
+              "dedicated_bytes": 43839488,
+              "shared_bytes": 39538688,
+              "committed_bytes": 83382272
+            }
+          ],
+          "process_rss_bytes": {
+            "main": 962654208,
+            "frontend": 37572608,
+            "acoustic": 1200357376
+          },
+          "cupy_pool": {
+            "used_bytes": 259989504,
+            "total_bytes": 330963456
+          },
+          "pdh_sample_ms": 0.5372000014176592,
+          "collect_status": "0x00000000",
+          "nvidia_smi_inventory": [
+            [
+              "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+              " NVIDIA GeForce RTX 5060",
+              " 3353",
+              " 8151"
+            ]
+          ]
+        },
+        {
+          "index": 6,
+          "label": "unloaded",
+          "roles": {
+            "main": 46108,
+            "frontend": 5456,
+            "acoustic": 40204
+          },
+          "configured_pid_count": 3,
+          "roles_with_process_counter_instance": [
+            "main"
+          ],
+          "process_instance_counts_by_luid": {
+            "0x00000000_0x0001df70": 1
+          },
+          "pids_without_instances": [
+            5456,
+            40204
+          ],
+          "process_memory_by_role_and_luid": [
+            {
+              "role": "main",
+              "pid": 46108,
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 106459136,
+              "shared_bytes": 85983232,
+              "committed_bytes": 192442368
+            }
+          ],
+          "adapter_memory_by_luid": [
+            {
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 2325098496,
+              "shared_bytes": 295583744,
+              "committed_bytes": 3177975808
+            },
+            {
+              "luid": "0x00000000_0x0001f046",
+              "physical_adapter": 0,
+              "dedicated_bytes": 0,
+              "shared_bytes": 8192,
+              "committed_bytes": 15695872
+            },
+            {
+              "luid": "0x00000000_0x0001f0b9",
+              "physical_adapter": 0,
+              "dedicated_bytes": 43839488,
+              "shared_bytes": 39538688,
+              "committed_bytes": 83382272
+            }
+          ],
+          "process_rss_bytes": {
+            "main": 962711552,
+            "frontend": 37572608,
+            "acoustic": null
+          },
+          "cupy_pool": {
+            "used_bytes": 0,
+            "total_bytes": 0
+          },
+          "pdh_sample_ms": 0.5315000016707927,
+          "collect_status": "0x00000000",
+          "nvidia_smi_inventory": [
+            [
+              "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+              " NVIDIA GeForce RTX 5060",
+              " 2204",
+              " 8151"
+            ]
+          ]
+        },
+        {
+          "index": 7,
+          "label": "closed",
+          "roles": {
+            "main": 46108,
+            "frontend": 5456,
+            "acoustic": 40204
+          },
+          "configured_pid_count": 3,
+          "roles_with_process_counter_instance": [
+            "main"
+          ],
+          "process_instance_counts_by_luid": {
+            "0x00000000_0x0001df70": 1
+          },
+          "pids_without_instances": [
+            5456,
+            40204
+          ],
+          "process_memory_by_role_and_luid": [
+            {
+              "role": "main",
+              "pid": 46108,
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 106459136,
+              "shared_bytes": 85983232,
+              "committed_bytes": 192442368
+            }
+          ],
+          "adapter_memory_by_luid": [
+            {
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 2357383168,
+              "shared_bytes": 295157760,
+              "committed_bytes": 3209834496
+            },
+            {
+              "luid": "0x00000000_0x0001f046",
+              "physical_adapter": 0,
+              "dedicated_bytes": 0,
+              "shared_bytes": 8192,
+              "committed_bytes": 15695872
+            },
+            {
+              "luid": "0x00000000_0x0001f0b9",
+              "physical_adapter": 0,
+              "dedicated_bytes": 43839488,
+              "shared_bytes": 39538688,
+              "committed_bytes": 83382272
+            }
+          ],
+          "process_rss_bytes": {
+            "main": 829255680,
+            "frontend": null,
+            "acoustic": null
+          },
+          "cupy_pool": {
+            "used_bytes": 0,
+            "total_bytes": 0
+          },
+          "pdh_sample_ms": 0.5124000017531216,
+          "collect_status": "0x00000000",
+          "nvidia_smi_inventory": [
+            [
+              "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+              " NVIDIA GeForce RTX 5060",
+              " 2235",
+              " 8151"
+            ]
+          ]
+        }
+      ],
+      "counter_metadata": {
+        "source": "windows_pdh_gpu_memory",
+        "schema_version": 1,
+        "measurement": "process-attributed WDDM counters; not exclusive VRAM",
+        "aggregation": "none; shared allocations may be counted for multiple PIDs",
+        "residency": "Total Committed is not a residency measurement",
+        "sources": [
+          "https://devblogs.microsoft.com/directx/gpus-in-the-task-manager/",
+          "https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/gpu-process-memory-counters-report-wrong-value",
+          "https://learn.microsoft.com/en-us/windows/win32/api/pdh/nf-pdh-pdhgetformattedcounterarrayw",
+          "https://learn.microsoft.com/en-us/windows/win32/perfctrs/checking-pdh-interface-return-values"
+        ],
+        "counters": [
+          {
+            "scope": "process",
+            "metric": "dedicated_bytes",
+            "path": "\\GPU Process Memory(*)\\Dedicated Usage",
+            "add_status": "0x00000000",
+            "info_status": "0x00000000",
+            "counter_type": "0x00010100",
+            "default_scale": 0,
+            "localized_path": "\\GPU Process Memory(*)\\Dedicated Usage",
+            "explanation": "Dedicated memory used"
+          },
+          {
+            "scope": "process",
+            "metric": "shared_bytes",
+            "path": "\\GPU Process Memory(*)\\Shared Usage",
+            "add_status": "0x00000000",
+            "info_status": "0x00000000",
+            "counter_type": "0x00010100",
+            "default_scale": 0,
+            "localized_path": "\\GPU Process Memory(*)\\Shared Usage",
+            "explanation": "Shared memory used"
+          },
+          {
+            "scope": "process",
+            "metric": "committed_bytes",
+            "path": "\\GPU Process Memory(*)\\Total Committed",
+            "add_status": "0x00000000",
+            "info_status": "0x00000000",
+            "counter_type": "0x00010100",
+            "default_scale": 0,
+            "localized_path": "\\GPU Process Memory(*)\\Total Committed",
+            "explanation": "Total committed memory used"
+          },
+          {
+            "scope": "adapter",
+            "metric": "dedicated_bytes",
+            "path": "\\GPU Adapter Memory(*)\\Dedicated Usage",
+            "add_status": "0x00000000",
+            "info_status": "0x00000000",
+            "counter_type": "0x00010100",
+            "default_scale": 0,
+            "localized_path": "\\GPU Adapter Memory(*)\\Dedicated Usage",
+            "explanation": "Dedicated memory used by the adapter"
+          },
+          {
+            "scope": "adapter",
+            "metric": "shared_bytes",
+            "path": "\\GPU Adapter Memory(*)\\Shared Usage",
+            "add_status": "0x00000000",
+            "info_status": "0x00000000",
+            "counter_type": "0x00010100",
+            "default_scale": 0,
+            "localized_path": "\\GPU Adapter Memory(*)\\Shared Usage",
+            "explanation": "Shared memory used by the adapter"
+          },
+          {
+            "scope": "adapter",
+            "metric": "committed_bytes",
+            "path": "\\GPU Adapter Memory(*)\\Total Committed",
+            "add_status": "0x00000000",
+            "info_status": "0x00000000",
+            "counter_type": "0x00010100",
+            "default_scale": 0,
+            "localized_path": "\\GPU Adapter Memory(*)\\Total Committed",
+            "explanation": "Total committed memory used by the adapter"
+          }
+        ]
+      }
+    },
+    "both-fp16-shared": {
+      "source_report": "outputs/windows-wddm-memory/both-fp16-shared/result.json",
+      "source_report_sha256": "8d76748ada5e9344c52025c609743f8c92ccdfd531c0e18e1d26ebd3da673da2",
+      "status": "completed",
+      "config_sha256": "84a62fcd604a30d6db4f845f93340333e533cafa5d4fee8f8822bb46a653dedf",
+      "gpt_precision": "fp16",
+      "gpt_attention": "baseline",
+      "shared_process": true,
+      "recorded_source_sha256": {
+        "harness/windows_wddm_synthesis.py": "adbf6ce55648335de8efb9376bcb92e3b842de2ae6d3cd789629464c88dae112",
+        "harness/windows_wddm_memory.py": "299296025cf277f7b20ddf15c1321fce58340ed7654420845026d27a480dfaa2",
+        "src/sakuratts/nvidia.py": "350a93ee96d94a9c6b3e97b00ff7e502ef531a778d3a6844cd93b4e8209a85fd",
+        "src/sakuratts/cuda_gpt.py": "30666267ba9d92969ecf5bbbdf14879f47e197b6c9ea78726972165ed370f358",
+        "src/sakuratts/ort_sovits.py": "7ade156b55b32e2b3b98f90ee2c4ab8821772e29bd27e4a5c84673f6cdd17a26",
+        "src/sakuratts/ort_process.py": "0caba3ac92296f82eabb3f63263ed37b4e737caa053f94720ae74d3834105996"
+      },
+      "sources_changed_during_run": [],
+      "torch_imported": false,
+      "snapshots": [
+        {
+          "index": 0,
+          "label": "before_engine",
+          "roles": {
+            "main": 41440
+          },
+          "configured_pid_count": 1,
+          "roles_with_process_counter_instance": [],
+          "process_instance_counts_by_luid": {},
+          "pids_without_instances": [
+            41440
+          ],
+          "process_memory_by_role_and_luid": [],
+          "adapter_memory_by_luid": [
+            {
+              "luid": "0x00000000_0x0001f0b9",
+              "physical_adapter": 0,
+              "dedicated_bytes": 43839488,
+              "shared_bytes": 39538688,
+              "committed_bytes": 83382272
+            },
+            {
+              "luid": "0x00000000_0x0001f046",
+              "physical_adapter": 0,
+              "dedicated_bytes": 0,
+              "shared_bytes": 8192,
+              "committed_bytes": 15695872
+            },
+            {
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 2331709440,
+              "shared_bytes": 207384576,
+              "committed_bytes": 3097141248
+            }
+          ],
+          "process_rss_bytes": {
+            "main": 55029760
+          },
+          "cupy_pool": null,
+          "pdh_sample_ms": 0.6197999973664992,
+          "collect_status": "0x00000000",
+          "nvidia_smi_inventory": [
+            [
+              "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+              " NVIDIA GeForce RTX 5060",
+              " 2206",
+              " 8151"
+            ]
+          ]
+        },
+        {
+          "index": 1,
+          "label": "frontend_ready",
+          "roles": {
+            "main": 41440,
+            "frontend": 45048
+          },
+          "configured_pid_count": 2,
+          "roles_with_process_counter_instance": [],
+          "process_instance_counts_by_luid": {},
+          "pids_without_instances": [
+            41440,
+            45048
+          ],
+          "process_memory_by_role_and_luid": [],
+          "adapter_memory_by_luid": [
+            {
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 2330394624,
+              "shared_bytes": 207294464,
+              "committed_bytes": 3095736320
+            },
+            {
+              "luid": "0x00000000_0x0001f046",
+              "physical_adapter": 0,
+              "dedicated_bytes": 0,
+              "shared_bytes": 8192,
+              "committed_bytes": 15695872
+            },
+            {
+              "luid": "0x00000000_0x0001f0b9",
+              "physical_adapter": 0,
+              "dedicated_bytes": 43839488,
+              "shared_bytes": 39538688,
+              "committed_bytes": 83382272
+            }
+          ],
+          "process_rss_bytes": {
+            "main": 73969664,
+            "frontend": 34340864
+          },
+          "cupy_pool": null,
+          "pdh_sample_ms": 0.6862000009277835,
+          "collect_status": "0x00000000",
+          "nvidia_smi_inventory": [
+            [
+              "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+              " NVIDIA GeForce RTX 5060",
+              " 2204",
+              " 8151"
+            ]
+          ]
+        },
+        {
+          "index": 2,
+          "label": "models_loaded",
+          "roles": {
+            "main": 41440,
+            "frontend": 45048
+          },
+          "configured_pid_count": 2,
+          "roles_with_process_counter_instance": [
+            "main"
+          ],
+          "process_instance_counts_by_luid": {
+            "0x00000000_0x0001df70": 1
+          },
+          "pids_without_instances": [
+            45048
+          ],
+          "process_memory_by_role_and_luid": [
+            {
+              "role": "main",
+              "pid": 41440,
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 421031936,
+              "shared_bytes": 85983232,
+              "committed_bytes": 507015168
+            }
+          ],
+          "adapter_memory_by_luid": [
+            {
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 2751426560,
+              "shared_bytes": 293277696,
+              "committed_bytes": 3602751488
+            },
+            {
+              "luid": "0x00000000_0x0001f046",
+              "physical_adapter": 0,
+              "dedicated_bytes": 0,
+              "shared_bytes": 8192,
+              "committed_bytes": 15695872
+            },
+            {
+              "luid": "0x00000000_0x0001f0b9",
+              "physical_adapter": 0,
+              "dedicated_bytes": 43839488,
+              "shared_bytes": 39538688,
+              "committed_bytes": 83382272
+            }
+          ],
+          "process_rss_bytes": {
+            "main": 453836800,
+            "frontend": 34340864
+          },
+          "cupy_pool": {
+            "used_bytes": 159309824,
+            "total_bytes": 159309824
+          },
+          "pdh_sample_ms": 0.7603999983984977,
+          "collect_status": "0x00000000",
+          "nvidia_smi_inventory": [
+            [
+              "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+              " NVIDIA GeForce RTX 5060",
+              " 2605",
+              " 8151"
+            ]
+          ]
+        },
+        {
+          "index": 3,
+          "label": "after_short",
+          "roles": {
+            "main": 41440,
+            "frontend": 45048
+          },
+          "configured_pid_count": 2,
+          "roles_with_process_counter_instance": [
+            "main"
+          ],
+          "process_instance_counts_by_luid": {
+            "0x00000000_0x0001df70": 1
+          },
+          "pids_without_instances": [
+            45048
+          ],
+          "process_memory_by_role_and_luid": [
+            {
+              "role": "main",
+              "pid": 41440,
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 639143936,
+              "shared_bytes": 88080384,
+              "committed_bytes": 727224320
+            }
+          ],
+          "adapter_memory_by_luid": [
+            {
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 2969542656,
+              "shared_bytes": 295079936,
+              "committed_bytes": 3822669824
+            },
+            {
+              "luid": "0x00000000_0x0001f046",
+              "physical_adapter": 0,
+              "dedicated_bytes": 0,
+              "shared_bytes": 8192,
+              "committed_bytes": 15695872
+            },
+            {
+              "luid": "0x00000000_0x0001f0b9",
+              "physical_adapter": 0,
+              "dedicated_bytes": 43839488,
+              "shared_bytes": 39538688,
+              "committed_bytes": 83382272
+            }
+          ],
+          "process_rss_bytes": {
+            "main": 1525829632,
+            "frontend": 35098624
+          },
+          "cupy_pool": {
+            "used_bytes": 259989504,
+            "total_bytes": 277232640
+          },
+          "pdh_sample_ms": 0.516200001584366,
+          "collect_status": "0x00000000",
+          "nvidia_smi_inventory": [
+            [
+              "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+              " NVIDIA GeForce RTX 5060",
+              " 2813",
+              " 8151"
+            ]
+          ]
+        },
+        {
+          "index": 4,
+          "label": "after_long",
+          "roles": {
+            "main": 41440,
+            "frontend": 45048
+          },
+          "configured_pid_count": 2,
+          "roles_with_process_counter_instance": [
+            "main"
+          ],
+          "process_instance_counts_by_luid": {
+            "0x00000000_0x0001df70": 1
+          },
+          "pids_without_instances": [
+            45048
+          ],
+          "process_memory_by_role_and_luid": [
+            {
+              "role": "main",
+              "pid": 41440,
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 1259905024,
+              "shared_bytes": 88080384,
+              "committed_bytes": 1347985408
+            }
+          ],
+          "adapter_memory_by_luid": [
+            {
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 3597230080,
+              "shared_bytes": 295759872,
+              "committed_bytes": 4451151872
+            },
+            {
+              "luid": "0x00000000_0x0001f046",
+              "physical_adapter": 0,
+              "dedicated_bytes": 0,
+              "shared_bytes": 8192,
+              "committed_bytes": 15695872
+            },
+            {
+              "luid": "0x00000000_0x0001f0b9",
+              "physical_adapter": 0,
+              "dedicated_bytes": 43839488,
+              "shared_bytes": 39538688,
+              "committed_bytes": 83382272
+            }
+          ],
+          "process_rss_bytes": {
+            "main": 1565646848,
+            "frontend": 37363712
+          },
+          "cupy_pool": {
+            "used_bytes": 259989504,
+            "total_bytes": 330963456
+          },
+          "pdh_sample_ms": 0.5107000033603981,
+          "collect_status": "0x00000000",
+          "nvidia_smi_inventory": [
+            [
+              "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+              " NVIDIA GeForce RTX 5060",
+              " 3412",
+              " 8151"
+            ]
+          ]
+        },
+        {
+          "index": 5,
+          "label": "after_short",
+          "roles": {
+            "main": 41440,
+            "frontend": 45048
+          },
+          "configured_pid_count": 2,
+          "roles_with_process_counter_instance": [
+            "main"
+          ],
+          "process_instance_counts_by_luid": {
+            "0x00000000_0x0001df70": 1
+          },
+          "pids_without_instances": [
+            45048
+          ],
+          "process_memory_by_role_and_luid": [
+            {
+              "role": "main",
+              "pid": 41440,
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 1259905024,
+              "shared_bytes": 88080384,
+              "committed_bytes": 1347985408
+            }
+          ],
+          "adapter_memory_by_luid": [
+            {
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 3597426688,
+              "shared_bytes": 295464960,
+              "committed_bytes": 4451053568
+            },
+            {
+              "luid": "0x00000000_0x0001f046",
+              "physical_adapter": 0,
+              "dedicated_bytes": 0,
+              "shared_bytes": 8192,
+              "committed_bytes": 15695872
+            },
+            {
+              "luid": "0x00000000_0x0001f0b9",
+              "physical_adapter": 0,
+              "dedicated_bytes": 43839488,
+              "shared_bytes": 39538688,
+              "committed_bytes": 83382272
+            }
+          ],
+          "process_rss_bytes": {
+            "main": 1565396992,
+            "frontend": 37363712
+          },
+          "cupy_pool": {
+            "used_bytes": 259989504,
+            "total_bytes": 330963456
+          },
+          "pdh_sample_ms": 0.5092000064905733,
+          "collect_status": "0x00000000",
+          "nvidia_smi_inventory": [
+            [
+              "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+              " NVIDIA GeForce RTX 5060",
+              " 3412",
+              " 8151"
+            ]
+          ]
+        },
+        {
+          "index": 6,
+          "label": "unloaded",
+          "roles": {
+            "main": 41440,
+            "frontend": 45048
+          },
+          "configured_pid_count": 2,
+          "roles_with_process_counter_instance": [
+            "main"
+          ],
+          "process_instance_counts_by_luid": {
+            "0x00000000_0x0001df70": 1
+          },
+          "pids_without_instances": [
+            45048
+          ],
+          "process_memory_by_role_and_luid": [
+            {
+              "role": "main",
+              "pid": 41440,
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 110657536,
+              "shared_bytes": 85983232,
+              "committed_bytes": 196640768
+            }
+          ],
+          "adapter_memory_by_luid": [
+            {
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 2448179200,
+              "shared_bytes": 293367808,
+              "committed_bytes": 3299708928
+            },
+            {
+              "luid": "0x00000000_0x0001f046",
+              "physical_adapter": 0,
+              "dedicated_bytes": 0,
+              "shared_bytes": 8192,
+              "committed_bytes": 15695872
+            },
+            {
+              "luid": "0x00000000_0x0001f0b9",
+              "physical_adapter": 0,
+              "dedicated_bytes": 43839488,
+              "shared_bytes": 39538688,
+              "committed_bytes": 83382272
+            }
+          ],
+          "process_rss_bytes": {
+            "main": 1543806976,
+            "frontend": 37363712
+          },
+          "cupy_pool": {
+            "used_bytes": 0,
+            "total_bytes": 0
+          },
+          "pdh_sample_ms": 0.5712000056519173,
+          "collect_status": "0x00000000",
+          "nvidia_smi_inventory": [
+            [
+              "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+              " NVIDIA GeForce RTX 5060",
+              " 2315",
+              " 8151"
+            ]
+          ]
+        },
+        {
+          "index": 7,
+          "label": "closed",
+          "roles": {
+            "main": 41440,
+            "frontend": 45048
+          },
+          "configured_pid_count": 2,
+          "roles_with_process_counter_instance": [
+            "main"
+          ],
+          "process_instance_counts_by_luid": {
+            "0x00000000_0x0001df70": 1
+          },
+          "pids_without_instances": [
+            45048
+          ],
+          "process_memory_by_role_and_luid": [
+            {
+              "role": "main",
+              "pid": 41440,
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 110657536,
+              "shared_bytes": 85983232,
+              "committed_bytes": 196640768
+            }
+          ],
+          "adapter_memory_by_luid": [
+            {
+              "luid": "0x00000000_0x0001df70",
+              "physical_adapter": 0,
+              "dedicated_bytes": 2446868480,
+              "shared_bytes": 293367808,
+              "committed_bytes": 3298398208
+            },
+            {
+              "luid": "0x00000000_0x0001f046",
+              "physical_adapter": 0,
+              "dedicated_bytes": 0,
+              "shared_bytes": 8192,
+              "committed_bytes": 15695872
+            },
+            {
+              "luid": "0x00000000_0x0001f0b9",
+              "physical_adapter": 0,
+              "dedicated_bytes": 43839488,
+              "shared_bytes": 39538688,
+              "committed_bytes": 83382272
+            }
+          ],
+          "process_rss_bytes": {
+            "main": 1410314240,
+            "frontend": null
+          },
+          "cupy_pool": {
+            "used_bytes": 0,
+            "total_bytes": 0
+          },
+          "pdh_sample_ms": 0.5127000040374696,
+          "collect_status": "0x00000000",
+          "nvidia_smi_inventory": [
+            [
+              "GPU-973c0011-e255-7d71-6744-93e652b84c98",
+              " NVIDIA GeForce RTX 5060",
+              " 2315",
+              " 8151"
+            ]
+          ]
+        }
+      ],
+      "counter_metadata": {
+        "source": "windows_pdh_gpu_memory",
+        "schema_version": 1,
+        "measurement": "process-attributed WDDM counters; not exclusive VRAM",
+        "aggregation": "none; shared allocations may be counted for multiple PIDs",
+        "residency": "Total Committed is not a residency measurement",
+        "sources": [
+          "https://devblogs.microsoft.com/directx/gpus-in-the-task-manager/",
+          "https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/gpu-process-memory-counters-report-wrong-value",
+          "https://learn.microsoft.com/en-us/windows/win32/api/pdh/nf-pdh-pdhgetformattedcounterarrayw",
+          "https://learn.microsoft.com/en-us/windows/win32/perfctrs/checking-pdh-interface-return-values"
+        ],
+        "counters": [
+          {
+            "scope": "process",
+            "metric": "dedicated_bytes",
+            "path": "\\GPU Process Memory(*)\\Dedicated Usage",
+            "add_status": "0x00000000",
+            "info_status": "0x00000000",
+            "counter_type": "0x00010100",
+            "default_scale": 0,
+            "localized_path": "\\GPU Process Memory(*)\\Dedicated Usage",
+            "explanation": "Dedicated memory used"
+          },
+          {
+            "scope": "process",
+            "metric": "shared_bytes",
+            "path": "\\GPU Process Memory(*)\\Shared Usage",
+            "add_status": "0x00000000",
+            "info_status": "0x00000000",
+            "counter_type": "0x00010100",
+            "default_scale": 0,
+            "localized_path": "\\GPU Process Memory(*)\\Shared Usage",
+            "explanation": "Shared memory used"
+          },
+          {
+            "scope": "process",
+            "metric": "committed_bytes",
+            "path": "\\GPU Process Memory(*)\\Total Committed",
+            "add_status": "0x00000000",
+            "info_status": "0x00000000",
+            "counter_type": "0x00010100",
+            "default_scale": 0,
+            "localized_path": "\\GPU Process Memory(*)\\Total Committed",
+            "explanation": "Total committed memory used"
+          },
+          {
+            "scope": "adapter",
+            "metric": "dedicated_bytes",
+            "path": "\\GPU Adapter Memory(*)\\Dedicated Usage",
+            "add_status": "0x00000000",
+            "info_status": "0x00000000",
+            "counter_type": "0x00010100",
+            "default_scale": 0,
+            "localized_path": "\\GPU Adapter Memory(*)\\Dedicated Usage",
+            "explanation": "Dedicated memory used by the adapter"
+          },
+          {
+            "scope": "adapter",
+            "metric": "shared_bytes",
+            "path": "\\GPU Adapter Memory(*)\\Shared Usage",
+            "add_status": "0x00000000",
+            "info_status": "0x00000000",
+            "counter_type": "0x00010100",
+            "default_scale": 0,
+            "localized_path": "\\GPU Adapter Memory(*)\\Shared Usage",
+            "explanation": "Shared memory used by the adapter"
+          },
+          {
+            "scope": "adapter",
+            "metric": "committed_bytes",
+            "path": "\\GPU Adapter Memory(*)\\Total Committed",
+            "add_status": "0x00000000",
+            "info_status": "0x00000000",
+            "counter_type": "0x00010100",
+            "default_scale": 0,
+            "localized_path": "\\GPU Adapter Memory(*)\\Total Committed",
+            "explanation": "Total committed memory used by the adapter"
+          }
+        ]
+      }
+    }
+  },
+  "request_pairs": [
+    {
+      "index": 0,
+      "case": "short",
+      "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+      "pcm_samples": 110720,
+      "semantic_tokens": 79,
+      "checks": {
+        "case_equal": true,
+        "pcm_sha256_equal": true,
+        "parameters_equal": true,
+        "reference_identity_equal": true,
+        "fragment_tokens_stops_shapes_equal": true
+      }
+    },
+    {
+      "index": 1,
+      "case": "long",
+      "pcm_sha256": "7a47db5136a1b09ef11fc9122ee0fa58ee8be5377e3314ea6a8154169d150ac9",
+      "pcm_samples": 814720,
+      "semantic_tokens": 629,
+      "checks": {
+        "case_equal": true,
+        "pcm_sha256_equal": true,
+        "parameters_equal": true,
+        "reference_identity_equal": true,
+        "fragment_tokens_stops_shapes_equal": true
+      }
+    },
+    {
+      "index": 2,
+      "case": "short",
+      "pcm_sha256": "365999ed967f98090b79cb3221d912a3eda4daa5edc1d71aca718f2af83509f5",
+      "pcm_samples": 110720,
+      "semantic_tokens": 79,
+      "checks": {
+        "case_equal": true,
+        "pcm_sha256_equal": true,
+        "parameters_equal": true,
+        "reference_identity_equal": true,
+        "fragment_tokens_stops_shapes_equal": true
+      }
+    }
+  ],
+  "kv_and_workspace_analysis": {
+    "reviewed_cuda_gpt_sha256": "30666267ba9d92969ecf5bbbdf14879f47e197b6c9ea78726972165ed370f358",
+    "default_capacity": 2048,
+    "layers": 24,
+    "heads": 16,
+    "head_dim": 32,
+    "fp16_element_bytes": 2,
+    "kv_bytes": 100663296,
+    "fixed_decode_workspace_bytes": 15364,
+    "state_bytes": 12,
+    "capacity_1536_kv_saving_bytes": 25165824,
+    "capacity_512_kv_saving_bytes": 75497472,
+    "long_context_note": "Current natural long case reaches KV position 1157, requiring 1158 slots; capacity 1024 is insufficient.",
+    "after_long_pool_free_bytes": 70973952,
+    "limitations": "Allocation math is not a measured VRAM reduction. Smaller capacity requires a safe growth or bucket policy; no truncation."
+  },
+  "documentation_sources": [
+    {
+      "url": "https://devblogs.microsoft.com/directx/gpus-in-the-task-manager/",
+      "retrieved_date": "2026-09-20",
+      "content_sha256": "ebf4fd51f468aa7526cb412cc8b5bd5ac2b369a27d67c331db66e044b58181b9",
+      "finding": "Per-process memory includes private and cross-process shared allocations; adding PID values can double-count."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/gpu-process-memory-counters-report-wrong-value",
+      "retrieved_date": "2026-09-20",
+      "content_sha256": "d7594df5ff7f79ae79d9567035b98eb6e2d300c53d566872082b10773c953367",
+      "finding": "KB4490156 explicitly applies to Windows 10 and describes GPU Process Memory misreporting on version 1709 and later. It does not establish that this Windows 11 run is affected."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/microsoft/onnxruntime/ffceed9d44/include/onnxruntime/core/session/onnxruntime_run_options_config_keys.h",
+      "retrieved_date": "2026-09-20",
+      "content_sha256": "730910e9e78af536d0a4a5a72d408ab793bbe232054a5a4596c8200e45f3c99c",
+      "finding": "Pinned ORT build exposes memory.enable_memory_arena_shrinkage with gpu:0 syntax."
+    },
+    {
+      "url": "https://onnxruntime.ai/docs/get-started/with-c.html",
+      "retrieved_date": "2026-09-20",
+      "content_sha256": "c83e9a25018a80d027f90cb42e371b57e404cd521ed475899e830f14b403ed5f",
+      "finding": "Arenas do not shrink by default; the RunOption can scan and free unused regions at the end of selected runs."
+    }
+  ],
+  "limitations": [
+    "Process attribution is not exclusive VRAM; never sum bytes across PIDs or adapter LUIDs.",
+    "Dedicated, Shared and Total Committed remain separate counters; Total Committed is not a residency measurement.",
+    "Absent or exited PID counters are missing, not zero. LUID order is not CUDA device order.",
+    "Each boundary waits 150 ms before sampling; transient request peaks are not captured and request timing is diagnostic.",
+    "Only recorded PCM hashes are compared here; the probe did not save audio files for fresh waveform analysis.",
+    "Recorded source hashes identify the executed probe even if current cleanup code changes later."
+  ]
+}
