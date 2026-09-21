@@ -23,11 +23,14 @@ class NVIDIAEngine:
     def __init__(self, config, *, policy="resident", use_graph=True, capacity=2048,
                  gpt_precision="fp32", gpt_attention="baseline", gpt_attention_chunk_size=256,
                  allow_experimental_acoustic_fp16=False, acoustic_arena_shrink=True,
-                 acoustic_chunk_frames=None, load_references=True):
+                 acoustic_chunk_frames=None, load_references=True, gpt_prefill_query_chunk_size=0):
         if policy not in ("resident", "release-state", "staged"):
             raise ValueError("Unknown model policy")
         if gpt_precision not in ("fp32", "fp16"):
             raise ValueError("GPT precision must be fp32 or fp16")
+        if type(gpt_prefill_query_chunk_size) is not int or gpt_prefill_query_chunk_size < 0:
+            raise ValueError("GPT prefill query chunk size must be a nonnegative integer")
+        self.gpt_prefill_query_chunk_size = gpt_prefill_query_chunk_size
         if not isinstance(acoustic_arena_shrink, bool):
             raise ValueError("acoustic_arena_shrink must be a bool")
         if acoustic_chunk_frames is not None and (type(acoustic_chunk_frames) is not int or acoustic_chunk_frames<0):
@@ -139,7 +142,8 @@ class NVIDIAEngine:
             from sakuratts.backends.cuda.gpt import CUDAGPT
             self.gpt = CUDAGPT.load(self.packages["gpt"], capacity=self.capacity,
                                     use_graph=self.use_graph, precision=self.gpt_precision,
-                                    attention=self.gpt_attention, attention_chunk_size=self.gpt_attention_chunk_size)
+                                    attention=self.gpt_attention, attention_chunk_size=self.gpt_attention_chunk_size,
+                                    prefill_query_chunk_size=self.gpt_prefill_query_chunk_size)
 
     def _load_sovits(self):
         if self.sovits is None:
@@ -281,6 +285,7 @@ class NVIDIAEngine:
                 "acoustic_arena_shrink":self.acoustic_arena_shrink,
                 "acoustic_chunk_frames":self.acoustic_chunk_frames,
                 "gpt_attention":self.gpt_attention,"gpt_attention_chunk_size":self.gpt_attention_chunk_size,
+                "gpt_prefill_query_chunk_size":self.gpt_prefill_query_chunk_size,
                 "frontend_profile":self.manifests["frontend"].get("japanese_g2p",{"implementation":"pyopenjtalk-plus"}),
                 "random_inputs":"fresh" if random_inputs is None else "explicit replay of draws and acoustic noise",
                 "quality":{"human_listening":"not_run","asr":"not_run"}}

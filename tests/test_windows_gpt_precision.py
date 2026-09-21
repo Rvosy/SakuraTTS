@@ -57,14 +57,16 @@ class WindowsGptPrecisionTests(unittest.TestCase):
                     (baseline / "result.json").write_text(json.dumps(prior), encoding="utf-8")
                     logits = np.array([[1, 2, 3, 4]], np.float32)
                     np.savez(baseline / "logits.npz", short=logits + difference)
-                    args += ["--compare", str(baseline), "--attention", "split-kv", "--repeats", "1"]
+                    args += ["--compare", str(baseline), "--attention", "split-kv", "--repeats", "1",
+                             "--prefill-query-chunk-size", "128"]
                     runtime = SimpleNamespace(
                         getDeviceProperties=lambda _: {"name": b"CPU test stub"},
                         runtimeGetVersion=lambda: 12000, driverGetVersion=lambda: 12000)
                     model = Mock()
+                    load_model = Mock(return_value=model)
                     replay = lambda *_: (logits.copy(), {"prefill_ms": 1, "decode_ms": 1, "total_ms": 2, "steps": 1})
                     with patch.object(sys, "argv", args), patch.dict(sys.modules, {
-                            "sakuratts.backends.cuda.gpt": SimpleNamespace(CUDAGPT=SimpleNamespace(load=Mock(return_value=model))),
+                            "sakuratts.backends.cuda.gpt": SimpleNamespace(CUDAGPT=SimpleNamespace(load=load_model)),
                             "cupy": SimpleNamespace(cuda=SimpleNamespace(runtime=runtime))}), \
                             patch.object(harness, "memory", return_value={}), \
                             patch.object(harness, "replay", side_effect=replay), patch("builtins.print"):
@@ -72,8 +74,11 @@ class WindowsGptPrecisionTests(unittest.TestCase):
                     report = json.loads((root / "output/result.json").read_text(encoding="utf-8"))
                     self.assertEqual(exit_code, 0 if expected_passed else 1)
                     self.assertEqual(report["engineering_passed"], expected_passed)
+                    self.assertEqual(report["prefill_query_chunk_size"], 128)
+                    self.assertEqual(load_model.call_args.kwargs["prefill_query_chunk_size"], 128)
                     self.assertEqual(report["status"], "completed" if expected_passed else "numerical_screen_failed")
                     comparison = report["comparison"]
+                    self.assertEqual(comparison["prefill_query_chunk_size"], 0)
                     for key in ("precision", "attention", "attention_chunk_size", "executor_sha256"):
                         self.assertEqual(comparison[key], prior[key])
                     self.assertEqual(comparison["same_precision"], prior_precision == "fp16")
@@ -83,6 +88,17 @@ class WindowsGptPrecisionTests(unittest.TestCase):
                     self.assertEqual(entry["comparison"], entry["other_precision"])
                     self.assertTrue(entry["official_fp32"]["screen_passed"])
                     self.assertTrue(entry["comparison"]["screen_passed"])
+
+    def test_negative_prefill_query_chunk_size_is_rejected_before_output_creation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            args, _ = fixture(root)
+            args += ["--prefill-query-chunk-size", "-1"]
+            with patch.object(sys, "argv", args), patch("sys.stderr"):
+                with self.assertRaises(SystemExit) as caught:
+                    harness.main()
+            self.assertEqual(caught.exception.code, 2)
+            self.assertFalse((root / "output").exists())
 
     def test_modified_reference_archive_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -109,6 +125,8 @@ class WindowsGptPrecisionTests(unittest.TestCase):
             self.assertIs(caught.exception, failure)
             report = json.loads((root / "output/result.json").read_text(encoding="utf-8"))
             self.assertEqual(report["status"], "failed")
+            self.assertEqual(model_class.load.call_args.kwargs["prefill_query_chunk_size"], 0)
+            self.assertEqual(report["prefill_query_chunk_size"], 0)
             self.assertFalse(report["engineering_passed"])
             self.assertEqual(report["reference_archive_sha256"], checksum)
             self.assertIn("model loading failed", report["error"])

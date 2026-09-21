@@ -129,7 +129,8 @@ class PublicApiTests(unittest.TestCase):
             runtime.__exit__ = Mock()
             runtime.synthesize.return_value = audio("stopped_at_limit")
             with patch.object(Engine, "load", return_value=runtime), contextlib.redirect_stdout(io.StringIO()):
-                self.assertEqual(main(["tts", "model", "--text", "こんにちは", "--output", str(path)]), 2)
+                self.assertEqual(main(["tts", "model", "--text", "こんにちは", "--split-method", "cut5", "--output", str(path)]), 2)
+                self.assertEqual(runtime.synthesize.call_args.kwargs["split_method"], "cut5")
             with wave.open(str(path)) as wav:
                 self.assertEqual(wav.getframerate(), 32000)
                 self.assertEqual(wav.readframes(3), audio().pcm.astype("<i2").tobytes())
@@ -143,5 +144,7 @@ class PublicApiTests(unittest.TestCase):
                 engine = Engine.load(model)
                 backend.assert_called_once_with(model)
                 engine.close()
+                Engine.load(model, experimental={"gpt_prefill_query_chunk_size": 128})
+                self.assertEqual(backend.call_args.kwargs["gpt_prefill_query_chunk_size"], 128)
                 with self.assertRaisesRegex(ValueError, "Unknown experimental"):
                     Engine.load(model, experimental={"precision": "fp16"})

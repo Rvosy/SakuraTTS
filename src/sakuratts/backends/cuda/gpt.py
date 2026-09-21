@@ -318,12 +318,20 @@ def _validate_attention(attention, chunk_size):
         raise ValueError("GPT attention chunk size must be 256 or 512")
 
 
+def _validate_prefill_query_chunk_size(chunk_size):
+    if (isinstance(chunk_size, (bool, np.bool_))
+            or not isinstance(chunk_size, (int, np.integer)) or chunk_size < 0):
+        raise ValueError("GPT prefill query chunk size must be a non-negative integer")
+
+
 class CUDAGPT:
     def __init__(self, manifest, weights, capacity, use_graph=True, precision="fp32",
-                 attention="baseline", attention_chunk_size=256):
+                 attention="baseline", attention_chunk_size=256, prefill_query_chunk_size=0):
         if precision not in ("fp32", "fp16"):
             raise ValueError("GPT precision must be fp32 or fp16")
         _validate_attention(attention, attention_chunk_size)
+        _validate_prefill_query_chunk_size(prefill_query_chunk_size)
+        self.prefill_query_chunk_size = int(prefill_query_chunk_size)
         self.attention, self.attention_chunk_size = attention, attention_chunk_size
         self.attention_chunks = (capacity+attention_chunk_size-1)//attention_chunk_size
         self.precision = precision
@@ -358,10 +366,11 @@ class CUDAGPT:
 
     @classmethod
     def load(cls, package, capacity=2048, use_graph=True, precision="fp32",
-             attention="baseline", attention_chunk_size=256):
+             attention="baseline", attention_chunk_size=256, prefill_query_chunk_size=0):
         if precision not in ("fp32", "fp16"):
             raise ValueError("GPT precision must be fp32 or fp16")
         _validate_attention(attention, attention_chunk_size)
+        _validate_prefill_query_chunk_size(prefill_query_chunk_size)
         package = Path(package)
         manifest = json.loads((package / "manifest.json").read_text(encoding="utf-8"))
         if (manifest["format"] != "sakuratts-gpt-fp32-v1"
@@ -384,7 +393,8 @@ class CUDAGPT:
                     value = np.ascontiguousarray(value, dtype=dtype)
                 weights[name] = cp.asarray(value)
         cp.cuda.get_current_stream().synchronize()
-        return cls(manifest, weights, capacity, use_graph, precision, attention, attention_chunk_size)
+        return cls(manifest, weights, capacity, use_graph, precision, attention,
+                   attention_chunk_size, prefill_query_chunk_size)
 
     def _allocate_state(self):
         if self.keys is None:
@@ -447,22 +457,26 @@ class CUDAGPT:
             text += w["text_alpha"] * w["position_encoding"][:t]
             audio = w["audio_embedding"][cp.asarray(prompt[0])] + w["audio_alpha"] * w["position_encoding"][:p]
             x = cp.concatenate((text,audio))
-            allowed = np.zeros((t+p,t+p),bool)
-            allowed[:,:t] = True
-            allowed[t:,t:] = np.tril(np.ones((p,p),bool))
-            mask = cp.asarray(allowed)
+            if not self.prefill_query_chunk_size:
+                allowed = np.zeros((t+p,t+p),bool)
+                allowed[:,:t] = True
+                allowed[t:,t:] = np.tril(np.ones((p,p),bool))
+                mask = cp.asarray(allowed)
             for layer in range(self.layers):
                 pre = f"layers.{layer}."
                 qkv = x @ w[pre+"qkv.weight"].T + w[pre+"qkv.bias"]
                 q,k,v = [a.reshape(-1,self.heads,self.head_dim).transpose(1,0,2) for a in cp.split(qkv,3,axis=-1)]
                 self.keys[layer,:,:t+p] = k
                 self.values[layer,:,:t+p] = v
-                scores = (q @ k.transpose(0,2,1)) * np.float32(self.head_dim**-0.5)
-                scores = cp.where(mask, scores, -cp.inf)
-                scores -= cp.max(scores, axis=-1, keepdims=True)
-                cp.exp(scores, out=scores)
-                scores /= cp.sum(scores,axis=-1,keepdims=True)
-                attended = (scores @ v).transpose(1,0,2).reshape(-1,self.width)
+                if self.prefill_query_chunk_size:
+                    attended = self._prefill_attention_chunked(q, k, v, t)
+                else:
+                    scores = (q @ k.transpose(0,2,1)) * np.float32(self.head_dim**-0.5)
+                    scores = cp.where(mask, scores, -cp.inf)
+                    scores -= cp.max(scores, axis=-1, keepdims=True)
+                    cp.exp(scores, out=scores)
+                    scores /= cp.sum(scores,axis=-1,keepdims=True)
+                    attended = (scores @ v).transpose(1,0,2).reshape(-1,self.width)
                 mixed = attended @ w[pre+"attention_output.weight"].T
                 mixed = self._norm(mixed,x,pre+"norm1",w[pre+"attention_output.bias"])
                 ffn = cp.maximum(mixed @ w[pre+"ffn_in.weight"].T + w[pre+"ffn_in.bias"],0)
@@ -476,6 +490,43 @@ class CUDAGPT:
         out = cp.empty((x.shape[0], weight.shape[0]), output_dtype or self.dtype)
         self.blas.linear(x, weight, out)
         return out
+
+    def _prefill_attention_chunked(self, q, k, v, text_length):
+        """Bound score/mask storage by query rows while retaining every key.
+
+        Global positions preserve bidirectional text and causal audio across
+        chunk boundaries. FP16 uses the same FP32 QK/softmax accumulation and
+        FP16 probabilities as the full prefill path.
+        """
+        length = q.shape[1]
+        attended = cp.empty_like(v)
+        key_positions = cp.arange(length)[None, :]
+        for start in range(0, length, self.prefill_query_chunk_size):
+            stop = min(start + self.prefill_query_chunk_size, length)
+            query_positions = cp.arange(start, stop)[:, None]
+            allowed = ((key_positions < text_length)
+                       | ((query_positions >= text_length) & (key_positions <= query_positions)))
+            if self.precision == "fp16":
+                query = cp.ascontiguousarray(q[:, start:stop])
+                scores = cp.empty((self.heads, stop-start, length), cp.float32)
+                self.blas._gemm_fp16(query, k, scores, transpose_y=True)
+                scores *= np.float32(self.head_dim**-0.5)
+            else:
+                scores = (q[:, start:stop] @ k.transpose(0, 2, 1)) * np.float32(self.head_dim**-0.5)
+            scores = cp.where(allowed, scores, -cp.inf)
+            scores -= cp.max(scores, axis=-1, keepdims=True)
+            cp.exp(scores, out=scores)
+            scores /= cp.sum(scores, axis=-1, keepdims=True, dtype=cp.float32)
+            if self.precision == "fp16":
+                block = cp.empty((self.heads, stop-start, self.head_dim), self.dtype)
+                self.blas._gemm_fp16(scores.astype(self.dtype), v, block)
+                attended[:, start:stop] = block
+                del query, block
+            else:
+                attended[:, start:stop] = scores @ v
+            # Release the previous block before allocating the next one.
+            del scores, allowed
+        return cp.ascontiguousarray(attended.transpose(1, 0, 2).reshape(-1, self.width))
 
     def _prefill_fp16(self, phones, prompt, bert):
         """Mixed-precision prefix using the same resident weights as decode.
@@ -491,10 +542,11 @@ class CUDAGPT:
         text += w["text_alpha"] * w["position_encoding"][:t]
         audio = w["audio_embedding"][cp.asarray(prompt[0])] + w["audio_alpha"] * w["position_encoding"][:p]
         x = cp.concatenate((text, audio))
-        allowed = np.zeros((t+p, t+p), bool)
-        allowed[:, :t] = True
-        allowed[t:, t:] = np.tril(np.ones((p, p), bool))
-        mask = cp.asarray(allowed)
+        if not self.prefill_query_chunk_size:
+            allowed = np.zeros((t+p, t+p), bool)
+            allowed[:, :t] = True
+            allowed[t:, t:] = np.tril(np.ones((p, p), bool))
+            mask = cp.asarray(allowed)
         for layer in range(self.layers):
             pre = f"layers.{layer}."
             qkv = self._linear_fp16(x, w[pre+"qkv.weight"]) + w[pre+"qkv.bias"]
@@ -502,16 +554,19 @@ class CUDAGPT:
                        for a in cp.split(qkv, 3, axis=-1)]
             self.keys[layer, :, :t+p] = k
             self.values[layer, :, :t+p] = v
-            scores = cp.empty((self.heads, t+p, t+p), cp.float32)
-            self.blas._gemm_fp16(q, k, scores, transpose_y=True)
-            scores *= np.float32(self.head_dim**-0.5)
-            scores = cp.where(mask, scores, -cp.inf)
-            scores -= cp.max(scores, axis=-1, keepdims=True)
-            cp.exp(scores, out=scores)
-            scores /= cp.sum(scores, axis=-1, keepdims=True, dtype=cp.float32)
-            attended = cp.empty_like(v)
-            self.blas._gemm_fp16(scores.astype(self.dtype), v, attended)
-            attended = cp.ascontiguousarray(attended.transpose(1, 0, 2).reshape(-1, self.width))
+            if self.prefill_query_chunk_size:
+                attended = self._prefill_attention_chunked(q, k, v, t)
+            else:
+                scores = cp.empty((self.heads, t+p, t+p), cp.float32)
+                self.blas._gemm_fp16(q, k, scores, transpose_y=True)
+                scores *= np.float32(self.head_dim**-0.5)
+                scores = cp.where(mask, scores, -cp.inf)
+                scores -= cp.max(scores, axis=-1, keepdims=True)
+                cp.exp(scores, out=scores)
+                scores /= cp.sum(scores, axis=-1, keepdims=True, dtype=cp.float32)
+                attended = cp.empty_like(v)
+                self.blas._gemm_fp16(scores.astype(self.dtype), v, attended)
+                attended = cp.ascontiguousarray(attended.transpose(1, 0, 2).reshape(-1, self.width))
             mixed = self._linear_fp16(attended, w[pre+"attention_output.weight"])
             mixed = self._norm(mixed, x, pre+"norm1", w[pre+"attention_output.bias"])
             ffn = cp.maximum(self._linear_fp16(mixed, w[pre+"ffn_in.weight"]) + w[pre+"ffn_in.bias"], 0)

@@ -1,0 +1,8 @@
+{
+  "gpt_precision": "fp16",
+  "allow_experimental_acoustic_fp16": true,
+  "acoustic_chunk_frames": 256,
+  "acoustic_arena_shrink": true,
+  "policy": "staged",
+  "capacity": 2048
+}

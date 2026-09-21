@@ -186,6 +186,9 @@ def main(argv=None):
             entry.add_argument("--output", type=Path, required=True)
         if command == "benchmark":
             entry.add_argument("--repeats", type=int, default=3)
+        if command == "tts":
+            entry.add_argument("--split-method", choices=tuple("cut" + str(i) for i in range(6)),
+                               default="cut0", help="Text splitting method; cut5 splits at punctuation")
     conversion = subparsers.add_parser("convert", help="Convert V2ProPlus checkpoints or package prepared resources")
     conversion.add_argument("--config", type=Path, help="Package an existing prepared runtime.json")
     for name in ("gpt", "sovits", "reference", "official-source", "python", "acoustic-python", "language-model"):
@@ -260,7 +263,8 @@ def run_product_command(args):
     if output.suffix.lower() != ".wav" or output.exists() or record.exists():
         raise ValueError("Choose a new .wav output path; neither WAV nor JSON may already exist")
     with Engine.load(args.model, experimental=experimental) as engine:
-        audio = engine.synthesize(args.text, reference=args.reference, seed=args.seed)
+        audio = engine.synthesize(args.text, reference=args.reference, seed=args.seed,
+                                  split_method=args.split_method)
         audio.save(output)
         with record.open("x", encoding="utf-8") as stream:
             json.dump(audio.report, stream, ensure_ascii=False, indent=2)

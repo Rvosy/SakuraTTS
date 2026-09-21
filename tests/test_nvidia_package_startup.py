@@ -154,6 +154,9 @@ class NvidiaPackageStartupTests(unittest.TestCase):
         for chunk in (0, 128, 256.0):
             with self.subTest(chunk=chunk), self.assertRaisesRegex(ValueError, "chunk size"):
                 NVIDIAEngine("does-not-exist.json", gpt_attention_chunk_size=chunk)
+        for chunk in (-1, 1.5, True):
+            with self.subTest(prefill_chunk=chunk), self.assertRaisesRegex(ValueError, "prefill query"):
+                NVIDIAEngine("does-not-exist.json", gpt_prefill_query_chunk_size=chunk)
 
     def test_selected_precision_reaches_gpt_loader(self):
         from types import ModuleType
@@ -164,11 +167,12 @@ class NvidiaPackageStartupTests(unittest.TestCase):
         model.packages = {"gpt": Path("model")}
         model.capacity, model.use_graph, model.gpt_precision = 2048, True, "fp16"
         model.gpt_attention, model.gpt_attention_chunk_size = "split-kv", 512
+        model.gpt_prefill_query_chunk_size = 128
         with patch.dict(sys.modules, {"sakuratts.backends.cuda.gpt": backend}):
             model._load_gpt()
         backend.CUDAGPT.load.assert_called_once_with(
             Path("model"), capacity=2048, use_graph=True, precision="fp16",
-            attention="split-kv", attention_chunk_size=512)
+            attention="split-kv", attention_chunk_size=512, prefill_query_chunk_size=128)
         model.sovits = None
         model.unload()
         with patch.dict(sys.modules, {"sakuratts.backends.cuda.gpt": backend}):
@@ -176,6 +180,7 @@ class NvidiaPackageStartupTests(unittest.TestCase):
         self.assertEqual(backend.CUDAGPT.load.call_count, 2)
         self.assertEqual(backend.CUDAGPT.load.call_args.kwargs["attention"], "split-kv")
         self.assertEqual(backend.CUDAGPT.load.call_args.kwargs["attention_chunk_size"], 512)
+        self.assertEqual(backend.CUDAGPT.load.call_args.kwargs["prefill_query_chunk_size"], 128)
 
     def test_cli_attention_selection_reaches_engine(self):
         from sakuratts.cli import main

@@ -53,7 +53,7 @@ class Engine:
         model = path if isinstance(path, Model) else Model.load(path)
         options = dict(experimental or {})
         allowed = {"policy", "use_graph", "capacity", "gpt_precision", "gpt_attention",
-                   "gpt_attention_chunk_size", "allow_experimental_acoustic_fp16",
+                   "gpt_attention_chunk_size", "gpt_prefill_query_chunk_size", "allow_experimental_acoustic_fp16",
                    "acoustic_arena_shrink", "acoustic_chunk_frames"}
         unknown = options.keys() - allowed
         if unknown:

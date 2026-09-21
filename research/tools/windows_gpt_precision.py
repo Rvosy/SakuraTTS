@@ -75,12 +75,16 @@ def main():
     parser.add_argument("--precision", choices=("fp32", "fp16"), required=True)
     parser.add_argument("--attention", choices=("baseline", "split-kv"), default="baseline")
     parser.add_argument("--attention-chunk-size", type=int, choices=(256, 512), default=256)
+    parser.add_argument("--prefill-query-chunk-size", type=int, default=0,
+                        help="Query rows per prefill attention block; 0 keeps full attention")
     parser.add_argument("--repeats", type=int, default=5)
     parser.add_argument("--capacity", type=int, default=2048)
     parser.add_argument("--compare", type=Path, help="Baseline result directory with the same inputs")
     args = parser.parse_args()
     if args.repeats < 1:
         parser.error("repeats must be positive")
+    if args.prefill_query_chunk_size < 0:
+        parser.error("prefill query chunk size must be non-negative")
     args.output.mkdir(parents=True, exist_ok=False)
     mapping = json.loads(args.captures.read_text(encoding="utf-8"))
     captures, identities = {}, {}
@@ -108,12 +112,14 @@ def main():
                       "precision": prior["precision"],
                       "attention": prior.get("attention", "baseline"),
                       "attention_chunk_size": prior.get("attention_chunk_size"),
+                      "prefill_query_chunk_size": prior.get("prefill_query_chunk_size", 0),
                       "executor_sha256": prior.get("executor_sha256"),
                       "same_precision": prior["precision"] == args.precision,
                       "strict_required": prior["precision"] == args.precision}
     report = {"status": "running", "engineering_passed": False,
               "precision": args.precision, "attention": args.attention,
               "attention_chunk_size": args.attention_chunk_size,
+              "prefill_query_chunk_size": args.prefill_query_chunk_size,
               "captures": identities, **identity, "cases": {}}
     if comparison is not None:
         report["comparison"] = comparison
@@ -129,7 +135,8 @@ def main():
                            "screen_rms": .05, "screen_max_abs": .5, "screen_cosine": .999}})
         started = time.perf_counter()
         model = CUDAGPT.load(args.gpt, capacity=args.capacity, precision=args.precision,
-                            attention=args.attention, attention_chunk_size=args.attention_chunk_size)
+                            attention=args.attention, attention_chunk_size=args.attention_chunk_size,
+                            prefill_query_chunk_size=args.prefill_query_chunk_size)
         report["load_ms"] = (time.perf_counter()-started)*1000
         report.update({"gpu": cp.cuda.runtime.getDeviceProperties(0)["name"].decode(),
                        "cuda_runtime": cp.cuda.runtime.runtimeGetVersion(),

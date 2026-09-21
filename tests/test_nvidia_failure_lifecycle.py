@@ -43,6 +43,7 @@ def engine(policy):
     model.acoustic_arena_shrink = False
     model.acoustic_chunk_frames = None
     model.gpt_attention, model.gpt_attention_chunk_size = "baseline", 256
+    model.gpt_prefill_query_chunk_size = 0
     model.gpt = model.sovits = None
     model.created_gpt, model.created_sovits, model.overlap_at_gpt_load = [], [], []
     def load_gpt():

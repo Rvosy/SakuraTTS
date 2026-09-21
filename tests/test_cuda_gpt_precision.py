@@ -19,7 +19,8 @@ from sakuratts._internal.reference_condition import sha256_file
 def load_module():
     cupy = SimpleNamespace(float16=np.float16, float32=np.float32, int32=np.int32,
         asarray=np.asarray, ascontiguousarray=np.ascontiguousarray, concatenate=np.concatenate,
-        empty=np.empty, zeros=np.zeros,
+        empty=np.empty, empty_like=np.empty_like, zeros=np.zeros, arange=np.arange,
+        where=np.where, max=np.max, exp=np.exp, sum=np.sum, inf=np.inf,
         RawKernel=Mock(side_effect=lambda *args, **kwargs: Mock()),
         cuda=SimpleNamespace(Stream=Mock(return_value=Mock()),
                              get_current_stream=Mock(return_value=Mock())),
@@ -65,6 +66,66 @@ class CudaGptPrecisionTests(unittest.TestCase):
         for chunk in (0, 128, 257, True):
             with self.subTest(chunk=chunk), self.assertRaisesRegex(ValueError, "256 or 512"):
                 cuda_gpt.CUDAGPT.load("does-not-exist", attention="split-kv", attention_chunk_size=chunk)
+
+    def test_prefill_query_chunk_size_is_validated_before_loading(self):
+        for chunk in (-1, True, np.bool_(False), 2.5, "256", None):
+            with self.subTest(chunk=chunk), self.assertRaisesRegex(ValueError, "non-negative integer"):
+                cuda_gpt.CUDAGPT.load("does-not-exist", prefill_query_chunk_size=chunk)
+        with tempfile.TemporaryDirectory() as directory, patch.object(cuda_gpt, "_GraphBLAS"):
+            root = Path(directory)
+            package(root)
+            for chunk in (0, 1, np.int64(128), 4096):
+                model = cuda_gpt.CUDAGPT.load(root, prefill_query_chunk_size=chunk)
+                self.assertEqual(model.prefill_query_chunk_size, chunk)
+                model.close()
+
+    def test_chunked_prefill_matches_full_attention_and_bounds_score_rows(self):
+        rng = np.random.default_rng(42)
+        heads, length, dim, text_length = 3, 11, 4, 5
+        # Text queries see every text key, including text in later chunks.
+        mask = np.zeros((length, length), dtype=bool)
+        mask[:, :text_length] = True
+        mask[text_length:, text_length:] = np.tril(np.ones((length-text_length, length-text_length), bool))
+        operands = [rng.normal(size=(heads, length, dim)).astype(np.float32) for _ in range(3)]
+        for precision, dtype in (("fp32", np.float32), ("fp16", np.float16)):
+            q, k, v = [a.astype(dtype) for a in operands]
+            scores = (q.astype(np.float32) @ k.astype(np.float32).transpose(0, 2, 1)) * np.float32(dim**-0.5)
+            scores = np.where(mask, scores, -np.inf)
+            scores -= scores.max(axis=-1, keepdims=True)
+            scores = np.exp(scores)
+            probabilities = (scores / scores.sum(axis=-1, keepdims=True)).astype(dtype)
+            expected = (probabilities.astype(np.float32) @ v.astype(np.float32)).astype(dtype)
+            expected = expected.transpose(1, 0, 2).reshape(length, heads*dim)
+            for chunk in (1, 3, 5, 8, length, length+7):
+                with self.subTest(precision=precision, chunk=chunk):
+                    model = object.__new__(cuda_gpt.CUDAGPT)
+                    model.precision, model.dtype = precision, dtype
+                    model.heads, model.head_dim, model.width = heads, dim, heads*dim
+                    model.prefill_query_chunk_size = chunk
+                    gemm_shapes = []
+                    def gemm(x, y, out, *, transpose_y=False):
+                        self.assertTrue(all(a.flags.c_contiguous for a in (x, y, out)))
+                        self.assertEqual(x.dtype, np.float16)
+                        self.assertEqual(y.dtype, np.float16)
+                        self.assertEqual(out.dtype, np.float32 if transpose_y else np.float16)
+                        gemm_shapes.append(out.shape)
+                        product = x.astype(np.float32) @ (y.astype(np.float32).transpose(0, 2, 1)
+                                                        if transpose_y else y.astype(np.float32))
+                        out[...] = product
+                    model.blas = SimpleNamespace(_gemm_fp16=gemm)
+                    with patch.object(cuda_gpt.cp, "where", wraps=np.where) as masked:
+                        actual = model._prefill_attention_chunked(q, k, v, text_length)
+                    np.testing.assert_allclose(actual, expected, rtol=1e-6, atol=1e-7)
+                    self.assertEqual(actual.dtype, dtype)
+                    self.assertTrue(actual.flags.c_contiguous)
+                    for call in masked.call_args_list:
+                        block_mask, block_scores = call.args[:2]
+                        self.assertLessEqual(block_mask.shape[0], chunk)
+                        self.assertEqual(block_mask.shape[1], length)
+                        self.assertEqual(block_scores.shape, (heads, block_mask.shape[0], length))
+                    if precision == "fp16":
+                        self.assertEqual(len(gemm_shapes), 2*((length+chunk-1)//chunk))
+                        self.assertTrue(all(shape[1] <= chunk for shape in gemm_shapes))
 
     def test_split_kv_workspace_is_fp32_bounded_and_recreated(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(cuda_gpt, "_GraphBLAS"):
@@ -155,6 +216,7 @@ class CudaGptPrecisionTests(unittest.TestCase):
     def test_prefill_accepts_transposed_bert_features(self):
         model = object.__new__(cuda_gpt.CUDAGPT)
         model.dtype, model.width, model.layers = np.float16, 2, 0
+        model.prefill_query_chunk_size = 0
         model.weights = {"text_embedding": np.zeros((4, 2), np.float16),
             "audio_embedding": np.zeros((4, 2), np.float16),
             "bert.weight": np.ones((2, 3), np.float16), "bert.bias": np.zeros(2, np.float16),

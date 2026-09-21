@@ -91,6 +91,7 @@ class EngineFactory:
         engine.acoustic_arena_shrink = True
         engine.acoustic_chunk_frames = None
         engine.gpt_attention, engine.gpt_attention_chunk_size = "baseline", 256
+        engine.gpt_prefill_query_chunk_size = 0
         engine.gpt = engine.sovits = None
         engine.japanese = Worker()
         self.frontends.append(engine.japanese.process)
