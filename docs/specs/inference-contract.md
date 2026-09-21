@@ -10,6 +10,8 @@ SakuraTTS 是面向本地应用的 GPT-SoVITS 轻量推理后端，接收支持�
 
 日常运行包不依赖完整 PyTorch 环境、训练工程或 CUDA 开发工具包。必要的驱动和可分发运行库需要明确列出。PyTorch 可以用于转换器、参考实现和开发实验，相关依赖单独交付。
 
+面向最终用户的交付目标是自带 Python 与推理依赖的 Windows / NVIDIA 整合包，在明确验证的设备上解压启动。整合包必须能搬迁运行，不依赖开发机绝对路径、系统 Python 或系统 CUDA Toolkit；具体待办与跨设备验收见[整合包计划](../portable-bundle.md)。当前 wheel / 源码预览不等于这一目标已经实现。
+
 当前 Windows 开发者预览采用独立安装的 wheel 与外部资源包。不同 Python ABI 的私有工作进程只加载指定的 SakuraTTS 包，不得把主环境整个 `site-packages` 加入搜索路径，否则可能误载主环境的 NumPy / ORT。CuPy / NVRTC 的头文件路径当前须为 ASCII；GPT 初始化与 `doctor --nvidia` 应提前说明不支持的安装路径。这项限制不用于拒绝日文文本、参考名称或模型资源路径。
 
 本轮不重写训练、标注、数据集管理，也不替换桌宠现有 CPU TTS 引擎。此版本只提供终端中的 HTTP 服务，前端页面留待后续开发。文本规范化、音素处理等使用 CPU 不违背 GPU 推理目标；中文特征模型的设备和精度需独立评估。
@@ -165,4 +167,4 @@ Windows CUDA 声学支持显式的 `acoustic_arena_shrink=True`，CLI 为 `--aco
 
 兼容范围内的模型能完成转换、加载、生成和取消；正确性、质量、资源与部署检查均按 [基准协议](benchmark-protocol.md) 提供证据。没有实测的模型、语言和硬件继续标为未验证。
 
-当前 Windows 实机为 RTX 5060 8 GB，官方基线与自有运行时测量单列在 [Windows 实测记录](../../research/experiments/2026-09-20-windows-nvidia-backend.md)。尚无用户批准的具体 MiB / ms 预算；默认策略优先保留实测不退步或波动范围内的速度，明显变慢的省显存策略单列。性能测量、数值容差和质量检查均保留原始结果，不能因环境或单次生成成功宣布整体目标达成。
+当前 Windows 实机为 RTX 5060 8 GB，官方基线与自有运行时测量单列在 [Windows 实测记录](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/2026-09-20-windows-nvidia-backend.md)。尚无用户批准的具体 MiB / ms 预算；默认策略优先保留实测不退步或波动范围内的速度，明显变慢的省显存策略单列。性能测量、数值容差和质量检查均保留原始结果，不能因环境或单次生成成功宣布整体目标达成。

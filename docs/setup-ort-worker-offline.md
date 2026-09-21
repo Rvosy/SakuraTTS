@@ -9,7 +9,7 @@
 在项目根目录执行：
 
 ```powershell
-.venv\Scripts\python.exe -B scripts\prepare_ort_worker_runtime.py `
+.venv\Scripts\python.exe -B tools\prepare_ort_worker_runtime.py `
   --source-runtime D:\Project\sakura\tts\g50\runtime `
   --nvidia-root .venv\Lib\site-packages\nvidia `
   --output data\windows-ort-runtime

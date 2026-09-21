@@ -29,7 +29,7 @@
 
 ## 实现和参考依据
 
-固定参考版本及逐项代码分析见 [Lite / Genie 研究记录](../../docs/research/windows-nvidia-reference-implementations.md)。Lite 参考提交为 `6c049397142f4c9147a85f86b6ba37546e93a188`，Genie 为 `d347fd0f8683e9a362b69f59fa0a4799ddb5e828`。没有引用社区性能数字作为本机结果。
+固定参考版本及逐项代码分析见 [Lite / Genie 研究记录](../notes/windows-nvidia-reference-implementations.md)。Lite 参考提交为 `6c049397142f4c9147a85f86b6ba37546e93a188`，Genie 为 `d347fd0f8683e9a362b69f59fa0a4799ddb5e828`。没有引用社区性能数字作为本机结果。
 
 GPT 复用现有 FP32 模型包、采样与停止代码。Prefill / Decode 共用一份权重，K/V 预分配并原地写入，仅当前长度参与注意力。CUDA Graph 捕获单步 Decode，包含 Embedding、24 层 Transformer 与输出投影，采样仍在图外逐步进行。没有移植 Lite 的前十步额外 token 抑制、每五步 EOS 检查，也没有使用 Genie 的正态分布除数采样。
 

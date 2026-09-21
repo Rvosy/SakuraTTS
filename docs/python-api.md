@@ -18,7 +18,7 @@ with Engine.load(model) as engine:
 
 `synthesize` 可指定 `reference`、`seed`、`language`（`ja` / `all_ja`）、`split_method`（`cut0` 至 `cut5`，默认 `cut0`）、`top_k`、`temperature`、`repetition_penalty`、`early_stop_num` 和 `cancel_requested`。默认值沿用原推理契约；相同 NumPy seed 不表示与官方 Torch seed 等价。
 
-`tts` CLI 可通过 `--split-method cut5` 按标点分句，默认仍为 `cut0`。当前只提供 FP32、FP16 标准、FP16 低显存、FP16 极限[四档配置](inference-profiles.md)，分句作为独立选项。历史实验和实测范围见[低显存报告](research/low-vram-20260921.md)。
+`tts` CLI 可通过 `--split-method cut5` 按标点分句，默认仍为 `cut0`。当前只提供 FP32、FP16 标准、FP16 低显存、FP16 极限[四档配置](inference-profiles.md)，分句作为独立选项。历史实验和实测范围见[低显存报告](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/low-vram-20260921.md)。
 
 一个 Engine 同时只处理一个请求，重入会抛出 `BusyError`。使用 `with` 或显式 `close()` 释放资源；关闭后不能继续合成。失败会沿原链路释放请求状态。宿主应在同一个线程中拥有、调用和关闭引擎，HTTP 服务已执行这一约束。
 

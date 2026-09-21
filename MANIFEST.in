@@ -3,9 +3,8 @@ include uv.lock
 recursive-include requirements *.txt
 recursive-include src/sakuratts *.py
 recursive-include scripts *.py *.ps1
-recursive-include research *.py *.json *.md
 recursive-include benchmarks *.py *.json *.md
-recursive-include tools *.py *.ps1
+recursive-include tools *.py *.ps1 *.md
 recursive-include tests *.py *.json
 recursive-include docs *.md *.txt *.json
 recursive-include examples *.py *.json *.md *.yaml
@@ -15,3 +14,4 @@ prune models
 prune outputs
 prune build
 prune dist
+prune research

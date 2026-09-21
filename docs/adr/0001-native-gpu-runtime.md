@@ -10,7 +10,7 @@
 
 KV 优化能减少解码复制与调度开销，但安装体积还受运行库、辅助模型、语言资源及重复产物影响。模型文件共享也不等于多个执行实例在 GPU 上共享权重。需要同时设计计算与资源生命周期。
 
-来源及核对范围见 [研究与证据](../research/gpu-inference.md)。
+来源及核对范围见 [研究与证据](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/gpu-inference.md)。
 
 2026-09-19 先完成 Mac 上游 MPS / FP32 功能验证，首个样本为“朱雀院红叶”V2Pro。2026-09-20 转入 Windows / RTX 5060 8 GB，以另一组 Sakura V2ProPlus 建立独立对照；Mac 结果不作为该设备的性能结论。
 
@@ -20,7 +20,7 @@ Windows 采用自有 CuPy CUDA GPT 执行器与 ORT CUDA SoVITS 子图。GPT 复
 
 本机离线可用的 ORT CUDA 1.19.2 属于 CPython 3.9 ABI，主环境为 Python 3.11，因此暂用独立、持久的声学工作进程承载该运行库。经典日文前端也使用包内 `pyopenjtalk 0.3.4` 与原主字典，通过单独 CPU 工作进程执行；开发环境的 plus 版本在部分文本上输出不同，不能静默替换。两个组件均复制为项目自己的资源，普通运行不读取原 g50。不同 Python ABI 的进程安排是本轮离线部署取舍，后续可在同一计算路径下整合运行环境，无需建立多后端框架。
 
-代价包括工作进程的 CPU 内存、数组传输和较大的运行库体积。这些成本必须计入完整请求、冷启动与卸载测量。当前组件由本机文件离线组装，其他干净机器安装和完整再分发材料尚待验收。具体版本、来源和结果见 [Windows 指南](../setup-windows-nvidia.md) 与 [实测记录](../../research/experiments/2026-09-20-windows-nvidia-backend.md)。后文的 C++、TensorRT 和量化内容仍是候选方向。
+代价包括工作进程的 CPU 内存、数组传输和较大的运行库体积。这些成本必须计入完整请求、冷启动与卸载测量。当前组件由本机文件离线组装，其他干净机器安装和完整再分发材料尚待验收。具体版本、来源和结果见 [Windows 指南](../setup-windows-nvidia.md) 与 [实测记录](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/2026-09-20-windows-nvidia-backend.md)。后文的 C++、TensorRT 和量化内容仍是候选方向。
 
 ## Mac 研发与 Windows 交付边界
 
@@ -84,7 +84,7 @@ SoVITS 单独安排工作区和阶段复用。文本编码与参考投影仅在�
 
 ## 后端选择实验
 
-Mac 研发阶段已有 [MLX / Metal GPT 实验](../../research/experiments/2026-09-19-mlx-gpt.md)、[自有历史采样](../../research/experiments/2026-09-19-native-gpt-generation.md)和[完整声学计算](../../research/experiments/2026-09-19-mlx-sovits-complete.md)，用于验证独立模型包、非 PyTorch 运行依赖和算子语义。随后已接通[原始日文到 PCM](../../research/experiments/2026-09-19-native-japanese-text-speech.md)，并将原始参考准备放入独立开发工具；扩展中间结果仍有数值失败。生产后端继续依据 Windows 实测选择。
+Mac 研发阶段已有 [MLX / Metal GPT 实验](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/2026-09-19-mlx-gpt.md)、[自有历史采样](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/2026-09-19-native-gpt-generation.md)和[完整声学计算](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/2026-09-19-mlx-sovits-complete.md)，用于验证独立模型包、非 PyTorch 运行依赖和算子语义。随后已接通[原始日文到 PCM](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/2026-09-19-native-japanese-text-speech.md)，并将原始参考准备放入独立开发工具；扩展中间结果仍有数值失败。生产后端继续依据 Windows 实测选择。
 
 | 候选 | 选择理由 | 首轮必须回答的问题 |
 |---|---|---|
@@ -139,4 +139,4 @@ KV INT8、INT4 等仅在缓存占比足够大时继续研究。量化收益必�
 
 该方案需要维护转换器、模型版本适配、原生文本处理与 GPU 二进制分发。显存释放和下一句热启动存在取舍；更小运行库也可能带来设备编译开销。
 
-在 [实施路线](../roadmap.md) M2 结束时复审本提案，填入实际后端、支持矩阵和测量依据，再将状态改为已接受或替换。C++、TensorRT-RTX 和性能目标目前都不能表述为已完成的产品能力。
+在 [实施路线](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/roadmap-20260920.md) M2 结束时复审本提案，填入实际后端、支持矩阵和测量依据，再将状态改为已接受或替换。C++、TensorRT-RTX 和性能目标目前都不能表述为已完成的产品能力。

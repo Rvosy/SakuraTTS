@@ -1,8 +1,10 @@
 # SakuraTTS
 
-GPT-SoVITS 的轻量推理运行时，以原版 API 和推理行为为兼容目标。HTTP 接受原版的文本、参考音频路径和采样参数；权重转换和参考编码在独立环境完成，主推理进程不导入 PyTorch。
+面向 GPT-SoVITS 模型的独立推理后端，以原版 API 和推理行为为兼容目标。HTTP 接受原版的文本、参考音频路径和采样参数；权重转换和参考编码在独立环境完成，主推理进程不导入 PyTorch。
 
 当前接通 Windows / NVIDIA、V2ProPlus 日文单请求，以及原版 `streaming_mode=1` 的按句返回。仍有未实现的原版功能，详见[HTTP 兼容清单](docs/http-api.md)。项目处于开发者预览阶段，不能视为完整替代原版。
+
+面向最终用户的交付目标是自带 Python 和推理依赖的 [Windows / NVIDIA 整合包](docs/portable-bundle.md)，在经过验证的设备上解压运行。当前发布工具只生成 wheel 与源码包，尚未交付该整合包。
 
 ## 安装
 
@@ -60,7 +62,7 @@ curl.exe -X POST http://127.0.0.1:9880/tts -H "Content-Type: application/json" -
 
 ## 支持与实测
 
-Windows 历史实测使用 RTX 5060 8 GB、Sakura V2ProPlus、日文非流式请求。声学 FP16 对官方 FP32 的严格数值对照仍有失败。ASR 辅助检查不能替代人工听感验收；中文整链、其他 GPU / 模型、语义 token 流式模式及宿主集成仍待实现或验证。性能条件和失败项见[兼容范围](docs/compatibility.md)与[研究总结](docs/research/reference-parity.md)。
+Windows 历史实测使用 RTX 5060 8 GB、Sakura V2ProPlus、日文非流式请求。声学 FP16 对官方 FP32 的严格数值对照仍有失败。ASR 辅助检查不能替代人工听感验收；中文整链、其他 GPU / 模型、语义 token 流式模式及宿主集成仍待实现或验证。性能条件和失败项见[兼容范围](docs/specs/compatibility-matrix.md)与[研究总结](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/reference-parity.md)。
 
 ## 仓库导航
 
@@ -73,14 +75,14 @@ start-server.bat  Windows 终端服务启动脚本
 examples/      Python、服务和模型描述示例
 benchmarks/    完整请求、官方对照入口及固定测试文本
 tests/         自动化回归
-docs/          使用说明、Spec、ADR 和研究结论
-tools/         资源准备、模型实验及高级维护工具
+docs/          部署、API、开发指南、Spec 与 ADR
+tools/         离线资源准备与高级维护工具
 scripts/       环境准备和预览版发布
-research/      历史诊断工具、实验记录与已保存证据
+research/      研究归档及其测试，仅保留在 Git 仓库
 requirements/  已验证环境的冻结依赖快照
 ```
 
-依赖声明以 `pyproject.toml` 为准。研究工具与原始证据不进入运行 wheel；新的输出保存在被 Git 忽略的目录。开发与迁移细节见[开发指南](docs/development.md)。
+依赖声明以 `pyproject.toml` 为准。研究工具与原始证据不进入 wheel 或源码包；新的输出保存在被 Git 忽略的目录。全部文档见[文档索引](docs/README.md)，开发与上游取舍见[开发指南](docs/development.md)和[架构](docs/architecture.md)。
 
 | 文档 | 内容 |
 | --- | --- |

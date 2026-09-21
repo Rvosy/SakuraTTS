@@ -6,6 +6,8 @@ SakuraTTS `0.1.0a1` 提供 Python 包和源码，当前重点是 Windows / NVIDI
 
 ## 下载内容
 
+面向最终用户的自带运行环境整合包另见[整合包计划](portable-bundle.md)。下面是当前开发者发布产物的安装方法。
+
 解压手动发布的 `sakuratts-0.1.0a1-preview.zip`：
 
 - `dist/sakuratts-0.1.0a1-py3-none-any.whl`：安装到 Python 环境的运行代码。
@@ -37,7 +39,7 @@ uv pip check --python .venv/Scripts/python.exe
 
 ## 模型、前端和声学工作进程
 
-先解开 `dist/sakuratts-0.1.0a1.tar.gz`，其中的 `docs/setup-windows-nvidia.md` 给出各准备工具及完整命令，也可阅读 [GitHub 上的 Windows 指南](https://github.com/Rvosy/SakuraTTS/blob/feat/reference-parity/docs/setup-windows-nvidia.md)。独立安装后的普通请求需要：
+先解开 `dist/sakuratts-0.1.0a1.tar.gz`，其中的 `docs/setup-windows-nvidia.md` 给出各准备工具及完整命令，也可阅读 [GitHub 上的 Windows 指南](https://github.com/Rvosy/SakuraTTS/blob/main/docs/setup-windows-nvidia.md)。独立安装后的普通请求需要：
 
 | 资源 | 准备方式 |
 | --- | --- |
@@ -50,42 +52,13 @@ uv pip check --python .venv/Scripts/python.exe
 
 `examples/runtime.windows.example.json` 提供配置格式。示例中的路径和 `neutral` 只是占位，必须指向自己的真实产物。不要沿用文档中开发机的绝对路径。开发转换依赖按 Windows 指南安装 `.[japanese,nvidia,dev]`；日常主环境只装 runtime 清单。
 
-## 命令行和 Python 接口
+## 推理与服务
 
-原 FP32 整图配置可先检查，再生成音频：
+安装后按[快速开始](quickstart.md)准备模型目录，使用公共 `Engine`、`sakuratts tts` 或 `sakuratts serve`。原 `synthesize --config` 入口保留兼容；默认 FP32，精度与显存选项见[推理档位](inference-profiles.md)。
 
-```powershell
-.venv/Scripts/sakuratts.exe doctor --nvidia --config <runtime.json>
-.venv/Scripts/sakuratts.exe synthesize --config <runtime.json> `
-  --text "おはよう。今日もよろしくね。" --seed 1234 --output outputs/hello.wav
-```
+HTTP 支持完整音频和按句流式返回；语义 token 流式、批量并行和其他语言整链尚未接入。具体字段、默认值与错误见 [HTTP API](http-api.md)，实测设备、模型和质量限制见[兼容矩阵](specs/compatibility-matrix.md)。
 
-输出目录可以不存在，但 WAV 和同名 JSON 文件必须尚不存在。退出码 `0` 表示正常停止；`2` 表示触及生成上限，不能当作文本完整的证明。其他非零退出码表示配置或运行失败。
-
-连续请求应在同一进程内复用引擎：
-
-```python
-from sakuratts.backends.cuda.engine import NVIDIAEngine, write_wav
-
-engine = NVIDIAEngine("runtime.json")
-try:
-    engine.load()
-    pcm, report = engine.synthesize("おはよう。今日もよろしくね。", seed=1234)
-    write_wav("hello.wav", pcm, report["sample_rate"])
-    # 下一次 synthesize 可复用已加载模型；同一实例一次处理一个请求。
-finally:
-    engine.close()
-```
-
-实测的低显存配置为 GPT FP16 / baseline attention，加已筛查的声学 FP16 分块 256；速度配置改用 GPT FP32 / split-KV 256。两者都需专用声学包、`allow_experimental_acoustic_fp16=True`、`acoustic_arena_shrink=True`、`acoustic_chunk_frames=256`，CLI 对应参数见 Windows 指南。默认 FP32 整图行为保留。未通过完整检查的 GEMV 实验没有进入运行包的执行路径。
-
-`doctor --nvidia --config` 暂只覆盖原 FP32 整图包，不接受声学 FP16 / 分块包。这些候选需实际合成检查，不能用一次依赖检查替代推理验收。
-
-## 当前范围
-
-已在本机验证 Sakura V2ProPlus、日文单请求、完整 WAV 和模型生命周期。速度配置自然生成 25.90 秒完整 PCM 的热请求中位数为 1557.08 ms；低显存配置生成 25.46 秒 PCM 为 2373.28 ms。两者工作量不同，不作为严格横向加速比。资源轮测得的全卡增量分别为 1108 MiB 和 799 MiB，包含桌面负载，也可能漏采瞬时峰值，不是进程独占显存。
-
-预览版尚未承诺其他 GPU、最低显存或其他模型家族兼容；不提供中文整链、量化、流式播放、并发服务或 Sakura 宿主集成。声学 FP16 保留相对官方 FP32 的严格数值失败。24 条保存音频已做辅助 ASR 检查，部分内容仍待复听，音色和自然度未获人工验收。详见源码包中 `research/experiments/` 下的 ASR 和分块入口记录，或 GitHub 上的 [ASR 记录](https://github.com/Rvosy/SakuraTTS/blob/feat/reference-parity/research/experiments/2026-09-20-windows-asr.md) 与 [分块入口记录](https://github.com/Rvosy/SakuraTTS/blob/feat/reference-parity/research/experiments/2026-09-20-windows-vocoder-public.md)。
+研究工具和原始数据只保留在 [Git 仓库](https://github.com/Rvosy/SakuraTTS/tree/main/research)。需要复现实验时，检出 `release-manifest.json` 记录的源码提交；源码包不携带研究目录。
 
 ## 手动构建和上传
 
@@ -95,7 +68,7 @@ finally:
 python scripts/build_preview.py --output dist/preview-0.1.0a1
 ```
 
-本机缓存齐全时加 `--offline`。输出目录必须是新目录。脚本需要 `uv`，在临时源码目录构建 wheel 与 sdist，再生成 ZIP、源码哈希清单与 ZIP 校验文件，不修改现有环境，不联网上传。它按明确目录和文件类型收集源码，不复制模型、实验输出、虚拟环境或本机构建缓存。构建清单保留 Git commit 与工作区是否有修改；从不含 `.git` 的源码包重建时，Git 状态记为不可用。
+本机缓存齐全时加 `--offline`。输出目录必须是新目录。脚本需要 `uv`，在临时源码目录构建 wheel 与 sdist，再生成 ZIP、源码哈希清单与 ZIP 校验文件，不修改现有环境，不联网上传。它按明确目录和文件类型收集产品源码、维护工具、产品测试、文档和许可，不复制研究目录、模型、实验输出、虚拟环境或本机构建缓存。构建清单保留 Git commit 与工作区是否有修改；从不含 `.git` 的源码包重建时，Git 状态记为不可用。
 
 发布前从该 wheel 在独立环境安装并生成音频，检查源码包能重新构建，核对 ZIP 清单。确认产物后，在 ModelScope 自己选定的仓库中手动上传 ZIP 与 `.sha256`，仓库说明可使用 `docs/releases/0.1.0a1.md`。GitHub 只提交源码与文档；`dist/` 已忽略，不把 ZIP 或 wheel 加入 Git。
 

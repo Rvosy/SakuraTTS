@@ -36,7 +36,7 @@
 | FP16 低显存 | 1.009 s | 3.560 s |
 | FP16 极限 | 3.055 s | 5.481 s |
 
-数值来自 RTX 5060 8 GB、Windows WDDM、Sakura V2ProPlus 日文单请求，使用准备好的中性参考、`cut0` 分句设置。MB 为十进制单位；显存是同一时刻主进程与声学 worker 的 Dedicated Usage 之和，空闲取请求后约 1 秒的稳定值。耗时为持续采样下的热请求中位数；FP32 与 FP16 来自不同轮次，输出长度也有差异。数据不是任意模型、输入或显卡的保证。详见 [FP32／FP16 对照](research/low-vram-20260921.md)及[声学错峰实测](research/acoustic-session-staging-20260921.md)。
+数值来自 RTX 5060 8 GB、Windows WDDM、Sakura V2ProPlus 日文单请求，使用准备好的中性参考、`cut0` 分句设置。MB 为十进制单位；显存是同一时刻主进程与声学 worker 的 Dedicated Usage 之和，空闲取请求后约 1 秒的稳定值。耗时为持续采样下的热请求中位数；FP32 与 FP16 来自不同轮次，输出长度也有差异。数据不是任意模型、输入或显卡的保证。详见 [FP32／FP16 对照](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/low-vram-20260921.md)及[声学错峰实测](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/acoustic-session-staging-20260921.md)。
 
 ## 选择与使用
 
@@ -68,6 +68,6 @@ C 保留模型权重，语义生成完成后释放 GPT 请求状态；E 进一�
 ## 旧配置迁移
 
 - 原 `examples/low-vram.json` 对应 C，现在改用 `examples/fp16.json`；新的 `low-vram.json` 对应 E。
-- 原 `examples/minimum-vram.json` 对应旧 F，现在的同名文件对应 H；旧 F 仅在[研究配置](../research/experiments/configs/fp16-staged-resident-acoustics.json)中保留，供复现历史数据。
+- 原 `examples/minimum-vram.json` 对应旧 F，现在的同名文件对应 H；旧 F 仅在[研究配置](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/configs/fp16-staged-resident-acoustics.json)中保留，供复现历史数据。
 - `low-vram-acoustic-staged.json` 和 `minimum-vram-acoustic-staged.json` 分别合并到 `low-vram.json`、`minimum-vram.json`。
-- Prefill query128 组合仅保留[研究配置](../research/experiments/configs/fp16-staged-acoustics-prefill128.json)与测量记录，不作为当前档位提供。
+- Prefill query128 组合仅保留[研究配置](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/configs/fp16-staged-acoustics-prefill128.json)与测量记录，不作为当前档位提供。

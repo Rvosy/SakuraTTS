@@ -1,6 +1,6 @@
 # 基准与验收协议
 
-状态：设计草案；已有 [Mac 上游功能冒烟记录](../../research/experiments/2026-09-19-macos-reference-smoke.md)，尚未完成本协议规定的正式验收。更新日期：2026-09-19。
+状态：设计草案；已有 [Mac 上游功能冒烟记录](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/2026-09-19-macos-reference-smoke.md)，尚未完成本协议规定的正式验收。更新日期：2026-09-19。
 
 本协议用于验证 [推理契约](inference-contract.md)，同时比较安装体积、显存、速度和质量。作者公布的数据、公式估算和本项目实测分别标注。外部数据不能直接填入项目验收结果。
 

@@ -18,7 +18,7 @@ import zipfile
 
 
 ROOT_FILES = {"README.md", "LICENSE", "MANIFEST.in", "pyproject.toml", "AGENTS.md", "uv.lock", "start-server.bat", "api.py"}
-SOURCE_DIRS = ("src/sakuratts", "scripts", "tools", "requirements", "research", "benchmarks", "tests", "docs", "examples")
+SOURCE_DIRS = ("src/sakuratts", "scripts", "tools", "requirements", "benchmarks", "tests", "docs", "examples")
 TEXT_SUFFIXES = {".py", ".md", ".txt", ".toml", ".json", ".ps1", ".yaml", ".yml", ".rst", ".ini", ".cfg"}
 EXCLUDED_DIRS = {"build", "dist", "__pycache__", "node_modules"}
 
@@ -103,6 +103,8 @@ def verify_distributions(wheel, sdist, inventory):
         if len(names) != len(members):
             raise ValueError("sdist contains duplicate members")
         prefix = sdist.name.removesuffix(".tar.gz") + "/"
+        if any(name.startswith(prefix + "research/") for name in names):
+            raise ValueError("sdist contains research files")
         for relative in inventory:
             member = names.get(prefix + relative)
             if member is None or not member.isfile():

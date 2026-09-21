@@ -4,7 +4,7 @@
 
 ## 安装运行环境
 
-从仓库根目录执行 `python -m pip install ".[nvidia,japanese,server]"`，或者安装构建好的 wheel 及对应 extras。HTTP 服务 需要 `server`，普通 Python / CLI 推理可以省略。
+从仓库根目录执行 `python -m pip install ".[nvidia,japanese,server]"`，或者安装构建好的 wheel 及对应 extras。HTTP 服务需要 `server`，普通 Python / CLI 推理可以省略。
 
 按照[Windows 准备指南](setup-windows-nvidia.md)准备模型、语言资源和[独立声学解释器](setup-ort-worker-offline.md)。经典 pyopenjtalk 的二进制 ABI、字典和来源身份不能用 pyopenjtalk-plus 直接替换。
 

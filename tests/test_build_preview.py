@@ -23,10 +23,9 @@ def source_tree(root):
              "pyproject.toml": '[project]\nname="sakuratts"\nversion="0.1.0a1"\n',
              "requirements/windows-runtime.txt": "numpy==2.4.6\n",
              "docs/preview-release.md": "Developer installation guide\n",
-             "research/experiments/data/evidence.json": '{"passed": true}\n',
              "docs/third-party/example-LICENSE.txt": "Example license\n",
              "src/sakuratts/__init__.py": '"""Package."""\n',
-             "src/sakuratts/_internal/conversion/convert_gpt.py": "pass\n", "research/tools/probe.py": "pass\n",
+             "src/sakuratts/_internal/conversion/convert_gpt.py": "pass\n",
              "benchmarks/cases/speech_regressions.json": '{"cases": []}\n',
              "tests/test_probe.py": "pass\n", "examples/runtime.json": "{}\n"}
     for name, text in files.items():
@@ -64,16 +63,21 @@ def write_distributions(source, dist, fault=None):
 
 
 class PreviewBuildTests(unittest.TestCase):
-    def test_documentation_data_is_preserved_without_root_runtime_data(self):
+    def test_research_is_excluded_without_losing_product_sources(self):
         with tempfile.TemporaryDirectory() as folder:
             root, staged = Path(folder) / "repo", Path(folder) / "staged"
             source_tree(root)
             (root / "data").mkdir()
             (root / "data/local.json").write_text("{}", encoding="utf-8")
-            (root / "research/experiments/data/weights.npz").write_bytes(b"binary")
+            research = root / "research/experiments/data"
+            research.mkdir(parents=True)
+            (research / "evidence.json").write_text('{"passed": true}', encoding="utf-8")
+            (research / "weights.npz").write_bytes(b"binary")
+            (root / "research/probe.py").write_text("pass\n", encoding="utf-8")
             inventory = preview.stage_source(root, staged)
-            self.assertIn("research/experiments/data/evidence.json", inventory)
-            self.assertEqual(json.loads((staged / "research/experiments/data/evidence.json").read_text()), {"passed": True})
+            self.assertIn("src/sakuratts/_internal/conversion/convert_gpt.py", inventory)
+            self.assertFalse(any(name.startswith("research/") for name in inventory))
+            self.assertFalse((staged / "research").exists())
             self.assertNotIn("data/local.json", inventory)
             self.assertNotIn("research/experiments/data/weights.npz", inventory)
 
@@ -158,6 +162,7 @@ class PreviewBuildTests(unittest.TestCase):
             self.assertFalse(output.exists())
 
     def test_sdist_missing_source_and_source_drift_prevent_publication(self):
+        self.assert_bad_distribution_rejected(("sdist", "research/local.json", b"{}"), "research files")
         for name, replacement in [("benchmarks/cases/speech_regressions.json", None),
                                   ("src/sakuratts/_internal/conversion/convert_gpt.py", b"changed source\n")]:
             with self.subTest(name=name):
