@@ -7,6 +7,7 @@ from threading import Lock
 import wave
 
 from .model import Model
+from ._internal.pcm import pcm_s16le_bytes
 
 
 class BusyError(RuntimeError):
@@ -25,7 +26,7 @@ class Audio:
             wav.setnchannels(1)
             wav.setsampwidth(2)
             wav.setframerate(self.sample_rate)
-            wav.writeframes(self.pcm.astype("<i2", copy=False).tobytes())
+            wav.writeframes(pcm_s16le_bytes(self.pcm))
         return stream.getvalue()
 
     def save(self, path):
@@ -98,49 +99,54 @@ def load(path, **kwargs):
     return Engine.load(path, **kwargs)
 
 
+def read_inference_configuration(model=None, *, tts_config=None):
+    """Read service settings without constructing frontends or GPU resources."""
+    import json
+    settings = {}
+    if tts_config:
+        path = Path(tts_config)
+        if path.suffix.lower() == ".json":
+            config = json.loads(path.read_text(encoding="utf-8"))
+        else:
+            import yaml
+            config = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if not isinstance(config, dict):
+            raise ValueError("TTS configuration must be a mapping")
+        if "format" in config:
+            model = path
+        else:
+            settings = dict(config.get("sakuratts", {}))
+            custom = config.get("custom", config)
+            if custom.get("device", "cuda") != "cuda":
+                raise NotImplementedError("The native service currently requires device: cuda")
+            if custom.get("is_half", False):
+                raise NotImplementedError("Official is_half mode is not yet supported; use is_half: false")
+            if custom.get("version", "v2ProPlus") != "v2ProPlus":
+                raise NotImplementedError("The Windows native service currently supports v2ProPlus")
+            model = model or settings.get("model")
+            for key, field in (("gpt", "t2s_weights_path"), ("sovits", "vits_weights_path")):
+                if custom.get(field):
+                    settings[key + "_checkpoint"] = custom[field]
+            if custom.get("cnhuhbert_base_path"):
+                settings["cnhubert"] = custom["cnhuhbert_base_path"]
+    from ._internal.portable import preparation_settings
+    return model, preparation_settings(settings)
+
+
 class Inference:
     """Upstream API lifecycle, owned entirely by one service worker thread."""
 
-    def __init__(self, model=None, *, tts_config=None, experimental=None):
-        import json
+    def __init__(self, model=None, *, tts_config=None, experimental=None, _allow_staged=False):
         import logging
-        if (experimental or {}).get("policy") == "staged":
-            raise ValueError("HTTP loads both models at startup; staged policy is available through the low-level Engine only")
+        if (experimental or {}).get("policy") == "staged" and not _allow_staged:
+            raise ValueError("Direct HTTP loads both models at startup; staged policy requires managed mode or the low-level Engine")
         self.logger = logging.getLogger("sakuratts.engine")
         self.engine = None
         self.references = None
         self.model = None
-        self.settings = {}
         self.experimental = experimental
         self.reference_audio = None
-        if tts_config:
-            path = Path(tts_config)
-            if path.suffix.lower() == ".json":
-                config = json.loads(path.read_text(encoding="utf-8"))
-            else:
-                import yaml
-                config = yaml.safe_load(path.read_text(encoding="utf-8"))
-            if not isinstance(config, dict):
-                raise ValueError("TTS configuration must be a mapping")
-            if "format" in config:
-                model = path
-            else:
-                self.settings = dict(config.get("sakuratts", {}))
-                custom = config.get("custom", config)
-                if custom.get("device", "cuda") != "cuda":
-                    raise NotImplementedError("The native service currently requires device: cuda")
-                if custom.get("is_half", False):
-                    raise NotImplementedError("Official is_half mode is not yet supported; use is_half: false")
-                if custom.get("version", "v2ProPlus") != "v2ProPlus":
-                    raise NotImplementedError("The Windows native service currently supports v2ProPlus")
-                model = model or self.settings.get("model")
-                for key, field in (("gpt", "t2s_weights_path"), ("sovits", "vits_weights_path")):
-                    if custom.get(field):
-                        self.settings[key + "_checkpoint"] = custom[field]
-                if custom.get("cnhuhbert_base_path"):
-                    self.settings["cnhubert"] = custom["cnhuhbert_base_path"]
-        from ._internal.portable import preparation_settings
-        self.settings = preparation_settings(self.settings)
+        model, self.settings = read_inference_configuration(model, tts_config=tts_config)
         try:
             if model is not None:
                 self._activate(model if isinstance(model, Model) else Model.load(model))

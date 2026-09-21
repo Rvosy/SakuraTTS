@@ -13,11 +13,12 @@ import threading
 from typing import Optional, Union
 import wave
 
-from fastapi import FastAPI, Request
+from fastapi import Body, FastAPI, Request
 from fastapi.responses import JSONResponse, Response, StreamingResponse
-from pydantic import BaseModel, ConfigDict, ValidationError
-from .engine import Audio, Inference
-from ._internal.generation import SynthesisCancelled
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from .engine import Audio, BusyError, Inference
+from ._internal.cancellation import SynthesisCancelled
+from ._internal.pcm import pcm_s16le_bytes
 from ._internal.logging import log_result, request_id, request_scope, service_logging, set_stage, stage
 
 logger = logging.getLogger("sakuratts.server")
@@ -98,7 +99,7 @@ class SpeechRequest(BaseModel):
 def pack_audio(pcm, rate, media_type):
     if media_type == "wav":
         return Audio(pcm, rate, {}).wav_bytes()
-    raw = pcm.astype("<i2", copy=False).tobytes()
+    raw = pcm_s16le_bytes(pcm)
     if media_type == "raw":
         return raw
     codec = ["-c:a", "aac", "-b:a", "192k", "-f", "adts"] if media_type == "aac" else ["-c:a", "libvorbis", "-f", "ogg"]
@@ -126,7 +127,22 @@ def error_response(error, *, synthesis=False):
     return JSONResponse({"message": str(error)}, status_code=400)
 
 
-def create_app(model=None, *, tts_config=None, experimental=None, control=None):
+class WakeRequest(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False, extra="forbid")
+    keep_alive_seconds: float = Field(default=60, ge=0, le=3600)
+
+
+def create_app(model=None, *, tts_config=None, experimental=None, control=None,
+               runtime_mode="direct", idle_sleep_seconds=60, wake_timeout_seconds=120,
+               operation_timeout_seconds=300):
+    if runtime_mode not in ("direct", "managed"):
+        raise ValueError("runtime_mode must be direct or managed")
+    for name, value in (("idle_sleep_seconds", idle_sleep_seconds),
+                        ("wake_timeout_seconds", wake_timeout_seconds),
+                        ("operation_timeout_seconds", operation_timeout_seconds)):
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+            raise ValueError(name + " must be finite and positive")
+
     @asynccontextmanager
     async def lifespan(app):
         pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="sakuratts")
@@ -136,37 +152,86 @@ def create_app(model=None, *, tts_config=None, experimental=None, control=None):
         app.state.streams = set()
         app.state.inference = None
         app.state.model_info = None
+        app.state.runtime = None
         try:
-            inference = await asyncio.get_running_loop().run_in_executor(pool,
-                partial(Inference, model, tts_config=tts_config, experimental=experimental))
+            if runtime_mode == "managed":
+                from ._internal.inference_process import ProcessInference
+                from ._internal.managed_runtime import ManagedRuntime
+                factory = partial(ProcessInference, model, tts_config=tts_config, experimental=experimental,
+                                  startup_timeout=wake_timeout_seconds, operation_timeout=operation_timeout_seconds)
+            else:
+                factory = partial(Inference, model, tts_config=tts_config, experimental=experimental)
+            inference = await asyncio.get_running_loop().run_in_executor(pool, factory)
             app.state.inference = inference
             app.state.model_info = inference.info()
-            if inference.info() is None:
+            if runtime_mode == "managed":
+                app.state.runtime = ManagedRuntime(inference, pool, idle_sleep_seconds=idle_sleep_seconds)
+                logger.info("控制模式已启动，推理进程按需唤醒")
+            elif inference.info() is None:
                 logger.warning("尚未加载模型，请通过 --tts-config 指定配置")
             logger.debug("No default reference audio. Specify ref_audio_path, prompt_text and prompt_lang in /tts.")
             yield
         finally:
+            if app.state.runtime is not None:
+                app.state.runtime.begin_shutdown()
             for stop in app.state.streams:
                 stop.set()
             if app.state.jobs:
                 await asyncio.gather(*app.state.jobs, return_exceptions=True)
-            if app.state.inference is not None:
-                await asyncio.get_running_loop().run_in_executor(pool, app.state.inference.close)
-            pool.shutdown(wait=True)
+            try:
+                if app.state.runtime is not None:
+                    await app.state.runtime.close()
+                elif app.state.inference is not None:
+                    await asyncio.get_running_loop().run_in_executor(pool, app.state.inference.close)
+            finally:
+                pool.shutdown(wait=True)
             logger.info("模型与工作进程已关闭")
 
     app = FastAPI(title="SakuraTTS", version="0.1.0a1", lifespan=lifespan)
 
-    def start_job(operation):
+    def start_job(operation, *, cancel_requested=None, preparation_failed=None, cancel_event=None):
         if app.state.busy:
             return None
+        runtime = app.state.runtime
+        if runtime is not None:
+            runtime.begin_operation()
         app.state.busy = True
         async def run():
+            failure = None
+            timeout_handle = None
+            expired = False
+            def expire():
+                nonlocal expired
+                expired = True
+                if cancel_event is not None:
+                    cancel_event.set()
             try:
-                return await asyncio.get_running_loop().run_in_executor(app.state.pool, operation)
+                if runtime is not None:
+                    try:
+                        await runtime.ensure_awake(cancel_requested)
+                    except Exception as error:
+                        if preparation_failed is not None:
+                            await preparation_failed(error)
+                        raise
+                    # The IPC deadline cannot run while its audio callback is
+                    # blocked by HTTP backpressure. Unblock that callback here.
+                    timeout_handle = asyncio.get_running_loop().call_later(operation_timeout_seconds, expire)
+                result = await asyncio.get_running_loop().run_in_executor(app.state.pool, operation)
+                if expired:
+                    raise TimeoutError("Inference operation timed out")
+                return result
+            except Exception as error:
+                failure = TimeoutError("Inference operation timed out") if expired else error
+                if expired:
+                    raise failure from error
+                raise
             finally:
+                if timeout_handle is not None:
+                    timeout_handle.cancel()
                 app.state.model_info = app.state.inference.info()
                 app.state.busy = False
+                if runtime is not None:
+                    runtime.end_operation(failure)
         job = asyncio.create_task(run())
         app.state.jobs.add(job)
         def finished(task):
@@ -181,12 +246,41 @@ def create_app(model=None, *, tts_config=None, experimental=None, control=None):
 
     @app.get("/health")
     async def health():
-        return {"status": "busy" if app.state.busy else "ready", "model_loaded": app.state.model_info is not None,
-                "model": app.state.model_info, "compatibility": "api_v2 native subset"}
+        info = app.state.model_info
+        loaded = info is not None
+        if app.state.runtime is not None:
+            runtime_status = app.state.runtime.snapshot()
+            info, loaded = runtime_status["model"], runtime_status["model_loaded"]
+        return {"status": "busy" if app.state.busy else "ready", "model_loaded": loaded,
+                "model": info, "compatibility": "api_v2 native subset"}
 
     @app.get("/models")
     async def models():
-        return [app.state.model_info] if app.state.model_info is not None else []
+        info = app.state.model_info if app.state.runtime is None else app.state.runtime.snapshot()["model"]
+        return [info] if info is not None else []
+
+    if runtime_mode == "managed":
+        @app.get("/runtime")
+        async def runtime_status():
+            return app.state.runtime.snapshot()
+
+        @app.post("/runtime/wake")
+        async def runtime_wake(request: Optional[WakeRequest] = Body(default=None)):
+            try:
+                task = app.state.runtime.request_wake((request or WakeRequest()).keep_alive_seconds)
+                return JSONResponse(app.state.runtime.snapshot(), status_code=202 if task is not None else 200)
+            except Exception as error:
+                return error_response(error)
+
+        @app.post("/runtime/sleep")
+        async def runtime_sleep():
+            try:
+                await app.state.runtime.sleep()
+                return app.state.runtime.snapshot()
+            except BusyError:
+                return busy_response()
+            except Exception as error:
+                return error_response(error)
 
     async def run_control(operation):
         job = start_job(operation)
@@ -244,25 +338,65 @@ def create_app(model=None, *, tts_config=None, experimental=None, control=None):
                 logger.exception("请求 #%s · %s失败", request_id.get(), stage.get(), extra={"block": "complete"})
                 raise
 
-    async def tts(request):
+    async def wait_with_disconnect(task, connection, stop, *, cancel_wait=False):
+        async def disconnected():
+            while True:
+                if (await connection.receive())["type"] == "http.disconnect":
+                    stop.set()
+                    return
+        watcher = asyncio.create_task(disconnected())
+        try:
+            done, _ = await asyncio.wait({task, watcher}, return_when=asyncio.FIRST_COMPLETED)
+            if watcher in done:
+                await watcher
+                if cancel_wait:
+                    task.cancel()
+                    await asyncio.gather(task, return_exceptions=True)
+                return True, None
+            return False, await asyncio.shield(task)
+        except BaseException:
+            stop.set()
+            if cancel_wait:
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+            raise
+        finally:
+            watcher.cancel()
+            await asyncio.gather(watcher, return_exceptions=True)
+
+    async def tts(request, connection):
         try:
             values = request.checked()
         except Exception as error:
             return error_response(error)
         if values["streaming_mode"]:
-            return await stream_tts(values)
-        job = start_job(partial(run_synthesis, values))
+            return await stream_tts(values, connection)
+        stop = threading.Event() if app.state.runtime is not None else None
+        cancelled = stop.is_set if stop is not None else None
+        operation = partial(run_synthesis, values, cancel_requested=cancelled)
+        job = start_job(operation, cancel_requested=cancelled, cancel_event=stop)
         if job is None:
             return busy_response()
+        if stop is not None:
+            app.state.streams.add(stop)
         try:
-            audio, data = await asyncio.shield(job)
+            if stop is None:
+                audio, data = await asyncio.shield(job)
+            else:
+                disconnected, result = await wait_with_disconnect(job, connection, stop)
+                if disconnected:
+                    return Response(status_code=499)
+                audio, data = result
         except Exception as error:
             return error_response(error, synthesis=True)
+        finally:
+            if stop is not None:
+                app.state.streams.discard(stop)
         return Response(data, media_type="audio/" + values["media_type"], headers={
             "X-SakuraTTS-Status": audio.report["status"],
             "X-SakuraTTS-Request-Ms": str(round(audio.report["request_ms"], 2)), "Cache-Control": "no-store"})
 
-    async def stream_tts(values):
+    async def stream_tts(values, connection):
         loop = asyncio.get_running_loop()
         queue = asyncio.Queue(maxsize=2)
         stop = threading.Event()
@@ -280,7 +414,6 @@ def create_app(model=None, *, tts_config=None, experimental=None, control=None):
                         return
         def fragment(pcm, rate):
             if stop.is_set():
-                from ._internal.generation import SynthesisCancelled
                 raise SynthesisCancelled("stream_output")
             media = "raw" if values["media_type"] == "wav" else values["media_type"]
             previous = stage.get()
@@ -295,14 +428,45 @@ def create_app(model=None, *, tts_config=None, experimental=None, control=None):
             except Exception as error:
                 if not stop.is_set():
                     put(error)
+                if app.state.runtime is not None:
+                    raise
             finally:
                 put(None)
-        job = start_job(synthesize)
+        async def preparation_failed(error):
+            if not stop.is_set():
+                await queue.put(error)
+                await queue.put(None)
+        job = start_job(synthesize, cancel_requested=stop.is_set, preparation_failed=preparation_failed,
+                        cancel_event=stop)
         if job is None:
             return busy_response()
         app.state.streams.add(stop)
+
+        async def receive_item():
+            if not queue.empty():
+                return queue.get_nowait()
+            if job.done():
+                return job.exception() or None
+            pending = asyncio.create_task(queue.get())
+            try:
+                done, _ = await asyncio.wait({pending, job}, return_when=asyncio.FIRST_COMPLETED)
+                if pending in done:
+                    return pending.result()
+                return job.exception() or None
+            finally:
+                if not pending.done():
+                    pending.cancel()
+                    await asyncio.gather(pending, return_exceptions=True)
+
         try:
-            first = await queue.get()
+            if app.state.runtime is None:
+                first = await queue.get()
+            else:
+                first_task = asyncio.create_task(receive_item())
+                disconnected, first = await wait_with_disconnect(first_task, connection, stop, cancel_wait=True)
+                if disconnected:
+                    app.state.streams.discard(stop)
+                    return Response(status_code=499)
         except BaseException:
             stop.set()
             app.state.streams.discard(stop)
@@ -317,7 +481,12 @@ def create_app(model=None, *, tts_config=None, experimental=None, control=None):
                     yield wave_header(first[0])
                 yield first[1]
                 while True:
-                    item = await queue.get()
+                    if app.state.runtime is None:
+                        item = await queue.get()
+                    else:
+                        if stop.is_set():
+                            raise SynthesisCancelled("stream_output")
+                        item = await receive_item()
                     if item is None:
                         return
                     if isinstance(item, Exception):
@@ -329,8 +498,8 @@ def create_app(model=None, *, tts_config=None, experimental=None, control=None):
         return StreamingResponse(body(), media_type="audio/" + values["media_type"])
 
     @app.post("/tts")
-    async def tts_post(request: SpeechRequest):
-        return await tts(request)
+    async def tts_post(request: SpeechRequest, connection: Request):
+        return await tts(request, connection)
 
     @app.get("/tts")
     async def tts_get(request: Request):
@@ -343,13 +512,14 @@ def create_app(model=None, *, tts_config=None, experimental=None, control=None):
             parsed = SpeechRequest.model_validate(values)
         except ValidationError as error:
             return JSONResponse({"detail": error.errors(include_context=False)}, status_code=422)
-        return await tts(parsed)
+        return await tts(parsed, request)
 
     return app
 
 
 def start_server(model=None, *, host="127.0.0.1", port=9880, tts_config=None, experimental=None,
-                 log_file="logs/sakuratts.log", log_level="info"):
+                 log_file="logs/sakuratts.log", log_level="info", runtime_mode="direct",
+                 idle_sleep_seconds=60, wake_timeout_seconds=120, operation_timeout_seconds=300):
     import uvicorn
     with service_logging(log_file, log_level) as path:
         while True:
@@ -360,7 +530,10 @@ def start_server(model=None, *, host="127.0.0.1", port=9880, tts_config=None, ex
             logger.info("SakuraTTS · 推理服务", extra={"block": "startup"})
             logger.info("地址  http://%s:%d", host, port)
             logger.info("日志  %s", path)
-            app = create_app(model, tts_config=tts_config, experimental=experimental, control=control)
+            app = create_app(model, tts_config=tts_config, experimental=experimental, control=control,
+                             runtime_mode=runtime_mode, idle_sleep_seconds=idle_sleep_seconds,
+                             wake_timeout_seconds=wake_timeout_seconds,
+                             operation_timeout_seconds=operation_timeout_seconds)
             server = uvicorn.Server(uvicorn.Config(app, host=host, port=port, workers=1, log_config=None))
             server.run()
             if not server.started:

@@ -14,6 +14,7 @@ import numpy as np
 
 from sakuratts._internal.sampling import StopResult, exclude_initial_eos, finish_nonstream_step, sample
 from sakuratts._internal.logging import set_stage, terminal_progress_enabled
+from sakuratts._internal.cancellation import SynthesisCancelled, check_cancelled
 
 logger = logging.getLogger("sakuratts.inference")
 
@@ -84,19 +85,6 @@ class _SemanticProgress:
                    self.prefix_length, self.prefix_length + self.count,
                    " · 达到长度上限" if limited else "",
                    extra={"block": "progress"})
-
-
-class SynthesisCancelled(RuntimeError):
-    """The caller requested cancellation at this completed compute boundary."""
-
-    def __init__(self, stage):
-        self.stage = stage
-        super().__init__(f"Synthesis cancelled at {stage}")
-
-
-def check_cancelled(cancel_requested, stage):
-    if cancel_requested is not None and cancel_requested():
-        raise SynthesisCancelled(stage)
 
 
 @dataclass

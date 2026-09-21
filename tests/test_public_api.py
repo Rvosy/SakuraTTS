@@ -8,13 +8,14 @@ import subprocess
 import sys
 import tempfile
 import threading
+from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 import wave
 
 import numpy as np
 
-from sakuratts import Audio, BusyError, Engine, Model
+from sakuratts import Audio, BusyError, Engine, Model, start_server
 from sakuratts.cli import main
 from sakuratts.converter import package_model
 
@@ -55,6 +56,55 @@ class PublicApiTests(unittest.TestCase):
         for command in ("tts", "convert", "serve", "benchmark"):
             result = subprocess.run([sys.executable, "-m", "sakuratts", command, "--help"], capture_output=True)
             self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_serve_defaults_keep_original_startup_options(self):
+        for extra in ([], ["--runtime-mode", "direct"]):
+            with self.subTest(extra=extra):
+                run = Mock()
+                with patch.dict(sys.modules, {"sakuratts.server": SimpleNamespace(start_server=run)}):
+                    self.assertEqual(main(["serve", "model", *extra]), 0)
+                run.assert_called_once_with("model", host="127.0.0.1", port=9880,
+                                            tts_config=None, experimental=None,
+                                            log_file=Path("logs/sakuratts.log"), log_level="info")
+
+    def test_serve_managed_options_are_explicit_and_forwarded(self):
+        for extra, expected in (
+                ([], (60., 120., 300.)),
+                (["--idle-sleep-seconds", "10.5", "--wake-timeout-seconds", "30",
+                  "--operation-timeout-seconds", "90"], (10.5, 30., 90.))):
+            with self.subTest(extra=extra):
+                run = Mock()
+                with patch.dict(sys.modules, {"sakuratts.server": SimpleNamespace(start_server=run)}):
+                    self.assertEqual(main(["serve", "model", "--runtime-mode", "managed", *extra]), 0)
+                options = run.call_args.kwargs
+                self.assertEqual(options["runtime_mode"], "managed")
+                self.assertEqual(tuple(options[key] for key in (
+                    "idle_sleep_seconds", "wake_timeout_seconds", "operation_timeout_seconds")), expected)
+
+    def test_serve_rejects_invalid_runtime_timers_before_startup(self):
+        for option in ("--idle-sleep-seconds", "--wake-timeout-seconds", "--operation-timeout-seconds"):
+            for value in ("0", "-1", "nan", "inf", "-inf"):
+                with self.subTest(option=option, value=value):
+                    run = Mock()
+                    with patch.dict(sys.modules, {"sakuratts.server": SimpleNamespace(start_server=run)}), \
+                            contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as raised:
+                        main(["serve", "model", "--runtime-mode", "managed", option + "=" + value])
+                    self.assertEqual(raised.exception.code, 2)
+                    run.assert_not_called()
+
+    def test_public_server_preserves_defaults_and_forwards_managed_options(self):
+        run = Mock(return_value="stopped")
+        with patch.dict(sys.modules, {"sakuratts.server": SimpleNamespace(start_server=run)}):
+            self.assertEqual(start_server("model"), "stopped")
+            run.assert_called_once_with("model", host="127.0.0.1", port=9880,
+                                        tts_config=None, experimental=None)
+            run.reset_mock()
+            start_server("model", runtime_mode="managed", idle_sleep_seconds=12.,
+                         wake_timeout_seconds=40., operation_timeout_seconds=80.)
+            run.assert_called_once_with("model", host="127.0.0.1", port=9880,
+                                        tts_config=None, experimental=None, runtime_mode="managed",
+                                        idle_sleep_seconds=12., wake_timeout_seconds=40.,
+                                        operation_timeout_seconds=80.)
 
     def test_model_rejects_escaping_resource_unsupported_backend_and_bad_default(self):
         with tempfile.TemporaryDirectory() as folder:

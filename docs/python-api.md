@@ -16,6 +16,19 @@ with Engine.load(model) as engine:
 
 这里是已有参考包的低级 Python 接口，字段和默认值保留历史行为；原版兼容入口是 [HTTP API](http-api.md)。
 
+`sakuratts.start_server(model, host="127.0.0.1", port=9880)` 启动 HTTP 服务，默认 `runtime_mode="direct"`，仍在启动时加载配置的模型。需要休眠和提前唤醒时显式选择控制模式：
+
+```python
+from sakuratts import start_server
+
+start_server("models/sakura", runtime_mode="managed", idle_sleep_seconds=60,
+             wake_timeout_seconds=120, operation_timeout_seconds=300)
+```
+
+三个秒数必须是有限正数，只在 `managed` 模式使用。该模式提供 `/runtime`、`/runtime/wake` 和 `/runtime/sleep`；普通 `/tts` 也会自动唤醒。它不会改变进程内 `Engine.load` 或 `Engine.close()` 的生命周期，准备就绪也不等于完成首次执行预热。
+
+HTTP 的总体 `policy="staged"` 仅允许显式启用的 `managed` 模式。可读取 `examples/minimum-vram.json`，通过 `start_server("MODEL", experimental=options, runtime_mode="managed")` 使用 H 档，模型须匹配 FP16 chunk256 声学包。此时 `/runtime.preparation="runtime_init"`，`awake` 表示推理进程、前端和配置已准备；GPU 权重在执行时交替加载，`model_loaded` 始终为 `false`。其他档位仍为 `preparation="model_load"`，加载步骤完成后 `model_loaded=true`。`direct` 的加载时机和策略限制保持不变。
+
 `synthesize` 可指定 `reference`、`seed`、`language`（`ja` / `all_ja`）、`split_method`（`cut0` 至 `cut5`，默认 `cut0`）、`top_k`、`temperature`、`repetition_penalty`、`early_stop_num` 和 `cancel_requested`。默认值沿用原推理契约；相同 NumPy seed 不表示与官方 Torch seed 等价。
 
 `tts` CLI 可通过 `--split-method cut5` 按标点分句，默认仍为 `cut0`。当前只提供 FP32、FP16 标准、FP16 低显存、FP16 极限[四档配置](inference-profiles.md)，分句作为独立选项。历史实验和实测范围见[低显存报告](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/low-vram-20260921.md)。

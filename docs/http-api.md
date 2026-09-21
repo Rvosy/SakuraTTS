@@ -7,14 +7,73 @@
 复制 [配置示例](../examples/tts_infer.example.yaml)，填写模型、转换解释器和源码路径：
 
 ```powershell
-start-server.bat -c configs/tts_infer.yaml
+.\start-server.bat -c configs/tts_infer.yaml
 # 同等入口
 python api.py -a 127.0.0.1 -p 9880 -c configs/tts_infer.yaml
 ```
 
 路径按启动工作目录解析，和原版一样；建议使用绝对路径。脚本固定从仓库目录启动。配置提供 `custom.t2s_weights_path` / `vits_weights_path` 时，先转换或复用部署缓存，再加载权重。`sakuratts.model` 可引用已有部署包以跳过完整转换。原始模型和原版配置文件不会被修改。
 
-无参数时仅检查 `configs/tts_infer.yaml`，不会自动发现角色包。没有配置时 HTTP 可以启动，但 `model_loaded=false`，合成会提示配置模型。HTTP 加载 GPU 权重；第一次合成仍可能有内核编译等开销。低级 `Engine.load` 保留延迟加载，实验性的 `staged` 模式只用于低级接口。
+无参数时仅检查 `configs/tts_infer.yaml`，不会自动发现角色包。没有配置时 HTTP 可以启动，但 `model_loaded=false`，合成会提示配置模型。默认 `direct` 模式在启动时加载 GPU 权重；第一次合成仍可能有内核编译等开销。低级 `Engine.load` 保留延迟加载。总体 `policy="staged"` 可用于低级接口或显式启用的 `managed` HTTP 模式，`direct` 仍拒绝该策略。
+
+## 可选后台控制模式
+
+需要长期待机的调用方可以显式选择 `managed`。省略选项或选择 `direct` 时，沿用原有启动加载、请求处理和驻留行为，不启用空闲休眠或 `/runtime` 接口。
+
+```powershell
+.\start-server.bat -c configs/tts_infer.yaml --runtime-mode managed --idle-sleep-seconds 60
+# 已转换的模型包也可以直接使用
+sakuratts serve models/sakura --runtime-mode managed
+```
+
+控制模式启动后处于 `sleeping`，收到提前唤醒或需要推理的请求后再启动完整推理进程。空闲期结束后退出该进程及其子进程，HTTP 控制服务继续接受请求。默认保留 FP32；运行模式与显存档位分别选择。A / C / E 可用于两种模式，H 极限档的总体 `policy="staged"` 仅在 `managed` 中开放。
+
+显存优先时，可在控制模式中显式选择 H 档：
+
+```powershell
+sakuratts serve MODEL --experimental examples/minimum-vram.json --runtime-mode managed
+```
+
+将 `MODEL` 换成准备好的 FP16 chunk256 模型目录或配置文件。该选项不会转换权重。H 档按片段交替加载 GPT 和声学模型，降低活动峰值和醒着空闲时的显存，代价是每片段都要等待重载；提前唤醒只完成运行环境准备，不能消除这些重载。需要连续短句速度时，可选择 `examples/fp16.json`，再由控制模式在长时间空闲后退出推理进程。档位说明见[推理档位](inference-profiles.md)。
+
+| 启动参数 | 默认值 | 含义 |
+| --- | --- | --- |
+| `--runtime-mode` | `direct` | `managed` 启用进程生命周期控制 |
+| `--idle-sleep-seconds` | `60` | 最后一次操作完成后，到自动休眠的空闲秒数 |
+| `--wake-timeout-seconds` | `120` | 推理进程启动和所选档位准备的超时秒数 |
+| `--operation-timeout-seconds` | `300` | 单次工作进程操作的总超时秒数，长文本或首次参考准备可按需调大 |
+
+三个时长都必须是有限正数，仅控制模式使用。`api.py`、仓库启动脚本和整合包启动脚本都转发这些参数；不会因为配置了时长或选择低显存档就自动启用控制模式。
+
+| 方法与路径 | 行为 |
+| --- | --- |
+| `GET /runtime` | 查询资源状态，不启动推理进程、不续期 |
+| `POST /runtime/wake` | 开始或合并一次准备，准备中返回 202，按所选档位准备完成后返回 200 |
+| `POST /runtime/sleep` | 空闲时退出推理进程；合成、准备或切换中返回 409；已经休眠时可重复调用 |
+| 原有 `GET/POST /tts` | 休眠时自动唤醒，正在准备时等待同一次准备；第二条合成仍返回 409 |
+
+`wake` 可以省略请求体，或传 `{"keep_alive_seconds": 60}`。保活时长允许 `0` 至 `3600` 秒，默认 `60`；重复唤醒可以延长保活，不会缩短已有窗口。正在准备时，窗口从准备完成开始计算。没有后续语音请求也会在保活和空闲期限都结束后自动休眠。`sleep` 是服务级操作，可以提前结束保活，但不会中断活动请求。
+
+```powershell
+# 开始请求大模型时并行发送，文本到达后照常调用 /tts
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:9880/runtime/wake -ContentType application/json -Body '{"keep_alive_seconds":60}'
+Invoke-RestMethod -Uri http://127.0.0.1:9880/runtime
+```
+
+`/runtime` 返回 `state`（`sleeping`、`waking`、`awake`、`stopping`、`failed`）、`model_configured`、`model_loaded`、`model`、`worker_pid`、`busy`、`last_error`、`last_wake_ms` 和 `idle_sleep_seconds`，另有进程代次 `generation`、保活剩余秒数 `keep_alive_remaining_seconds` 及准备范围 `preparation`。唤醒和休眠接口返回相同的状态结构。`busy` 表示已有合成、切换或参考准备请求；单独提前唤醒时它可以是 `false`，此时仍须结合 `state` 判断，准备中不能休眠。
+
+`awake` 表示所选档位的准备已经完成：
+
+| 档位 | `preparation` | `awake` 时的保证 |
+| --- | --- | --- |
+| A / C / E | `model_load` | 模型加载步骤完成，`model_loaded=true`；E 的声学 Session 仍按原策略在执行时创建 |
+| H | `runtime_init` | 推理进程、前端和配置已准备，GPU 权重留到执行时错峰加载；`model_loaded` 始终为 `false`，`model` 可以返回当前所选模型 |
+
+这些状态都不保证已经执行 Prefill、Decode、CUDA Graph 捕获或陌生参考编码。H 档应结合 `state` 与 `preparation` 判断准备情况，不要等待 `model_loaded` 变为 `true`。`last_wake_ms` 是最近一次成功唤醒的耗时，不是首段音频延迟。`/health` 保留原有字段，并使用相同的 `model_loaded` 含义；休眠或 H 档的 `false` 不代表服务故障。
+
+控制模式不在启动时执行 GPU 加载。只有唤醒后才能发现的资源、运行库或 CUDA 加载错误会记录为 `failed`，等待加载的请求也会收到错误。未配置模型时不创建 worker。失败不会无限自动重启；清理完成后，下一次唤醒或合成可以重试。
+
+休眠保留本次服务会话中成功选择的模型与参考准备设置；重启服务仍恢复启动配置。已准备参考不替代 `/tts` 的 `ref_audio_path`。控制服务不加载 NumPy、GPU 计算库或文本前端，但仍占用解释器和 HTTP 所需的主存。RSS 和私有提交是主存指标，显存另看 GPU Dedicated / Shared Usage；进程退出后计数实例消失不能写成测得零显存。首次加载与陌生参考的开销仍需在目标机器测量。架构和测量范围见[后台驻留与提前唤醒](background-runtime.md)。
 
 ## 原版调用方式
 
@@ -25,7 +84,7 @@ python api.py -a 127.0.0.1 -p 9880 -c configs/tts_infer.yaml
 | `GET /set_sovits_weights?weights_path=...` | 更换 SoVITS，可传原始 `.pth` 或转换后的声学目录 |
 | `GET /set_refer_audio?refer_audio_path=...` | 预先准备参考音频的条件；字段拼写沿用原版 |
 | `GET /control?command=exit` | 结束独立服务，等待工作线程清理 |
-| `GET /control?command=restart` | 清理后按启动配置重新加载；进程 PID 不保证变化 |
+| `GET /control?command=restart` | 清理后恢复启动配置；`direct` 重新加载，`managed` 回到休眠；进程 PID 不保证变化 |
 | `GET /health`、`GET /models` | 附加诊断接口，查询忙碌和模型状态 |
 
 嵌入 ASGI 应用时，进程控制需要宿主提供回调；默认不退出宿主进程。权重切换不会保存到启动配置，重启恢复配置中的路径。初始模型组合通过配置提供，权重切换接口不承担资源安装。

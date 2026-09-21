@@ -3,6 +3,7 @@
 import argparse
 from importlib import import_module, metadata
 import json
+import math
 import platform
 from pathlib import Path
 import shutil
@@ -17,6 +18,13 @@ JAPANESE_MODULES = {
     "split-lang": "split_lang", "fast-langdetect": "fast_langdetect",
     "fasttext-predict": "fasttext", "budoux": "budoux",
 }
+
+
+def positive_seconds(value):
+    seconds = float(value)
+    if not math.isfinite(seconds) or seconds <= 0:
+        raise argparse.ArgumentTypeError("Seconds must be finite and greater than zero")
+    return seconds
 
 
 def doctor(*, japanese=False, cuda=False, nvidia=False, config=None):
@@ -171,6 +179,14 @@ def main(argv=None):
                            help="Model directory, model.json, or legacy runtime.json")
         entry.add_argument("--experimental", type=Path, help="Explicit JSON backend options; defaults remain FP32")
         if command == "serve":
+            entry.add_argument("--runtime-mode", choices=("direct", "managed"), default="direct",
+                               help="direct loads at startup (default); managed sleeps until wake or synthesis")
+            entry.add_argument("--idle-sleep-seconds", type=positive_seconds, default=60.,
+                               help="Managed mode: sleep after this many idle seconds (default: 60)")
+            entry.add_argument("--wake-timeout-seconds", type=positive_seconds, default=120.,
+                               help="Managed mode: maximum model loading time in seconds (default: 120)")
+            entry.add_argument("--operation-timeout-seconds", type=positive_seconds, default=300.,
+                               help="Managed mode: maximum worker operation time in seconds (default: 300)")
             entry.add_argument("--log-level", choices=("debug", "info", "warning", "error"), default="info",
                                help="Terminal detail; the log file always keeps full diagnostics")
             entry.add_argument("--log-file", type=Path, default=Path("logs/sakuratts.log"),
@@ -251,8 +267,17 @@ def run_product_command(args):
         config = args.tts_config
         if config is None and args.model is None and Path("configs/tts_infer.yaml").is_file():
             config = Path("configs/tts_infer.yaml")
+        runtime_options = {}
+        if (args.runtime_mode != "direct" or args.idle_sleep_seconds != 60.
+                or args.wake_timeout_seconds != 120. or args.operation_timeout_seconds != 300.):
+            runtime_options = {
+                "runtime_mode": args.runtime_mode,
+                "idle_sleep_seconds": args.idle_sleep_seconds,
+                "wake_timeout_seconds": args.wake_timeout_seconds,
+                "operation_timeout_seconds": args.operation_timeout_seconds,
+            }
         start_server(args.model, host=args.host, port=args.port, tts_config=config, experimental=experimental,
-                     log_file=args.log_file, log_level=args.log_level)
+                     log_file=args.log_file, log_level=args.log_level, **runtime_options)
         return 0
     if args.command == "benchmark":
         from ._internal.benchmark import run

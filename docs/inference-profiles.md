@@ -61,7 +61,13 @@ with Engine.load("MODEL", experimental=options) as engine:
     audio.save("outputs/hello.wav")
 ```
 
-A、C、E 可经 `serve MODEL --experimental FILE` 启动 HTTP 服务；H 的总体 `policy="staged"` 当前仍不支持 HTTP，使用 Python Engine 或 `tts` CLI。现有 YAML 的 `is_half` 兼容限制仍需遵循 [HTTP API](http-api.md)。
+A、C、E 可经 `serve MODEL --experimental FILE` 启动 HTTP 服务。H 的总体 `policy="staged"` 可用于 Python Engine、`tts` CLI，或显式启用的 `managed` HTTP 模式；默认 `direct` 仍拒绝 H。现有 YAML 的 `is_half` 兼容限制仍需遵循 [HTTP API](http-api.md)。
+
+```powershell
+sakuratts serve MODEL --experimental examples/minimum-vram.json --runtime-mode managed
+```
+
+控制模式默认空闲 60 秒后退出整个推理进程树，释放进程级 GPU 资源。H 档醒着时也按片段错峰加载权重，活动显存较低，但会增加每片段等待；提前唤醒只准备运行环境，`preparation="runtime_init"`，不会提前把两组权重都加载。需要连续短句速度时可把命令中的配置换为 `examples/fp16.json`，保留标准档执行速度，再通过空闲休眠减少长期显存驻留。上面的 Engine 历史测量不代表这两种 HTTP 组合的实测成绩，控制模式的数据见[后台驻留与提前唤醒](background-runtime.md)。
 
 C 保留模型权重，语义生成完成后释放 GPT 请求状态；E 进一步让 latent／vocoder Session 错峰；H 再让 GPT／声学模型错峰。三个 FP16 档均关闭 Prefill query 分块，在已测对应文本上的音频逐采样一致。`cut5` 是独立的文本分句选项，会改变停顿与生成过程，不再单列为一个档位；E、H 在片段较多时会有更多重载等待。
 

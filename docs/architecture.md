@@ -18,6 +18,8 @@
 
 HTTP 以原版 api_v2 的字段和默认值接入，在单一线程中创建、调用、切换和关闭引擎，不维护另一套采样流程。参考条件在请求时解析；模型目录不再要求绑定参考。按句流式在每片完成后发送 PCM，通过有界队列施加背压，客户端断开后在计算边界取消。模型内存策略和实验参数仍由后端负责；没有引入插件注册层或自动后端回退。
 
+默认 `direct` 模式保留上述进程安排。显式选择 `managed` 后，`_internal/managed_runtime.py` 在事件循环中管理唤醒、保活与休眠，`inference_process.py` 通过有界 IPC 调用独立进程中的同一个 `Inference`。`inference_worker.py` 仍串行执行模型操作，`process_tree.py` 管理整棵自有进程树。Windows 使用 Job Object 处理正常退出和异常回收；控制进程通过标准库传输 PCM，不加载 NumPy、GPU 计算库或文本前端。具体取舍见 [可选推理进程控制 ADR](adr/0003-managed-runtime.md)。
+
 `benchmarks/` 提供常用入口。`research/` 保存历史工具、报告和原始证据，仅保留在 Git 仓库，不进入 wheel 或源码包；相关测试由 `research/run_tests.py` 单独运行。保存过的失败项不能因归档而改写为通过。
 
 ## 与上游的组织方式对照
