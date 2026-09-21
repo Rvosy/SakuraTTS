@@ -9,7 +9,7 @@ custom:
 sakuratts:
   official_source: D:/Tools/GPT-SoVITS
   python: D:/Tools/GPT-SoVITS/runtime/python.exe
-  acoustic_python: D:/Project/SakuraTTS/data/windows-ort-runtime/python.exe
+  acoustic_python: D:/Runtime/SakuraTTS/acoustic/python.exe
   cache_dir: .cache/sakuratts
   # Optional existing deployment package; original weight paths above still apply.
   # model: models/example/model.json

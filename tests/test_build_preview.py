@@ -86,6 +86,8 @@ class PreviewBuildTests(unittest.TestCase):
             root, staged = Path(folder) / "repo", Path(folder) / "staged"
             expected = source_tree(root)
             excluded = [".env", "data/private.json", "models/model.json", "outputs/log.txt",
+                        "configs/tts_infer.yaml", ".cache/sakuratts/references/condition.json",
+                        "logs/sakuratts.log", ".venv-windows-runtime/Lib/site-packages/local.py",
                         "build/lib/old.py", "src/sakuratts.egg-info/SOURCES.txt",
                         "src/sakuratts/kernel.dll", "docs/audio.wav", "docs/snapshot.png",
                         "scripts/.venv/secret.py", "scripts/__pycache__/cached.py",
