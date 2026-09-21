@@ -4,7 +4,7 @@
   "acoustic_chunk_frames": 256,
   "acoustic_arena_shrink": true,
   "acoustic_session_policy": "staged",
-  "gpt_prefill_query_chunk_size": 0,
+  "gpt_prefill_query_chunk_size": 128,
   "policy": "staged",
   "capacity": 2048
 }

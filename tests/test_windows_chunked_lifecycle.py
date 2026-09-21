@@ -90,6 +90,7 @@ class EngineFactory:
         engine.gpt_precision = engine.acoustic_precision = "fp16"
         engine.acoustic_arena_shrink = True
         engine.acoustic_chunk_frames = None
+        engine.acoustic_session_policy = "resident"
         engine.gpt_attention, engine.gpt_attention_chunk_size = "baseline", 256
         engine.gpt_prefill_query_chunk_size = 0
         engine.gpt = engine.sovits = None
@@ -282,7 +283,8 @@ class ChunkedLifecycleTests(unittest.TestCase):
 
                 argv = ["--public-package", "--config", str(config), "--output", str(output),
                     "--gpt-precision", precision, "--gpt-attention", attention,
-                    "--allow-experimental-acoustic-fp16", "--acoustic-arena-shrink"]
+                    "--allow-experimental-acoustic-fp16", "--acoustic-arena-shrink",
+                    "--acoustic-session-policy", "staged"]
                 with patch.object(probe, "NVIDIAEngine", Engine), \
                         patch.object(probe, "verify_split", side_effect=AssertionError("Development verifier invoked")), \
                         patch.object(probe, "ChunkedProcessSoVITS", side_effect=AssertionError("Development worker invoked")), \
@@ -292,6 +294,7 @@ class ChunkedLifecycleTests(unittest.TestCase):
                 for selected_config, kwargs in constructed:
                     self.assertEqual(selected_config, config.resolve())
                     self.assertEqual(kwargs["acoustic_chunk_frames"], 256)
+                    self.assertEqual(kwargs["acoustic_session_policy"], "staged")
                     self.assertEqual(kwargs["gpt_precision"], precision)
                     self.assertEqual(kwargs["gpt_attention"], attention)
                     self.assertTrue(kwargs["allow_experimental_acoustic_fp16"])

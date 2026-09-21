@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("windows_low_vram", ROOT / "research/tools/windows_low_vram.py")
@@ -109,6 +110,108 @@ class LowVRAMMeasurementTests(unittest.TestCase):
         self.assertEqual([value["phase"] for value in result["events"]],
                          ["before_spawn", "request_start", "request_start", "process_exited"])
         self.assertAlmostEqual(result["interval_ms"]["max"], 20)
+
+    def test_stage_peaks_keep_simultaneous_sum_and_unsampled_intervals(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            stages = [
+                {"stage": "gpt.load", "start_unix_s": 1001, "end_unix_s": 1002, "pid": 10},
+                {"stage": "acoustic.latent.run", "start_unix_s": 1002, "end_unix_s": 1003, "pid": 20},
+                {"stage": "acoustic.vocoder.session_create", "start_unix_s": 1003.1,
+                 "end_unix_s": 1003.2, "pid": 20},
+            ]
+            (output / "stage-intervals.jsonl").write_text("".join(json.dumps(value) + "\n" for value in stages))
+            values = [sample([row(10, 800), row(20, 100)], 18001),
+                      sample([row(10, 100), row(20, 700)], 18002), sample([], 18004)]
+            for value, wall_time in zip(values, (1001.1, 1002, 1004)):
+                value["timestamp_unix_s"] = wall_time
+            (output / "samples.jsonl").write_text("".join(json.dumps(value) + "\n" for value in values))
+            result = BENCH.summarize(output)
+        suffix = "/process/gpu-a/phys_0/dedicated_bytes"
+        self.assertEqual(result["stage_peaks"]["gpt.load" + suffix]["observed_sum_bytes"], 900)
+        self.assertEqual(result["stage_peaks"]["acoustic.latent.run" + suffix]["observed_sum_bytes"], 800)
+        self.assertEqual(result["stage_intervals"][0]["observed_samples"], 1)
+        self.assertEqual(result["stage_intervals"][2]["observed_samples"], 0)
+        self.assertEqual(result["stage_intervals"][2]["peaks"], {})
+        self.assertNotIn("acoustic.vocoder.session_create" + suffix, result["stage_peaks"])
+
+    def test_profiler_restores_methods_and_collects_direct_and_worker_metadata(self):
+        from sakuratts.backends.cuda import engine
+        from sakuratts._internal import synthesis
+
+        class FakeGPT:
+            def prefill(self):
+                return 3
+
+            def close(self):
+                pass
+
+        class FakeAcoustic:
+            runtime = {}
+
+            def close(self):
+                pass
+
+        original_prefill = FakeGPT.prefill
+        model = engine.NVIDIAEngine.__new__(engine.NVIDIAEngine)
+        model.gpt = model.sovits = None
+
+        def load(instance):
+            instance.gpt = FakeGPT()
+
+        def generate(gpt):
+            return gpt.prefill() + 1
+
+        def load_acoustic(instance):
+            instance.sovits = FakeAcoustic()
+
+        acoustic = {"stage": "acoustic.latent.run", "start_unix_s": 1, "end_unix_s": 2,
+                    "duration_ms": 1000, "pid": 20}
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(engine.NVIDIAEngine, "_load_gpt", load), \
+                patch.object(engine.NVIDIAEngine, "_load_sovits", load_acoustic), \
+                patch.object(synthesis, "generate_semantic", generate):
+            output = Path(directory)
+            with BENCH.NativeStageProfiler(output) as profiler:
+                profiler.request_name = "001-short"
+                model._load_gpt()
+                self.assertEqual(synthesis.generate_semantic(model.gpt), 4)
+                model.gpt.close()
+                model._load_sovits()
+                model.sovits.close()
+                profiler.collect_acoustic({"fragments": [
+                    {"index": 0, "acoustic_transport": {"stage_intervals": [acoustic]}},
+                    {"index": 1, "acoustic_transport": {"worker_acoustic": {"stage_intervals": [acoustic]}}},
+                ]})
+            records = list(BENCH.json_lines(output / "stage-intervals.jsonl"))
+            self.assertIs(synthesis.generate_semantic, generate)
+            self.assertIs(engine.NVIDIAEngine._load_gpt, load)
+        self.assertIs(FakeGPT.prefill, original_prefill)
+        self.assertEqual([record["stage"] for record in records], [
+            "gpt.load", "gpt.prefill", "gpt.decode_and_sampling", "gpt.close",
+            "acoustic.load", "acoustic.close",
+            "acoustic.latent.run", "acoustic.latent.run"])
+        self.assertTrue(all(record["name"] == "001-short" for record in records))
+        self.assertEqual([record["fragment_index"] for record in records[-2:]], [0, 1])
+
+    def test_profiler_records_failure_without_swallowing_it(self):
+        class Broken:
+            def run(self):
+                raise RuntimeError("expected failure")
+
+        original = Broken.run
+        with tempfile.TemporaryDirectory() as directory:
+            profiler = BENCH.NativeStageProfiler(Path(directory))
+            profiler.timed_method(Broken, "run", "broken.run")
+            try:
+                with self.assertRaisesRegex(RuntimeError, "expected failure"):
+                    Broken().run()
+            finally:
+                profiler.__exit__(None, None, None)
+            record = list(BENCH.json_lines(Path(directory) / "stage-intervals.jsonl"))[0]
+        self.assertIs(Broken.run, original)
+        self.assertEqual(record["status"], "failed")
+        self.assertGreaterEqual(record["duration_ms"], 0)
 
 
 if __name__ == "__main__":

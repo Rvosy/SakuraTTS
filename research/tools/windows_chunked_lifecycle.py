@@ -252,8 +252,11 @@ def main(argv=None):
     parser.add_argument("--gpt-attention-chunk-size", type=int, choices=(256, 512), default=256)
     parser.add_argument("--allow-experimental-acoustic-fp16", action="store_true")
     parser.add_argument("--acoustic-arena-shrink", action="store_true")
+    parser.add_argument("--acoustic-session-policy", choices=("resident", "staged"), default="resident")
     parser.add_argument("--check-only", action="store_true")
     args = parser.parse_args(argv)
+    if args.acoustic_session_policy != "resident" and not args.public_package:
+        parser.error("--acoustic-session-policy staged requires --public-package")
     if args.chunk_frames <= 0 or not args.acoustic_arena_shrink:
         parser.error("Require positive --chunk-frames and explicit --acoustic-arena-shrink")
     if args.public_package:
@@ -274,7 +277,8 @@ def main(argv=None):
         package = (config_path.parent / config["sovits"]).resolve(strict=True)
         manifest, graph = read_manifest(package,
             allow_experimental_fp16=args.allow_experimental_acoustic_fp16,
-            acoustic_arena_shrink=True, acoustic_chunk_frames=256)
+            acoustic_arena_shrink=True, acoustic_chunk_frames=256,
+            acoustic_session_policy=args.acoustic_session_policy)
         if graph is not None:
             raise ValueError("Public lifecycle checks require a self-contained chunk package")
         provenance = {**deepcopy(manifest["provenance"]), "package": str(package),
@@ -300,6 +304,7 @@ def main(argv=None):
         "text": TEXT, "seed": 1234, "gpt_precision": args.gpt_precision, "gpt_attention": args.gpt_attention,
         "gpt_attention_chunk_size": args.gpt_attention_chunk_size, "chunk_frames": args.chunk_frames,
         "acoustic_arena_shrink": True, "config": str(config_path), "config_sha256": sha256_file(config_path),
+        "acoustic_session_policy": args.acoustic_session_policy,
         "acoustic_python": str(python), "cuda_directory": str(cuda_dir) if cuda_dir is not None else None, "provenance": provenance,
         "gpu_execution_requested": not args.check_only,
         "sources_sha256": {name: sha256_file(ROOT / name) for name in (PUBLIC_SOURCE_FILES if args.public_package else SOURCE_FILES)},
@@ -315,7 +320,7 @@ def main(argv=None):
             record["loads"].append({"policy": engine.policy, **deepcopy(engine.sovits.runtime)})
 
     def engine_factory(policy):
-        kwargs = {"acoustic_chunk_frames": 256} if args.public_package else {}
+        kwargs = {"acoustic_chunk_frames": 256, "acoustic_session_policy": args.acoustic_session_policy} if args.public_package else {}
         return NVIDIAEngine(config_path, policy=policy, gpt_precision=args.gpt_precision,
             gpt_attention=args.gpt_attention, gpt_attention_chunk_size=args.gpt_attention_chunk_size,
             allow_experimental_acoustic_fp16=args.allow_experimental_acoustic_fp16, acoustic_arena_shrink=True,

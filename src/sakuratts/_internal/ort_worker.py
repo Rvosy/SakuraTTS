@@ -78,13 +78,15 @@ def main():
     parser.add_argument("--allow-experimental-fp16",action="store_true")
     parser.add_argument("--acoustic-arena-shrink",action="store_true")
     parser.add_argument("--acoustic-chunk-frames",type=int)
+    parser.add_argument("--acoustic-session-policy",choices=("resident","staged"),default="resident")
     args=parser.parse_args()
     model,failure,status=None,None,1
     try:
         model=ORTSoVITS.load(args.package,diagnostic=args.diagnostic,
                             allow_experimental_fp16=args.allow_experimental_fp16,
                             acoustic_arena_shrink=args.acoustic_arena_shrink,
-                            acoustic_chunk_frames=args.acoustic_chunk_frames)
+                            acoustic_chunk_frames=args.acoustic_chunk_frames,
+                            acoustic_session_policy=args.acoustic_session_policy)
         import onnxruntime
         runtime=getattr(model,"runtime",None)
         runtime=runtime if isinstance(runtime,dict) else {}
@@ -96,6 +98,8 @@ def main():
             "diagnostic":args.diagnostic,"chunk_frames":runtime.get("chunk_frames",args.acoustic_chunk_frames),
             "acoustic_dtype":model.encoder.manifest["dtype"],
             "acoustic_arena_shrink":model.acoustic_arena_shrink,
+            "acoustic_session_policy":args.acoustic_session_policy,
+            "session_initialization":runtime.get("session_initialization","eager"),
             "onnxruntime":onnxruntime.__version__,"torch_imported":"torch" in sys.modules,
             "onnx_imported":"onnx" in sys.modules}
         if isinstance(runtime.get("providers"),dict):

@@ -42,6 +42,7 @@ def engine(policy):
     model.acoustic_precision = "fp32"
     model.acoustic_arena_shrink = False
     model.acoustic_chunk_frames = None
+    model.acoustic_session_policy = "resident"
     model.gpt_attention, model.gpt_attention_chunk_size = "baseline", 256
     model.gpt_prefill_query_chunk_size = 0
     model.gpt = model.sovits = None

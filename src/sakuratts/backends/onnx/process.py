@@ -16,7 +16,7 @@ from sakuratts._internal.reference_condition import sha256_file
 
 class ORTProcessSoVITS:
     def __init__(self,package,python,*,diagnostic=False,allow_experimental_fp16=False,
-                 acoustic_arena_shrink=False,acoustic_chunk_frames=None):
+                 acoustic_arena_shrink=False,acoustic_chunk_frames=None,acoustic_session_policy="resident"):
         if not isinstance(acoustic_arena_shrink, bool):
             raise ValueError("acoustic_arena_shrink must be a bool")
         package=Path(package).resolve(strict=True)
@@ -24,7 +24,8 @@ class ORTProcessSoVITS:
         manifest,_=read_manifest(package,diagnostic=diagnostic,
                                  allow_experimental_fp16=allow_experimental_fp16,
                                  acoustic_arena_shrink=acoustic_arena_shrink,
-                                 acoustic_chunk_frames=acoustic_chunk_frames)
+                                 acoustic_chunk_frames=acoustic_chunk_frames,
+                                 acoustic_session_policy=acoustic_session_policy)
         manifest_sha256=sha256_file(package / "manifest.json")
         self.encoder=SimpleNamespace(manifest=manifest)
         self.sample_rate=manifest["config"]["sample_rate"]
@@ -32,6 +33,7 @@ class ORTProcessSoVITS:
         self.diagnostic=diagnostic
         self.acoustic_arena_shrink=acoustic_arena_shrink
         self.acoustic_chunk_frames=acoustic_chunk_frames
+        self.acoustic_session_policy=acoustic_session_policy
         command=[str(python),"-B",str(Path(__file__).resolve().parents[2] / "_internal/ort_worker.py"),"--package",str(package)]
         if diagnostic:
             command.append("--diagnostic")
@@ -41,6 +43,7 @@ class ORTProcessSoVITS:
             command.append("--acoustic-arena-shrink")
         if acoustic_chunk_frames is not None:
             command.extend(("--acoustic-chunk-frames",str(acoustic_chunk_frames)))
+        command.extend(("--acoustic-session-policy",acoustic_session_policy))
         environment=dict(os.environ,PYTHONDONTWRITEBYTECODE="1",PYTHONUTF8="1")
         environment.pop("PYTHONPATH",None)
         self.process=subprocess.Popen(command,stdin=subprocess.PIPE,stdout=subprocess.PIPE,env=environment,
@@ -59,6 +62,8 @@ class ORTProcessSoVITS:
                     or runtime.get("acoustic_dtype")!=manifest["dtype"]
                     or runtime.get("acoustic_arena_shrink") is not acoustic_arena_shrink
                     or runtime.get("chunk_frames")!=acoustic_chunk_frames
+                    or runtime.get("acoustic_session_policy")!=acoustic_session_policy
+                    or runtime.get("session_initialization")!=("deferred" if acoustic_session_policy=="staged" else "eager")
                     or runtime.get("diagnostic") is not diagnostic
                     or runtime.get("torch_imported") is not False or runtime.get("onnx_imported") is not False
                     or not runtime.get("providers") or runtime["providers"][0]!="CUDAExecutionProvider"):

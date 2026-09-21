@@ -126,6 +126,9 @@ class SplitAcousticAdapterTests(unittest.TestCase):
                 with self.subTest(tokens=tokens, core_frames=core_frames):
                     model = self.make_adapter(core_frames)
                     try:
+                        self.assertEqual(model.acoustic_session_policy, "resident")
+                        self.assertEqual(model.runtime["session_initialization"], "eager")
+                        self.assertTrue(model.runtime["shared_cuda_process"])
                         actual = model.decode(*values)
                         np.testing.assert_array_equal(actual, expected)
                         self.assertEqual(actual.shape, (1, 1, tokens * 2 * 3))

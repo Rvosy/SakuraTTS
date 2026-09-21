@@ -27,6 +27,8 @@ class ORTProcessPrecisionTests(unittest.TestCase):
             ready = {"status": "ready", "acoustic_dtype": "float16", "private_acoustic_process": True,
                 "shared_cuda_process": False, "worker_pid": process.pid, "executable": str(python.resolve()),
                 "package_manifest_sha256": sha256_file(package / "manifest.json"), "acoustic_arena_shrink": True,
+                "acoustic_session_policy": "resident",
+                "session_initialization": "eager",
                 "diagnostic": True, "chunk_frames": None, "torch_imported": False, "onnx_imported": False,
                 "providers": ["CUDAExecutionProvider"], "provider_options": {}}
             with patch("sakuratts.backends.onnx.process.read_manifest", return_value=(manifest, package / "graph.onnx")) as read, \
@@ -35,7 +37,7 @@ class ORTProcessPrecisionTests(unittest.TestCase):
                 model = ORTProcessSoVITS(package, python, diagnostic=True, allow_experimental_fp16=True,
                                          acoustic_arena_shrink=True)
                 read.assert_called_once_with(package.resolve(), diagnostic=True, allow_experimental_fp16=True,
-                    acoustic_arena_shrink=True, acoustic_chunk_frames=None)
+                    acoustic_arena_shrink=True, acoustic_chunk_frames=None, acoustic_session_policy="resident")
                 self.assertIn("--allow-experimental-fp16", launch.call_args.args[0])
                 self.assertIn("--diagnostic", launch.call_args.args[0])
                 self.assertIn("--acoustic-arena-shrink", launch.call_args.args[0])
@@ -53,7 +55,7 @@ class ORTProcessPrecisionTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "opt-in"):
                     ORTProcessSoVITS(root, python)
                 read.assert_called_once_with(root.resolve(), diagnostic=False, allow_experimental_fp16=False,
-                    acoustic_arena_shrink=False, acoustic_chunk_frames=None)
+                    acoustic_arena_shrink=False, acoustic_chunk_frames=None, acoustic_session_policy="resident")
                 launch.assert_not_called()
 
 

@@ -1,0 +1,9 @@
+{
+  "gpt_precision": "fp32",
+  "allow_experimental_acoustic_fp16": false,
+  "acoustic_arena_shrink": true,
+  "acoustic_session_policy": "resident",
+  "gpt_prefill_query_chunk_size": 0,
+  "policy": "resident",
+  "capacity": 2048
+}

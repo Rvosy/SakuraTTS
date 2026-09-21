@@ -23,7 +23,8 @@ class NVIDIAEngine:
     def __init__(self, config, *, policy="resident", use_graph=True, capacity=2048,
                  gpt_precision="fp32", gpt_attention="baseline", gpt_attention_chunk_size=256,
                  allow_experimental_acoustic_fp16=False, acoustic_arena_shrink=True,
-                 acoustic_chunk_frames=None, load_references=True, gpt_prefill_query_chunk_size=0):
+                 acoustic_chunk_frames=None, load_references=True, gpt_prefill_query_chunk_size=0,
+                 acoustic_session_policy="resident"):
         if policy not in ("resident", "release-state", "staged"):
             raise ValueError("Unknown model policy")
         if gpt_precision not in ("fp32", "fp16"):
@@ -35,6 +36,10 @@ class NVIDIAEngine:
             raise ValueError("acoustic_arena_shrink must be a bool")
         if acoustic_chunk_frames is not None and (type(acoustic_chunk_frames) is not int or acoustic_chunk_frames<0):
             raise ValueError("acoustic_chunk_frames must be a nonnegative integer or None")
+        if acoustic_session_policy not in ("resident", "staged"):
+            raise ValueError("acoustic_session_policy must be resident or staged")
+        if acoustic_session_policy == "staged" and acoustic_chunk_frames is None:
+            raise ValueError("staged acoustic_session_policy requires acoustic_chunk_frames")
         if gpt_attention not in ("baseline", "split-kv"):
             raise ValueError("GPT attention must be baseline or split-kv")
         if (not isinstance(gpt_attention_chunk_size, (int, np.integer))
@@ -45,6 +50,7 @@ class NVIDIAEngine:
         self.allow_experimental_acoustic_fp16 = allow_experimental_acoustic_fp16
         self.acoustic_arena_shrink = acoustic_arena_shrink
         self.acoustic_chunk_frames = acoustic_chunk_frames
+        self.acoustic_session_policy = acoustic_session_policy
         from sakuratts.model import Model
         model = config if isinstance(config, Model) else Model.load(config)
         self.config_path = model.path
@@ -67,7 +73,8 @@ class NVIDIAEngine:
             from sakuratts.backends.onnx.sovits import read_manifest
             self.manifests["sovits"],_ = read_manifest(self.packages["sovits"],
                 allow_experimental_fp16=allow_experimental_acoustic_fp16,
-                acoustic_arena_shrink=acoustic_arena_shrink, acoustic_chunk_frames=acoustic_chunk_frames)
+                acoustic_arena_shrink=acoustic_arena_shrink, acoustic_chunk_frames=acoustic_chunk_frames,
+                acoustic_session_policy=acoustic_session_policy)
         source = self.manifests["gpt"]["source"]["official_commit"]
         if (self.manifests["sovits"]["source"]["official_commit"] != source
                 or self.manifests["frontend"]["official_commit"] != source):
@@ -153,13 +160,15 @@ class NVIDIAEngine:
                     self.config_path.parent / self.config["acoustic_python"],
                     allow_experimental_fp16=self.allow_experimental_acoustic_fp16,
                     acoustic_arena_shrink=self.acoustic_arena_shrink,
-                    acoustic_chunk_frames=self.acoustic_chunk_frames)
+                    acoustic_chunk_frames=self.acoustic_chunk_frames,
+                    acoustic_session_policy=self.acoustic_session_policy)
             else:
                 from sakuratts.backends.onnx.sovits import ORTSoVITS
                 self.sovits = ORTSoVITS.load(self.packages["sovits"],
                     allow_experimental_fp16=self.allow_experimental_acoustic_fp16,
                     acoustic_arena_shrink=self.acoustic_arena_shrink,
-                    acoustic_chunk_frames=self.acoustic_chunk_frames)
+                    acoustic_chunk_frames=self.acoustic_chunk_frames,
+                    acoustic_session_policy=self.acoustic_session_policy)
 
     def unload(self):
         """Idle unload is explicit; the next request includes the reload cost."""
@@ -284,6 +293,7 @@ class NVIDIAEngine:
                 "gpt_precision":self.gpt_precision,"acoustic_precision":self.acoustic_precision,
                 "acoustic_arena_shrink":self.acoustic_arena_shrink,
                 "acoustic_chunk_frames":self.acoustic_chunk_frames,
+                "acoustic_session_policy":self.acoustic_session_policy,
                 "gpt_attention":self.gpt_attention,"gpt_attention_chunk_size":self.gpt_attention_chunk_size,
                 "gpt_prefill_query_chunk_size":self.gpt_prefill_query_chunk_size,
                 "frontend_profile":self.manifests["frontend"].get("japanese_g2p",{"implementation":"pyopenjtalk-plus"}),

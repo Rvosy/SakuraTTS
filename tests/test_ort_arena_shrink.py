@@ -82,7 +82,8 @@ class ORTArenaShrinkTests(unittest.TestCase):
              patch.dict(sys.modules, {"onnxruntime": SimpleNamespace(__version__="test")}):
             self.assertEqual(ort_worker.main(), 0)
         load.assert_called_once_with("unused", diagnostic=False, allow_experimental_fp16=True,
-                                     acoustic_arena_shrink=True, acoustic_chunk_frames=None)
+                                     acoustic_arena_shrink=True, acoustic_chunk_frames=None,
+                                     acoustic_session_policy="resident")
         self.assertTrue(send.call_args.args[1]["acoustic_arena_shrink"])
         model.close.assert_called_once()
 

@@ -146,5 +146,7 @@ class PublicApiTests(unittest.TestCase):
                 engine.close()
                 Engine.load(model, experimental={"gpt_prefill_query_chunk_size": 128})
                 self.assertEqual(backend.call_args.kwargs["gpt_prefill_query_chunk_size"], 128)
+                Engine.load(model, experimental={"acoustic_session_policy": "staged", "acoustic_chunk_frames": 256})
+                self.assertEqual(backend.call_args.kwargs["acoustic_session_policy"], "staged")
                 with self.assertRaisesRegex(ValueError, "Unknown experimental"):
                     Engine.load(model, experimental={"precision": "fp16"})

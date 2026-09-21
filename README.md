@@ -56,6 +56,8 @@ curl.exe -X POST http://127.0.0.1:9880/tts -H "Content-Type: application/json" -
 
 各入口共用 Engine。一次只处理一条请求；服务忙碌时返回 HTTP 409。默认保留 FP32、baseline attention 和原采样参数。达到生成上限时，CLI 写出音频和报告后退出 `2`；HTTP 的 `X-SakuraTTS-Status` 返回 `stopped_at_limit`。
 
+推理配置收敛为 **FP32、FP16 标准、FP16 低显存、FP16 极限**四档，配置文件、显存与耗时见[推理档位](docs/inference-profiles.md)。
+
 ## 支持与实测
 
 Windows 历史实测使用 RTX 5060 8 GB、Sakura V2ProPlus、日文非流式请求。声学 FP16 对官方 FP32 的严格数值对照仍有失败。ASR 辅助检查不能替代人工听感验收；中文整链、其他 GPU / 模型、语义 token 流式模式及宿主集成仍待实现或验证。性能条件和失败项见[兼容范围](docs/compatibility.md)与[研究总结](docs/research/reference-parity.md)。
@@ -83,6 +85,7 @@ requirements/  已验证环境的冻结依赖快照
 | 文档 | 内容 |
 | --- | --- |
 | [快速开始](docs/quickstart.md) | 环境、模型转换、首次生成 |
+| [推理档位](docs/inference-profiles.md) | 四档配置、显存、耗时与旧配置迁移 |
 | [Python API](docs/python-api.md) / [HTTP API](docs/http-api.md) | 调用、输出、错误与生命周期 |
 | [模型目录](docs/model-format.md) | model.json、路径及身份校验 |
 | [架构](docs/architecture.md) / [开发](docs/development.md) | 模块职责、迁移和验证 |

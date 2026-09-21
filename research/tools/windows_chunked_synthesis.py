@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(ROOT / "src"), str(ROOT / "research/tools"), str(ROOT / "tools")]
 from sakuratts.backends.onnx.sovits import FP16_EXECUTION_OPTIONS, INPUT_NAMES, ORTSoVITS, _package_file, read_manifest
 from sakuratts._internal.reference_condition import sha256_file
-from sakuratts.backends.onnx.chunked import ORTChunkedSoVITS
+from sakuratts.backends.onnx.chunked import ORTChunkedSoVITS, _clear_session_tracebacks
 from vocoder_receptive_field import VocoderReceptiveField
 
 
@@ -83,9 +83,27 @@ def verify_split(package, split_package, rf_spec, *, allow_experimental_fp16):
 class SplitAcousticAdapter(ORTChunkedSoVITS):
     """Development-only adapter; the inherited reference and input checks apply."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.runtime["shared_cuda_process"] = True
+    def __init__(self, manifest, sessions, planner, chunk_frames, provenance):
+        # Development packages already create and validate their sessions in
+        # load_split; they do not have the self-contained public package schema.
+        self.session = self.vocoder_session = self._run_options = None
+        self.last_transfer = None
+        self._closed, self._stage_intervals = False, []
+        self.acoustic_session_policy = "resident"
+        try:
+            ORTSoVITS.__init__(self, manifest, sessions["latent"], acoustic_arena_shrink=True)
+            self.vocoder_session = sessions["vocoder"]
+            self.planner, self.chunk_frames = planner, chunk_frames
+            self.runtime = {"experiment": "split-full" if chunk_frames == 0 else "chunked-vocoder",
+                "development_only": True, "quality_accepted": False, "shared_cuda_process": True,
+                "chunk_frames": chunk_frames, **provenance, "acoustic_session_policy": "resident",
+                "session_initialization": "eager",
+                "providers": {kind: session.get_provider_options() for kind, session in sessions.items()}}
+        except BaseException as error:
+            self.session = self.vocoder_session = self._run_options = None
+            self._closed = True
+            _clear_session_tracebacks(error)
+            raise
 
     @classmethod
     def load_split(cls, package, split_package, rf_spec, *, chunk_frames,

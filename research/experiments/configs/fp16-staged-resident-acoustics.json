@@ -3,8 +3,6 @@
   "allow_experimental_acoustic_fp16": true,
   "acoustic_chunk_frames": 256,
   "acoustic_arena_shrink": true,
-  "acoustic_session_policy": "staged",
-  "gpt_prefill_query_chunk_size": 0,
   "policy": "staged",
   "capacity": 2048
 }

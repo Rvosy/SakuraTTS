@@ -90,6 +90,7 @@ class NvidiaPackageStartupTests(unittest.TestCase):
                     model.allow_experimental_acoustic_fp16 = allowed
                     model.acoustic_arena_shrink = allowed
                     model.acoustic_chunk_frames = 256 if allowed else None
+                    model.acoustic_session_policy = "staged" if allowed else "resident"
                     with patch("sakuratts.backends.onnx.process.ORTProcessSoVITS") as process, \
                             patch("sakuratts.backends.onnx.sovits.ORTSoVITS.load") as direct:
                         model._load_sovits()
@@ -97,11 +98,19 @@ class NvidiaPackageStartupTests(unittest.TestCase):
                     self.assertEqual(selected.call_args.kwargs["allow_experimental_fp16"], allowed)
                     self.assertEqual(selected.call_args.kwargs["acoustic_arena_shrink"], allowed)
                     self.assertEqual(selected.call_args.kwargs["acoustic_chunk_frames"], 256 if allowed else None)
+                    self.assertEqual(selected.call_args.kwargs["acoustic_session_policy"], "staged" if allowed else "resident")
                     unused.assert_not_called()
 
     def test_unknown_precision_is_rejected_before_loading_resources(self):
         with self.assertRaisesRegex(ValueError, "precision"):
             NVIDIAEngine("does-not-exist.json", gpt_precision="int8")
+
+    def test_acoustic_session_policy_is_validated_before_loading_resources(self):
+        for value in (None, True, "unknown"):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "acoustic_session_policy"):
+                NVIDIAEngine("does-not-exist.json", acoustic_session_policy=value)
+        with self.assertRaisesRegex(ValueError, "requires acoustic_chunk_frames"):
+            NVIDIAEngine("does-not-exist.json", acoustic_session_policy="staged")
 
     def test_invalid_acoustic_chunk_type_fails_before_loading_resources(self):
         for value in (True, -1, 256., "256"):
@@ -123,7 +132,7 @@ class NvidiaPackageStartupTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, "package admission"):
                         NVIDIAEngine(config, acoustic_chunk_frames=chunk, acoustic_arena_shrink=True)
                 read.assert_called_once_with(path.parent.resolve(), allow_experimental_fp16=False,
-                    acoustic_arena_shrink=True, acoustic_chunk_frames=chunk)
+                    acoustic_arena_shrink=True, acoustic_chunk_frames=chunk, acoustic_session_policy="resident")
                 reference.assert_not_called()
                 frontend.assert_not_called()
 

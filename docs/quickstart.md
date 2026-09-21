@@ -20,6 +20,8 @@ sakuratts tts models/mika --text "こんにちは。" --output outputs/hello.wav
 
 `doctor` 检查依赖、资源哈希与身份，不执行 GPU 推理，不能代表音质通过。
 
+需要选择精度与显存档位时，使用[四档配置](inference-profiles.md)：FP32、FP16 标准、FP16 低显存、FP16 极限。通过 `--experimental examples/fp16.json` 等文件选择；FP16 档要求已经准备好的 FP16 chunk256 模型包。
+
 ## 从检查点转换
 
 在开发环境安装 `python -m pip install ".[convert,japanese]"`。官方源码须包含参考准备需要的 HuBERT、说话人编码模型、日文字典等资源；转换过程不会补下载。当前封装沿用已验证的 V2ProPlus 参考准备工具，不承诺任意检查点兼容。

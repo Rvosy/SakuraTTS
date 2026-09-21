@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import argparse
 from collections import defaultdict
+from contextlib import ExitStack, nullcontext
+from functools import wraps
 import hashlib
 from importlib import metadata
 import json
@@ -46,6 +48,130 @@ def json_lines(path):
             yield json.loads(line)
 
 
+class NativeStageProfiler:
+    """Research-only method wrappers; no GPU imports or extra synchronizations.
+
+    GPT load includes import, archive validation, upload and construction. The
+    decode interval includes CPU sampling and graph capture, not just kernels.
+    Acoustic intervals come from the existing runtime/transport metadata.
+    """
+
+    def __init__(self, output):
+        self.output, self.request_name = output, None
+        self._patches = ExitStack()
+        self._gpt_classes, self._acoustic_classes = set(), set()
+        self._decode_started = None
+
+    def record(self, row):
+        row = {**row, "name": self.request_name}
+        with (self.output / "stage-intervals.jsonl").open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+    def finish(self, stage, started, *, status="completed"):
+        self.record({"stage": stage, "start_unix_s": started[0], "end_unix_s": time.time(),
+            "duration_ms": (time.perf_counter() - started[1]) * 1000,
+            "pid": os.getpid(), "status": status})
+
+    def patch(self, owner, name, replacement):
+        original = getattr(owner, name)
+        self._patches.callback(setattr, owner, name, original)
+        setattr(owner, name, replacement)
+        return original
+
+    def timed_method(self, owner, name, stage, *, after=None):
+        original = getattr(owner, name)
+
+        @wraps(original)
+        def timed(*args, **kwargs):
+            started, status = (time.time(), time.perf_counter()), "failed"
+            try:
+                value = original(*args, **kwargs)
+                status = "completed"
+                return value
+            finally:
+                self.finish(stage, started, status=status)
+                if status == "completed" and after is not None:
+                    after()
+
+        self.patch(owner, name, timed)
+
+    def __enter__(self):
+        from sakuratts.backends.cuda import engine as cuda_engine
+        from sakuratts._internal import synthesis
+
+        original_load = cuda_engine.NVIDIAEngine._load_gpt
+
+        @wraps(original_load)
+        def load_gpt(engine):
+            if engine.gpt is not None:
+                return original_load(engine)
+            started, status = (time.time(), time.perf_counter()), "failed"
+            try:
+                result = original_load(engine)
+                kind = type(engine.gpt)
+                if kind not in self._gpt_classes:
+                    self.timed_method(kind, "prefill", "gpt.prefill", after=self._start_decode)
+                    self.timed_method(kind, "close", "gpt.close")
+                    self._gpt_classes.add(kind)
+                status = "completed"
+                return result
+            finally:
+                self.finish("gpt.load", started, status=status)
+
+        self.patch(cuda_engine.NVIDIAEngine, "_load_gpt", load_gpt)
+        original_acoustic = cuda_engine.NVIDIAEngine._load_sovits
+
+        @wraps(original_acoustic)
+        def load_acoustic(engine):
+            if engine.sovits is not None:
+                return original_acoustic(engine)
+            started, status = (time.time(), time.perf_counter()), "failed"
+            try:
+                result = original_acoustic(engine)
+                runtime = getattr(engine.sovits, "runtime", {})
+                for row in runtime.get("initialization_stage_intervals", []):
+                    self.record(row)
+                kind = type(engine.sovits)
+                if kind not in self._acoustic_classes:
+                    self.timed_method(kind, "close", "acoustic.close")
+                    self._acoustic_classes.add(kind)
+                status = "completed"
+                return result
+            finally:
+                self.finish("acoustic.load", started, status=status)
+
+        self.patch(cuda_engine.NVIDIAEngine, "_load_sovits", load_acoustic)
+        original_generate = synthesis.generate_semantic
+
+        @wraps(original_generate)
+        def generate(*args, **kwargs):
+            self._decode_started, status = None, "failed"
+            try:
+                value = original_generate(*args, **kwargs)
+                status = "completed"
+                return value
+            finally:
+                if self._decode_started is not None:
+                    self.finish("gpt.decode_and_sampling", self._decode_started, status=status)
+                self._decode_started = None
+
+        self.patch(synthesis, "generate_semantic", generate)
+        return self
+
+    def _start_decode(self):
+        self._decode_started = (time.time(), time.perf_counter())
+
+    def collect_acoustic(self, report):
+        for fragment in report.get("fragments", []):
+            transport = fragment.get("acoustic_transport") or {}
+            transport = transport.get("worker_acoustic") or transport
+            for row in transport.get("stage_intervals", []):
+                self.record({**row, "fragment_index": fragment.get("index")})
+
+    def __exit__(self, *exc):
+        return self._patches.__exit__(*exc)
+
+
 def aggregate_sample(sample):
     """Sum only simultaneous, valid rows on each physical adapter.
 
@@ -74,6 +200,11 @@ def aggregate_sample(sample):
 
 def summarize(output):
     events = list(json_lines(output / "events.jsonl")) if (output / "events.jsonl").exists() else []
+    stage_path = output / "stage-intervals.jsonl"
+    stage_intervals = [{**row, "observed_samples": 0, "peaks": {}}
+                       for row in (json_lines(stage_path) if stage_path.exists() else [])]
+    stage_intervals.sort(key=lambda row: row["start_unix_s"])
+    stage_index, active_stages, stage_peaks = 0, [], {}
     # Older Python versions on Windows use a process-specific perf_counter
     # origin. Parent and worker phases therefore align by their wall clocks.
     events.sort(key=lambda row: row["timestamp_unix_s"])
@@ -92,6 +223,13 @@ def summarize(output):
         if previous is not None:
             intervals.append((now - previous) * 1000)
         previous = now
+        wall_time = sample["timestamp_unix_s"]
+        while stage_index < len(stage_intervals) and stage_intervals[stage_index]["start_unix_s"] <= wall_time:
+            active_stages.append(stage_intervals[stage_index])
+            stage_index += 1
+        active_stages = [row for row in active_stages if wall_time < row["end_unix_s"]]
+        for stage in active_stages:
+            stage["observed_samples"] += 1
         while event_index < len(events) and events[event_index]["timestamp_unix_s"] <= sample["timestamp_unix_s"]:
             current_event = events[event_index]
             phase = current_event["phase"]
@@ -120,10 +258,15 @@ def summarize(output):
                     "timestamp_unix_s": sample["timestamp_unix_s"], "monotonic_s": now,
                     "benchmark_pids": sample["benchmark_pids"],
                     "live_pids": sample["live_pids"],
-                    "observed_sum_mib": row["observed_sum_bytes"] / 1024**2}
+                    "observed_sum_mib": row["observed_sum_bytes"] / 1024**2,
+                    "active_stages": [stage["stage"] for stage in active_stages]}
             for target, name in ((peaks, key), (phase_peaks, phase_key + "/" + key)):
                 if name not in target or peak["observed_sum_bytes"] > target[name]["observed_sum_bytes"]:
                     target[name] = peak
+            for stage in active_stages:
+                for target, name in ((stage["peaks"], key), (stage_peaks, stage["stage"] + "/" + key)):
+                    if name not in target or peak["observed_sum_bytes"] > target[name]["observed_sum_bytes"]:
+                        target[name] = peak
         usable_dedicated_samples += int(usable_dedicated)
         for counter in sample["counters"]:
             if not counter["rows"]:
@@ -140,24 +283,31 @@ def summarize(output):
             "samples": samples, "interval_ms": {"median": statistics.median(intervals) if intervals else None,
                 "p95": sorted(intervals)[int((len(intervals) - 1) * .95)] if intervals else None,
                 "max": max(intervals) if intervals else None},
-            "peaks": peaks, "phase_peaks": phase_peaks, "coverage": dict(gaps), "events": events}
+            "peaks": peaks, "phase_peaks": phase_peaks, "coverage": dict(gaps), "events": events,
+            "stage_peaks": stage_peaks, "stage_intervals": stage_intervals,
+            "stage_scope": "Optional wall-clock intervals aligned with simultaneous process-tree WDDM sums. "
+                "Intervals with no samples remain unmeasured. GPT load includes validation/upload/construction; "
+                "decode includes CPU sampling and CUDA graph capture. Durations are host elapsed time, not GPU kernel time. "
+                "Nested stages may overlap and must not be added."}
 
 
 def worker_environment(args):
     return {"python": sys.version, "executable": sys.executable, "platform": platform.platform(),
             "mode": args.mode, "precision": args.precision,
+            "profile_stages": args.profile_stages,
             "packages": {dist.metadata["Name"]: dist.version for dist in metadata.distributions()},
             "request_parameters": {"seed": args.seed, "split_method": args.split_method, "top_k": 15,
                 "temperature": 1.0, "repetition_penalty": 1.35},
             "sequence": args.sequence.split(","), "repeats": args.repeat}
 
 
-def native_worker(args, result):
+def native_worker(args, result, profiler=None):
     from sakuratts import Engine
     experimental = {"gpt_precision": args.precision, "policy": args.policy,
         "capacity": args.capacity, "use_graph": not args.no_graph,
         "allow_experimental_acoustic_fp16": args.allow_experimental_acoustic_fp16,
-        "acoustic_arena_shrink": args.acoustic_arena_shrink}
+        "acoustic_arena_shrink": args.acoustic_arena_shrink,
+        "acoustic_session_policy": args.acoustic_session_policy}
     if args.acoustic_chunk_frames is not None:
         experimental["acoustic_chunk_frames"] = args.acoustic_chunk_frames
     if args.prefill_query_chunk_size is not None:
@@ -180,12 +330,16 @@ def native_worker(args, result):
     try:
         for index, case in enumerate(args.sequence.split(",") * args.repeat):
             name = f"{index + 1:03d}-{case}"
+            if profiler is not None:
+                profiler.request_name = name
             event(args.output, "request_start", name=name, case=case)
             started = time.perf_counter()
             audio = engine.synthesize(CASES[case], reference=args.reference,
                 seed=args.seed, split_method=args.split_method)
             elapsed = time.perf_counter() - started
             event(args.output, "request_end", name=name, case=case)
+            if profiler is not None:
+                profiler.collect_acoustic(audio.report)
             audio.save(args.output / (name + ".wav"))
             row = {"name": name, "case": case, "text": CASES[case], "request_ms": elapsed * 1000,
                 "sample_rate": audio.sample_rate, "pcm_samples": int(audio.pcm.size),
@@ -202,6 +356,8 @@ def native_worker(args, result):
             time.sleep(args.idle_seconds)
             event(args.output, "idle_end", after_request=name)
     finally:
+        if profiler is not None:
+            profiler.request_name = None
         event(args.output, "close_start")
         engine.close()
         event(args.output, "close_end")
@@ -321,7 +477,11 @@ def worker(args):
     result = {"status": "running", "requests": [], "pid": os.getpid()}
     try:
         write_json(args.output / "worker-environment.json", worker_environment(args))
-        (native_worker if args.mode == "native" else official_worker)(args, result)
+        if args.mode == "native":
+            with NativeStageProfiler(args.output) if args.profile_stages else nullcontext() as profiler:
+                native_worker(args, result, profiler)
+        else:
+            official_worker(args, result)
         result["status"] = "completed"
     except BaseException as error:
         result.update(status="failed", error=repr(error), traceback=traceback.format_exc())
@@ -456,6 +616,9 @@ def main():
     parser.add_argument("--acoustic-chunk-frames", type=int)
     parser.add_argument("--allow-experimental-acoustic-fp16", action="store_true")
     parser.add_argument("--acoustic-arena-shrink", action="store_true")
+    parser.add_argument("--acoustic-session-policy", choices=("resident", "staged"), default="resident")
+    parser.add_argument("--profile-stages", action="store_true",
+                        help="Record optional native GPT/acoustic stage intervals aligned to WDDM samples")
     parser.add_argument("--no-graph", action="store_true")
     parser.add_argument("--sequence", default=DEFAULT_SEQUENCE)
     parser.add_argument("--repeat", type=int, default=1)
