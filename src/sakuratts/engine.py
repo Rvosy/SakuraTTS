@@ -139,6 +139,8 @@ class Inference:
                         self.settings[key + "_checkpoint"] = custom[field]
                 if custom.get("cnhuhbert_base_path"):
                     self.settings["cnhubert"] = custom["cnhuhbert_base_path"]
+        from ._internal.portable import preparation_settings
+        self.settings = preparation_settings(self.settings)
         try:
             if model is not None:
                 self._activate(model if isinstance(model, Model) else Model.load(model))

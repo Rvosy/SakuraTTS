@@ -57,7 +57,8 @@ class Model:
         if config.get("format") == FORMAT:
             config["format"] = LEGACY_FORMAT
             config["sovits"] = config.pop("acoustic", None)
-        return config
+        from ._internal.portable import model_config
+        return model_config(config)
 
     @property
     def name(self):

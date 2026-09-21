@@ -40,6 +40,10 @@ def configure_cuda():
     bundled = Path(sys.executable).parent / "cuda"
     if bundled.is_dir():
         roots.append(bundled)
+    from sakuratts._internal.portable import bundle_root
+    portable = bundle_root()
+    if portable is not None:
+        roots.extend((portable / "runtime/main/Lib/site-packages/nvidia").glob("*/bin"))
     for entry in sys.path:
         root = Path(entry) / "nvidia"
         if root.is_dir():

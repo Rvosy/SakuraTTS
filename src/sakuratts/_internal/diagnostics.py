@@ -36,7 +36,8 @@ def read_windows_config(config_path):
     for name in ("acoustic_python", "main_dictionary"):
         if name in config and (not isinstance(config[name], str) or not config[name].strip()):
             raise ValueError(f"Windows configuration {name!r} must be a nonempty path")
-    return path, config
+    from sakuratts._internal.portable import model_config
+    return path, model_config(config)
 
 
 def checked_file(root, name, spec):

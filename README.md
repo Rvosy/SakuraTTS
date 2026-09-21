@@ -4,7 +4,7 @@
 
 当前接通 Windows / NVIDIA、V2ProPlus 日文单请求，以及原版 `streaming_mode=1` 的按句返回。仍有未实现的原版功能，详见[HTTP 兼容清单](docs/http-api.md)。项目处于开发者预览阶段，不能视为完整替代原版。
 
-面向最终用户的交付目标是自带 Python 和推理依赖的 [Windows / NVIDIA 整合包](docs/portable-bundle.md)，在经过验证的设备上解压运行。当前发布工具只生成 wheel 与源码包，尚未交付该整合包。
+面向桌宠等本地应用，优先控制显存和分发体积。[Windows / NVIDIA 整合包](docs/portable-bundle.md)可从本地文件离线构建，自带 Python 和推理依赖，以 7z 分发；不捆绑发声模型、个人参考或 PyTorch。当前已在 RTX 5060 上验证预览包，其他设备仍需兼容验收。
 
 ## 安装
 

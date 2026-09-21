@@ -1,33 +1,33 @@
 # Windows / NVIDIA 整合包
 
-状态：交付目标与待办，尚未提供整合包。当前 `scripts/build_preview.py` 只构建 wheel、产品源码包和安装说明，不携带 Python、CUDA 运行库或模型。
+当前提供无模型的推理预览包，可以只用本地文件构建。面向桌宠，优先控制显存和分发体积；主包包含 HTTP、CLI、日文推理及私有 Python/CUDA 运行库，不带 PyTorch、训练工具、转换环境或开发环境。
 
-目标是在支持的 Windows x64 / NVIDIA 设备上，下载、解压后直接启动 HTTP 推理服务，导入用户自己的模型后生成语音。没有模型时服务保持未配置状态，不选择开发机正在使用的角色。用户不需要安装 Python、pip、uv、PyTorch 或 CUDA Toolkit；系统仍须有兼容的 NVIDIA 驱动。Windows 版本、最低驱动与显卡范围需由最终同一份 ZIP 的实测确定。
+下载并解压到 ASCII 路径（允许空格），双击 `check-runtime.bat` 检查 GPU，双击 `start-server.bat` 启动服务。无需系统 Python 或 CUDA Toolkit，系统仍须安装兼容的 NVIDIA 驱动。没有模型时服务保持未配置状态，不选择本机角色。
 
-## 交付内容
-
-整合包由固定版本的产品 wheel 和锁定的运行资源组装，与开发者源码包分别发布。产品源码继续留在 `src/sakuratts/`，构建与安装工作放在 `scripts/`；研究材料只用于开发验证，不作为整合包运行依赖。
-
-整合包默认不包含发声模型权重。开发机当前的角色模型、参考音频、参考条件、用户配置、转换结果、生成音频和缓存均不作为构建输入。官方底模也不因本机已有文件而自动收录；如后续提供官方底模，作为单独、明确选择的资源包分发。
-
-建议目录如下，具体解释器布局在 ABI 验证后确定：
+## 内容与边界
 
 ```text
 SakuraTTS-Windows-NVIDIA/
-  start-server.bat
-  runtime/                 私有 Python、依赖和 CUDA 运行库
-    runtime-manifest.json
-  resources/               按发布清单准备的公共辅助资源
-  models/                  初始为空，由用户导入发声模型
-  configs/                 中性模板及用户自行保存的配置
-  licenses/                实际捆绑组件的许可与来源
+  start-server.bat          启动 HTTP 服务
+  sakuratts.bat             CLI
+  check-runtime.bat         实际 GPU 运算检查
+  runtime/
+    main/                  Python 3.11、前端、CuPy、HTTP
+    acoustic/              Python 3.9、独立 ORT GPU ABI
+    bin/                   FFmpeg，仅用于 HTTP 音频编码
+  models/                  由用户导入模型
+  configs/                 中性模板、四个推理档位
+  licenses/
   logs/
-  cache/                   可删除并重建的缓存
+  cache/
+  bundle-manifest.json      版本、文件哈希与共享库清单
 ```
 
-这里的“模型包”指用户选择的 GPT 语义模型与 SoVITS 声学模型转换成 SakuraTTS 格式后的部署目录，可以来自官方底模或用户的微调权重。它不是运行环境，也不特指开发中使用的 Sakura 角色。目前格式把 `frontend/` 放在部署目录内、允许带 `references/`；整合包不得因此复制开发机已有的部署目录。公共资源的物理共享方式仍需单独实现。
+发声模型全部排除：开发机角色、GPT/SoVITS 官方底模、转换结果、参考音频、参考条件、生成音频和个人配置均不进入整合包。“模型包”是用户明确选择的 GPT 语义模型与 SoVITS 声学模型转换后的部署目录，可来自官方底模或用户微调权重，不是 Python/CUDA 运行环境。
 
-权重转换在独立准备环境进行。准备新参考音频目前也依赖额外准备环境与编码模型，交付时需由独立构建的准备组件承接，不能调用开发机的 Python 或官方整合包路径。仅支持预先准备参考的发行版本必须明确说明限制，不能把主推理进程无 Torch 等同于任意新参考也无需准备依赖。
+主包包含日文前端依赖需要的公共字典和辅助数据；HuBERT、Pro 说话人编码器及原版准备源码不在主包内。它支持已有转换模型和预先准备的参考条件。原始检查点转换、新参考编码需要另行准备独立组件；本次没有交付准备组件。HTTP 仍要求参考音频路径和转写，只有命中已有参考条件才不需要准备环境。
+
+`configs/low-vram.json` 和 `configs/minimum-vram.json` 保留低显存选择，需要匹配的 FP16 chunk256 声学包，不能通过切换配置自动转换模型。极限档当前仅支持 CLI/Python；FP16 听感验收未完成，默认仍保持 FP32。详见[推理档位](inference-profiles.md)。
 
 ## 原版带的模型与本项目的边界
 
@@ -43,39 +43,59 @@ SakuraTTS-Windows-NVIDIA/
 
 底模与微调模型不是每次都必须同时加载的两层。当前转换器读取用户明确选择的 GPT、SoVITS 检查点，并检查其中的结构与权重；是否需要额外基础权重取决于具体模型格式。当前支持范围不据此扩展到所有增量或 LoRA 模型。
 
-## 与开发环境解耦
+## 离线构建
 
-正式构建的输入限定为源码提交所构建的 wheel、锁定的运行组件、公共资源清单和中性配置模板。构建在新目录完成，不整体复制 `.venv*` 或 `data/`，不把其中的绝对路径和可编辑安装链接带入发布物。`models/`、本地 `configs/tts_infer.yaml`、`.cache/`、`outputs/`、`logs/` 均不作为发布内容，也不扫描用户目录自动选择模型或参考。
+先用本地缓存构建产品 wheel。历史构建留下的 `build/lib` 可能包含已删除模块，因此应在干净的源码快照中构建，或先清理仓库内已确认的 `build/` 目录。
 
-构建优先离线复用本地已有文件：先使用已缓存的 wheel、Python 分发文件和经过校验的运行组件；缓存中没有完整产物时，可以从用户指定的现有安装或原版目录中提取清单明确列出的文件。提取时记录组件版本、来源、许可及逐文件哈希，校验副本，不修改原安装。当前环境可作为取材来源，最终运行不能依赖它仍在原位置。
+```powershell
+uv build --offline --wheel --no-python-downloads --out-dir dist/portable-wheel
+python scripts/build_portable.py `
+  --python-base LOCAL_CPYTHON_311 `
+  --main-site LOCAL_RUNTIME_SITE_PACKAGES `
+  --ffmpeg LOCAL_FFMPEG_EXE `
+  --worker LOCAL_VERIFIED_ORT_WORKER `
+  --wheel dist/portable-wheel/sakuratts-0.1.0a1-py3-none-any.whl `
+  --output dist/SakuraTTS-Windows-NVIDIA `
+  --audit tmp/portable-inputs.json
+```
 
-默认禁止构建工具联网下载，包括 Python 自动下载、pip/uv 解析时补包及辅助模型首次加载时下载。能使用离线模式的命令必须显式启用；本地材料不完整时列出缺失文件和用途，不自动改为在线构建。只有用户之后明确要求下载，才获取所缺资源。已有源码构建使用 `scripts/build_preview.py --offline`。
+构建脚本需要 `packaging`，使用已有开发 Python 即可；不执行安装或下载。`--plan-only` 只校验并列出构建输入。输出目录必须不存在。源文件按安装包 RECORD 和声学组件哈希清单选取并复核，不整体复制 venv，不复制可编辑安装、`.pth`、字节码或开发配置。绝对来源路径只写在包外的本地 audit；发行清单不包含这些路径。
 
-本机的 `data/windows-ort-runtime` 可作为已导出声学组件的候选输入；原版目录中的 HuBERT、说话人编码器与语言资源可按公共资源清单选取。它们仍需检查完整性、来源和所需功能，不能把整个原版目录或当前 Torch 安装直接当作发行包。开发机角色权重与个人参考无论存放在哪里都不进入整合包。
+两个解释器共享内容完全一致的 NVIDIA DLL，声学 worker 显式从包内主环境加载，保留不同版本的库。共享与去重将本次运行输入从约 4.84 GB 减为 3.85 GB；这也包含移除未使用的 ffprobe。余下体积主要来自 ORT CUDA、cuDNN、cuBLAS 和日文字典。不能仅凭单卡冒烟通过就删除其他架构或算子需要的库。
 
-模板不能预选角色、保存个人参考或写入维护者的绝对路径。资源缺失时运行明确报错，不回退到原开发环境、系统 Python 或其他正在使用的整合包。
+启动器绑定包内 Python，清理外部 Python/CUDA 路径，将缓存放在包内。模型中旧的声学 Python 路径在运行时改为当前包内解释器；个人权重路径不变。准备路径不会回退到开发环境。暂不支持非 ASCII 的解压目录；模型和参考路径可含中文。
 
-实际发声验收由独立测试步骤显式提供外部模型与参考，验收产物不回流进发布 ZIP。最终清单需验证不含个人模型、参考数据及本机配置，并在无法访问开发目录的环境里验证启动、模型导入与推理。
+FFmpeg 保留本地二进制的版本、编译选项和 LGPL 说明；组件许可证随包携带。本地拼装与运行验证不等于完整公开发行合规审计，正式对外分发前仍需核对所携带第三方二进制的对应源码及再分发要求。
 
-## 当前阻塞与实施顺序
+## 7z 压缩
 
-1. **可搬迁路径。** `converter.package_model()` 会把 `acoustic_python`、`main_dictionary` 写成绝对路径；服务示例也引用本机准备环境。整合包需统一从自身位置解析运行资源，移动目录后不再读取开发机路径。调整模型与运行环境的绑定时，保留旧配置读取能力，并补模型、前端、参考准备的迁移验证。
-2. **私有运行环境。** 根目录启动脚本当前选择本地 venv 或系统 Python。整合包启动器必须使用包内解释器，在自己的进程及 worker 中确定 DLL、头文件和缓存位置。当前 `configure_cuda()` 会保留外部 `CUDA_PATH`；整合包需要隔离系统 CUDA 和用户 Python 环境，不能只增加几个 PATH 项就算完成。
-3. **运行组件来源。** `prepare_ort_worker_runtime.py` 是本机导出工具，仍从 `torch/lib` 补 DLL，并查找固定的 Torch 2.7.0 许可目录。正式构建要从固定来源的组件组装，记录版本、下载来源、SHA256、许可和目标路径，检查 VC Runtime 等系统依赖。不能把任意开发 venv 直接压缩发布。
-4. **路径与 ABI。** 当前 CuPy/NVRTC 头文件要求 ASCII 路径，需要验证带空格、中文用户名及中文解压目录的启动方案。`LOCALAPPDATA` 本身也可能含中文，不能作为未经检查的 ASCII 保证。经典 `pyopenjtalk 0.3.4` 仍依赖现有 Python 3.9 组件；是否统一到 Python 3.11，要同时验证前端扩展、字典和 ORT，不能仅凭存在 CP311 ORT wheel 决定。
-5. **实际 GPU 检查。** `doctor --nvidia` 当前检查导入和资源身份，不执行 GPU 推理。整合包应另有实际分配、NVRTC 编译、cuBLAS、所选精度、CUDA Graph 与声学 CUDA 请求检查，并输出 GPU、驱动、组件版本及失败阶段。检查成功与音质验收分别记录。
+```powershell
+python scripts/archive_portable.py --bundle dist/SakuraTTS-Windows-NVIDIA `
+  --sevenzip "C:/Program Files/7-Zip/7z.exe" --output tmp/7z-benchmark --benchmark
+python scripts/archive_portable.py --bundle dist/SakuraTTS-Windows-NVIDIA `
+  --sevenzip "C:/Program Files/7-Zip/7z.exe" --output dist/portable-release --profile maximum
+```
 
-这些项目需要运行代码与构建工具的后续实现。本轮仓库整理不改变现有模型字段、解释器版本或 CUDA 搜索策略。
+采样比较 LZMA2 solid 的 `mx=5/7/9`、32/64/128 MiB 字典，固定 2 个压缩线程，记录压缩大小、耗时、校验和解压耗时。样本取自体积最大的 12 个文件的多个位置，结果只用于选参，不代表完整包的压缩率。正式压缩只读取发行清单中的文件，并重新校验哈希；验收产生的缓存、日志、音频及用户后来放入的模型都不会收录。输出 `.7z`、SHA256 和压缩报告。
 
-## 兼容验收
+本次约 302 MB 样本的实测如下。最高档比快速档小约 1.6%，多耗时约 16 秒，解压耗时相近。考虑下载流量，最终选择 `mx=9`、128 MiB 字典；快速开发打包可使用 `balanced`。
 
-先以 Windows / NVIDIA 为范围，分别测试 Turing、Ampere、Ada 和 Blackwell 的代表设备。GTX 16、RTX 20/30/40/50 属于拟验证范围；当前已有证据主要来自 RTX 5060，不能据此宣布整代或所有型号通过。再补低显存及笔记本样本，记录实际型号和驱动。CPU、AMD、Intel GPU 和其他操作系统需要独立后端与发行验收，不承诺由同一个 NVIDIA 包直接覆盖。
+| 档位 | 压缩大小 | 压缩耗时 | 解压耗时 |
+| --- | ---: | ---: | ---: |
+| mx=5 / 32 MiB | 99.19 MB | 36.90 秒 | 2.42 秒 |
+| mx=7 / 64 MiB | 98.70 MB | 51.12 秒 | 2.94 秒 |
+| mx=9 / 128 MiB | 97.57 MB | 53.33 秒 | 2.93 秒 |
 
-每台设备使用相同 ZIP，保留以下记录：
+最终运行包为 1,313,042,840 字节（约 1.31 GB），清单内文件解压后为 3,851,802,388 字节（约 3.85 GB，不含清单自身）。完整压缩耗时 598 秒，`7z t` 校验耗时 24 秒；这些是本机单次构建记录，不是其他设备的性能保证。
 
-- 干净 Windows 上无 Python、CUDA Toolkit 和开发工程时的首次启动、短句及长句请求。
-- FP32 与所选 FP16 档位、多轮请求、取消、失败恢复、卸载重载和显存峰值。
-- 整个目录搬迁、空格与非 ASCII 路径，以及已有其他 CUDA / Python 环境时的隔离结果。
-- 音频内容、停止原因、时长、有限值检查、数值误差和人工抽听；跨 GPU 不以 PCM 哈希完全相同作为唯一门槛。
+最终压缩包重新解压耗时 31.6 秒，6,361 个文件的 SHA256 全部匹配，没有清单外文件；解压后的副本再次通过 GPU 检查。压缩报告和验收报告保存在本地 `dist/portable-release/`，与 `.7z` 和 `.sha256` 同目录。
 
-运行包大小、首次启动后缓存大小和准备新参考的依赖要分别记录。Linux 云卡测试可补充算子与架构证据，不能替代 Windows 整合包验收。
+## 验证范围
+
+本机 RTX 5060、驱动 610.62 已通过 NVRTC、FP32/FP16 GEMM、CUDA Graph 和独立 ORT CUDA 实际运算；也用包外模型完成了日文短句合成。GPU 检查不代表音质验收，冷启动短句耗时也不能作为稳定性能指标。
+
+包目录复制到带空格的新位置后，同样通过 GPU 检查与无模型 HTTP `/health` 检查。测试故意设置了错误的外部 `PYTHONHOME`、`PYTHONPATH`、`CUDA_PATH`、`CUDA_HOME`；主 Python 的文件审计同时阻止读取原开发环境。服务返回 `ready`、`model_loaded=false`。这项测试在同一台 Windows 上进行，不能替代干净机器验收。
+
+搬迁后的包还通过了 FP16 低显存档短句合成，使用包外的 chunk256 声学模型与已准备参考。FP32 和低显存档都生成了 32 kHz、单声道、4.54 秒的 WAV；本轮未重新测量峰值显存或评价音质。模型、参考与输出均未进入发行清单。
+
+其他 Windows 设备，尤其 Turing、Ampere、Ada、笔记本和低显存型号仍需测试。同一 NVIDIA 包不承诺覆盖 CPU、AMD、Intel GPU 或其他操作系统。干净 Windows 上无开发目录的安装、最低驱动、长句、多轮请求、取消恢复、完整显存测量和人工听音仍属于发行验收范围。
