@@ -34,6 +34,7 @@ def engine(policy):
     model = object.__new__(NVIDIAEngine)
     model.policy, model.busy = policy, False
     model.frontend = object()
+    model.frontend_runtime = SimpleNamespace(profile={"implementation": "pyopenjtalk-plus"})
     model.config = {"default_reference": "neutral"}
     model.references = {"neutral": SimpleNamespace(manifest={"identity": {}})}
     model.manifests = {"frontend": {}}

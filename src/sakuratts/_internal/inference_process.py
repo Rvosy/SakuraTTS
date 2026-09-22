@@ -67,7 +67,7 @@ class _RemoteError(Exception):
 class ProcessInference:
     """All operations run serially on the service's single inference thread."""
 
-    def __init__(self, model=None, *, tts_config=None, experimental=None,
+    def __init__(self, model=None, *, tts_config=None, backend=None, experimental=None,
                  startup_timeout=120, operation_timeout=300):
         for value in (startup_timeout, operation_timeout):
             if isinstance(value, bool) or not math.isfinite(value) or value <= 0:
@@ -79,6 +79,8 @@ class ProcessInference:
             raise ValueError("TTS configuration requires both t2s_weights_path and vits_weights_path, or sakuratts.model")
         self._configuration = {"model": self._model_value(model),
             "tts_config": str(tts_config) if tts_config else None, "experimental": dict(experimental or {})}
+        if backend is not None:
+            self._configuration["backend"] = backend
         # Validate serialization before creating any process, including user options.
         json.dumps(self._configuration, allow_nan=False)
         self.configured = configured

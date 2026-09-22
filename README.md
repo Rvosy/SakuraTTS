@@ -4,7 +4,9 @@
 
 当前接通 Windows / NVIDIA、V2ProPlus 日文单请求，以及原版 `streaming_mode=1` 的按句返回。仍有未实现的原版功能，详见[HTTP 兼容清单](docs/http-api.md)。项目处于开发者预览阶段，不能视为完整替代原版。
 
-面向桌宠等本地应用，优先控制显存和分发体积。[Windows / NVIDIA 整合包](docs/portable-bundle.md)可从本地文件离线构建，自带 Python 和推理依赖，以 7z 分发；不捆绑发声模型、个人参考或 PyTorch。当前已在 RTX 5060 上验证预览包，其他设备仍需兼容验收。
+面向桌宠等本地应用，优先控制显存和分发体积。[Windows / NVIDIA 整合包](docs/portable-bundle.md)可从本地文件离线构建，自带 Python 和推理依赖，以 7z 分发。完整包另带独立准备组件，用于自动转换原始权重和处理新参考音频；PyTorch 只在准备进程中使用。精简推理包可省去该组件。两种包都不捆绑发声模型或个人参考，其他设备仍需兼容验收。
+
+发行内容由 [recipe](packaging/recipes/windows-nvidia-ja.toml) 组合，分别选择平台后端、语言、HTTP 服务和工作进程。当前可选择保留或省略 HTTP、准备组件；Windows / NVIDIA 日文仍是唯一接通的完整链路。增加中文、AMD、CPU 或 Apple 支持时，需实现对应前端或后端并补齐打包输入，不会把所有平台依赖塞进现有包。默认 direct + FP32 保持不变。
 
 ## 安装
 
@@ -68,8 +70,8 @@ Windows 历史实测使用 RTX 5060 8 GB、Sakura V2ProPlus、日文非流式请
 
 ```text
 src/sakuratts/  Engine、模型目录、转换器、CLI、HTTP 服务
-  frontend/    日文、中文、G2PW；第三方衍生代码在 _vendor/
-  backends/    CUDA、ONNX 和实验 MLX 实现
+  frontend/    语言选择、日文链路；中文/G2PW 尚未接通，衍生代码在 _vendor/
+  backends/    后端选择、CUDA 实现、ONNX 组件及实验 MLX 代码
   _internal/   推理步骤、模型校验、私有工作进程、离线转换
 start-server.bat  Windows 终端服务启动脚本
 examples/      Python、服务和模型描述示例
@@ -78,11 +80,12 @@ tests/         自动化回归
 docs/          部署、API、开发指南、Spec 与 ADR
 tools/         离线资源准备与高级维护工具
 scripts/       环境准备和预览版发布
+packaging/recipes/  发行组合与工作进程角色
 research/      研究归档及其测试，仅保留在 Git 仓库
 requirements/  已验证环境的冻结依赖快照
 ```
 
-依赖声明以 `pyproject.toml` 为准。研究工具与原始证据不进入 wheel 或源码包；新的输出保存在被 Git 忽略的目录。全部文档见[文档索引](docs/README.md)，开发与上游取舍见[开发指南](docs/development.md)和[架构](docs/architecture.md)。
+依赖声明以 `pyproject.toml` 为准，recipe 只选择组合；`build_portable.py --recipe` 的用法见[整合包构建](docs/portable-bundle.md#离线构建)。研究工具与原始证据不进入 wheel 或源码包；新的输出保存在被 Git 忽略的目录。全部文档见[文档索引](docs/README.md)，开发与上游取舍见[开发指南](docs/development.md)和[架构](docs/architecture.md)。
 
 | 文档 | 内容 |
 | --- | --- |

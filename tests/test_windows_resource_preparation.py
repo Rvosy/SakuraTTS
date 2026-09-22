@@ -1,13 +1,14 @@
 """Protect source resources and existing output when preparing Windows packages."""
 import hashlib
 import importlib.util
+import io
 import json
 from pathlib import Path
 import tempfile
 import unittest
 import subprocess
 import sys
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / "src/sakuratts/_internal/conversion/prepare_windows_resources.py"
 spec = importlib.util.spec_from_file_location("windows_resource_preparation", SCRIPT)
@@ -126,6 +127,67 @@ class WindowsResourcePreparationTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "different Japanese G2P profile"):
                     prepare.prepare_frontend(root, output, preflight=preflight)
                 self.assertEqual(before, {str(p): prepare.digest(p) for p in output.rglob("*") if p.is_file()})
+
+    def test_reference_preparation_uses_current_files_after_frontend_relocation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            original = Path(directory) / "original"
+            root, _, language = self.fixture(original)
+            preflight = self.classic_fixture(root)
+            frontend = original / "frontend"
+            expected_language_hash = prepare.digest(language)
+            expected_language_bytes = language.stat().st_size
+            with patch.object(prepare, "LID_BYTES", expected_language_bytes), \
+                 patch.object(prepare, "LID_SHA256", expected_language_hash):
+                manifest = prepare.prepare_frontend(root, frontend, preflight=preflight)
+            sv = root / "GPT_SoVITS/pretrained_models/sv/pretrained_eres2netv2w24s4ep4.ckpt"
+            sv.parent.mkdir()
+            sv.write_bytes(b"speaker embedding fixture")
+            config = root / "GPT_SoVITS/configs/tts_infer.yaml"
+            config.parent.mkdir()
+            config.write_bytes(b"config fixture")
+            for name in ("gpt.ckpt", "sovits.pth", "reference.wav"):
+                (original / name).write_bytes(name.encode())
+            relocated = Path(directory) / "relocated"
+            original.rename(relocated)
+            root = relocated / "official"
+            frontend = relocated / "frontend"
+            preflight = dict(preflight)
+            for field in ("module_directory", "main_dictionary", "distribution_directory"):
+                preflight[field] = str(relocated / Path(preflight[field]).relative_to(original))
+            inputs = relocated / "inputs.json"
+            prepare.write_json(inputs, {"gpt": str(relocated / "gpt.ckpt"), "sovits": str(relocated / "sovits.pth"),
+                "references": [{"audio": str(relocated / "reference.wav"), "text": "こんにちは。",
+                                "language": "ja", "tone": "reference"}]})
+            jobs = []
+
+            def start_worker(command, **_kwargs):
+                job = prepare.read_json(command[-1])
+                jobs.append(job)
+                prepare.verify_protected(job["protected"])
+                return Mock(stdout=[], wait=Mock(return_value=0))
+
+            args = [str(SCRIPT), "--official-source", str(root), "--inputs", str(inputs),
+                    "--output", str(relocated / "prepared"), "--frontend", str(frontend),
+                    "--language-model", str(frontend / "lid.176.bin")]
+            with patch.object(prepare, "LID_BYTES", expected_language_bytes), \
+                 patch.object(prepare, "LID_SHA256", expected_language_hash), \
+                 patch.object(prepare, "inspect_frontend", return_value=preflight), \
+                 patch.object(prepare.subprocess, "Popen", side_effect=start_worker), \
+                 patch.object(sys, "argv", args), patch.object(sys, "stdout", io.StringIO()):
+                self.assertEqual(prepare.main(), 0)
+            self.assertFalse(original.exists())
+            self.assertFalse(Path(manifest["sources"]["language_model"]["path"]).exists())
+            self.assertEqual(prepare.read_json(frontend / "manifest.json"), manifest)
+            protected = jobs[0]["protected"]
+            self.assertIn(str(frontend / "manifest.json"), protected)
+            for name in manifest["files"]:
+                self.assertIn(str(frontend / name), protected)
+            for path in prepare.classic_frontend_files(preflight).values():
+                self.assertIn(str(path), protected)
+            self.assertTrue(all(Path(path).is_relative_to(relocated) for path in protected))
+            (frontend / "user.dict").write_bytes(b"changed during preparation")
+            with self.assertRaisesRegex(RuntimeError, "Preparation source changed"):
+                prepare.verify_protected(protected)
 
     def test_duplicate_tones_do_not_silently_replace_a_reference(self):
         with tempfile.TemporaryDirectory() as directory:

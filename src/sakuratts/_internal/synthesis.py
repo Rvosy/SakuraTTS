@@ -12,6 +12,7 @@ import numpy as np
 
 from sakuratts._internal.generation import SemanticGeneration, check_cancelled, generate_semantic
 from sakuratts._internal.reference_condition import PreparedReference
+from sakuratts.frontend.profiles import SUPPORTED_LANGUAGE_MODES, language_profile
 
 
 @dataclass
@@ -77,7 +78,7 @@ def single_fragment_pcm(waveform, sample_rate, fragment_interval=0.3):
 
 def _validate_model(reference, name, manifest):
     identity = reference.manifest["identity"]
-    if identity["reference_language"] not in ("ja", "all_ja"):
+    if identity["reference_language"] not in SUPPORTED_LANGUAGE_MODES:
         raise ValueError("Only a prepared Japanese reference is currently supported")
     if (manifest["source"]["checkpoint_sha256"] != identity[name + "_checkpoint_sha256"]
             or manifest["source"]["official_commit"] != identity["official_commit"]):
@@ -101,14 +102,13 @@ def prepare_text_request(text, language, frontend, *, split_method="cut0"):
     The caller processes each fragment's semantic and acoustic phases in order,
     using one RNG for the whole request, and concatenates the resulting PCM.
     """
-    if language not in ("ja", "all_ja"):
-        raise ValueError("Only Japanese ja/all_ja requests are currently supported")
+    language_profile(language)
     if split_method not in tuple("cut" + str(i) for i in range(6)):
         raise ValueError("Expected an official cut0 through cut5 text split method")
     start = time.perf_counter()
     targets = frontend.prepare_target(text, language, split_method=split_method)
     if not targets:
-        raise ValueError("The request has no Japanese text fragments")
+        raise ValueError("The request has no text fragments")
     fragments = []
     for target in targets:
         target_phones = np.asarray(target["phones"], dtype=np.int64)
@@ -146,8 +146,6 @@ def generate_prepared_semantic(prepared: PreparedText, reference: PreparedRefere
     The cancellation predicate is not retained in the returned request. Pass it
     explicitly to synthesize_acoustic to keep cancellation enabled in that phase.
     """
-    if prepared.language not in ("ja", "all_ja"):
-        raise ValueError("Only Japanese ja/all_ja requests are currently supported")
     _validate_model(reference, "gpt", gpt.weight_manifest)
     rng = np.random.default_rng() if rng is None else rng
     start = time.perf_counter()

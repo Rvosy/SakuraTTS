@@ -8,6 +8,7 @@ import logging
 from pathlib import Path
 
 from ._internal.reference_condition import PreparedReference, sha256_array, sha256_file
+from .frontend.profiles import language_profile
 
 logger = logging.getLogger("sakuratts.reference")
 
@@ -24,7 +25,7 @@ class ReferenceCache:
         self.paths = [] if settings.get("cnhubert") else [engine.model.path.parent / path
                       for path in engine.model.runtime_config.get("references", {}).values()]
 
-    def _audio(self, audio_path, prompt_text):
+    def _audio(self, audio_path):
         audio_path = Path(audio_path).resolve(strict=True)
         audio_hash = sha256_file(audio_path)
         if audio_hash in self.audio_cache:
@@ -42,18 +43,28 @@ class ReferenceCache:
                 break
         if base is None:
             from .converter import prepare_reference
+            from ._internal.portable import bundle_root
             script = Path(__file__).parent / "_internal/conversion/prepare_windows_resources.py"
             resources = {"frontend": sha256_file(self.engine._runtime.packages["frontend"] / "manifest.json")}
-            if self.settings.get("official_source"):
+            portable_root = bundle_root()
+            bundled_preparation = (portable_root is not None
+                                   and self.settings.get("official_source") and self.settings.get("python"))
+            if bundled_preparation:
+                resources["preparation"] = sha256_file(portable_root / "runtime/preparation/preparation-manifest.json")
+            directories = []
+            if self.settings.get("official_source") and not bundled_preparation:
                 source = Path(self.settings["official_source"]) / "GPT_SoVITS"
-                for prefix, directory in (("hubert", Path(self.settings.get("cnhubert", source / "pretrained_models/chinese-hubert-base"))),
-                                          ("speaker", source / "eres2net")):
-                    for resource in sorted(directory.rglob("*")):
-                        if resource.is_file() and "__pycache__" not in resource.parts:
-                            resources[prefix + "/" + str(resource.relative_to(directory))] = sha256_file(resource)
+                directories = [("hubert", Path(self.settings.get("cnhubert", source / "pretrained_models/chinese-hubert-base"))),
+                               ("speaker", source / "eres2net")]
                 speaker = source / "pretrained_models/sv/pretrained_eres2netv2w24s4ep4.ckpt"
                 if speaker.is_file():
                     resources[str(speaker.relative_to(source))] = sha256_file(speaker)
+            elif self.settings.get("cnhubert"):
+                directories = [("hubert", Path(self.settings["cnhubert"]))]
+            for prefix, directory in directories:
+                for resource in sorted(directory.rglob("*")):
+                    if resource.is_file() and "__pycache__" not in resource.parts:
+                        resources[prefix + "/" + str(resource.relative_to(directory))] = sha256_file(resource)
             key = hashlib.sha256(json.dumps({**expected, "resources": resources, "preparer": sha256_file(script)},
                 sort_keys=True).encode("utf-8")).hexdigest()
             path = Path(self.settings.get("cache_dir", ".cache/sakuratts")) / "references" / key
@@ -63,6 +74,9 @@ class ReferenceCache:
                 required = ("gpt_checkpoint", "sovits_checkpoint", "official_source", "python")
                 missing = [name for name in required if not self.settings.get(name)]
                 if missing:
+                    if portable_root is not None and any(name in missing for name in ("official_source", "python")):
+                        raise ValueError("This bundle cannot prepare new reference audio without its preparation component. "
+                                         "Use the complete bundle, or install the matching component in runtime/preparation.")
                     raise ValueError("Raw reference preparation is not configured: " + ", ".join(missing)
                                      + ". Set these preparation paths in the sakuratts section of --tts-config.")
                 for kind in ("gpt", "sovits"):
@@ -81,19 +95,18 @@ class ReferenceCache:
         return base
 
     def prepare_audio(self, path):
-        self._audio(path, "")
+        self._audio(path)
 
     def resolve(self, path, text, language):
-        if language not in ("ja", "all_ja"):
-            raise NotImplementedError("Reference language is not implemented: " + language)
+        profile = language_profile(language)
         if not text or not text.strip():
             raise NotImplementedError("Inference without prompt_text is not implemented by the native backend")
-        base = self._audio(path, text)
+        base = self._audio(path)
         from .frontend.text_frontend import splits
         import numpy as np
         prompt = text.strip("\n")
         if prompt[-1] not in splits:
-            prompt += "。"
+            prompt += profile.terminal
         target = self.engine._runtime.frontend.segment(prompt, language)
         phones = np.asarray(target["phones"], dtype=np.int64)
         bert = np.asarray(target["bert_features"], dtype=np.float32)

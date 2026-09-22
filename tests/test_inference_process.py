@@ -75,6 +75,18 @@ class InferenceProcessTests(unittest.TestCase):
             proxy.wake()
         self.assertFalse(proxy.alive)
 
+    def test_preparation_child_cannot_read_the_worker_control_pipe(self):
+        for level in ("DEBUG", "WARNING"):
+            with self.subTest(level=level):
+                proxy = self.proxy(tts_config=self.config({"prepare_child": True,
+                    "preparation_log_level": level}), startup_timeout=5)
+                proxy.wake()
+                self.assertEqual(proxy.info(), {"name": "configured"})
+                audio = proxy.tts({"chunks": 1})
+                self.assertEqual(pcm_s16le_bytes(audio.pcm), struct.pack("<16h", *range(16)))
+                proxy.sleep()
+                self.assertFalse(proxy.alive)
+
     def test_control_process_never_imports_numerical_backends_during_lifecycle(self):
         code = textwrap.dedent('''
             import importlib.abc
@@ -84,7 +96,8 @@ class InferenceProcessTests(unittest.TestCase):
             import threading
             import wave
 
-            forbidden = ("numpy", "torch", "cupy", "onnxruntime", "sakuratts.backends", "sakuratts.frontend")
+            forbidden = ("numpy", "torch", "cupy", "onnxruntime", "sakuratts.backends.cuda",
+                "sakuratts.frontend.runtime", "sakuratts.frontend.processors", "sakuratts.frontend.text_frontend")
             class NoNumericalBackends(importlib.abc.MetaPathFinder):
                 def find_spec(self, fullname, path=None, target=None):
                     if any(fullname == name or fullname.startswith(name + ".") for name in forbidden):
@@ -182,6 +195,16 @@ class InferenceProcessTests(unittest.TestCase):
         self.assertFalse(proxy.alive)
         self.assertEqual(proxy.tts({}).report["name"], "new-sovits")
 
+    def test_backend_selection_survives_worker_restart_and_weight_switch(self):
+        proxy = self.proxy(backend="fixture-backend")
+        first = proxy.tts({}).report
+        self.assertEqual(first["backend"], "fixture-backend")
+        proxy.set_weights("sovits", "new-sovits")
+        proxy.sleep()
+        second = proxy.tts({}).report
+        self.assertNotEqual(first["pid"], second["pid"])
+        self.assertEqual(second["backend"], "fixture-backend")
+        self.assertEqual(second["name"], "new-sovits")
     def test_wake_without_model_never_claims_ready(self):
         proxy = self.proxy(model=None)
         self.assertFalse(proxy.configured)

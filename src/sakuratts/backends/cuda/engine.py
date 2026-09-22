@@ -1,10 +1,8 @@
 """Independent Japanese text-to-WAV entry point for prepared CUDA models."""
 
-from importlib import metadata
 import json
 import logging
 import math
-import os
 from pathlib import Path
 import time
 import wave
@@ -20,6 +18,8 @@ logger = logging.getLogger("sakuratts.inference")
 
 class NVIDIAEngine:
     """One active model pair and one synchronous request; caller owns lifetime."""
+    name = "cuda"
+
     def __init__(self, config, *, policy="resident", use_graph=True, capacity=2048,
                  gpt_precision="fp32", gpt_attention="baseline", gpt_attention_chunk_size=256,
                  allow_experimental_acoustic_fp16=False, acoustic_arena_shrink=True,
@@ -54,9 +54,8 @@ class NVIDIAEngine:
         from sakuratts.model import Model
         model = config if isinstance(config, Model) else Model.load(config)
         self.config_path = model.path
-        self.config = model.runtime_config
-        if self.config.get("format") != "sakuratts-windows-config-v1":
-            raise ValueError("Expected a sakuratts-windows-config-v1 configuration")
+        from sakuratts._internal.portable import model_config
+        self.config = model_config(model.runtime_config)
         root = self.config_path.parent
         self.packages = {key: (root / self.config[key]).resolve(strict=True)
                          for key in ("gpt", "sovits", "frontend")}
@@ -85,55 +84,10 @@ class NVIDIAEngine:
                 gpt_checkpoint_sha256=self.manifests["gpt"]["source"]["checkpoint_sha256"],
                 sovits_checkpoint_sha256=self.manifests["sovits"]["source"]["checkpoint_sha256"],
                 reference_language="ja", official_commit=source)
-        frontend_manifest = self.manifests["frontend"]
-        if frontend_manifest["format"] != "sakuratts-japanese-frontend-resources-v1":
-            raise ValueError("Unsupported frontend resource package")
-        if not {"symbols-v2.json", "user.dict", "lid.176.bin"}.issubset(frontend_manifest["files"]):
-            raise ValueError("Incomplete frontend resource package")
-        for name,spec in frontend_manifest["files"].items():
-            path = (self.packages["frontend"] / name).resolve(strict=True)
-            if self.packages["frontend"] not in path.parents:
-                raise ValueError("Frontend resource must remain inside its package")
-            if path.stat().st_size != spec["bytes"] or sha256_file(path) != spec["sha256"]:
-                raise ValueError(f"Frontend resource checksum mismatch: {name}")
-        from sakuratts.frontend.text_frontend import LanguageSegmenter, TextFrontend
-        profile=frontend_manifest.get("japanese_g2p",{"implementation":"pyopenjtalk-plus"})
-        self.japanese = self.segmenter = None
-        try:
-            if profile["implementation"]=="pyopenjtalk-classic":
-                from sakuratts.frontend.classic_japanese import ClassicJapaneseG2P
-                if profile.get("version") != "0.3.4" or not self.config.get("acoustic_python"):
-                    raise ValueError("This classic frontend package requires version 0.3.4 and its prepared Python runtime")
-                directories = {}
-                for key in ("module_directory", "main_dictionary"):
-                    path = (self.packages["frontend"] / profile[key]).resolve(strict=True)
-                    if self.packages["frontend"] not in path.parents or not path.is_dir():
-                        raise ValueError("Classic frontend directories must remain inside their package")
-                    directories[key] = path
-                self.japanese=ClassicJapaneseG2P(
-                    self.config_path.parent/self.config["acoustic_python"],
-                    directories["module_directory"], directories["main_dictionary"],
-                    self.packages["frontend"]/"user.dict")
-            elif profile["implementation"]=="pyopenjtalk-plus":
-                from sakuratts.frontend.japanese import JapaneseG2P
-                dictionary = self.config.get("main_dictionary")
-                dictionary = (root / dictionary).resolve(strict=True) if dictionary else Path(
-                    metadata.distribution("pyopenjtalk-plus").locate_file("pyopenjtalk/dictionary"))
-                os.environ["OPEN_JTALK_DICT_DIR"] = str(dictionary)
-                self.japanese = JapaneseG2P(dictionary, self.packages["frontend"] / "user.dict")
-            else:
-                raise ValueError("Unsupported Japanese frontend implementation")
-            self.segmenter = LanguageSegmenter(self.packages["frontend"])
-            symbols = json.loads((self.packages["frontend"] / "symbols-v2.json").read_text(encoding="utf-8"))
-            self.frontend = TextFrontend(self.japanese, symbols, self.segmenter)
-        except BaseException as error:
-            for component in (self.segmenter, self.japanese):
-                if component is not None:
-                    try:
-                        component.close()
-                    except BaseException as cleanup_error:
-                        error.add_note(f"Frontend construction cleanup failed: {cleanup_error!r}")
-            raise
+        from sakuratts.frontend.runtime import load_frontend
+        self.frontend_runtime = load_frontend(self.config_path, self.config,
+            self.packages["frontend"], self.manifests["frontend"])
+        self.frontend = self.frontend_runtime.text
         self.policy, self.use_graph, self.capacity = policy, use_graph, capacity
         self.gpt = self.sovits = None
         self.busy = False
@@ -181,8 +135,7 @@ class NVIDIAEngine:
 
     def close(self):
         self.unload()
-        self.japanese.close()
-        self.segmenter.close()
+        self.frontend_runtime.close()
 
     def synthesize(self, text, *, reference=None, seed=1234, language="ja", split_method="cut0",
                    top_k=15, temperature=1., repetition_penalty=1.35, early_stop_num=2700,
@@ -296,7 +249,7 @@ class NVIDIAEngine:
                 "acoustic_session_policy":self.acoustic_session_policy,
                 "gpt_attention":self.gpt_attention,"gpt_attention_chunk_size":self.gpt_attention_chunk_size,
                 "gpt_prefill_query_chunk_size":self.gpt_prefill_query_chunk_size,
-                "frontend_profile":self.manifests["frontend"].get("japanese_g2p",{"implementation":"pyopenjtalk-plus"}),
+                "frontend_profile":self.frontend_runtime.profile,
                 "random_inputs":"fresh" if random_inputs is None else "explicit replay of draws and acoustic noise",
                 "quality":{"human_listening":"not_run","asr":"not_run"}}
             return pcm,report

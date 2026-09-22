@@ -1,0 +1,10 @@
+# Release payload only; inference precision and direct/managed lifecycle stay
+# in the normal runtime configuration. Set services = [] for an SDK/CLI bundle.
+target = "windows-x64"
+backend = "cuda"
+languages = ["ja"]
+services = ["http"]
+
+[workers]
+acoustic = "runtime/acoustic/python.exe"
+frontend = "runtime/acoustic/python.exe"

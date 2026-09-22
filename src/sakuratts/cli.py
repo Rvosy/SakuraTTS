@@ -11,6 +11,8 @@ import subprocess
 import sys
 import warnings
 
+from .frontend.profiles import DEFAULT_LANGUAGE, SUPPORTED_LANGUAGE_MODES
+
 
 JAPANESE_MODULES = {
     "onnxruntime": "onnxruntime", "pyopenjtalk-plus": "pyopenjtalk",
@@ -46,9 +48,25 @@ def doctor(*, japanese=False, cuda=False, nvidia=False, config=None):
             "note": "Diagnostics do not synthesize audio or validate quality. Use doctor --nvidia --config PATH for dependencies and prepared package checks, then synthesize to test a request.",
         },
     }
+    if config is not None:
+        report["synthesis"]["models_checked"] = True
+        try:
+            from sakuratts._internal.diagnostics import check_windows_packages
+            report["resource_check"] = check_windows_packages(config)
+            report["synthesis"]["packages_ready"] = True
+        except KeyError as exc:
+            report["resource_check"] = {"status": "failed", "error": f"Incomplete model configuration or manifest: missing field {exc.args[0]!r}"}
+            report["synthesis"]["packages_ready"] = False
+        except Exception as exc:
+            report["resource_check"] = {"status": "failed", "error": str(exc)}
+            report["synthesis"]["packages_ready"] = False
     modules = {"numpy": "numpy"}
-    if japanese or nvidia:
+    configured_profile = report.get("resource_check", {}).get("japanese_g2p", {}).get("implementation")
+    if japanese or nvidia and config is None or configured_profile == "pyopenjtalk-plus":
         modules.update(JAPANESE_MODULES)
+    elif configured_profile == "pyopenjtalk-classic":
+        modules.update({name: module for name, module in JAPANESE_MODULES.items()
+                        if name in ("split-lang", "fast-langdetect", "fasttext-predict")})
     if nvidia:
         from sakuratts.backends.cuda.runtime import configure_cuda, import_cupy, validate_gpt_cuda_include_paths
         configure_cuda()
@@ -91,20 +109,8 @@ def doctor(*, japanese=False, cuda=False, nvidia=False, config=None):
                 report["packages"][distribution] = {"error": str(exc)}
                 report["checks_passed"] = False
         report["synthesis"]["dependencies_ready"] = report["checks_passed"]
-    if config is not None:
-        report["synthesis"]["models_checked"] = True
-        try:
-            from sakuratts._internal.diagnostics import check_windows_packages
-            report["resource_check"] = check_windows_packages(config)
-            report["synthesis"]["packages_ready"] = True
-        except KeyError as exc:
-            report["resource_check"] = {"status": "failed", "error": f"Incomplete model configuration or manifest: missing field {exc.args[0]!r}"}
-            report["synthesis"]["packages_ready"] = False
-            report["checks_passed"] = False
-        except Exception as exc:
-            report["resource_check"] = {"status": "failed", "error": str(exc)}
-            report["synthesis"]["packages_ready"] = False
-            report["checks_passed"] = False
+    if report["synthesis"]["packages_ready"] is False:
+        report["checks_passed"] = False
     if cuda:
         try:
             import torch
@@ -138,6 +144,7 @@ def main(argv=None):
         version = "uninstalled source"
     parser.add_argument("--version", action="version", version="%(prog)s " + version)
     subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("capabilities", help="List implemented backends and language modes without loading them")
     check = subparsers.add_parser("doctor", help="Check imports and optional CUDA development execution")
     check.add_argument("model", nargs="?", help="Model directory or legacy runtime configuration")
     check.add_argument("--japanese", action="store_true", help="Check Japanese frontend libraries")
@@ -150,7 +157,7 @@ def main(argv=None):
     speech.add_argument("--output", required=True)
     speech.add_argument("--reference")
     speech.add_argument("--seed", type=int, default=1234)
-    speech.add_argument("--language", choices=("ja","all_ja"), default="ja")
+    speech.add_argument("--language", choices=SUPPORTED_LANGUAGE_MODES, default=DEFAULT_LANGUAGE)
     speech.add_argument("--text-split-method", choices=("cut0","cut2"), default="cut0")
     speech.add_argument("--top-k", type=int, default=15)
     speech.add_argument("--temperature", type=float, default=1.)
@@ -178,6 +185,7 @@ def main(argv=None):
         entry.add_argument("model", nargs="?" if command == "serve" else None,
                            help="Model directory, model.json, or legacy runtime.json")
         entry.add_argument("--experimental", type=Path, help="Explicit JSON backend options; defaults remain FP32")
+        entry.add_argument("--backend", help="Explicit backend override; defaults to model/config selection")
         if command == "serve":
             entry.add_argument("--runtime-mode", choices=("direct", "managed"), default="direct",
                                help="direct loads at startup (default); managed sleeps until wake or synthesis")
@@ -197,6 +205,7 @@ def main(argv=None):
                                help="GPT-SoVITS YAML with optional sakuratts deployment settings")
         else:
             entry.add_argument("--text", required=True)
+            entry.add_argument("--language", choices=SUPPORTED_LANGUAGE_MODES, default=DEFAULT_LANGUAGE)
             entry.add_argument("--reference")
             entry.add_argument("--seed", type=int, default=1234)
             entry.add_argument("--output", type=Path, required=True)
@@ -207,12 +216,19 @@ def main(argv=None):
                                default="cut0", help="Text splitting method; cut5 splits at punctuation")
     conversion = subparsers.add_parser("convert", help="Convert V2ProPlus checkpoints or package prepared resources")
     conversion.add_argument("--config", type=Path, help="Package an existing prepared runtime.json")
-    for name in ("gpt", "sovits", "reference", "official-source", "python", "acoustic-python", "language-model"):
+    for name in ("gpt", "sovits", "reference", "official-source", "python", "acoustic-python", "frontend-python", "language-model"):
         conversion.add_argument("--" + name, type=Path)
     conversion.add_argument("--reference-text")
     conversion.add_argument("--name")
     conversion.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
+    if args.command == "capabilities":
+        from .backends import available_backends
+        from .frontend.profiles import SUPPORTED_LANGUAGES
+        print(json.dumps({"backends": available_backends(), "languages": list(SUPPORTED_LANGUAGES),
+            "language_modes": list(SUPPORTED_LANGUAGE_MODES),
+            "scope": "Implemented components; driver availability and model compatibility are checked when loading."}))
+        return 0
     if args.command in ("tts", "serve", "convert", "benchmark"):
         try:
             return run_product_command(args)
@@ -240,7 +256,7 @@ def run_product_command(args):
         from .converter import convert, package_model
         raw = (args.gpt, args.sovits, args.reference, args.reference_text, args.official_source)
         if args.config:
-            if any(raw) or any((args.python, args.acoustic_python, args.language_model)):
+            if any(raw) or any((args.python, args.acoustic_python, args.frontend_python, args.language_model)):
                 raise ValueError("--config cannot be combined with raw conversion options")
             model = package_model(args.config, args.output, name=args.name)
         else:
@@ -249,7 +265,8 @@ def run_product_command(args):
             model = convert(gpt=args.gpt, sovits=args.sovits, reference=args.reference,
                 reference_text=args.reference_text, official_source=args.official_source,
                 output=args.output, name=args.name, python=args.python,
-                acoustic_python=args.acoustic_python, language_model=args.language_model)
+                acoustic_python=args.acoustic_python, frontend_python=args.frontend_python,
+                language_model=args.language_model)
         print(json.dumps({"model": str(model.path), **model.info()}, ensure_ascii=False))
         return 0
     experimental = None
@@ -268,14 +285,16 @@ def run_product_command(args):
         if config is None and args.model is None and Path("configs/tts_infer.yaml").is_file():
             config = Path("configs/tts_infer.yaml")
         runtime_options = {}
+        if args.backend is not None:
+            runtime_options["backend"] = args.backend
         if (args.runtime_mode != "direct" or args.idle_sleep_seconds != 60.
                 or args.wake_timeout_seconds != 120. or args.operation_timeout_seconds != 300.):
-            runtime_options = {
+            runtime_options.update({
                 "runtime_mode": args.runtime_mode,
                 "idle_sleep_seconds": args.idle_sleep_seconds,
                 "wake_timeout_seconds": args.wake_timeout_seconds,
                 "operation_timeout_seconds": args.operation_timeout_seconds,
-            }
+            })
         start_server(args.model, host=args.host, port=args.port, tts_config=config, experimental=experimental,
                      log_file=args.log_file, log_level=args.log_level, **runtime_options)
         return 0
@@ -287,9 +306,10 @@ def run_product_command(args):
     record = output.with_suffix(".json")
     if output.suffix.lower() != ".wav" or output.exists() or record.exists():
         raise ValueError("Choose a new .wav output path; neither WAV nor JSON may already exist")
-    with Engine.load(args.model, experimental=experimental) as engine:
+    options = {"backend": args.backend} if args.backend is not None else {}
+    with Engine.load(args.model, experimental=experimental, **options) as engine:
         audio = engine.synthesize(args.text, reference=args.reference, seed=args.seed,
-                                  split_method=args.split_method)
+                                  split_method=args.split_method, language=args.language)
         audio.save(output)
         with record.open("x", encoding="utf-8") as stream:
             json.dump(audio.report, stream, ensure_ascii=False, indent=2)

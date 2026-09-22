@@ -1,6 +1,7 @@
 """Hardware-free inference implementation run behind the production worker loop."""
 
 import json
+import logging
 import os
 from pathlib import Path
 import subprocess
@@ -16,8 +17,8 @@ from sakuratts._internal.inference_worker import main
 
 
 class FakeInference:
-    def __init__(self, model=None, *, tts_config=None, experimental=None):
-        self.settings = {"loads": 1}
+    def __init__(self, model=None, *, tts_config=None, experimental=None, backend=None):
+        self.settings = {"loads": 1, "backend": backend}
         self.reference_audio = None
         self.model = None
         self.children = []
@@ -29,6 +30,12 @@ class FakeInference:
                 time.sleep(config["sleep"])
             if config.get("error"):
                 raise ValueError("Invalid fake configuration")
+            if config.get("prepare_child"):
+                from sakuratts._internal.logging import run_conversion
+                logger = logging.getLogger("sakuratts.converter")
+                logger.setLevel(config.get("preparation_log_level", "DEBUG"))
+                run_conversion([sys.executable, "-c",
+                    "import sys; assert sys.stdin.buffer.read() == b''; print('ready')"], env=dict(os.environ))
             if config.get("child_file"):
                 child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"],
                     creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
@@ -60,7 +67,7 @@ class FakeInference:
                 on_fragment(pcm, 32000)
         return Audio(np.empty(0, np.int16) if on_fragment else np.tile(pcm, count), 32000,
             {"sample_rate": 32000, "name": self.model.name if self.model else None,
-             "reference": self.reference_audio, "pid": os.getpid()})
+             "reference": self.reference_audio, "pid": os.getpid(), "backend": self.settings["backend"]})
 
     def set_weights(self, kind, path):
         if path == "bad":

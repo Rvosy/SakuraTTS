@@ -1,6 +1,7 @@
 include README.md LICENSE AGENTS.md pyproject.toml MANIFEST.in start-server.bat api.py
 include uv.lock
 recursive-include requirements *.txt
+recursive-include packaging/recipes *.toml
 recursive-include src/sakuratts *.py
 recursive-include scripts *.py *.ps1 *.bat *.md
 recursive-include benchmarks *.py *.json *.md

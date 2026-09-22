@@ -19,6 +19,7 @@ from sakuratts._internal.generation import SynthesisCancelled
 from sakuratts._internal.synthesis import (generate_prepared_semantic, prepare_text, prepare_text_request, synthesize,
                                  synthesize_acoustic, synthesize_prepared)
 from sakuratts.frontend.text_frontend import TextFrontend
+from sakuratts.frontend.processors import JapaneseProcessor
 
 
 class Frontend:
@@ -159,7 +160,7 @@ class SynthesisTests(unittest.TestCase):
 
     def test_explicit_cut2_uses_full_original_text_and_preserves_fragment_order(self):
         frontend = TextFrontend(
-            japanese=SimpleNamespace(normalize=lambda text: text, g2p=lambda text: ["a"] * 6),
+            processors={"ja": JapaneseProcessor(SimpleNamespace(normalize=lambda text: text, g2p=lambda text: ["a"] * 6))},
             symbols=["UNK", "a"], segmenter=lambda text, *args: [{"lang": "ja", "text": text}])
         sentence = "今日はいい天気ですね。"
         text = sentence * 10

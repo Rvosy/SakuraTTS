@@ -35,16 +35,20 @@ class Model:
             raise ValueError("Model requires named, nonempty reference package paths")
         if "default_reference" in config and config["default_reference"] not in refs:
             raise ValueError("default_reference must name a configured reference")
-        for name in ("acoustic_python", "main_dictionary"):
+        for name in ("acoustic_python", "frontend_python", "main_dictionary"):
             if name in config and (not isinstance(config[name], str) or not config[name].strip()):
                 raise ValueError(f"{name} must be a nonempty path")
         if manifest["format"] == FORMAT:
             if not isinstance(manifest.get("name"), str) or not manifest["name"].strip():
                 raise ValueError("Model name must be nonempty")
-            if manifest.get("languages") != ["ja"]:
-                raise ValueError("The public Engine currently supports Japanese models only (languages: ['ja'])")
-            if manifest.get("backend", {"preferred": "cuda"}) != {"preferred": "cuda"}:
-                raise ValueError("The public Engine currently supports the cuda backend only")
+            languages = manifest.get("languages")
+            if (not isinstance(languages, list) or not languages
+                    or any(not isinstance(language, str) or not language.strip() for language in languages)):
+                raise ValueError("Model languages must be a nonempty list of language names")
+            backend = manifest.get("backend", {"preferred": "cuda"})
+            if (not isinstance(backend, dict) or not isinstance(backend.get("preferred"), str)
+                    or not backend["preferred"].strip()):
+                raise ValueError("Model backend.preferred must be a nonempty backend name")
             for value in [config[k] for k in ("gpt", "sovits", "frontend")] + list(refs.values()):
                 resource = (path.parent / value).resolve(strict=True)
                 if Path(value).is_absolute() or path.parent not in resource.parents or not resource.is_dir():
@@ -57,8 +61,15 @@ class Model:
         if config.get("format") == FORMAT:
             config["format"] = LEGACY_FORMAT
             config["sovits"] = config.pop("acoustic", None)
-        from ._internal.portable import model_config
-        return model_config(config)
+        return config
+
+    @property
+    def backend(self):
+        return self.manifest.get("backend", {}).get("preferred", "cuda")
+
+    @property
+    def languages(self):
+        return tuple(self.manifest.get("languages", ["ja"]))
 
     @property
     def name(self):
@@ -73,5 +84,5 @@ class Model:
         return self.manifest.get("default_reference", next(iter(self.references), None))
 
     def info(self):
-        return {"name": self.name, "backend": "cuda", "languages": ["ja"],
+        return {"name": self.name, "backend": self.backend, "languages": list(self.languages),
                 "references": list(self.references), "default_reference": self.default_reference}

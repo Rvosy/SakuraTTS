@@ -20,6 +20,7 @@ from .engine import Audio, BusyError, Inference
 from ._internal.cancellation import SynthesisCancelled
 from ._internal.pcm import pcm_s16le_bytes
 from ._internal.logging import log_result, request_id, request_scope, service_logging, set_stage, stage
+from .frontend.profiles import SUPPORTED_LANGUAGE_MODES
 
 logger = logging.getLogger("sakuratts.server")
 
@@ -59,8 +60,8 @@ class SpeechRequest(BaseModel):
                 raise ValueError(field + " is required")
         for field in ("text_lang", "prompt_lang"):
             request[field] = request[field].lower()
-            if request[field] not in ("ja", "all_ja"):
-                raise NotImplementedError(field + ": native inference currently supports ja and all_ja")
+            if request[field] not in SUPPORTED_LANGUAGE_MODES:
+                raise NotImplementedError(field + ": native inference currently supports " + ", ".join(SUPPORTED_LANGUAGE_MODES))
         if request["text_split_method"] not in {"cut" + str(i) for i in range(6)}:
             raise ValueError("text_split_method: " + request["text_split_method"] + " is not supported")
         if request["media_type"] not in ("wav", "raw", "ogg", "aac"):
@@ -132,7 +133,7 @@ class WakeRequest(BaseModel):
     keep_alive_seconds: float = Field(default=60, ge=0, le=3600)
 
 
-def create_app(model=None, *, tts_config=None, experimental=None, control=None,
+def create_app(model=None, *, tts_config=None, backend=None, experimental=None, control=None,
                runtime_mode="direct", idle_sleep_seconds=60, wake_timeout_seconds=120,
                operation_timeout_seconds=300):
     if runtime_mode not in ("direct", "managed"):
@@ -154,13 +155,14 @@ def create_app(model=None, *, tts_config=None, experimental=None, control=None,
         app.state.model_info = None
         app.state.runtime = None
         try:
+            options = {"backend": backend} if backend is not None else {}
             if runtime_mode == "managed":
                 from ._internal.inference_process import ProcessInference
                 from ._internal.managed_runtime import ManagedRuntime
                 factory = partial(ProcessInference, model, tts_config=tts_config, experimental=experimental,
-                                  startup_timeout=wake_timeout_seconds, operation_timeout=operation_timeout_seconds)
+                                  startup_timeout=wake_timeout_seconds, operation_timeout=operation_timeout_seconds, **options)
             else:
-                factory = partial(Inference, model, tts_config=tts_config, experimental=experimental)
+                factory = partial(Inference, model, tts_config=tts_config, experimental=experimental, **options)
             inference = await asyncio.get_running_loop().run_in_executor(pool, factory)
             app.state.inference = inference
             app.state.model_info = inference.info()
@@ -517,7 +519,7 @@ def create_app(model=None, *, tts_config=None, experimental=None, control=None,
     return app
 
 
-def start_server(model=None, *, host="127.0.0.1", port=9880, tts_config=None, experimental=None,
+def start_server(model=None, *, host="127.0.0.1", port=9880, tts_config=None, backend=None, experimental=None,
                  log_file="logs/sakuratts.log", log_level="info", runtime_mode="direct",
                  idle_sleep_seconds=60, wake_timeout_seconds=120, operation_timeout_seconds=300):
     import uvicorn
@@ -530,7 +532,7 @@ def start_server(model=None, *, host="127.0.0.1", port=9880, tts_config=None, ex
             logger.info("SakuraTTS · 推理服务", extra={"block": "startup"})
             logger.info("地址  http://%s:%d", host, port)
             logger.info("日志  %s", path)
-            app = create_app(model, tts_config=tts_config, experimental=experimental, control=control,
+            app = create_app(model, tts_config=tts_config, backend=backend, experimental=experimental, control=control,
                              runtime_mode=runtime_mode, idle_sleep_seconds=idle_sleep_seconds,
                              wake_timeout_seconds=wake_timeout_seconds,
                              operation_timeout_seconds=operation_timeout_seconds)

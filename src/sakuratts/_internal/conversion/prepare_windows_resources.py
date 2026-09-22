@@ -103,7 +103,8 @@ def frontend_preflight():
 
 def inspect_frontend(python):
     command = [str(Path(python).resolve(strict=True)), "-B", str(Path(__file__).resolve()), "--frontend-preflight"]
-    result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace",
+    result = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                             env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONIOENCODING="utf-8",
                                      HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1"))
     if result.returncode:
@@ -256,18 +257,14 @@ def worker(job_file):
     started = time.perf_counter()
     try:
         disable_network()
-        verify_protected(job["protected"])
-        if frontend_preflight() != job["frontend_preflight"]:
-            raise RuntimeError("The preparation interpreter's Japanese frontend changed after preflight")
         try:
             import numpy as np
             import torch
             from GPT_SoVITS.TTS_infer_pack.TTS import TTS, TTS_Config
             from module import commons
             from TTS_infer_pack.text_segmentation_method import splits
-            from sakuratts._internal.reference_condition import PreparedReference, validate_arrays
+            from sakuratts._internal.reference_condition import validate_arrays
             import fast_langdetect
-            import pyopenjtalk
         except ImportError as error:
             raise RuntimeError("Preparation interpreter lacks an official source dependency: " + str(error)
                                + ". Install the development dependencies or pass --python with the existing official interpreter.") from error
@@ -276,9 +273,6 @@ def worker(job_file):
         torch.set_num_threads(job["cpu_threads"])
         torch.backends.cuda.matmul.allow_tf32 = False
         torch.backends.cudnn.allow_tf32 = False
-        main_dictionary = Path(os.fsdecode(pyopenjtalk.OPEN_JTALK_DICT_DIR))
-        if not main_dictionary.is_dir() or not (main_dictionary / "sys.dic").is_file():
-            raise FileNotFoundError("The preparation interpreter's OpenJTalk dictionary is missing; automatic download is disabled")
         fast_langdetect.infer._default_detector = fast_langdetect.infer.LangDetector(
             fast_langdetect.infer.LangDetectConfig(cache_dir=Path(job.get("frontend", str(Path(job["output"]) / "frontend")))))
 
@@ -343,12 +337,10 @@ def worker(job_file):
                             "sha256_raw_c_order": hashlib.sha256(a.tobytes()).hexdigest()} for name, a in arrays.items()},
                         "provenance": {"preparation_job": str(job_file), "protected_files_sha256": job["protected"]}}
             write_json(package / "manifest.json", manifest)
-            PreparedReference.load(package, **manifest["identity"])
             result["references"].append({"tone": ref["tone"], "package": str(package),
                                          "elapsed_seconds": time.perf_counter() - phase})
             print("PREPARED_REFERENCE", package, flush=True)
-        verify_protected(job["protected"])
-        result.update(status="completed", source_files_unchanged=True)
+        result.update(status="completed")
     except Exception:
         result.update(status="error", error=traceback.format_exc())
         traceback.print_exc()
@@ -419,8 +411,13 @@ def main():
     cnhubert = args.cnhubert.resolve(strict=True) if args.cnhubert else root / "GPT_SoVITS/pretrained_models/chinese-hubert-base"
     protected_paths.extend(p for p in cnhubert.rglob("*") if p.is_file())
     protected_paths.append(root / "GPT_SoVITS/pretrained_models/sv/pretrained_eres2netv2w24s4ep4.ckpt")
-    protected_paths.append(Path(frontend["sources"]["language_model"]["path"]))
-    protected_paths.extend(Path(spec["path"]) for spec in frontend["sources"].get("classic_files", {}).values())
+    # Manifest source paths record provenance and may belong to a moved or removed installation.
+    language = (args.language_model.resolve(strict=True) if args.language_model else
+                root / "GPT_SoVITS/pretrained_models/fast_langdetect/lid.176.bin")
+    protected_paths.append(language)
+    protected_paths.extend(classic_frontend_files(preflight).values())
+    protected_paths.extend(frontend_path / name for name in frontend["files"])
+    protected_paths.append(frontend_path / "manifest.json")
     protected_paths.append(root / "GPT_SoVITS/configs/tts_infer.yaml")
     job = {"official_source": str(root), "output": str(output), "frontend": str(frontend_path), "gpt": str(inputs["gpt"]), "sovits": str(inputs["sovits"]),
            "source_id": frontend["official_commit"], "cnhubert": str(cnhubert), "device": args.device, "precision": args.precision,
@@ -434,15 +431,16 @@ def main():
     env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONIOENCODING="utf-8")
     command = [str(args.python.resolve(strict=True)), "-B", str(Path(__file__).resolve()), "--worker", str(job_file)]
     with (run / "worker.log").open("w", encoding="utf-8") as log:
-        child = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                                 encoding="utf-8", errors="replace", env=env)
+        child = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                                 encoding="utf-8", errors="replace", env=env,
+                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         for line in child.stdout:
             print(line, end="", flush=True)
             log.write(line)
             log.flush()
         returncode = child.wait()
     verify_protected(job["protected"])
-    write_json(run / "process.json", {"command": command, "returncode": returncode})
+    write_json(run / "process.json", {"command": command, "returncode": returncode, "source_files_unchanged": True})
     if returncode:
         print("Reference preparation failed; details: " + str(run / "worker.log"), file=sys.stderr)
     elif character:

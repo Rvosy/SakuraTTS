@@ -12,6 +12,8 @@ import re
 
 import numpy as np
 
+from .profiles import language_profile
+
 punctuation = {"!", "?", "…", ",", ".", "-", " "}
 
 splits = {
@@ -421,11 +423,10 @@ def pre_seg_text(text, language, split_method="cut0"):
 
 def route_text(text, language, segmenter):
     """Apply the official mode rules to real LanguageSegmenter results."""
+    profile = language_profile(language)
     text = re.sub(r" {2,}", " ", text)
-    if language == "all_ja":
-        return segmenter(text, language.removeprefix("all_"))
-    if language != "ja":
-        raise NotImplementedError(f"Target language mode is not validated: {language}")
+    if language.startswith("all_"):
+        return segmenter(text, profile.code)
     result = []
     for item in segmenter(text):
         is_english = item["lang"] == "en"
@@ -439,51 +440,44 @@ def route_text(text, language, segmenter):
 class TextFrontend:
     """Prepare original non-streaming target text for fixed V2/V2Pro phones.
 
-    Component lifetimes belong to the caller. Japanese uses the official
-    float32 zero BERT features, so no Chinese component or model is loaded.
+    Component lifetimes belong to the caller. Each language processor supplies
+    its own phones and BERT features; routing does not choose a device backend.
     This class does not load GPT/SoVITS or prepare reference audio.
     """
 
-    def __init__(self, japanese, symbols, segmenter):
-        self.japanese = japanese
+    def __init__(self, processors, symbols, segmenter):
+        self.processors = processors
         self.symbol_ids = {phone: index for index, phone in enumerate(symbols)}
         self.segmenter = segmenter
 
     def clean_segment(self, text, language):
-        if language == "ja":
-            normalized = self.japanese.normalize(text)
-            raw = self.japanese.g2p(normalized)
-            phones = [phone if phone in self.symbol_ids else "UNK" for phone in raw]
-            word2ph = None
-        else:
-            raise NotImplementedError(f"Language segment G2P is not implemented: {language}")
+        raw, word2ph, normalized = self.processors[language].clean(text)
+        phones = [phone if phone in self.symbol_ids else "UNK" for phone in raw]
         ids = [self.symbol_ids[phone] for phone in phones]
         return ids, word2ph, normalized
 
     def segment(self, text, language, *, final=False):
         routes = route_text(text, language, self.segmenter)
-        unsupported = {item["lang"] for item in routes} - {"ja"}
+        unsupported = {item["lang"] for item in routes} - self.processors.keys()
         if unsupported:
             raise NotImplementedError(f"Language segment G2P is not implemented: {sorted(unsupported)}")
         if not routes:
-            raise ValueError("No Japanese language segments")
-        segments, phone_groups = [], []
+            raise ValueError("No language segments")
+        segments, phone_groups, feature_groups = [], [], []
         for item in routes:
             phones, word2ph, normalized = self.clean_segment(item["text"], item["lang"])
             phone_groups.append(phones)
+            feature_groups.append(self.processors[item["lang"]].features(phones, word2ph, normalized))
             segments.append(dict(input=item["text"], language=item["lang"], phones=phones,
                                  word2ph=word2ph, norm_text=normalized))
         phones = sum(phone_groups, [])
         normalized = "".join(item["norm_text"] for item in segments)
         if not final and len(phones) < 6:
             return self.segment("." + text, language, final=True)
-        # Every accepted route is Japanese, whose official BERT input is zero.
-        features = np.zeros((1024, len(phones)), dtype=np.float32)
+        features = feature_groups[0] if len(feature_groups) == 1 else np.concatenate(feature_groups, axis=1)
         return dict(phones=phones, bert_features=features, norm_text=normalized, segments=segments)
 
     def prepare_target(self, text, language, split_method="cut0"):
-        if language not in ("ja", "all_ja"):
-            raise NotImplementedError(f"Target language mode is not validated: {language}")
         prepared = pre_seg_text(replace_consecutive_punctuation(text), language, split_method)
         result = []
         for part in prepared:

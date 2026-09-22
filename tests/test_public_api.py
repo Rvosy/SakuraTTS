@@ -3,6 +3,7 @@
 import contextlib
 import io
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -106,14 +107,40 @@ class PublicApiTests(unittest.TestCase):
                                         idle_sleep_seconds=12., wake_timeout_seconds=40.,
                                         operation_timeout_seconds=80.)
 
-    def test_model_rejects_escaping_resource_unsupported_backend_and_bad_default(self):
+    def test_model_rejects_escaping_resources_bad_defaults_and_malformed_metadata(self):
         with tempfile.TemporaryDirectory() as folder:
             model = model_directory(Path(folder) / "model")
-            for update in ({"gpt": "../"}, {"backend": {"preferred": "mlx"}},
-                           {"default_reference": "missing"}, {"languages": ["zh"]}):
-                model.path.write_text(json.dumps(dict(model.manifest, **update)), encoding="utf-8")
-                with self.assertRaises(ValueError):
-                    Model.load(model.path)
+            for update in ({"gpt": "../"}, {"gpt": ""}, {"default_reference": "missing"},
+                           {"backend": {}}, {"backend": "cuda"}, {"backend": {"preferred": ""}},
+                           {"languages": []}, {"languages": [None]}, {"frontend_python": ""}):
+                with self.subTest(update=update):
+                    model.path.write_text(json.dumps(dict(model.manifest, **update)), encoding="utf-8")
+                    with self.assertRaises(ValueError):
+                        Model.load(model.path)
+
+    def test_model_metadata_is_readable_without_implemented_backend_or_portable_installation(self):
+        with tempfile.TemporaryDirectory() as folder:
+            model = model_directory(Path(folder) / "model")
+            model.path.write_text(json.dumps(dict(model.manifest, backend={"preferred": "mlx"},
+                languages=["ja", "zh"], frontend_python="old/frontend/python.exe")), encoding="utf-8")
+            code = """
+import json, sys
+from sakuratts import Model
+model = Model.load(sys.argv[1])
+assert model.backend == 'mlx'
+assert model.languages == ('ja', 'zh')
+assert model.runtime_config['frontend_python'] == 'old/frontend/python.exe'
+assert not set(('numpy', 'cupy', 'torch', 'onnxruntime', 'fastapi', 'mlx',
+                'sakuratts._internal.portable', 'sakuratts.backends')) & sys.modules.keys()
+print(json.dumps(model.info()))
+"""
+            environment = dict(os.environ, SAKURATTS_BUNDLE_ROOT=str(Path(folder) / "missing-bundle"))
+            result = subprocess.run([sys.executable, "-c", code, str(model.path)],
+                env=environment, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            info = json.loads(result.stdout)
+            self.assertEqual(info["backend"], "mlx")
+            self.assertEqual(info["languages"], ["ja", "zh"])
 
     def test_prepared_package_relocates_resources_and_keeps_worker_path(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -121,12 +148,16 @@ class PublicApiTests(unittest.TestCase):
             model = model_directory(root / "old")
             worker = root / "worker.exe"
             worker.write_bytes(b"fake")
-            model.path.write_text(json.dumps(dict(model.manifest, acoustic_python="../worker.exe")), encoding="utf-8")
+            frontend_worker = root / "frontend.exe"
+            frontend_worker.write_bytes(b"fake")
+            model.path.write_text(json.dumps(dict(model.manifest, acoustic_python="../worker.exe",
+                frontend_python="../frontend.exe")), encoding="utf-8")
             with patch("sakuratts._internal.diagnostics.check_windows_packages") as check:
                 packed = package_model(model.path, root / "new")
-            self.assertEqual(check.call_count, 2)
+            check.assert_called_once()
             self.assertEqual(packed.name, "テスト")
             self.assertEqual(packed.manifest["acoustic_python"], str(worker.resolve()))
+            self.assertEqual(packed.manifest["frontend_python"], str(frontend_worker.resolve()))
             self.assertEqual(packed.references, ("通常",))
             self.assertTrue((root / "old/model.json").exists())
             with self.assertRaises(FileExistsError), patch("sakuratts._internal.diagnostics.check_windows_packages"):
@@ -136,7 +167,7 @@ class PublicApiTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             model = model_directory(root / "old")
-            with patch("sakuratts._internal.diagnostics.check_windows_packages", side_effect=[{}, ValueError("bad hash")]):
+            with patch("sakuratts._internal.diagnostics.check_windows_packages", side_effect=ValueError("bad hash")):
                 with self.assertRaisesRegex(ValueError, "bad hash"):
                     package_model(model.path, root / "new")
             self.assertFalse((root / "new").exists())

@@ -1,6 +1,7 @@
 """Build a model directory without importing training tools in the runtime."""
 
 import json
+import logging
 import os
 from pathlib import Path
 import shutil
@@ -10,18 +11,19 @@ import tempfile
 from .model import FORMAT, Model
 from ._internal.logging import run_conversion
 
+logger = logging.getLogger("sakuratts.converter")
+
 
 def _write_manifest(output, config, *, name):
-    manifest = {"format": FORMAT, "name": name, "languages": ["ja"],
-        "backend": {"preferred": "cuda"}, "gpt": "gpt", "acoustic": "acoustic",
+    manifest = {"format": FORMAT, "name": name, "languages": config.get("languages", ["ja"]),
+        "backend": config.get("backend", {"preferred": "cuda"}), "gpt": "gpt", "acoustic": "acoustic",
         "frontend": "frontend", "references": config.get("references", {})}
     if manifest["references"]:
         manifest["default_reference"] = config.get("default_reference", next(iter(manifest["references"])))
-    for key in ("acoustic_python", "main_dictionary"):
+    for key in ("acoustic_python", "frontend_python", "main_dictionary"):
         if key in config:
             manifest[key] = config[key]
     (output / "model.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return Model.load(output)
 
 
 def _destination(output):
@@ -43,7 +45,6 @@ def package_model(config, output, *, name=None):
     if any(source == output or source in output.parents for source in sources):
         raise ValueError("Output must be outside the input resource directories")
     from ._internal.diagnostics import check_windows_packages
-    check_windows_packages(model.path)
     output = _destination(output)
     with tempfile.TemporaryDirectory(prefix=".sakuratts-", dir=output.parent) as temporary:
         staged = Path(temporary) / "model"
@@ -56,7 +57,7 @@ def package_model(config, output, *, name=None):
             shutil.copytree(root / path, staged / target)
             refs[reference] = target
         config = dict(config, references=refs)
-        for key in ("acoustic_python", "main_dictionary"):
+        for key in ("acoustic_python", "frontend_python", "main_dictionary"):
             if key in config:
                 config[key] = str((root / config[key]).resolve(strict=True))
         _write_manifest(staged, config, name=name or model.name)
@@ -66,7 +67,7 @@ def package_model(config, output, *, name=None):
 
 
 def convert(*, gpt, sovits, official_source, output, reference=None, reference_text=None,
-            name=None, python=None, acoustic_python=None, language_model=None):
+            name=None, python=None, acoustic_python=None, frontend_python=None, language_model=None):
     """Convert supported checkpoints; reference audio is optional."""
     if bool(reference) != bool(reference_text and reference_text.strip()):
         raise ValueError("Supply both reference and reference_text, or neither")
@@ -95,21 +96,36 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
             command.append("--frontend-only")
         if language_model:
             command += ["--language-model", str(Path(language_model).resolve(strict=True))]
+        logger.info("准备日文前端资源（1/3）")
         run_conversion(command, env=env)
-        for script, checkpoint, target in (("convert_gpt.py", paths["gpt"], "gpt"),
-                                            ("export_sovits_onnx.py", paths["sovits"], "sovits")):
+        for step, (script, checkpoint, target) in enumerate((("convert_gpt.py", paths["gpt"], "gpt"),
+                                            ("export_sovits_onnx.py", paths["sovits"], "sovits")), 2):
+            logger.info("转换 %s 权重（%d/3），首次准备需要一些时间", "GPT" if target == "gpt" else "SoVITS", step)
             run_conversion([interpreter, "-B", str(tools / script), "--checkpoint", str(checkpoint),
                 "--official-source", str(paths["source"]), "--output", str(prepared / target)], env=env)
-        config_path = prepared / "runtime.json"
         config = {"format": "sakuratts-windows-config-v1", "gpt": "gpt", "sovits": "sovits",
-                  "frontend": "frontend", "references": {"reference": "references/reference"} if refs else {}}
+                  "frontend": "frontend", "references": {"reference": "references/000"} if refs else {}}
         if worker:
             config["acoustic_python"] = worker
-        elif json.loads((prepared / "frontend/manifest.json").read_text(encoding="utf-8")).get(
+        elif not frontend_python and json.loads((prepared / "frontend/manifest.json").read_text(encoding="utf-8")).get(
                 "japanese_g2p", {}).get("implementation") == "pyopenjtalk-classic":
             config["acoustic_python"] = interpreter
-        config_path.write_text(json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8")
-        return package_model(config_path, output, name=name or output.name)
+        if frontend_python:
+            config["frontend_python"] = str(Path(frontend_python).resolve(strict=True))
+        staged = temporary / "model"
+        staged.mkdir()
+        for source, target in (("gpt", "gpt"), ("sovits", "acoustic"), ("frontend", "frontend")):
+            (prepared / source).rename(staged / target)
+        if refs:
+            (staged / "references").mkdir()
+            (prepared / "references/reference").rename(staged / "references/000")
+        _write_manifest(staged, config, name=name or output.name)
+        from ._internal.diagnostics import check_windows_packages
+        check_windows_packages(staged)
+        staged.rename(output)
+        model = Model.load(output)
+        logger.info("模型准备完成，后续启动将复用缓存")
+        return model
 
 
 def prepare_reference(*, gpt, sovits, audio, text, frontend, official_source, python, output, cnhubert=None):

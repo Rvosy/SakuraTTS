@@ -50,19 +50,11 @@ class Engine:
         self._closed = False
 
     @classmethod
-    def load(cls, path, *, experimental=None, load_references=True):
+    def load(cls, path, *, backend=None, experimental=None, load_references=True):
         model = path if isinstance(path, Model) else Model.load(path)
-        options = dict(experimental or {})
-        allowed = {"policy", "use_graph", "capacity", "gpt_precision", "gpt_attention",
-                   "gpt_attention_chunk_size", "gpt_prefill_query_chunk_size", "allow_experimental_acoustic_fp16",
-                   "acoustic_arena_shrink", "acoustic_chunk_frames", "acoustic_session_policy"}
-        unknown = options.keys() - allowed
-        if unknown:
-            raise ValueError("Unknown experimental options: " + ", ".join(sorted(unknown)))
-        from .backends.cuda.engine import NVIDIAEngine
-        if not load_references:
-            options["load_references"] = False
-        return cls(model, NVIDIAEngine(model, **options))
+        from .backends import create_runtime
+        return cls(model, create_runtime(model, backend=backend,
+            experimental=experimental, load_references=load_references))
 
     def synthesize(self, text, *, reference=None, seed=1234, language="ja",
                    split_method="cut0", top_k=15, temperature=1.,
@@ -117,12 +109,12 @@ def read_inference_configuration(model=None, *, tts_config=None):
         else:
             settings = dict(config.get("sakuratts", {}))
             custom = config.get("custom", config)
-            if custom.get("device", "cuda") != "cuda":
-                raise NotImplementedError("The native service currently requires device: cuda")
+            if "device" in custom:
+                settings.setdefault("backend", custom["device"])
             if custom.get("is_half", False):
                 raise NotImplementedError("Official is_half mode is not yet supported; use is_half: false")
             if custom.get("version", "v2ProPlus") != "v2ProPlus":
-                raise NotImplementedError("The Windows native service currently supports v2ProPlus")
+                raise NotImplementedError("The native service currently supports v2ProPlus")
             model = model or settings.get("model")
             for key, field in (("gpt", "t2s_weights_path"), ("sovits", "vits_weights_path")):
                 if custom.get(field):
@@ -136,7 +128,7 @@ def read_inference_configuration(model=None, *, tts_config=None):
 class Inference:
     """Upstream API lifecycle, owned entirely by one service worker thread."""
 
-    def __init__(self, model=None, *, tts_config=None, experimental=None, _allow_staged=False):
+    def __init__(self, model=None, *, tts_config=None, backend=None, experimental=None, _allow_staged=False):
         import logging
         if (experimental or {}).get("policy") == "staged" and not _allow_staged:
             raise ValueError("Direct HTTP loads both models at startup; staged policy requires managed mode or the low-level Engine")
@@ -147,6 +139,11 @@ class Inference:
         self.experimental = experimental
         self.reference_audio = None
         model, self.settings = read_inference_configuration(model, tts_config=tts_config)
+        if backend is not None:
+            self.settings["backend"] = backend
+        if "backend" in self.settings:
+            from .backends import require_backend
+            require_backend(self.settings["backend"])
         try:
             if model is not None:
                 self._activate(model if isinstance(model, Model) else Model.load(model))
@@ -160,7 +157,8 @@ class Inference:
                 raise ValueError("TTS configuration requires both t2s_weights_path and vits_weights_path, or sakuratts.model")
             if self.engine is not None:
                 self._log_weights()
-                self.logger.info("设备  CUDA · GPT %s / SoVITS %s", self.engine._runtime.gpt_precision.upper(),
+                self.logger.info("设备  %s · GPT %s / SoVITS %s", self.engine._runtime.name.upper(),
+                                 self.engine._runtime.gpt_precision.upper(),
                                  self.engine._runtime.acoustic_precision.upper())
         except BaseException:
             self.close()
@@ -168,9 +166,14 @@ class Inference:
 
     def _activate(self, model):
         from .reference import ReferenceCache
+        workers = {name: str(Path(self.settings[name]).resolve()) for name in ("acoustic_python", "frontend_python")
+                   if self.settings.get(name)}
+        if workers:
+            model = Model(model.path, dict(model.manifest, **workers))
         self.logger.info("加载 GPT / SoVITS…")
         self.logger.debug("Loading GPT and SoVITS weights: %s", model.path)
-        candidate = Engine.load(model, experimental=self.experimental, load_references=False)
+        options = {"backend": self.settings["backend"]} if "backend" in self.settings else {}
+        candidate = Engine.load(model, experimental=self.experimental, load_references=False, **options)
         try:
             references = ReferenceCache(candidate, self.settings)
             self.close()
@@ -182,11 +185,16 @@ class Inference:
         self.model = model
         self.references = references
         self.reference_audio = None
-        self.logger.debug("Model weights loaded | %s | CUDA | Japanese", model.name)
+        self.logger.debug("Model weights loaded | %s | %s | %s", model.name,
+                          candidate._runtime.name, ", ".join(model.languages))
 
     def _conversion_settings(self):
         missing = [key for key in ("official_source", "python") if not self.settings.get(key)]
         if missing:
+            from ._internal.portable import bundle_root
+            if bundle_root() is not None:
+                raise ValueError("This bundle cannot convert original checkpoints without its preparation component. "
+                                 "Use the complete bundle, or install the matching component in runtime/preparation.")
             raise ValueError("Checkpoint conversion requires sakuratts." + " and sakuratts.".join(missing)
                              + " in --tts-config")
         return {key: self.settings[key] for key in ("official_source", "python")}
@@ -206,28 +214,37 @@ class Inference:
         import hashlib
         import json
         from .converter import convert
+        from ._internal.portable import bundle_root
         from ._internal.reference_condition import sha256_file
         options = self._conversion_settings()
         identity = {kind: sha256_file(self.settings[kind + "_checkpoint"]) for kind in ("gpt", "sovits")}
         identity["source"] = sha256_file(Path(options["official_source"]) / "GPT_SoVITS/TTS_infer_pack/TTS.py")
-        identity["python"] = str(Path(options["python"]).resolve())
+        portable_root = bundle_root()
+        if portable_root is None:
+            identity["python"] = str(Path(options["python"]).resolve())
+        else:
+            identity["preparation"] = sha256_file(portable_root / "runtime/preparation/preparation-manifest.json")
         identity["converter"] = sha256_file(Path(__file__).with_name("converter.py"))
         for script in ("convert_gpt.py", "export_sovits_onnx.py", "prepare_windows_resources.py"):
             identity[script] = sha256_file(Path(__file__).parent / "_internal/conversion" / script)
         key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
         output = Path(self.settings.get("cache_dir", ".cache/sakuratts")) / "models" / key
         if not output.exists():
-            self.logger.info("Converting original checkpoints for native inference")
+            self.logger.info("首次转换 GPT / SoVITS 权重，完成后将复用缓存")
             convert(gpt=self.settings["gpt_checkpoint"], sovits=self.settings["sovits_checkpoint"],
                 output=output, name=Path(self.settings["sovits_checkpoint"]).stem,
-                acoustic_python=self.settings.get("acoustic_python"),
-                language_model=self.settings.get("language_model"), **options)
+                  acoustic_python=self.settings.get("acoustic_python"),
+                  frontend_python=self.settings.get("frontend_python"),
+                  language_model=self.settings.get("language_model"), **options)
+        else:
+            self.logger.info("复用 GPT / SoVITS 转换缓存")
         self._activate(Model.load(output))
 
     def set_weights(self, kind, weights_path):
         import hashlib
         import json
         from .converter import convert_checkpoint
+        from ._internal.portable import bundle_root
         from ._internal.reference_condition import sha256_file
         path = Path(weights_path).resolve(strict=True)
         self.logger.debug("请求切换 %s 权重 | %s", kind.upper(), path)
@@ -241,7 +258,11 @@ class Inference:
             source_hash = sha256_file(Path(options["official_source"]) / "GPT_SoVITS/TTS_infer_pack/TTS.py")
             script = "convert_gpt.py" if kind == "gpt" else "export_sovits_onnx.py"
             converter_hash = sha256_file(Path(__file__).parent / "_internal/conversion" / script)
-            key = hashlib.sha256((digest + source_hash + kind + converter_hash).encode()).hexdigest()
+            identity = digest + source_hash + kind + converter_hash
+            portable_root = bundle_root()
+            if portable_root is not None:
+                identity += sha256_file(portable_root / "runtime/preparation/preparation-manifest.json")
+            key = hashlib.sha256(identity.encode()).hexdigest()
             converted = Path(self.settings.get("cache_dir", ".cache/sakuratts")) / "weights" / key
             if not converted.exists():
                 self.logger.info("首次转换 %s 权重  %s", kind.upper(), path.name)
@@ -260,7 +281,7 @@ class Inference:
             raise ValueError("Configure both initial model weights and frontend resources in --tts-config first")
         config = self.model.runtime_config
         root = self.model.path.parent
-        for field in ("gpt", "sovits", "frontend", "acoustic_python", "main_dictionary"):
+        for field in ("gpt", "sovits", "frontend", "acoustic_python", "frontend_python", "main_dictionary"):
             if field in config:
                 config[field] = str((root / config[field]).resolve())
         config[kind] = str(path.resolve())
@@ -327,6 +348,7 @@ class Inference:
         if self.engine is None:
             return None
         info = self.engine.model.info()
+        info["backend"] = self.engine._runtime.name
         info.pop("references", None)
         info.pop("default_reference", None)
         return info

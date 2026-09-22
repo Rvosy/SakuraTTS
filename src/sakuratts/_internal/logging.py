@@ -214,9 +214,10 @@ def run_conversion(command, *, env):
     """Stream preparation output to diagnostics without retaining it in RAM."""
     logger = logging.getLogger("sakuratts.converter")
     if not logger.isEnabledFor(logging.DEBUG):
-        return subprocess.run(command, check=True, env=env)
+        return subprocess.run(command, check=True, env=env, stdin=subprocess.DEVNULL,
+                              creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     logger.debug("运行准备命令: %r", command)
-    with subprocess.Popen(command, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    with subprocess.Popen(command, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, encoding="utf-8", errors="replace",
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)) as process:
         try:

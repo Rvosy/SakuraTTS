@@ -16,11 +16,13 @@ def run(args, *, experimental=None):
     started = time.perf_counter()
     report = {"scope": "Complete non-streaming PCM; first request includes lazy GPU loads; no quality claim",
               "experimental": experimental or {}, "requests": []}
-    with Engine.load(args.model, experimental=experimental) as engine:
+    options = {"backend": args.backend} if args.backend is not None else {}
+    with Engine.load(args.model, experimental=experimental, **options) as engine:
         report["open_ms"] = (time.perf_counter() - started) * 1000
         report["model"] = engine.model.info()
         for index in range(args.repeats):
-            audio = engine.synthesize(args.text, reference=args.reference, seed=args.seed)
+            audio = engine.synthesize(args.text, reference=args.reference, seed=args.seed,
+                                      language=args.language)
             report["requests"].append({"run": index, **audio.report})
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("x", encoding="utf-8") as stream:

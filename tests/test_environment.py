@@ -70,6 +70,31 @@ class EnvironmentTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "inside its package"):
                 checked_file(root, "../outside.bin", spec)
 
+    def test_configured_classic_workers_do_not_require_plus_or_ort_in_main_python(self):
+        resource_check = {"status": "passed", "japanese_g2p": {"implementation": "pyopenjtalk-classic"}}
+        def import_selected(module):
+            if module in ("pyopenjtalk", "onnxruntime", "sudachipy", "sudachidict_core"):
+                raise ImportError("This dependency belongs to another configured worker")
+        with patch("sakuratts.cli.import_module", side_effect=import_selected) as imported, \
+                patch("sakuratts.cli.metadata.version", return_value="test"), \
+                patch("sakuratts.cli.platform.system", return_value="Windows"), \
+                patch("sakuratts.backends.cuda.runtime.configure_cuda"), \
+                patch("sakuratts.backends.cuda.runtime.import_cupy"), \
+                patch("sakuratts.backends.cuda.runtime.validate_gpt_cuda_include_paths", return_value={}), \
+                patch("sakuratts._internal.diagnostics.check_windows_packages", return_value=resource_check):
+            report = doctor(config="runtime.json")
+        self.assertTrue(report["checks_passed"])
+        self.assertTrue(report["synthesis"]["dependencies_ready"])
+        modules = {call.args[0] for call in imported.call_args_list}
+        self.assertEqual(modules, {"numpy", "split_lang", "fast_langdetect", "fasttext"})
+
+    def test_explicit_japanese_diagnostic_still_checks_main_interpreter(self):
+        with patch("sakuratts.cli.import_module", side_effect=ImportError("missing main dependency")) as imported:
+            report = doctor(japanese=True)
+        self.assertFalse(report["checks_passed"])
+        self.assertIn("pyopenjtalk", [call.args[0] for call in imported.call_args_list])
+        self.assertIn("onnxruntime", [call.args[0] for call in imported.call_args_list])
+
     def test_cli_help_needs_no_optional_dependencies(self):
         source = Path(__file__).resolve().parents[1] / "src"
         process = subprocess.run([sys.executable, "-m", "sakuratts", "--help"], cwd=source,

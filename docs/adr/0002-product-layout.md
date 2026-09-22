@@ -2,6 +2,8 @@
 
 状态：已接受。日期：2026-09-20。
 
+2026-09-22 更新：后端选择、语言装配和发行组合边界见 [ADR 0004](0004-composable-components.md)。本文保留最初拆分及收紧源码包范围的原因；当前公共 Engine 已使用显式后端 factory，实际支持范围仍是 CUDA / 日文。
+
 平铺的运行时模块、专项 Harness 和逐次实验报告让首次使用者难以找到入口。已有推理行为和独立 Python ABI 工作进程包含大量验证，目录整理不同时重写计算实现。
 
 低级 Python API 收敛到 Engine、Model 和 Audio。CLI 和 HTTP 调用同一 Engine；model.json 引用原有资源包。CUDA / ONNX / MLX 按后端组织，前端与第三方派生实现单独归类，私有 worker 继续只加载目标 SakuraTTS 包。

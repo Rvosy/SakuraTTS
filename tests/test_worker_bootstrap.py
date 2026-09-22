@@ -128,6 +128,25 @@ print(json.dumps({'restored':True}))
         self.assertFalse(report["cuda_execution_tested"])
         self.assertFalse(report["torch_imported"])
 
+    def test_frontend_only_diagnostic_needs_no_acoustic_libraries(self):
+        worker_site = self.root / "classic-frontend"
+        worker_site.mkdir()
+        (worker_site / "pyopenjtalk.py").write_text("__version__ = '0.3.4'\n", encoding="utf-8")
+        dictionary = worker_site / "dictionary"
+        dictionary.mkdir()
+        actual_run = subprocess.run
+
+        def isolated_child(command, **kwargs):
+            code = command[3] + "\nassert not set(('onnxruntime', 'cupy', 'torch', 'sakuratts.backends.cuda.runtime')) & sys.modules.keys()\n"
+            return actual_run([command[0], "-I", *command[1:3], code, *command[4:]], **kwargs)
+
+        with patch.object(diagnostics, "__file__", str(self.package / "_internal/diagnostics.py")), \
+                patch.object(diagnostics.subprocess, "run", side_effect=isolated_child):
+            report = diagnostics.check_worker_imports(Path(sys.executable),
+                {"module_directory": str(worker_site), "main_dictionary": str(dictionary)}, acoustic=False)
+        self.assertEqual(report["japanese_g2p"]["version"], "0.3.4")
+        self.assertNotIn("onnxruntime", report)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -13,31 +13,12 @@ from sakuratts._internal.reference_condition import PreparedReference, sha256_fi
 
 
 def read_windows_config(config_path):
-    path = Path(config_path).resolve(strict=True)
-    if path.is_dir():
-        path = path / "model.json"
-    config = json.loads(path.read_text(encoding="utf-8"))
-    if isinstance(config, dict) and config.get("format") == "sakuratts-model-v1":
-        from sakuratts.model import Model
-        model = Model.load(path)
-        return model.path, model.runtime_config
-    if not isinstance(config, dict) or config.get("format") != "sakuratts-windows-config-v1":
-        raise ValueError("Expected a sakuratts-windows-config-v1 JSON object: " + str(path))
-    for name in ("gpt", "sovits", "frontend"):
-        if not isinstance(config.get(name), str) or not config[name].strip():
-            raise ValueError(f"Windows configuration requires a nonempty {name!r} package path: {path}")
-    references = config.get("references", {})
-    if (not isinstance(references, dict)
-            or any(not isinstance(name, str) or not name or not isinstance(value, str) or not value.strip()
-                   for name, value in references.items())):
-        raise ValueError("Windows configuration requires named, nonempty reference package paths: " + str(path))
-    if "default_reference" in config and config["default_reference"] not in references:
-        raise ValueError("Windows configuration default_reference does not name a configured reference")
-    for name in ("acoustic_python", "main_dictionary"):
-        if name in config and (not isinstance(config[name], str) or not config[name].strip()):
-            raise ValueError(f"Windows configuration {name!r} must be a nonempty path")
-    from sakuratts._internal.portable import model_config
-    return path, model_config(config)
+    from sakuratts.model import Model
+    from .portable import model_config
+    model = Model.load(config_path)
+    if model.backend != "cuda":
+        raise NotImplementedError("Windows CUDA diagnostics cannot check backend: " + model.backend)
+    return model.path, model_config(model.runtime_config)
 
 
 def checked_file(root, name, spec):
@@ -76,8 +57,6 @@ def check_windows_packages(config_path):
     for name, spec in frontend["files"].items():
         checked_file(paths["frontend"], name, spec)
     references = config.get("references", {})
-    if "default_reference" in config and config["default_reference"] not in references:
-        raise ValueError("default_reference must name a configured reference")
     for path in references.values():
         reference = PreparedReference.load(root / path,
             gpt_checkpoint_sha256=gpt["source"]["checkpoint_sha256"],
@@ -87,9 +66,12 @@ def check_windows_packages(config_path):
             raise ValueError("Reference family differs from the acoustic package")
     profile = frontend.get("japanese_g2p", {"implementation": "pyopenjtalk-plus"})
     probe = {}
+    frontend_python = None
     if profile["implementation"] == "pyopenjtalk-classic":
-        if profile.get("version") != "0.3.4" or not config.get("acoustic_python"):
+        selected = config.get("frontend_python", config.get("acoustic_python"))
+        if profile.get("version") != "0.3.4" or not selected:
             raise ValueError("Classic frontend requires its prepared Python worker and version 0.3.4")
+        frontend_python = (root / selected).resolve(strict=True)
         for key in ("module_directory", "main_dictionary"):
             path = (paths["frontend"] / profile[key]).resolve(strict=True)
             if paths["frontend"] not in path.parents or not path.is_dir():
@@ -98,21 +80,34 @@ def check_windows_packages(config_path):
     elif profile["implementation"] != "pyopenjtalk-plus":
         raise ValueError("Unsupported Japanese frontend implementation")
     worker_python = (root / config["acoustic_python"]).resolve(strict=True) if config.get("acoustic_python") else Path(sys.executable)
-    runtime_manifest = worker_python.parent / "runtime-manifest.json"
-    runtime_files = None
-    if runtime_manifest.is_file():
-        runtime = json.loads(runtime_manifest.read_text(encoding="utf-8"))
-        for name, spec in runtime["files"].items():
-            checked_file(worker_python.parent, name, spec)
-        runtime_files = len(runtime["files"])
-    worker = check_worker_imports(worker_python, probe)
+    runtime_files = _check_runtime_files(worker_python)
+    separate_frontend = frontend_python is not None and frontend_python != worker_python
+    worker = check_worker_imports(worker_python, {} if separate_frontend else probe)
+    frontend_worker = None
+    frontend_runtime_files = None
+    if separate_frontend:
+        frontend_runtime_files = _check_runtime_files(frontend_python)
+        frontend_worker = check_worker_imports(frontend_python, probe, acoustic=False)
+    elif frontend_python is not None:
+        frontend_worker, frontend_runtime_files = worker, runtime_files
     return {"status": "passed", "config": str(config_path), "model_family": acoustic["config"]["model"]["version"],
             "packages": {name: str(path) for name, path in paths.items()}, "references": list(references),
             "japanese_g2p": profile, "worker": worker, "worker_files_checked": runtime_files,
+            "frontend_worker": frontend_worker, "frontend_worker_files_checked": frontend_runtime_files,
             "scope": "Package hashes, source/reference identities and worker imports; no TTS or CUDA execution"}
 
 
-def check_worker_imports(python, frontend):
+def _check_runtime_files(python):
+    manifest = python.parent / "runtime-manifest.json"
+    if manifest.is_file():
+        files = json.loads(manifest.read_text(encoding="utf-8"))["files"]
+        for name, spec in files.items():
+            checked_file(python.parent, name, spec)
+        return len(files)
+    return None
+
+
+def check_worker_imports(python, frontend, *, acoustic=True):
     # The isolated interpreter does not inherit the editable installation.
     code = """import json,os,sys
 from pathlib import Path
@@ -121,12 +116,14 @@ run_path(str(Path(sys.argv[1])/'_internal/worker.py'))['load_package'](sys.argv[
 def offline(event,args):
     if event=='socket.connect': raise RuntimeError('Diagnostics are offline')
 sys.addaudithook(offline)
-from sakuratts.backends.cuda.runtime import configure_cuda
-configure_cuda()
-import numpy,onnxruntime
 profile=json.loads(sys.argv[2])
-result={'python':sys.version,'executable':sys.executable,'numpy':numpy.__version__,'onnxruntime':onnxruntime.__version__,'available_providers':onnxruntime.get_available_providers(),'cuda_execution_tested':False}
-if 'CUDAExecutionProvider' not in result['available_providers']: raise RuntimeError('The acoustic interpreter has no CUDA execution provider')
+result={'python':sys.version,'executable':sys.executable,'cuda_execution_tested':False}
+if sys.argv[3]=='1':
+    from sakuratts.backends.cuda.runtime import configure_cuda
+    configure_cuda()
+    import numpy,onnxruntime
+    result.update(numpy=numpy.__version__,onnxruntime=onnxruntime.__version__,available_providers=onnxruntime.get_available_providers())
+    if 'CUDAExecutionProvider' not in result['available_providers']: raise RuntimeError('The acoustic interpreter has no CUDA execution provider')
 if profile:
     sys.path.insert(0,profile['module_directory'])
     os.environ['OPEN_JTALK_DICT_DIR']=profile['main_dictionary']
@@ -138,8 +135,8 @@ print(json.dumps(result))
 """
     environment = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1")
     environment.pop("PYTHONPATH", None)
-    command = [str(python), "-B", "-c", code, str(Path(__file__).resolve().parents[1]), json.dumps(frontend)]
-    result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace",
+    command = [str(python), "-B", "-c", code, str(Path(__file__).resolve().parents[1]), json.dumps(frontend), "1" if acoustic else "0"]
+    result = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding="utf-8", errors="replace",
                             env=environment, timeout=30, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     if result.returncode:
         raise RuntimeError("Acoustic/frontend worker import check failed: " + result.stderr.strip())

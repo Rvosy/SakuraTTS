@@ -265,7 +265,7 @@ class NvidiaPackageStartupTests(unittest.TestCase):
             config, _, _ = fixture(Path(directory))
             worker, segmenter = Mock(), Mock()
             with patch("sakuratts.backends.cuda.engine.PreparedReference.load", return_value=object()), \
-                    patch("sakuratts.backends.cuda.engine.metadata.distribution", side_effect=AssertionError("classic must not resolve plus")), \
+                    patch("sakuratts.frontend.runtime.metadata.distribution", side_effect=AssertionError("classic must not resolve plus")), \
                     patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P", return_value=worker), \
                     patch("sakuratts.frontend.text_frontend.LanguageSegmenter", return_value=segmenter), \
                     patch("sakuratts.frontend.text_frontend.TextFrontend", side_effect=ValueError("bad symbol table")):

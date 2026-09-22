@@ -105,7 +105,8 @@ def run(args, report):
     try:
         japanese = JapaneseG2P(main_dictionary, packages["frontend"] / "user.dict")
         segmenter = LanguageSegmenter(packages["frontend"])
-        frontend = TextFrontend(japanese=japanese, symbols=symbols, segmenter=segmenter)
+        from sakuratts.frontend.processors import JapaneseProcessor
+        frontend = TextFrontend(processors={"ja": JapaneseProcessor(japanese)}, symbols=symbols, segmenter=segmenter)
         report["timings"]["frontend_load_seconds"] = time.perf_counter() - start
         prepared_request = prepare_text_request(args.text, args.language, frontend,
                                                 split_method=args.text_split_method)

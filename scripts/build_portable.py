@@ -17,6 +17,41 @@ from packaging.markers import default_environment
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 
+BACKEND_EXTRAS = {("windows-x64", "cuda"): "nvidia"}
+LANGUAGE_EXTRAS = {"ja": "japanese"}
+SERVICE_EXTRAS = {"http": "server"}
+
+
+def read_recipe(path):
+    """Select implemented payloads before inspecting any large local inputs."""
+    recipe = tomllib.loads(Path(path).read_text(encoding="utf-8"))
+    if (recipe["target"], recipe["backend"]) not in BACKEND_EXTRAS:
+        raise ValueError("Portable assembly currently implements only windows-x64 with backend cuda")
+    if not recipe["languages"] or set(recipe["languages"]) - LANGUAGE_EXTRAS.keys():
+        raise ValueError("Portable assembly currently implements only the ja language component")
+    if set(recipe["services"]) - SERVICE_EXTRAS.keys():
+        raise ValueError("Unknown service component; supported services: http")
+    return {key: recipe[key] for key in ("target", "backend", "languages", "services", "workers")}
+
+
+def main_requirements(project, recipe):
+    """Platform, language and service extras are independent package choices."""
+    extras = [BACKEND_EXTRAS[recipe["target"], recipe["backend"]],
+              *(LANGUAGE_EXTRAS[name] for name in recipe["languages"]),
+              *(SERVICE_EXTRAS[name] for name in recipe["services"])]
+    requirements = list(project["dependencies"])
+    for extra in extras:
+        requirements.extend(project["optional-dependencies"][extra])
+    return requirements
+
+
+def launch_files(recipe):
+    names = ["launcher.py", "check_runtime.py", "sakuratts.bat", "check-runtime.bat", "README.md"]
+    if "http" in recipe["services"]:
+        names.append("start-server.bat")
+    return names
+
+
 def digest(path):
     result = hashlib.sha256()
     with Path(path).open("rb") as stream:
@@ -83,6 +118,8 @@ class Plan:
         self.files = {}
         self.components = {}
         self.shared_files = {}
+        self.release = {}
+        self.workers = {}
 
     def add(self, source, destination, component, expected=None):
         source = Path(source)
@@ -127,8 +164,23 @@ class Plan:
                 self.add(path, target + "/" + relative, component, expected)
 
 
+def trim_main_runtime(plan):
+    """Omit installation tools, desktop demos and package tests from the server."""
+    stdlib = "runtime/main/Lib/"
+    numpy = stdlib + "site-packages/numpy/"
+    excluded = tuple(stdlib + name + "/" for name in ("test", "idlelib", "tkinter", "ensurepip"))
+    for name in list(plan.files):
+        if (name.startswith(excluded)
+                or (name.startswith(numpy) and "tests" in PurePosixPath(name).parts)):
+            del plan.files[name]
+
+
 def make_plan(args):
     plan = Plan()
+    recipe = read_recipe(getattr(args, "recipe", None) or args.root / "packaging/recipes/windows-nvidia-ja.toml")
+    plan.release = {key: recipe[key] for key in ("target", "backend", "languages", "services")}
+    plan.release["preparation"] = getattr(args, "preparation", None) is not None
+    plan.workers = recipe["workers"]
     # Copy the base interpreter, never a venv trampoline or pyvenv.cfg.
     for name in ("python.exe", "python3.dll", "python311.dll", "vcruntime140.dll", "vcruntime140_1.dll", "LICENSE.txt"):
         plan.add(args.python_base / name, "runtime/main/" + name, "cpython-3.11")
@@ -137,11 +189,9 @@ def make_plan(args):
             plan.add(source, "runtime/main/" + source.relative_to(args.python_base).as_posix(), "cpython-3.11")
     main = distributions(args.main_site)
     project = tomllib.loads((args.root / "pyproject.toml").read_text(encoding="utf-8"))["project"]
-    requirements = list(project["dependencies"])
-    for extra in ("nvidia", "japanese", "server"):
-        requirements.extend(project["optional-dependencies"][extra])
-    for name in dependency_names(main, requirements, "3.11"):
+    for name in dependency_names(main, main_requirements(project, recipe), "3.11"):
         plan.package(args.main_site, *main[name], "runtime/main/Lib/site-packages")
+    trim_main_runtime(plan)
 
     # The private acoustic ABI is copied only through its existing hash manifest.
     worker = json.loads((args.worker / "runtime-manifest.json").read_text(encoding="utf-8"))
@@ -163,7 +213,47 @@ def make_plan(args):
     plan.add(args.root / "LICENSE", "licenses/SakuraTTS-LICENSE.txt", "sakuratts")
     for name in ("fp32.json", "fp16.json", "low-vram.json", "minimum-vram.json"):
         plan.add(args.root / "examples" / name, "configs/" + name, "inference-profiles")
+    preparation = getattr(args, "preparation", None)
+    if preparation is not None:
+        add_preparation(plan, preparation)
+    for name in ("acoustic", "frontend"):
+        if plan.workers[name] not in plan.files:
+            raise ValueError("Worker is missing from the selected release payload: " + name)
     return plan
+
+
+def add_preparation(plan, source):
+    """Include only the preparation component's verified release inventory."""
+    source = Path(source).resolve(strict=True)
+    manifest_path = source / "preparation-manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("format") != "sakuratts-preparation-bundle-v1":
+        raise ValueError("Unsupported preparation component manifest")
+    marker = json.loads((source / "preparation.json").read_text(encoding="utf-8"))
+    if marker.get("format") != "sakuratts-preparation-v1":
+        raise ValueError("Unsupported preparation component marker")
+    for field in ("python", "official_source", "language_model", "cnhubert"):
+        relative = marker[field]
+        path = PurePosixPath(relative)
+        if path.is_absolute() or ".." in path.parts or ":" in relative or "\\" in relative:
+            raise ValueError("Unsafe preparation component path: " + relative)
+        resolved = (source / path).resolve(strict=True)
+        if source not in resolved.parents:
+            raise ValueError("Preparation component path escaped its root")
+        if ((resolved.is_file() and relative not in manifest["files"])
+                or (resolved.is_dir() and not any(name.startswith(relative.rstrip("/") + "/")
+                                                 for name in manifest["files"]))):
+            raise ValueError("Preparation component resource is missing from its inventory: " + relative)
+    if "preparation.json" not in manifest["files"] or marker["python"] not in manifest["files"]:
+        raise ValueError("Preparation component inventory is incomplete")
+    for name, row in manifest["files"].items():
+        if source not in (source / name).resolve(strict=True).parents:
+            raise ValueError("Preparation inventory input escaped its root: " + name)
+        plan.add(source / name, "runtime/preparation/" + name,
+                 "preparation:" + row.get("component", "resource"), row["sha256"])
+    plan.add(manifest_path, "runtime/preparation/preparation-manifest.json", "preparation-inventory")
+    for name, component in manifest.get("components", {}).items():
+        plan.components["preparation:" + name] = component
 
 
 def write(path, content):
@@ -180,8 +270,6 @@ def assemble(args, plan):
         path = output / name
         path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(row["source"], path)
-        if digest(path) != row["sha256"]:
-            raise ValueError("Input changed while copying: " + name)
         if index % 2000 == 0:
             print(f"Copied {index}/{len(plan.files)} files", flush=True)
     # Only our independently built product wheel is allowed to install sakuratts.
@@ -197,9 +285,11 @@ def assemble(args, plan):
             target.write_bytes(archive.read(name))
     write(output / "runtime/main/python311._pth", ".\nDLLs\nLib\nLib/site-packages\n")
     # Marker read only by the explicit portable launcher.
-    write(output / "runtime/portable.json", json.dumps({"format": "sakuratts-portable-v1", "has_preparation": False}))
+    write(output / "runtime/portable.json", json.dumps({"format": "sakuratts-portable-v1",
+        "has_preparation": getattr(args, "preparation", None) is not None,
+        "workers": plan.workers, "release": plan.release}))
     templates = args.root / "scripts/portable"
-    for name in ("launcher.py", "check_runtime.py", "start-server.bat", "sakuratts.bat", "check-runtime.bat", "README.md"):
+    for name in launch_files(plan.release):
         shutil.copyfile(templates / name, output / name)
     for directory in ("models", "configs", "logs", "cache"):
         (output / directory).mkdir(exist_ok=True)
@@ -211,9 +301,14 @@ def assemble(args, plan):
     for path in sorted(output.rglob("*")):
         if path.is_file():
             name = path.relative_to(output).as_posix()
-            inventory[name] = {"bytes": path.stat().st_size, "sha256": digest(path),
-                               "component": plan.files.get(name, {}).get("component", "product-or-generated")}
+            row = plan.files.get(name, {})
+            checksum = digest(path)
+            if row and checksum != row["sha256"]:
+                raise ValueError("Input changed while copying: " + name)
+            inventory[name] = {"bytes": path.stat().st_size, "sha256": checksum,
+                               "component": row.get("component", "product-or-generated")}
     manifest = {"format": "sakuratts-portable-bundle-v1", "network_used": False,
+                "release": plan.release, "workers": plan.workers,
                 "synthesis_models_included": False, "personal_references_included": False,
                 "wheel_sha256": digest(args.wheel), "components": plan.components, "shared_files": plan.shared_files, "files": inventory,
                 "bytes": sum(row["bytes"] for row in inventory.values())}
@@ -225,12 +320,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("python-base", "main-site", "ffmpeg", "worker", "wheel", "output", "audit"):
         parser.add_argument("--" + name, type=Path, required=True)
+    parser.add_argument("--preparation", type=Path,
+                        help="Optional verified offline component built by build_preparation.py")
+    parser.add_argument("--recipe", type=Path,
+                        help="Release recipe TOML (default: packaging/recipes/windows-nvidia-ja.toml)")
     parser.add_argument("--plan-only", action="store_true")
     args = parser.parse_args()
     args.root = Path(__file__).resolve().parents[1]
     plan = make_plan(args)
     # Local audit keeps source paths outside the public archive.
-    write(args.audit, json.dumps({"files": plan.files, "components": plan.components, "shared_files": plan.shared_files}, ensure_ascii=False, indent=2) + "\n")
+    write(args.audit, json.dumps({"release": plan.release, "workers": plan.workers, "files": plan.files, "components": plan.components, "shared_files": plan.shared_files}, ensure_ascii=False, indent=2) + "\n")
     print(json.dumps({"planned_files": len(plan.files), "bytes": sum(row["bytes"] for row in plan.files.values())}), flush=True)
     if not args.plan_only:
         assemble(args, plan)

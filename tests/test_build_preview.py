@@ -22,6 +22,7 @@ def source_tree(root):
     files = {"README.md": "Preview\n", "LICENSE": "MIT\n", "MANIFEST.in": "graft src\n", "start-server.bat": "@echo off\n", "api.py": "pass\n",
              "pyproject.toml": '[project]\nname="sakuratts"\nversion="0.1.0a1"\n',
              "requirements/windows-runtime.txt": "numpy==2.4.6\n",
+             "packaging/recipes/windows-nvidia-ja.toml": 'target="windows-x64"\nbackend="cuda"\n',
              "docs/preview-release.md": "Developer installation guide\n",
              "docs/third-party/example-LICENSE.txt": "Example license\n",
              "src/sakuratts/__init__.py": '"""Package."""\n',
@@ -76,6 +77,7 @@ class PreviewBuildTests(unittest.TestCase):
             (root / "research/probe.py").write_text("pass\n", encoding="utf-8")
             inventory = preview.stage_source(root, staged)
             self.assertIn("src/sakuratts/_internal/conversion/convert_gpt.py", inventory)
+            self.assertIn("packaging/recipes/windows-nvidia-ja.toml", inventory)
             self.assertFalse(any(name.startswith("research/") for name in inventory))
             self.assertFalse((staged / "research").exists())
             self.assertNotIn("data/local.json", inventory)
@@ -166,7 +168,8 @@ class PreviewBuildTests(unittest.TestCase):
     def test_sdist_missing_source_and_source_drift_prevent_publication(self):
         self.assert_bad_distribution_rejected(("sdist", "research/local.json", b"{}"), "research files")
         for name, replacement in [("benchmarks/cases/speech_regressions.json", None),
-                                  ("src/sakuratts/_internal/conversion/convert_gpt.py", b"changed source\n")]:
+                                  ("src/sakuratts/_internal/conversion/convert_gpt.py", b"changed source\n"),
+                                  ("packaging/recipes/windows-nvidia-ja.toml", None)]:
             with self.subTest(name=name):
                 self.assert_bad_distribution_rejected(("sdist", name, replacement), "sdist source")
 

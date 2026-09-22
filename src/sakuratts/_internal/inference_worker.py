@@ -113,11 +113,12 @@ def main(inference_factory=None):
                         inference_factory = partial(Inference, _allow_staged=True)
                     configuration = message["configuration"]
                     saved = message.get("snapshot")
+                    options = {"backend": configuration["backend"]} if "backend" in configuration else {}
                     if saved is None:
                         inference = inference_factory(decode_model(configuration["model"]),
-                            tts_config=configuration["tts_config"], experimental=configuration["experimental"])
+                            tts_config=configuration["tts_config"], experimental=configuration["experimental"], **options)
                     else:
-                        inference = inference_factory(experimental=configuration["experimental"])
+                        inference = inference_factory(experimental=configuration["experimental"], **options)
                         inference.settings = saved["settings"]
                         if saved["model"] is not None:
                             inference._activate(decode_model(saved["model"]))
