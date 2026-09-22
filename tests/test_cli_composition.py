@@ -1,5 +1,6 @@
 """CLI selection reaches the runtime without eager optional dependencies."""
 
+import builtins
 import contextlib
 import io
 import json
@@ -17,6 +18,20 @@ from sakuratts.engine import Engine
 
 
 class CliCompositionTests(unittest.TestCase):
+    def test_serve_preserves_the_server_import_failure(self):
+        original_import = builtins.__import__
+        failure = "cannot import name 'MissingRuntime' from 'sakuratts.engine'"
+        def import_module(name, globals=None, locals=None, fromlist=(), level=0):
+            if name == "server" and level == 1:
+                raise ImportError(failure)
+            return original_import(name, globals, locals, fromlist, level)
+        errors = io.StringIO()
+        with patch("builtins.__import__", side_effect=import_module), \
+                contextlib.redirect_stderr(errors), self.assertRaises(SystemExit) as raised:
+            main(["serve", "model"])
+        self.assertEqual(raised.exception.code, 1)
+        self.assertIn(failure, errors.getvalue())
+
     def test_original_entrypoint_forwards_launch_flags(self):
         entry = Path(__file__).resolve().parents[1] / "api_v2.py"
         with patch("sakuratts.cli.main", return_value=0) as launch, \

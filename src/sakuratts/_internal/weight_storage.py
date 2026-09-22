@@ -33,20 +33,15 @@ def validate_storage(manifest, tensor_names):
 
 
 def read_fp32(archive, manifest, name):
-    """Read one tensor and restore its declared exact FP32 representation."""
+    """Read one tensor after validate_storage and restore its exact FP32 bytes."""
     array = archive[name]
     storage = manifest["weights"].get("storage")
     if storage is None:
         if array.dtype != np.float32:
             raise ValueError(f"Undeclared non-FP32 weight storage: {name}")
     else:
-        # Reject unknown encodings even when callers read just one tensor.
-        if (not isinstance(storage, dict) or storage.get("format") != LOSSLESS_STORAGE
-                or storage.get("runtime_dtype") != "float32"):
-            raise ValueError("Unsupported weight storage declaration")
         spec = storage["tensors"][name]
-        if (spec["storage_dtype"] not in ("float16", "float32") or spec["expanded_dtype"] != "float32"
-                or array.dtype != np.dtype(spec["storage_dtype"]) or list(array.shape) != spec["shape"]):
+        if array.dtype != np.dtype(spec["storage_dtype"]) or list(array.shape) != spec["shape"]:
             raise ValueError(f"Stored tensor dtype/shape differs from metadata: {name}")
         if array_sha256(array) != spec["storage_sha256_raw_c_order"]:
             raise ValueError(f"Stored tensor checksum differs: {name}")

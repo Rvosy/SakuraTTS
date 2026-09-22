@@ -1,6 +1,6 @@
 # 文档
 
-首次部署从[快速开始](quickstart.md)进入；接入桌宠或其他 HTTP 客户端先看 [API V2 使用说明](api-v2-guide.md)，其中列出当前支持的调用、全部参数和错误处理。实现细节见 [HTTP API](http-api.md)，在 Python 中直接使用自有 Engine 则看 [Python API](python-api.md)。
+首次部署从[快速开始](quickstart.md)进入；接入桌宠或其他 HTTP 客户端先看 [API V2 使用说明](api-v2-guide.md)，其中列出当前支持的调用、全部参数和错误处理。服务配置与生命周期见 [HTTP API](http-api.md)，在 Python 中直接使用自有 Engine 则看 [Python API](python-api.md)。
 
 | 需求 | 文档 |
 | --- | --- |
@@ -13,7 +13,7 @@
 | 行为约束 | [推理契约](specs/inference-contract.md)、[基准协议](specs/benchmark-protocol.md) |
 | 修改代码与运行测试 | [开发指南](development.md)、[架构](architecture.md) |
 | 打包与安装发布产物 | [预览版说明](preview-release.md) |
-| 解压即用整合包的交付目标 | [Windows / NVIDIA 整合包](portable-bundle.md) |
-| 后续产品工作 | [路线图](roadmap.md) |
+| 整合包使用、离线构建与验收 | [Windows / NVIDIA 整合包](portable-bundle.md) |
+| 后续开发顺序 | [路线图](roadmap.md) |
 
 历史实验、失败记录和原始测量保存在 Git 仓库的 [research](https://github.com/Rvosy/SakuraTTS/tree/main/research) 中，不随 wheel 或源码包发布。Mac 实验入口见[日文运行记录](japanese-runtime.md)，不属于当前公共 Engine 的支持范围。

@@ -1,6 +1,6 @@
 # SakuraTTS Windows / NVIDIA 整合包
 
-本包用于桌宠等本地应用，默认没有角色模型、官方发声底模、参考音频或个人配置。模型目录为空。当前是本机验证的预览版，尚未通过其他显卡的兼容验收。
+本包用于桌宠等本地应用，提供推理运行环境。模型目录为空，发声模型、参考音频和个人配置由使用者准备。设备与模型的验证范围见[兼容矩阵](https://github.com/Rvosy/SakuraTTS/blob/main/docs/specs/compatibility-matrix.md)。
 
 解压到只含英文、数字和空格的路径，例如 `D:/SakuraTTS`。这版 CuPy/NVRTC 编译仍有非 ASCII 头文件路径限制；模型和参考音频路径可以含中文。系统需要兼容的 NVIDIA 驱动，无需系统 Python 或 CUDA Toolkit。
 
@@ -30,7 +30,7 @@ start-server.bat D:/MyModels/example
 
 桌宠可在默认 FP32 基础上加 `--runtime-mode managed`，空闲时退出推理进程树；调用大模型 API 时可先请求 `POST /runtime/wake`。首次原始模型转换也计入唤醒时间，慢机器可加 `--wake-timeout-seconds 900`；默认启动模式仍为 `direct`。
 
-`configs/` 附带四个推理档位。`low-vram.json` 和 `minimum-vram.json` 需要另行准备匹配的 FP16 chunk256 声学包；本次自动转换生成 FP32 资源，仅切换配置不会转换精度。极限档支持 CLI/Python 和 managed HTTP，会增加重载等待。FP16 听感验收未完成，不传配置仍使用 FP32。
+`configs/` 附带四个推理档位。`low-vram.json` 和 `minimum-vram.json` 需要另行准备匹配的 FP16 chunk256 声学包；自动转换生成 FP32 资源，仅切换配置不会转换精度。极限档支持 CLI/Python 和 managed HTTP，会增加重载等待。FP16 听感验收未完成，不传配置仍使用 FP32。
 
 如果下载的是不含 `runtime/preparation/` 的精简推理包，原始权重和新参考处理需要补充匹配的准备组件，或者改用完整包。无需填写开发机的 Python、原版源码或辅助模型路径。
 

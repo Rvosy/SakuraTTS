@@ -60,6 +60,14 @@ class BoundReferenceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             bound.validate_reference(other)
 
+    def test_signed_zero_change_is_not_the_same_bound_condition(self):
+        self.reference.ge[0, 0, 0] = 0.0
+        bound = BoundAcousticReference.from_reference(self.reference, self.model)
+        bound.validate_reference(self.reference)
+        self.reference.ge[0, 0, 0] = -0.0
+        with self.assertRaises(ValueError):
+            bound.validate_reference(self.reference)
+
     def test_invalid_model_language_and_nonfinite_conditions_fail_at_binding(self):
         for field in ("sovits_checkpoint_sha256", "official_commit", "reference_language"):
             other = replace(self.reference, manifest=dict(self.reference.manifest,

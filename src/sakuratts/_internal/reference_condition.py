@@ -118,8 +118,6 @@ class BoundAcousticReference:
     identity_json: str
     ge: np.ndarray
     ge512: np.ndarray
-    ge_sha256: str
-    ge512_sha256: str
 
     @staticmethod
     def _condition(value, name, shape):
@@ -146,14 +144,13 @@ class BoundAcousticReference:
             value = cls._condition(getattr(reference, name), name, shape)
             snapshots[name] = np.frombuffer(value.tobytes(order="C"), dtype=np.float32).reshape(shape)
         return cls(json.dumps(identity, sort_keys=True, ensure_ascii=False),
-                   snapshots["ge"], snapshots["ge512"],
-                   sha256_array(snapshots["ge"]), sha256_array(snapshots["ge512"]))
+                   snapshots["ge"], snapshots["ge512"])
 
     def validate_conditions(self, ge, ge512):
         for name, value in (("ge", ge), ("ge512", ge512)):
             expected = getattr(self, name)
             value = self._condition(value, name, expected.shape)
-            if sha256_array(value) != getattr(self, name + "_sha256"):
+            if not np.array_equal(value.view(np.uint32), expected.view(np.uint32)):
                 raise ValueError(f"Bound acoustic reference {name} differs; load a new model for this reference")
 
     def validate_reference(self, reference):

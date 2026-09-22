@@ -277,29 +277,18 @@ def run_product_command(args):
     if args.command == "serve":
         if not 1 <= args.port <= 65535:
             raise ValueError("Port must be between 1 and 65535")
-        try:
-            from .server import start_server
-        except ImportError as exc:
-            raise ImportError('Install HTTP dependencies with: pip install "sakuratts[server]"') from exc
+        from .server import start_server
         config = args.tts_config
         if config is None and args.model is None:
             for candidate in (Path("configs/tts_infer.yaml"), Path("GPT_SoVITS/configs/tts_infer.yaml")):
                 if candidate.is_file():
                     config = candidate
                     break
-        runtime_options = {}
-        if args.backend is not None:
-            runtime_options["backend"] = args.backend
-        if (args.runtime_mode != "direct" or args.idle_sleep_seconds != 60.
-                or args.wake_timeout_seconds != 120. or args.operation_timeout_seconds != 300.):
-            runtime_options.update({
-                "runtime_mode": args.runtime_mode,
-                "idle_sleep_seconds": args.idle_sleep_seconds,
-                "wake_timeout_seconds": args.wake_timeout_seconds,
-                "operation_timeout_seconds": args.operation_timeout_seconds,
-            })
-        start_server(args.model, host=args.host, port=args.port, tts_config=config, experimental=experimental,
-                     log_file=args.log_file, log_level=args.log_level, **runtime_options)
+        start_server(args.model, host=args.host, port=args.port, tts_config=config,
+                     backend=args.backend, experimental=experimental, log_file=args.log_file,
+                     log_level=args.log_level, runtime_mode=args.runtime_mode,
+                     idle_sleep_seconds=args.idle_sleep_seconds, wake_timeout_seconds=args.wake_timeout_seconds,
+                     operation_timeout_seconds=args.operation_timeout_seconds)
         return 0
     if args.command == "benchmark":
         from ._internal.benchmark import run

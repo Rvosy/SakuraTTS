@@ -141,7 +141,7 @@ class PreparationBuilderTests(unittest.TestCase):
             source = put(root, "upstream/GPT_SoVITS/TTS_infer_pack/TTS.py")
             payload = put(root, "payload.py")
             output = root / "component"
-            plan = builder.Plan()
+            plan = builder.PreparationPlan()
             plan.add(payload, "Lib/site-packages/example.py", "fixture")
             args = SimpleNamespace(output=output, official_source=root / "upstream")
             builder.assemble(args, plan, "python39", ["python39.zip", ".", "Lib/site-packages"])

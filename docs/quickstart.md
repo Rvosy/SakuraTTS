@@ -24,7 +24,7 @@ sakuratts tts models/mika --text "こんにちは。" --output outputs/hello.wav
 
 ## 从检查点转换
 
-在开发环境安装 `python -m pip install ".[convert,japanese]"`。官方源码须包含参考准备需要的 HuBERT、说话人编码模型、日文字典等资源；转换过程不会补下载。当前封装沿用已验证的 V2ProPlus 参考准备工具，不承诺任意检查点兼容。
+在开发环境安装 `python -m pip install ".[convert,japanese]"`。官方源码须包含参考准备需要的 HuBERT、说话人编码模型、日文字典等资源；转换过程不会补下载。转换使用 V2ProPlus 准备工具，具体权重范围见[兼容矩阵](specs/compatibility-matrix.md)。
 
 ```powershell
 sakuratts convert --gpt character.ckpt --sovits character.pth --reference reference.wav --reference-text "参考音频的日文转写" --official-source D:/Models/GPT-SoVITS --acoustic-python D:/Runtime/python.exe --output models/mika

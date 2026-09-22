@@ -2,7 +2,7 @@
 
 整合包可以只用本地文件构建。默认发行组合包含 HTTP、CLI、日文推理及私有 Python/CUDA 运行库；完整包另外带独立准备组件，让用户提供原始权重和新参考音频后直接调用 HTTP。PyTorch、原版准备源码和公共辅助模型放在准备组件中，按需启动 CPU 进程，完成后退出。HTTP 和准备组件可以分别省略。
 
-下载并解压到 ASCII 路径（允许空格），双击 `check-runtime.bat` 检查 GPU，双击 `start-server.bat` 启动服务。无需系统 Python 或 CUDA Toolkit，系统仍须安装兼容的 NVIDIA 驱动。没有模型时服务保持未配置状态，不选择本机角色。
+取得整合包后解压到 ASCII 路径（允许空格），双击 `check-runtime.bat` 检查 GPU，双击 `start-server.bat` 启动服务。无需系统 Python 或 CUDA Toolkit，系统仍须安装兼容的 NVIDIA 驱动。没有模型时服务保持未配置状态，不选择本机角色。
 
 ## 内容与边界
 
@@ -36,9 +36,9 @@ SakuraTTS-Windows-NVIDIA/
 1. 将自己的 GPT `.ckpt`、SoVITS `.pth` 放在 `models/`，或保留在其他目录。
 2. 复制 `configs/tts_infer.example.yaml` 为 `configs/tts_infer.yaml`，填写 `t2s_weights_path` 和 `vits_weights_path`。
 3. 双击 `start-server.bat`。终端依次显示前端准备、GPT 转换、SoVITS 转换；完成后开始接收请求。
-4. 按[原版 HTTP 字段](http-api.md)提交 `/tts`，包含 `ref_audio_path`、`prompt_text`、`prompt_lang` 等。首次参考编码自动完成，返回音频后缓存可复用。
+4. 按[原版 HTTP 字段](api-v2-guide.md)提交 `/tts`，包含 `ref_audio_path`、`prompt_text`、`prompt_lang` 等。首次参考编码自动完成，返回音频后缓存可复用。
 
-整个过程使用用户选定的两份权重，不需要手工执行转换命令或提供内部模型目录。当前范围为 V2ProPlus、日文，原版尚未支持的参数仍按兼容清单报错。没有 `configs/tts_infer.yaml` 时保持未配置状态，不选择任何默认角色。
+整个过程使用用户选定的两份权重，不需要手工执行转换命令或提供内部模型目录。当前范围为 V2ProPlus、日文，尚未接入的原版参数按 API 支持表报错。没有 `configs/tts_infer.yaml` 时保持未配置状态，不选择任何默认角色。
 
 后台应用可加 `--runtime-mode managed`。首次转换也计入唤醒等待，慢机器可显式设置 `--wake-timeout-seconds 900`；普通重启命中缓存后不需要再次导出。第一次处理参考的时间也包含在请求时限内。准备默认使用 CPU FP32，主推理默认模式和精度不变。
 
@@ -46,12 +46,12 @@ SakuraTTS-Windows-NVIDIA/
 
 ## 原版带的模型与本项目的边界
 
-核对 [GPT-SoVITS 固定版本配置](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/GPT_SoVITS/configs/tts_infer.yaml) 和[预训练资源说明](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/README.md#pretrained-models)，可以区分以下资源。本机现有原版目录也包含这些预训练资源，但不能据此推断每个官方发行版本都包含相同文件。
+核对 [GPT-SoVITS 固定版本配置](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/GPT_SoVITS/configs/tts_infer.yaml) 和[预训练资源说明](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/README.md#pretrained-models)，可以区分以下资源。具体文件以所用上游版本的资源清单为准。
 
 | 类别 | 例子与作用 | SakuraTTS 整合包的处理 |
 | --- | --- | --- |
-| 官方发声底模 | V2ProPlus 配置中的 `s1v3.ckpt` 与 `v2Pro/s2Gv2ProPlus.pth`，分别负责语义生成和声学生成 | 默认不捆绑，可另行准备和转换；尚未验证的底模不能直接宣称兼容 |
-| 用户微调模型 | 用户自己的 GPT `.ckpt`、SoVITS `.pth`，以及转换后的推理图和权重 | 用户自行导入，不读取或打包开发机当前模型 |
+| 官方发声底模 | V2ProPlus 配置中的 `s1v3.ckpt` 与 `v2Pro/s2Gv2ProPlus.pth`，分别负责语义生成和声学生成 | 另行准备与转换，按具体权重验证 |
+| 用户微调模型 | 用户自己的 GPT `.ckpt`、SoVITS `.pth`，以及转换后的推理图和权重 | 用户自行导入，不进入发行清单 |
 | 公共辅助模型与字典 | HuBERT 用于参考音频特征，Pro 系列的说话人编码器；中文 BERT、G2PW 用于中文链路；语言识别模型和日文字典用于前端 | 按已支持功能建立版本、来源、哈希和许可清单，独立获取；当前日文路径不因上游包含中文模型就全部捆绑 |
 | 个人参考与缓存 | 参考录音、转写、提取出的语义与音色条件、已生成音频 | 不分发；在用户设备上显式选择并生成 |
 | 训练与数据处理资源 | 训练用判别器、ASR、UVR 人声分离等 | 不属于推理整合包的默认范围 |
@@ -121,11 +121,11 @@ python scripts/build_portable.py `
 
 本地安装文件若与 wheel 的 RECORD 不同，构建默认失败。只有核对过的修改才能通过 `--record-overrides` 显式提供相对文件名、原始 `record_sha256`、当前 `sha256` 和 `reason`；这些信息写入准备组件清单。不能用该选项批量忽略校验。
 
-两个解释器共享内容完全一致的 NVIDIA DLL，声学 worker 显式从包内主环境加载，保留不同版本的库。共享与去重将本次运行输入从约 4.84 GB 减为 3.85 GB；这也包含移除未使用的 ffprobe。余下体积主要来自 ORT CUDA、cuDNN、cuBLAS 和日文字典。不能仅凭单卡冒烟通过就删除其他架构或算子需要的库。
+两个解释器共享内容完全一致的 NVIDIA DLL，声学 worker 显式从包内主环境加载，不同版本分别保留。构建产物的实际文件和体积由 `bundle-manifest.json` 记录。
 
 启动器绑定包内 Python，清理外部 Python/CUDA 路径，将缓存放在包内。模型中旧的声学和前端 Python 路径在运行时按 `workers` 改为当前包内解释器；个人权重路径不变。准备路径不会回退到开发环境。暂不支持非 ASCII 的解压目录；模型和参考路径可含中文。
 
-FFmpeg 保留本地二进制的版本、编译选项和 LGPL 说明；组件许可证随包携带。本地拼装与运行验证不等于完整公开发行合规审计，正式对外分发前仍需核对所携带第三方二进制的对应源码及再分发要求。
+FFmpeg 保留二进制版本、编译选项和 LGPL 说明；组件许可证随包携带。公开分发时需提供所携带第三方二进制要求的来源、对应源码与许可材料。
 
 ## 7z 压缩
 
@@ -138,19 +138,7 @@ python scripts/archive_portable.py --bundle dist/SakuraTTS-Windows-NVIDIA `
 
 采样比较 LZMA2 solid 的 `mx=5/7/9`、32/64/128 MiB 字典，固定 2 个压缩线程，记录压缩大小、耗时、校验和解压耗时。样本取自体积最大的 12 个文件的多个位置，结果只用于选参，不代表完整包的压缩率。正式压缩只读取发行清单中的文件，并重新校验哈希；验收产生的缓存、日志、音频及用户后来放入的模型都不会收录。输出 `.7z`、SHA256 和压缩报告。
 
-早期精简包使用约 302 MB 样本，实测如下。最高档比快速档小约 1.6%，多耗时约 16 秒，解压耗时相近。考虑下载流量，最终选择 `mx=9`、128 MiB 字典；快速开发打包可使用 `balanced`。
-
-| 档位 | 压缩大小 | 压缩耗时 | 解压耗时 |
-| --- | ---: | ---: | ---: |
-| mx=5 / 32 MiB | 99.19 MB | 36.90 秒 | 2.42 秒 |
-| mx=7 / 64 MiB | 98.70 MB | 51.12 秒 | 2.94 秒 |
-| mx=9 / 128 MiB | 97.57 MB | 53.33 秒 | 2.93 秒 |
-
-该轮精简运行包为 1,313,042,840 字节（约 1.31 GB），清单内文件解压后为 3,851,802,388 字节（约 3.85 GB，不含清单自身）。完整压缩耗时 598 秒，`7z t` 校验耗时 24 秒；这些是历史单机记录，不代表本轮完整包。
-
-该轮压缩包重新解压耗时 31.6 秒，6,361 个文件的 SHA256 全部匹配，没有清单外文件；解压后的副本再次通过 GPU 检查。历史报告保存在本地 `dist/portable-release/`。
-
-本轮完整包改用 CPU 准备组件，并清理重复的开发文件和校验步骤；解压后的清单文件从 10.90 GB 降到 5.51 GB。最终 7z 为 **1,960,862,106 字节（1.961 GB）**，低于 2 GB，`7z t` 校验通过。实际首次使用、解压验收及继续缩减的方向见[完整包缩减记录](../research/notes/portable-compact-20260922.md)，本地发行物位于 `dist/compact/release/`。
+压缩选项由 [archive_portable.py](../scripts/archive_portable.py) 的 `PROFILES` 定义。`balanced` 适合开发打包，`maximum` 用于体积优先的发行物；本机样本比较与完整压缩结果分别保存，具体结果见下方记录。
 
 ## 验证范围
 
@@ -168,12 +156,13 @@ python scripts/verify_portable_first_use.py `
 
 搬迁保留缓存的整包后，可用相同参数加 `--reuse-cache`，并指定新的输出目录。该模式只验证已有缓存的复用，不把它计为首次转换通过。
 
-以下体积、解压与 GPU 运算记录属于早期精简包，不代表新完整包已通过同样的全部验收。
+## 验证记录
 
-本机 RTX 5060、驱动 610.62 已通过 NVRTC、FP32/FP16 GEMM、CUDA Graph 和独立 ORT CUDA 实际运算；也用包外模型完成了日文短句合成。GPU 检查不代表音质验收，冷启动短句耗时也不能作为稳定性能指标。
+| 产物与日期 | 记录 |
+| --- | --- |
+| 2026-09-22 完整包 | [缩减、首次使用、搬迁与解压验收](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/portable-compact-20260922.md) |
+| 早期精简推理包 | [压缩、解压与单机运行检查](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/portable-runtime-bundle-20260922.md) |
 
-包目录复制到带空格的新位置后，同样通过 GPU 检查与无模型 HTTP `/health` 检查。测试故意设置了错误的外部 `PYTHONHOME`、`PYTHONPATH`、`CUDA_PATH`、`CUDA_HOME`；主 Python 的文件审计同时阻止读取原开发环境。服务返回 `ready`、`model_loaded=false`。这项测试在同一台 Windows 上进行，不能替代干净机器验收。
+这些记录中的体积、路径和设备对应当时的构建。查询手头产物应读取 `bundle-manifest.json`、压缩报告及 SHA256 文件。构建和本机验证结果与实际发布状态分别记录。
 
-搬迁后的包还通过了 FP16 低显存档短句合成，使用包外的 chunk256 声学模型与已准备参考。FP32 和低显存档都生成了 32 kHz、单声道、4.54 秒的 WAV；本轮未重新测量峰值显存或评价音质。模型、参考与输出均未进入发行清单。
-
-其他 Windows 设备，尤其 Turing、Ampere、Ada、笔记本和低显存型号仍需测试。同一 NVIDIA 包不承诺覆盖 CPU、AMD、Intel GPU 或其他操作系统。干净 Windows 上无开发目录的安装、最低驱动、长句、多轮请求、取消恢复、完整显存测量和人工听音仍属于发行验收范围。
+硬件记录集中于 RTX 5060。其他 Windows 设备、干净机器、最低驱动、长句、多轮请求、取消恢复、完整显存测量和人工听音仍需验收。

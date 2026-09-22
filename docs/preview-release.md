@@ -1,22 +1,22 @@
 # 开发者预览版
 
-SakuraTTS `0.1.0a1` 提供 Python 包和源码，当前重点是 Windows / NVIDIA 上的日文完整 WAV 推理。GitHub 保存源码；发行者手动构建 ZIP，再把 ZIP 与校验文件上传 ModelScope。项目自身采用 MIT，第三方代码与资源保留各自许可。
+SakuraTTS `0.1.0a1` 提供 Python 包和源码，当前重点是 Windows / NVIDIA 上的日文完整 WAV 推理。构建脚本生成 wheel、源码包和 ZIP；发行时将 ZIP 与校验文件上传选定的 ModelScope 仓库。项目自身采用 MIT，第三方代码与资源保留各自许可。
 
 这是开发者预览版。安装 wheel 后仍需准备运行依赖、模型、日文前端、参考条件和独立声学工作进程。发行 ZIP 不包含 Python、CUDA/cuDNN、模型权重、参考音频或词典，不是离线整合包。普通推理不导入 PyTorch；模型转换与参考准备使用单独的开发环境。
 
 ## 下载内容
 
-面向最终用户的自带运行环境整合包另见[整合包计划](portable-bundle.md)。下面是当前开发者发布产物的安装方法。
+面向最终用户的自带运行环境整合包另见[整合包指南](https://github.com/Rvosy/SakuraTTS/blob/main/docs/portable-bundle.md)。下面是当前开发者发布产物的安装方法。
 
 解压手动发布的 `sakuratts-0.1.0a1-preview.zip`：
 
 - `dist/sakuratts-0.1.0a1-py3-none-any.whl`：安装到 Python 环境的运行代码。
 - `dist/sakuratts-0.1.0a1.tar.gz`：源码包，含转换脚本、测试、验证工具及文档。
-- `requirements/windows-runtime.txt`：本轮 Windows 主环境的固定依赖。
+- `requirements/windows-runtime.txt`：Windows 主环境的固定依赖。
 - `QUICKSTART.md`：本说明；源码包中的 `docs/` 含详细指南。
 - `release-manifest.json`、`SHA256SUMS`：构建版本、源码身份及包内文件校验。
 
-ZIP 旁的 `.sha256` 文件用于下载后的完整性核对。PowerShell 可用 `Get-FileHash <下载的ZIP> -Algorithm SHA256` 计算哈希，与该文件比较。文件名中的版本号不替代哈希。
+ZIP 旁的 `.sha256` 文件用于下载后的完整性核对。PowerShell 可用 `Get-FileHash <下载的ZIP> -Algorithm SHA256` 计算哈希，与该文件比较。构建身份由 `release-manifest.json` 记录。
 
 ## 安装主环境
 
@@ -35,7 +35,7 @@ uv pip check --python .venv/Scripts/python.exe
 
 实际安装验证发现，CuPy / NVRTC 的 CUDA 首次编译无法读取非 ASCII 路径中的 `cupy/complex.cuh`。需要将 Python 环境及 CUDA 头文件放在 ASCII 路径，重新创建环境后安装 wheel；不要仅搬移现有 venv。空格与中文/日文字符是不同情况，限制针对非 ASCII 头文件路径，不限制日文文本或模型参考名称。
 
-也可以从源码安装。将源码包解压到新目录，在其中执行相同的 requirements 安装，最后改为 `uv pip install --python <环境中的python.exe> --no-deps .`。需要改代码时再使用 `-e .`。`.[japanese,nvidia]` 只声明主环境的直接依赖，复现本轮环境优先使用固定清单。
+也可以从源码安装。将源码包解压到新目录，在其中执行相同的 requirements 安装，最后改为 `uv pip install --python <环境中的python.exe> --no-deps .`。需要改代码时再使用 `-e .`。`.[japanese,nvidia]` 只声明主环境的直接依赖，复现预览环境时使用固定清单。
 
 ## 模型、前端和声学工作进程
 
@@ -48,15 +48,15 @@ uv pip check --python .venv/Scripts/python.exe
 | 声学工作进程 | 目前使用 CPython 3.9、NumPy 1.23.4、ORT CUDA 1.19.2 及匹配的 CUDA DLL |
 | `runtime.json` | 填写上述资源路径，路径相对配置文件解析 |
 
-当前 `tools/prepare_ort_worker_runtime.py` 从已有官方运行目录及本地 NVIDIA wheel 文件导出独立组件，不是一个从空机器自动安装全部资源的工具。首次使用者仍需这些准备输入；它们不在本次开发者 ZIP 中。导出完成后，普通推理读取独立组件与包内资源，不读取原官方项目。
+当前 `tools/prepare_ort_worker_runtime.py` 从已有官方运行目录及本地 NVIDIA wheel 文件导出独立组件，不是一个从空机器自动安装全部资源的工具。首次使用者仍需这些准备输入；它们不在开发者 ZIP 中。导出完成后，普通推理读取独立组件与包内资源，不读取原官方项目。
 
 `examples/runtime.windows.example.json` 提供配置格式。示例中的路径和 `neutral` 只是占位，必须指向自己的真实产物。不要沿用文档中开发机的绝对路径。开发转换依赖按 Windows 指南安装 `.[japanese,nvidia,dev]`；日常主环境只装 runtime 清单。
 
 ## 推理与服务
 
-安装后按[快速开始](quickstart.md)准备模型目录，使用公共 `Engine`、`sakuratts tts` 或 `sakuratts serve`。原 `synthesize --config` 入口保留兼容；默认 FP32，精度与显存选项见[推理档位](inference-profiles.md)。
+安装后按[快速开始](https://github.com/Rvosy/SakuraTTS/blob/main/docs/quickstart.md)准备模型目录，使用公共 `Engine`、`sakuratts tts` 或 `sakuratts serve`。原 `synthesize --config` 入口保留兼容；默认 FP32，精度与显存选项见[推理档位](https://github.com/Rvosy/SakuraTTS/blob/main/docs/inference-profiles.md)。
 
-HTTP 支持完整音频和按句流式返回；语义 token 流式、批量并行和其他语言整链尚未接入。具体字段、默认值与错误见 [HTTP API](http-api.md)，实测设备、模型和质量限制见[兼容矩阵](specs/compatibility-matrix.md)。
+HTTP 支持完整音频和按句流式返回；语义 token 流式、批量并行和其他语言整链尚未接入。具体字段、默认值与错误见 [HTTP API](https://github.com/Rvosy/SakuraTTS/blob/main/docs/http-api.md)，实测设备、模型和质量限制见[兼容矩阵](https://github.com/Rvosy/SakuraTTS/blob/main/docs/specs/compatibility-matrix.md)。
 
 研究工具和原始数据只保留在 [Git 仓库](https://github.com/Rvosy/SakuraTTS/tree/main/research)。需要复现实验时，检出 `release-manifest.json` 记录的源码提交；源码包不携带研究目录。
 

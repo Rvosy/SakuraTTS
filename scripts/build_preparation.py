@@ -195,7 +195,7 @@ def make_plan(args):
     overrides = json.loads(args.record_overrides.read_text(encoding="utf-8")) if args.record_overrides else {}
     plan = PreparationPlan(overrides)
     stem, version, paths = add_interpreter(plan, args.python_base)
-    installed, origins = preparation_distributions(args.site, getattr(args, "runtime_site", None))
+    installed, origins = preparation_distributions(args.site, args.runtime_site)
     frontend = frontend_requirement(installed, version)
     # A local GPU wheel also contains the CPU backend. Omit its optional GPU
     # providers above rather than downloading another copy of the CPU runtime.
@@ -276,7 +276,7 @@ def assemble(args, plan, stem, paths):
                 "synthesis_models_included": False, "personal_references_included": False,
                 "auxiliary_analysis_models_included": True,
                 "source_sha256": digest(args.official_source / "GPT_SoVITS/TTS_infer_pack/TTS.py"),
-                "record_overrides": getattr(plan, "applied_overrides", {}),
+                "record_overrides": plan.applied_overrides,
                 "components": plan.components, "files": inventory,
                 "bytes": sum(row["bytes"] for row in inventory.values())}
     write(output / "preparation-manifest.json", json.dumps(manifest, indent=2) + "\n")

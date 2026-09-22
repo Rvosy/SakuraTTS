@@ -1,6 +1,6 @@
 # 开发指南
 
-先读与改动相关的 `docs/specs/`、`docs/adr/` 和测试。依赖声明在 `pyproject.toml`；`requirements/` 是此前实测环境的冻结快照，不能当作额外功能声明。运行、转换与私有声学解释器仍分开安装。
+先读与改动相关的 [Spec](specs/)、[ADR](adr/) 和测试。依赖声明在 [pyproject.toml](../pyproject.toml)；`requirements/` 是此前实测环境的冻结快照，不能当作额外功能声明。运行、转换与私有声学解释器仍分开安装。
 
 ```powershell
 python -m pip install -e ".[japanese,dev,server]"
@@ -10,7 +10,7 @@ python benchmarks/run.py models/mika --text "こんにちは。" --output output
 python scripts/build_preview.py --output dist/preview-0.1.0a1
 ```
 
-单元测试使用小型资源和替身，不等于 GPU 或音质验收。CUDA smoke 使用本机准备好的模型及运行环境；MLX 验证需要 Mac。
+单元测试使用小型资源和替身验证代码行为。CUDA 冒烟需要模型与目标运行环境，MLX 验证需要 Mac；音质通过实际音频另行检查。
 
 ## 环境准备
 
@@ -37,7 +37,7 @@ powershell -ExecutionPolicy Bypass -File scripts/setup_windows.ps1
 
 无符号链接创建权限的 Windows 会跳过一项符号链接逃逸测试；普通相对路径、盘符和目录穿越检查继续执行。无需为安装环境更改系统权限。
 
-`pyproject.toml` 声明直接依赖；Windows 清单固定本轮解析的传递依赖。更新直接依赖后，用下面的命令重新生成清单并复验：
+`pyproject.toml` 声明直接依赖；Windows 清单固定已解析的传递依赖。更新直接依赖后，用下面的命令重新生成清单并复验：
 
 ```powershell
 uv --offline pip compile pyproject.toml --extra japanese --extra dev --python-version 3.11 --python-platform windows --output-file requirements/windows-dev.txt
@@ -56,7 +56,7 @@ uv --offline pip install --python .venv/bin/python --no-deps -e .
 .venv/bin/python -m sakuratts doctor --japanese
 ```
 
-准备 GPT、SoVITS、日文前端和参考条件四个包后，按[日文运行入口](japanese-runtime.md)生成 WAV。资源目录由参数指定，不要求旧实验目录或时间戳命名。Mac 依赖的既有验证记录仍有效，本次 Windows 环境整理没有重新执行 Mac 合成。
+准备 GPT、SoVITS、日文前端和参考条件四个包后，按[日文运行入口](japanese-runtime.md)生成 WAV。资源目录由参数指定；历史模型和运行结果见该指南链接的研究记录。
 
 
 ## 旧目录对应关系
@@ -76,12 +76,12 @@ uv --offline pip install --python .venv/bin/python --no-deps -e .
 
 旧 `sakuratts synthesize --config ...` 和 `sakuratts.nvidia.NVIDIAEngine` 继续可用。内部模块没有逐个添加别名；仓库内调用方与测试已迁移，外部研究脚本需按表更新。
 
-新实验输出写到被 Git 忽略的 `outputs/`、`results/` 或 `artifacts/`。`research/experiments/data/` 只保留此次迁移前已经引用的证据，避免丢失数值失败与性能数字的来源。
+新实验输出写到被 Git 忽略的 `outputs/`、`results/` 或 `artifacts/`。`research/experiments/data/` 保留已引用的历史证据，避免丢失数值失败与性能数字的来源。
 
 ## 产品与研究的边界
 
 `tests/` 验证包、API、转换和运行生命周期；`research/tests/` 验证历史测量与实验工具。两组测试都保留，发布源码包只带产品测试。研究测试入口会加载少量产品测试夹具，需要完整 Git checkout。
 
-研究总结已从 `docs/research/` 收拢到 `research/notes/`。`docs/setup.md` 的环境步骤并入本页，兼容范围并入 `docs/specs/compatibility-matrix.md`。原始测量 JSON 和失败记录继续保留。
+研究总结、原始测量和失败记录由 [research/README.md](https://github.com/Rvosy/SakuraTTS/blob/main/research/README.md) 导航。产品支持范围由[兼容矩阵](specs/compatibility-matrix.md)维护。
 
 `python scripts/build_preview.py --offline --output dist/preview-check` 构建 wheel、源码包和校验清单。源码包包含维护工具、产品测试、使用文档与许可，排除整个 `research/`。源码包应能在没有研究目录的环境中重建并运行产品测试；研究脚本从对应 Git 提交获取。

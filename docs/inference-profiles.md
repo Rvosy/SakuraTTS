@@ -7,9 +7,11 @@
 | A．FP32 | [fp32.json](../examples/fp32.json) | 保留当前 FP32 路径与精度 |
 | C．FP16 标准 | [fp16.json](../examples/fp16.json) | 日常使用，兼顾速度与显存 |
 | E．FP16 低显存 | [low-vram.json](../examples/low-vram.json) | 更少显存，接受每片段额外加载 |
-| H．FP16 极限 | [minimum-vram.json](../examples/minimum-vram.json) | 显存优先，接受约 3 秒的重载等待 |
+| H．FP16 极限 | [minimum-vram.json](../examples/minimum-vram.json) | 显存优先，接受每片段重载等待 |
 
-## 峰值显存
+## 2026-09-21 实测
+
+### 峰值显存
 
 | 档位 | 完整请求观测峰值 |
 |---|---:|
@@ -18,7 +20,7 @@
 | FP16 低显存 | 584.1 MB |
 | FP16 极限 | 465.1 MB |
 
-## 空闲显存
+### 空闲显存
 
 | 档位 | 最后请求后空闲 |
 |---|---:|
@@ -27,7 +29,7 @@
 | FP16 低显存 | 387.0 MB |
 | FP16 极限 | 106.5 MB |
 
-## 请求耗时
+### 请求耗时
 
 | 档位 | 热短句 | 热长句 |
 |---|---:|---:|
@@ -36,7 +38,7 @@
 | FP16 低显存 | 1.009 s | 3.560 s |
 | FP16 极限 | 3.055 s | 5.481 s |
 
-数值来自 RTX 5060 8 GB、Windows WDDM、Sakura V2ProPlus 日文单请求，使用准备好的中性参考、`cut0` 分句设置。MB 为十进制单位；显存是同一时刻主进程与声学 worker 的 Dedicated Usage 之和，空闲取请求后约 1 秒的稳定值。耗时为持续采样下的热请求中位数；FP32 与 FP16 来自不同轮次，输出长度也有差异。数据不是任意模型、输入或显卡的保证。详见 [FP32／FP16 对照](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/low-vram-20260921.md)及[声学错峰实测](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/acoustic-session-staging-20260921.md)。
+数值来自 RTX 5060 8 GB、Windows WDDM、Sakura V2ProPlus 日文单请求，使用准备好的中性参考、`cut0` 分句设置。MB 为十进制单位；显存是同一时刻主进程与声学 worker 的 Dedicated Usage 之和，空闲取请求后约 1 秒的稳定值。耗时为持续采样下的热请求中位数；FP32 与 FP16 来自不同轮次，输出长度也有差异。其他模型、输入和设备需分别测量。详见 [FP32／FP16 对照](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/low-vram-20260921.md)及[声学错峰实测](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/acoustic-session-staging-20260921.md)。
 
 ## 选择与使用
 
@@ -61,13 +63,13 @@ with Engine.load("MODEL", experimental=options) as engine:
     audio.save("outputs/hello.wav")
 ```
 
-A、C、E 可经 `serve MODEL --experimental FILE` 启动 HTTP 服务。H 的总体 `policy="staged"` 可用于 Python Engine、`tts` CLI，或显式启用的 `managed` HTTP 模式；默认 `direct` 仍拒绝 H。现有 YAML 的 `is_half` 兼容限制仍需遵循 [HTTP API](http-api.md)。
+A、C、E 可经 `serve MODEL --experimental FILE` 启动 HTTP 服务。H 的总体 `policy="staged"` 可用于 Python Engine、`tts` CLI，或显式启用的 `managed` HTTP 模式；默认 `direct` 仍拒绝 H。YAML 的 `is_half=true` 尚未映射到实验档位；使用上述 JSON 显式选择。
 
 ```powershell
 sakuratts serve MODEL --experimental examples/minimum-vram.json --runtime-mode managed
 ```
 
-控制模式默认空闲 60 秒后退出整个推理进程树，释放进程级 GPU 资源。H 档醒着时也按片段错峰加载权重，活动显存较低，但会增加每片段等待；提前唤醒只准备运行环境，`preparation="runtime_init"`，不会提前把两组权重都加载。需要连续短句速度时可把命令中的配置换为 `examples/fp16.json`，保留标准档执行速度，再通过空闲休眠减少长期显存驻留。上面的 Engine 历史测量不代表这两种 HTTP 组合的实测成绩，控制模式的数据见[后台驻留与提前唤醒](background-runtime.md)。
+控制模式默认空闲 60 秒后退出整个推理进程树，释放进程级 GPU 资源。H 档醒着时也按片段错峰加载权重，活动显存较低，但会增加每片段等待；提前唤醒只准备运行环境，`preparation="runtime_init"`，不会提前把两组权重都加载。需要连续短句速度时可把命令中的配置换为 `examples/fp16.json`，保留标准档执行速度，再通过空闲休眠减少长期显存驻留。控制模式的 HTTP 测量单列在[后台驻留与提前唤醒](background-runtime.md)。
 
 C 保留模型权重，语义生成完成后释放 GPT 请求状态；E 进一步让 latent／vocoder Session 错峰；H 再让 GPT／声学模型错峰。三个 FP16 档均关闭 Prefill query 分块，在已测对应文本上的音频逐采样一致。`cut5` 是独立的文本分句选项，会改变停顿与生成过程，不再单列为一个档位；E、H 在片段较多时会有更多重载等待。
 

@@ -306,14 +306,14 @@ def main():
                        "speed": 1.0, "noise_scale": 0.5, "fragment_interval": 0.3,
                        "text_split_method": args.text_split_method},
         "scope": f"V2Pro Japanese ja/all_ja, ordered {args.text_split_method} fragments, one offline prepared Japanese reference, complete WAV only",
-        "validation_scope": "Only Suzakuin Momiji V2Pro has been validated; accepting another package is not a compatibility claim. The early-stop threshold is an explicit request parameter, not derived from package metadata.",
+        "validation_scope": "Validated model: Suzakuin Momiji V2Pro. Other models are untested. The early-stop threshold comes from the request.",
         "precision": {"gpt_prefill": "CPU FP64", "gpt_decode": "GPU FP32", "acoustic_encoder": "CPU FP32",
                       "flow_decoder": "GPU FP32", "fold_weight_norm": False},
         "runtime_policy": {"release_gpt_state_before_acoustic": True, "model_policy": args.model_policy,
                            "bind_reference": args.bind_reference,
                            "clear_acoustic_load_cache": args.bind_reference},
         "lifecycle": "Prepare all text and release frontend before synthesis models; discard GPT KV after each fragment's semantics. Staged policy loads and releases each model for every fragment; simultaneous policy reuses both across fragments and releases after the last. Shared Nani/Sudachi caches may remain until process exit.",
-        "timing_scope": "Complete request includes frontend/model load, computation and release. Package validation, initial module imports and file output are separate. No diagnostic boundary sampling. Not a whole-process cold-start or streaming first-packet measurement.",
+        "timing_scope": "Complete request covers frontend/model load, computation and release, without diagnostic boundary sampling. Package validation, initial imports and file output are timed separately. Process cold start and streaming first packet are unmeasured.",
         "quality": {"asr": "not_run", "human_listening": "not_run"}, "timings": {},
     }
     started = time.perf_counter()

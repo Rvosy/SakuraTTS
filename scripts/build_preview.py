@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a developer preview ZIP from a filtered source snapshot; never upload."""
+"""Build a developer preview ZIP from a filtered source snapshot."""
 
 import argparse
 import hashlib
@@ -173,7 +173,7 @@ def build_preview(root, output, *, offline=False):
                     "distribution_validation": distribution_validation,
                     "payload_files": {name: {"bytes": len(data), "sha256": sha256(data)}
                                       for name, data in sorted(payload.items())},
-                    "scope": "Python wheel and source only; no models, CUDA DLLs, Python runtime or upload"}
+                    "scope": "Python wheel and source; install the runtime and model resources separately"}
         payload["release-manifest.json"] = (json.dumps(manifest, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
         payload["SHA256SUMS"] = "".join(sha256(data) + "  " + name + "\n"
                                         for name, data in sorted(payload.items())).encode("utf-8")

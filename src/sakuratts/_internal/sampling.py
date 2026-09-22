@@ -2,9 +2,9 @@
 
 No PyTorch dependency. NumPy RNG streams are not equivalent to PyTorch streams.
 Top-p ties use stable token order here; the upstream torch.sort is not stable,
-and FP32 reduction order can change a cumulative threshold decision. This
-baseline does not claim compatibility at tied or numerically borderline top-p
-boundaries; the equivalence harness saves those categorical differences.
+and FP32 reduction order can change a cumulative threshold decision. Ties and
+numerically borderline top-p values can therefore select different tokens;
+the equivalence harness records those differences.
 """
 
 from dataclasses import dataclass

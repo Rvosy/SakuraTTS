@@ -1,8 +1,6 @@
-# HTTP API 与原版兼容范围
+# HTTP 服务配置与生命周期
 
-接口只以 GPT-SoVITS [`48b1a016` 的 `api_v2.py`](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/api_v2.py) 为兼容目标。当前支持 Windows / NVIDIA、V2ProPlus 和日文，未实现的 V2 功能返回 HTTP 400，后续逐项完善。旧版 `api.py` 协议、Gradio 客户端及原版 Python 模块接口不在兼容范围内。
-
-首次接入请从 [API v2 使用指南](api-v2-guide.md)开始，那里集中列出支持状态和可复制的调用示例。本页保留完整的服务配置、生命周期与诊断说明。所有合成请求当前都须显式传 `parallel_infer=false`；原版默认值 `true` 尚未实现，省略该字段也会返回 400。仓库中的 `api.py` 仅是启动本服务的别名，不提供旧协议。
+本页说明服务启动、后台控制和诊断。客户端路由、请求字段、默认值与错误处理集中在 [API V2 使用说明](api-v2-guide.md)；字段实现见 [server.SpeechRequest](../src/sakuratts/server.py)。
 
 ## 启动
 
@@ -72,85 +70,19 @@ Invoke-RestMethod -Uri http://127.0.0.1:9880/runtime
 | A / C / E | `model_load` | 模型加载步骤完成，`model_loaded=true`；E 的声学 Session 仍按原策略在执行时创建 |
 | H | `runtime_init` | 推理进程、前端和配置已准备，GPU 权重留到执行时错峰加载；`model_loaded` 始终为 `false`，`model` 可以返回当前所选模型 |
 
-这些状态都不保证已经执行 Prefill、Decode、CUDA Graph 捕获或陌生参考编码。H 档应结合 `state` 与 `preparation` 判断准备情况，不要等待 `model_loaded` 变为 `true`。`last_wake_ms` 是最近一次成功唤醒的耗时，不是首段音频延迟。`/health` 保留原有字段，并使用相同的 `model_loaded` 含义；休眠或 H 档的 `false` 不代表服务故障。
+Prefill、Decode、CUDA Graph 捕获和新参考编码在实际请求时执行。H 档应结合 `state` 与 `preparation` 判断准备情况，不要等待 `model_loaded` 变为 `true`。`last_wake_ms` 是最近一次成功唤醒的耗时，不是首段音频延迟。`/health` 使用相同的 `model_loaded` 含义；休眠或 H 档的 `false` 是正常状态。
 
 控制模式不在启动时执行 GPU 加载。只有唤醒后才能发现的资源、运行库或 CUDA 加载错误会记录为 `failed`，等待加载的请求也会收到错误。未配置模型时不创建 worker。失败不会无限自动重启；清理完成后，下一次唤醒或合成可以重试。
 
-休眠保留本次服务会话中成功选择的模型与参考准备设置；重启服务仍恢复启动配置。已准备参考不替代 `/tts` 的 `ref_audio_path`。控制服务不加载 NumPy、GPU 计算库或文本前端，但仍占用解释器和 HTTP 所需的主存。RSS 和私有提交是主存指标，显存另看 GPU Dedicated / Shared Usage；进程退出后计数实例消失不能写成测得零显存。首次加载与陌生参考的开销仍需在目标机器测量。架构和测量范围见[后台驻留与提前唤醒](background-runtime.md)。
+休眠保留本次服务会话中成功选择的模型与参考准备设置；重启服务仍恢复启动配置。已准备参考不替代 `/tts` 的 `ref_audio_path`。控制服务不加载 NumPy、GPU 计算库或文本前端，但仍占用解释器和 HTTP 所需的主存。运行方式选择和资源测量见[后台驻留与提前唤醒](background-runtime.md)。
 
-## 原版调用方式
+## 请求与模型切换
 
-| 方法与路径 | 行为 |
-| --- | --- |
-| `GET/POST /tts` | 返回音频；POST 为 JSON，GET 为查询参数 |
-| `GET /set_gpt_weights?weights_path=...` | 更换 GPT，可传原始 `.ckpt` 或转换后的 GPT 目录 |
-| `GET /set_sovits_weights?weights_path=...` | 更换 SoVITS，可传原始 `.pth` 或转换后的声学目录 |
-| `GET /set_refer_audio?refer_audio_path=...` | 预先准备参考音频的条件；字段拼写沿用原版 |
-| `GET /control?command=exit` | 结束独立服务，等待工作线程清理 |
-| `GET /control?command=restart` | 清理后恢复启动配置；`direct` 重新加载，`managed` 回到休眠；进程 PID 不保证变化 |
-| `GET /health`、`GET /models` | 附加诊断接口，查询忙碌和模型状态 |
+[API V2 使用说明](api-v2-guide.md#当前支持哪些调用)列出原版路由、参数表与调用示例。`/docs` 和 `/openapi.json` 提供本服务的 GET 查询字段与 POST JSON 模型。
 
-`/docs` 与 `/openapi.json` 列出 GET 的全部查询字段及 POST JSON 模型。两种方式共用字段、默认值和校验；GET 的 `streaming_mode` 可传 `0` 至 `3` 或 `true` / `false`。权重及参考切换成功返回 `{"message":"success"}`；操作失败保留原版的固定 `message` 和 `Exception` 字段。当前原版代码只注册 GET `/control`，这里与之保持一致。
+嵌入 ASGI 应用时，进程控制由宿主提供回调。权重切换只影响当前服务会话；重启恢复启动配置。初始模型及准备环境通过配置提供，`/tts` 每次仍须传参考音频、转写与语言。
 
-嵌入 ASGI 应用时，进程控制需要宿主提供回调；默认不退出宿主进程。权重切换不会保存到启动配置，重启恢复配置中的路径。初始模型组合通过配置提供，权重切换接口不承担资源安装。
-
-```json
-{
-  "text": "こんにちは。今日はいい天気ですね。",
-  "text_lang": "ja",
-  "ref_audio_path": "D:/Voices/reference.wav",
-  "prompt_text": "参考音声です。",
-  "prompt_lang": "ja",
-  "parallel_infer": false,
-  "text_split_method": "cut5",
-  "seed": -1,
-  "media_type": "wav",
-  "streaming_mode": false
-}
-```
-
-与本次对照的原版 API 一样，`/tts` 仍要求 `ref_audio_path`，调用 `/set_refer_audio` 不会让该字段变成可选。服务没有角色、情绪或参考 ID 的注册前置步骤。已有部署包中的参考文件只作为匹配音频内容和模型身份的缓存，不作为默认选择。
-
-## 参数与已知差异
-
-| 能力 | 当前行为 |
-| --- | --- |
-| 字段和默认值 | 使用原版字段；`seed=-1`、`text_split_method=cut5`、`parallel_infer=true`、`batch_size=1` |
-| 分句 | `cut0` 至 `cut5`，沿用现有原版派生文本处理 |
-| 种子 | `-1` 生成随机种子；非负值可复用；NumPy 与 Torch 的同 seed 不保证相同序列 |
-| 采样 | Top-k、温度、重复惩罚；`top_p` 当前仅接受 `1`，此前数值边界问题尚未解决 |
-| 参考 | 单个原始音频及非空转写，`ja` / `all_ja`；新增音频由独立准备进程编码 |
-| 间隔 | `fragment_interval` 控制每片尾部静音，默认 `0.3` |
-| 音频 | WAV、RAW；OGG / AAC 需要 PATH 中的 FFmpeg，分别具备 `libvorbis` / `aac` 编码器；压缩码流不承诺逐字节等同原版 |
-| `streaming_mode=0/false` | 整条请求成功后返回完整音频 |
-| `streaming_mode=1/true` | 每片合成完成后立即返回；WAV 先发原版形式的空数据头，后续为 PCM |
-| `streaming_mode=2/3` | 尚未实现语义 token 流式，返回 400 |
-| 分桶 | 非流式默认 `split_bucket=true`，按规范化文本长度稳定排序推理，最后恢复原文音频顺序；模式 1 自动关闭分桶 |
-| 批处理 | 当前 `batch_size=1`，`batch_threshold` 不改变单项批次 |
-| 并行开关 | 当前仅支持显式 `parallel_infer=false`；`true` 和省略字段均返回 400 |
-| 语速、多参考、无转写、超采样 | 尚未实现，明确返回 400 |
-| 模型与语言 | Windows V2ProPlus 日文路径；其他版本、中文等仍需实现或验证 |
-| 精度 | 默认 FP32；原版 `is_half=true` 尚未对齐，不能直接映射为某个实验 FP16 开关 |
-
-`sample_steps` 对 V2ProPlus 不适用，`overlap_length` / `min_chunk_length` 对模式 0/1 不适用，保留原版字段，其数值不影响当前计算。参数非法、功能未实现或包含未知额外字段返回 400，Pydantic 类型错误返回 422。合成失败使用原版的 `message: tts failed` / `Exception` 结构。无对应路由的旧 API 请求返回 404；已有路径上的不支持方法返回 405，不转换成 V2 功能错误。
-
-此前 `parallel_infer` 和未知字段会被忽略。本次收紧后会明确拒绝这些请求，调用方需传 `parallel_infer=false` 并去掉未知字段。参数校验发生在提交推理工作前，managed 模式中的这类 400 不会唤醒推理进程。
-
-分桶会改变每句消耗随机数的顺序。先前版本忽略了该参数，本次修正后，多句非流式请求即使使用相同 seed，也可能生成不同音频；显式 `split_bucket=false` 保留原文推理顺序。报告的 `execution_order` 记录原文片段索引的执行顺序，`fragments` 和完整 PCM 按原文排列。此处对齐执行顺序，不表示 NumPy 与原版 Torch 采样逐值相同。
-
-## 语言选择与后续适配
-
-原版通过每次 `/tts` 请求中的 `text_lang` 和 `prompt_lang` 选择目标语言与参考转写语言，没有单独的语言切换接口。两个字段各自生效；更换参考语言时重新计算文本特征，音频条件可复用。当前可在 `ja`、`all_ja` 间切换，不能据此宣称已经支持中文或英文。
-
-| 原版语言模式 | 当前状态与下一步 |
-| --- | --- |
-| `ja` / `all_ja` | 日文处理已接入；两种路由仍可能保留英文段，遇英文处理器缺失明确报错 |
-| `en` | 下一步接英文规范化、G2P、词典和离线资源，同时补齐日英混合文本 |
-| `zh` / `all_zh` | 需要接通中文处理器、G2PW 与实际 BERT 特征执行，不能沿用日文零特征 |
-| `auto` | 中、英、日处理器齐备后，对齐自动识别与混合分段 |
-| `ko` / `all_ko`、`yue` / `all_yue`、`auto_yue` | 后续分别适配语言资源和原版路由 |
-
-每种新增语言同时验证目标文本、参考转写、同文本换语言、A→B→A 连续请求、失败后恢复，以及 Windows CUDA 生成与听音。HTTP 字段测试和离线前端对照不能替代实际语音验收。
+请求参数在提交推理工作前校验，managed 模式下被拒绝的请求不会唤醒推理进程。非流式分桶会按规范化文本长度排序并改变各句的随机数消耗顺序；显式 `split_bucket=false` 保留原文推理顺序。报告的 `execution_order` 记录实际执行顺序，`fragments` 与完整 PCM 按原文排列。
 
 ## 生命周期与输出
 
@@ -166,7 +98,7 @@ Invoke-RestMethod -Uri http://127.0.0.1:9880/runtime
 
 总耗时包含参考准备，输出 RTF 按包含句间静音的音频时长计算。非流式总耗时不含音频压缩和网络发送；流式总耗时包含片段编码及等待发送队列的时间。日志包含输入文本和本地路径。嵌入 ASGI 时由宿主配置 `sakuratts` 日志级别为 `INFO` 以显示内部进度；低级 SDK 默认保持安静。
 
-一个专用线程负责模型创建、推理、切换和关闭。正在计算或切换时，冲突操作返回 409；这是当前与原版不同的并发约束。模型格式检查失败时保留现有实例；旧 GPU 权重释放后发生的加载失败会使服务处于未加载状态，不能承诺自动恢复旧模型。
+一个专用线程负责模型创建、推理、切换和关闭。正在计算或切换时，冲突操作返回 409；这是当前与原版不同的并发约束。模型格式检查失败时保留现有实例；旧 GPU 权重释放后发生的加载失败会使服务处于未加载状态，需要重新加载模型。
 
 完整响应的 `X-SakuraTTS-Status` 区分 `completed` 和 `stopped_at_limit`。`X-SakuraTTS-Request-Ms` 包含本次参考解析和原生推理，音频压缩与网络发送不在其中。达到长度限制不表示内容完整。
 

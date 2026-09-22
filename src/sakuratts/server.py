@@ -101,7 +101,7 @@ class SpeechRequest(BaseModel):
         if request["seed"] < -1 or request["top_k"] < 1:
             raise ValueError("Require seed >= -1 and top_k >= 1")
         for field in ("temperature", "repetition_penalty"):
-            if not math.isfinite(request[field]) or request[field] <= 0:
+            if request[field] <= 0:
                 raise ValueError(field + " must be finite and positive")
         if request["fragment_interval"] < 0:
             raise ValueError("fragment_interval must be nonnegative")

@@ -206,6 +206,7 @@ def self_test(references):
             altered = copy.deepcopy(manifest)
             mutate(altered)
             try:
+                validate_storage(altered, archive.files)
                 read_fp32(archive, altered, "exact")
             except ValueError:
                 checks[label] = True

@@ -64,9 +64,18 @@ class PublicApiTests(unittest.TestCase):
                 run = Mock()
                 with patch.dict(sys.modules, {"sakuratts.server": SimpleNamespace(start_server=run)}):
                     self.assertEqual(main(["serve", "model", *extra]), 0)
-                run.assert_called_once_with("model", host="127.0.0.1", port=9880,
-                                            tts_config=None, experimental=None,
-                                            log_file=Path("logs/sakuratts.log"), log_level="info")
+                run.assert_called_once()
+                self.assertEqual(run.call_args.args, ("model",))
+                options = run.call_args.kwargs
+                self.assertEqual(options["host"], "127.0.0.1")
+                self.assertEqual(options["port"], 9880)
+                self.assertIsNone(options["tts_config"])
+                self.assertIsNone(options["experimental"])
+                self.assertEqual(options["log_file"], Path("logs/sakuratts.log"))
+                self.assertEqual(options["log_level"], "info")
+                for name, default in (("runtime_mode", "direct"), ("idle_sleep_seconds", 60.),
+                                      ("wake_timeout_seconds", 120.), ("operation_timeout_seconds", 300.)):
+                    self.assertEqual(options.get(name, default), default)
 
     def test_serve_managed_options_are_explicit_and_forwarded(self):
         for extra, expected in (
@@ -97,13 +106,19 @@ class PublicApiTests(unittest.TestCase):
         run = Mock(return_value="stopped")
         with patch.dict(sys.modules, {"sakuratts.server": SimpleNamespace(start_server=run)}):
             self.assertEqual(start_server("model"), "stopped")
-            run.assert_called_once_with("model", host="127.0.0.1", port=9880,
-                                        tts_config=None, experimental=None)
+            run.assert_called_once()
+            self.assertEqual(run.call_args.args, ("model",))
+            options = run.call_args.kwargs
+            for name, default in (("host", "127.0.0.1"), ("port", 9880), ("tts_config", None),
+                                  ("backend", None), ("experimental", None), ("runtime_mode", "direct"),
+                                  ("idle_sleep_seconds", 60.), ("wake_timeout_seconds", 120.),
+                                  ("operation_timeout_seconds", 300.)):
+                self.assertEqual(options.get(name, default), default)
             run.reset_mock()
             start_server("model", runtime_mode="managed", idle_sleep_seconds=12.,
                          wake_timeout_seconds=40., operation_timeout_seconds=80.)
             run.assert_called_once_with("model", host="127.0.0.1", port=9880,
-                                        tts_config=None, experimental=None, runtime_mode="managed",
+                                        tts_config=None, backend=None, experimental=None, runtime_mode="managed",
                                         idle_sleep_seconds=12., wake_timeout_seconds=40.,
                                         operation_timeout_seconds=80.)
 

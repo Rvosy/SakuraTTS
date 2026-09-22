@@ -177,9 +177,9 @@ def trim_main_runtime(plan):
 
 def make_plan(args):
     plan = Plan()
-    recipe = read_recipe(getattr(args, "recipe", None) or args.root / "packaging/recipes/windows-nvidia-ja.toml")
+    recipe = read_recipe(args.recipe or args.root / "packaging/recipes/windows-nvidia-ja.toml")
     plan.release = {key: recipe[key] for key in ("target", "backend", "languages", "services")}
-    plan.release["preparation"] = getattr(args, "preparation", None) is not None
+    plan.release["preparation"] = args.preparation is not None
     plan.workers = recipe["workers"]
     # Copy the base interpreter, never a venv trampoline or pyvenv.cfg.
     for name in ("python.exe", "python3.dll", "python311.dll", "vcruntime140.dll", "vcruntime140_1.dll", "LICENSE.txt"):
@@ -213,9 +213,8 @@ def make_plan(args):
     plan.add(args.root / "LICENSE", "licenses/SakuraTTS-LICENSE.txt", "sakuratts")
     for name in ("fp32.json", "fp16.json", "low-vram.json", "minimum-vram.json"):
         plan.add(args.root / "examples" / name, "configs/" + name, "inference-profiles")
-    preparation = getattr(args, "preparation", None)
-    if preparation is not None:
-        add_preparation(plan, preparation)
+    if args.preparation is not None:
+        add_preparation(plan, args.preparation)
     for name in ("acoustic", "frontend"):
         if plan.workers[name] not in plan.files:
             raise ValueError("Worker is missing from the selected release payload: " + name)
@@ -286,7 +285,7 @@ def assemble(args, plan):
     write(output / "runtime/main/python311._pth", ".\nDLLs\nLib\nLib/site-packages\n")
     # Marker read only by the explicit portable launcher.
     write(output / "runtime/portable.json", json.dumps({"format": "sakuratts-portable-v1",
-        "has_preparation": getattr(args, "preparation", None) is not None,
+        "has_preparation": plan.release["preparation"],
         "workers": plan.workers, "release": plan.release}))
     templates = args.root / "scripts/portable"
     for name in launch_files(plan.release):

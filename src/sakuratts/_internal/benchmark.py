@@ -14,7 +14,7 @@ def run(args, *, experimental=None):
     if output.exists():
         raise FileExistsError(output)
     started = time.perf_counter()
-    report = {"scope": "Complete non-streaming PCM; first request includes lazy GPU loads; no quality claim",
+    report = {"scope": "Complete non-streaming PCM; first request includes lazy GPU loads",
               "experimental": experimental or {}, "requests": []}
     options = {"backend": args.backend} if args.backend is not None else {}
     with Engine.load(args.model, experimental=experimental, **options) as engine:

@@ -1,6 +1,6 @@
 # 模型目录
 
-模型目录包含 `model.json`、`gpt/`、`acoustic/` 和 `frontend/`。`references/` 为可选参考缓存，允许模型完全不带参考条件。旧格式示例见 [model.example.json](../examples/model.example.json)。
+模型目录包含 `model.json`、`gpt/`、`acoustic/` 和 `frontend/`。`references/` 为可选参考缓存，允许模型完全不带参考条件。格式示例见 [model.example.json](../examples/model.example.json)，字段和路径检查由 [Model.load](../src/sakuratts/model.py) 定义。
 
 `format` 固定为 `sakuratts-model-v1`；`name` 是显示名称；`languages` 是非空语言名称数组；`backend.preferred` 是建议使用的后端名称，省略时为 `cuda`。当前可执行的公共组合是 `languages: ["ja"]` 与 `backend.preferred: "cuda"`。
 

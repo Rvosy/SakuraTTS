@@ -1,8 +1,8 @@
 # API V2 使用说明
 
-SakuraTTS 只以 GPT-SoVITS 的 `api_v2.py` 作为 HTTP 兼容目标。当前可用于 Windows / NVIDIA、V2ProPlus 模型的日文合成，尚未实现的 V2 功能返回 HTTP 400，后续逐项补齐。旧版 `api.py` 协议、Gradio 接口和原版 Python 调用接口不在兼容范围内。
+SakuraTTS 只以 GPT-SoVITS 的 `api_v2.py` 作为 HTTP 兼容目标。当前可用于 Windows / NVIDIA、V2ProPlus 模型的日文合成，尚未实现的 V2 功能返回 HTTP 400。旧版 `api.py` 协议、Gradio 接口和原版 Python 调用接口不在兼容范围内。
 
-这份文档用于客户端接入；部署细节见[快速开始](quickstart.md)，接口实现与生命周期见 [HTTP 兼容清单](http-api.md)。对照版本固定为 GPT-SoVITS [`48b1a016`](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/api_v2.py)。
+这份文档用于客户端接入；部署细节见[快速开始](quickstart.md)，接口实现与生命周期见 [HTTP 服务配置](http-api.md)。对照版本固定为 GPT-SoVITS [`48b1a016`](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/api_v2.py)。
 
 ## 启动服务
 
@@ -103,7 +103,7 @@ with urlopen("http://127.0.0.1:9880/tts?" + urlencode(params)) as response:
 
 ## `/tts` 参数支持表
 
-以下列出全部 24 个字段。默认值与固定原版一致；默认值本身不保证当前后端已实现该功能。GET 使用查询字符串，POST 使用 JSON 的字符串、数字、布尔值和数组。
+字段与默认值由 [server.SpeechRequest](../src/sakuratts/server.py) 定义，固定上游对照保存在 [API 快照](../tests/fixtures/gpt_sovits_api_v2.json)。下表说明各字段的使用方式；GET 使用查询字符串，POST 使用 JSON。
 
 ### 文本、语言与参考
 
@@ -187,8 +187,6 @@ call("/set_refer_audio", refer_audio_path="D:/Voices/character.wav")
 
 参数未实现通常可直接根据 400 修正调用；无法连接服务则应先查看启动终端和 `logs/sakuratts.log`。模型或配置加载失败可能使服务无法启动，不属于 HTTP 参数错误。
 
-## 能力与验证边界
+## 验证范围
 
-本表记录已接通的接口与明确拒绝的功能，不代表全部模型、硬件和音质都已验收。当前整链历史实测使用 Windows / NVIDIA、RTX 5060 8 GB、Sakura V2ProPlus 日文模型；其他模型家族、语言与设备仍需适配或验证。
-
-接口契约与错误分支有离线回归，按句流式和分桶也有编排测试；这些测试不替代目标机器上的 CUDA 推理和听音验收。FP16 声学仍有严格数值对照失败，OGG / AAC 还受本机编码器影响。实际证据与未验收项见[模型与功能验证矩阵](specs/compatibility-matrix.md)。
+设备、模型、数值失败和待验收项集中在[模型与功能验证矩阵](specs/compatibility-matrix.md)。接口与编排测试、CUDA 实测、ASR 和人工听音分别记录结果。

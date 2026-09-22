@@ -131,8 +131,7 @@ class MLXSoVITSDecoder:
             for kernel in range(1, self.kernels):
                 total = total + self.resblock(x, f"dec.resblocks.{index * self.kernels + kernel}")
             x = total / self.kernels
-            # Bound the lazy graph between upsampling stages. This is not a
-            # claim of in-place workspace reuse or a normal timing benchmark.
+            # Bound the lazy graph between upsampling stages.
             mx.eval(x)
             save(f"residual_{index}", x)
         # Official Generator omits negative_slope only on this final call;

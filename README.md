@@ -1,102 +1,56 @@
 # SakuraTTS
 
-面向 GPT-SoVITS 模型的独立推理后端，以原版 `api_v2.py` 和推理行为为兼容目标。HTTP 接受原版的文本、参考音频路径和采样参数；权重转换和参考编码在独立环境完成，主推理进程不导入 PyTorch。
+面向 GPT-SoVITS 模型的独立推理后端，提供 Python 引擎、命令行和兼容原版 `api_v2.py` 的 HTTP 服务。权重转换和新参考音频编码由独立准备进程完成，主推理进程不导入 PyTorch。
 
-当前接通 Windows / NVIDIA、V2ProPlus 日文单请求，以及原版 `streaming_mode=1` 的按句返回。未实现的 V2 功能返回 HTTP 400，后续逐项补齐；旧版 API 和 Gradio 不在兼容范围内。项目处于开发者预览阶段，不能视为完整替代原版。
+项目处于开发者预览阶段，公共入口支持 Windows / NVIDIA、V2ProPlus 日文单请求及按句流式返回。完整的接口能力见 [API V2 使用说明](docs/api-v2-guide.md)，设备、模型与音质的实测范围见[兼容矩阵](docs/specs/compatibility-matrix.md)。
 
-接入桌宠或其他客户端，请先读 [API V2 使用说明](docs/api-v2-guide.md)：包含支持表、全部参数、可复制示例和错误处理。当前请求必须显式设置 `parallel_infer=false`。
+## 快速开始
 
-面向桌宠等本地应用，优先控制显存和分发体积。[Windows / NVIDIA 整合包](docs/portable-bundle.md)可从本地文件离线构建，自带 Python 和推理依赖，以 7z 分发。完整包另带独立准备组件，用于自动转换原始权重和处理新参考音频；PyTorch 只在准备进程中使用。精简推理包可省去该组件。两种包都不捆绑发声模型或个人参考，其他设备仍需兼容验收。
+[Windows / NVIDIA 整合包](docs/portable-bundle.md)自带 Python 与运行依赖，完整包还带有模型转换和参考准备组件。解压后复制 `configs/tts_infer.example.yaml` 为 `configs/tts_infer.yaml`，填写自己的 GPT / SoVITS 权重路径，再运行 `start-server.bat`。模型与参考音频由使用者提供。
 
-发行内容由 [recipe](packaging/recipes/windows-nvidia-ja.toml) 组合，分别选择平台后端、语言、HTTP 服务和工作进程。当前可选择保留或省略 HTTP、准备组件；Windows / NVIDIA 日文仍是唯一接通的完整链路。增加中文、AMD、CPU 或 Apple 支持时，需实现对应前端或后端并补齐打包输入，不会把所有平台依赖塞进现有包。默认 direct + FP32 保持不变。
-
-## 安装
-
-在 Python 3.11 环境中，从仓库根目录安装：
+源码安装使用 Python 3.11：
 
 ```powershell
 python -m pip install ".[nvidia,japanese,server]"
 sakuratts doctor
 ```
 
-`server` 是可选依赖。不启动 HTTP 服务时可省略。声学 CUDA 和经典日文前端仍使用[单独准备的 Python 工作进程](docs/setup-ort-worker-offline.md)，不能只装上述依赖就开始推理。模型、字典和参考条件需事先准备，运行时不自动下载。
-
-## 准备模型
-
-已有预览版 `runtime.json` 可以直接传给新入口，也可以整理成一个模型目录：
+然后按[快速开始](docs/quickstart.md)准备模型、日文资源和独立工作进程，复制 [HTTP 配置示例](examples/tts_infer.example.yaml)并填写路径，启动服务：
 
 ```powershell
-sakuratts convert --config models/windows-sakura/runtime.json --output models/mika
-sakuratts doctor models/mika
+.\start-server.bat -c configs/tts_infer.yaml
 ```
 
-转换会复制 GPT、声学、前端和参考包，生成 `model.json`；共享的声学解释器使用明确路径引用。旧资源不被覆盖。从原始检查点转换，需要独立开发环境和受支持的官方源码；完整命令见[快速开始](docs/quickstart.md)。
-
-## 使用
-
-下面的低级 Python 和 `tts` 示例用于已经带参考条件的旧模型包。HTTP 请求使用原版的音频路径和转写，无需参考名称。
-
-```python
-from sakuratts import Engine
-
-with Engine.load("models/mika") as tts:
-    audio = tts.synthesize("こんにちは。今日はどんな一日でしたか。")
-    audio.save("hello.wav")
-    print(audio.report["status"])
-```
-
-```powershell
-sakuratts tts models/mika --text "こんにちは。" --output hello.wav
-sakuratts serve models/mika --host 127.0.0.1 --port 9880
-```
-
-推荐从 [tts_infer.example.yaml](examples/tts_infer.example.yaml) 配置模型和准备环境，再运行 `start-server.bat -c configs/tts_infer.yaml`。也支持 `python api_v2.py -a 127.0.0.1 -p 9880 -c configs/tts_infer.yaml`。终端显示加载和推理日志，按 `Ctrl+C` 退出并释放模型。
-
-无参数启动优先读取 `configs/tts_infer.yaml`，其次读取 `GPT_SoVITS/configs/tts_infer.yaml`；都不存在时服务保持未配置状态，不自动选择示例角色。显式传入现有模型目录仍可使用，新的原始参考音频需要配置独立准备环境。
-
-`serve` 提供原版 `GET/POST /tts`、权重切换、参考音频设置和进程控制接口，另有 `/health`、`/models` 和 `/docs`。此版本没有前端页面。
+将参考音频路径和转写替换为自己的内容：
 
 ```powershell
 curl.exe -X POST http://127.0.0.1:9880/tts -H "Content-Type: application/json" --data-raw '{"text":"こんにちは。","text_lang":"ja","ref_audio_path":"D:/Voices/reference.wav","prompt_text":"参考音声です。","prompt_lang":"ja","parallel_infer":false}' --output hello.wav
 ```
 
-各入口共用 Engine。一次只处理一条请求；服务忙碌时返回 HTTP 409。默认保留 FP32、baseline attention 和原采样参数。达到生成上限时，CLI 写出音频和报告后退出 `2`；HTTP 的 `X-SakuraTTS-Status` 返回 `stopped_at_limit`。
+请求须显式传 `parallel_infer=false`。默认服务地址为 `127.0.0.1:9880`，浏览器打开 `/docs` 查看接口；终端按 `Ctrl+C` 退出。客户端接入、流式读取与错误处理见 [API V2 使用说明](docs/api-v2-guide.md)。
 
-推理配置收敛为 **FP32、FP16 标准、FP16 低显存、FP16 极限**四档，配置文件、显存与耗时见[推理档位](docs/inference-profiles.md)。
+已有带参考条件的模型包也可直接调用 Python：
 
-## 支持与实测
+```python
+from sakuratts import Engine
 
-Windows 历史实测使用 RTX 5060 8 GB、Sakura V2ProPlus、日文非流式请求。声学 FP16 对官方 FP32 的严格数值对照仍有失败。ASR 辅助检查不能替代人工听感验收；中文整链、其他 GPU / 模型、语义 token 流式模式及宿主集成仍待实现或验证。性能条件和失败项见[兼容范围](docs/specs/compatibility-matrix.md)与[研究总结](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/reference-parity.md)。
-
-## 仓库导航
-
-```text
-src/sakuratts/  Engine、模型目录、转换器、CLI、HTTP 服务
-  frontend/    语言选择、日文链路；中文/G2PW 尚未接通，衍生代码在 _vendor/
-  backends/    后端选择、CUDA 实现、ONNX 组件及实验 MLX 代码
-  _internal/   推理步骤、模型校验、私有工作进程、离线转换
-start-server.bat  Windows 终端服务启动脚本
-examples/      Python、服务和模型描述示例
-benchmarks/    完整请求、官方对照入口及固定测试文本
-tests/         自动化回归
-docs/          部署、API、开发指南、Spec 与 ADR
-tools/         离线资源准备与高级维护工具
-scripts/       环境准备和预览版发布
-packaging/recipes/  发行组合与工作进程角色
-research/      研究归档及其测试，仅保留在 Git 仓库
-requirements/  已验证环境的冻结依赖快照
+with Engine.load("models/mika") as tts:
+    audio = tts.synthesize("こんにちは。")
+    audio.save("hello.wav")
 ```
 
-依赖声明以 `pyproject.toml` 为准，recipe 只选择组合；`build_portable.py --recipe` 的用法见[整合包构建](docs/portable-bundle.md#离线构建)。研究工具与原始证据不进入 wheel 或源码包；新的输出保存在被 Git 忽略的目录。全部文档见[文档索引](docs/README.md)，开发与上游取舍见[开发指南](docs/development.md)和[架构](docs/architecture.md)。
+## 文档与源码
 
-| 文档 | 内容 |
+| 需求 | 入口 |
 | --- | --- |
-| [快速开始](docs/quickstart.md) | 环境、模型转换、首次生成 |
-| [API V2 使用说明](docs/api-v2-guide.md) | 客户端接入、支持表、参数、调用示例与错误处理 |
-| [推理档位](docs/inference-profiles.md) | 四档配置、显存、耗时与旧配置迁移 |
-| [Python API](docs/python-api.md) / [HTTP API](docs/http-api.md) | 调用、输出、错误与生命周期 |
-| [模型目录](docs/model-format.md) | model.json、路径及身份校验 |
-| [架构](docs/architecture.md) / [开发](docs/development.md) | 模块职责、迁移和验证 |
-| [推理契约](docs/specs/inference-contract.md) / [兼容矩阵](docs/specs/compatibility-matrix.md) | 行为不变量与实测边界 |
+| 安装、模型准备与首次生成 | [快速开始](docs/quickstart.md) |
+| HTTP 客户端接入 | [API V2 使用说明](docs/api-v2-guide.md) |
+| 服务配置、休眠与提前唤醒 | [HTTP API](docs/http-api.md)、[后台运行](docs/background-runtime.md) |
+| 精度、显存与延迟取舍 | [推理档位](docs/inference-profiles.md) |
+| 嵌入 Python 或了解模型格式 | [Python API](docs/python-api.md)、[模型目录](docs/model-format.md) |
+| 修改代码与运行验证 | [开发指南](docs/development.md)、[架构](docs/architecture.md) |
+| 查找其他指南与规范 | [文档索引](docs/README.md) |
 
-项目代码采用 [MIT](LICENSE)。第三方代码和字典声明见 [docs/third-party](docs/third-party)，随 wheel 和源码包保留。源码许可不授予角色模型、参考音频或 NVIDIA 运行库的再分发权。
+运行代码在 `src/sakuratts/`，测试在 `tests/`，离线维护工具在 `tools/`，构建脚本在 `scripts/`。`research/` 保存实验工具和历史证据，仅随 Git 仓库提供；普通基准入口在 `benchmarks/`。
+
+项目代码采用 [MIT](LICENSE)。第三方代码和字典声明见 [docs/third-party](docs/third-party)。角色模型、参考音频和 NVIDIA 运行库适用各自的许可。
