@@ -27,7 +27,7 @@ class ServerTests(unittest.TestCase):
                 raise AssertionError("Unsupported requests must not reach inference")
         cases = [{key: value for key, value in REQUEST.items() if key != "parallel_infer"}]
         cases += [dict(REQUEST, **update) for update in (
-            {"parallel_infer": True}, {"text_lang": "zh"}, {"prompt_lang": "en"},
+            {"parallel_infer": True}, {"text_lang": "zh"}, {"prompt_lang": "ko"},
             {"top_p": .8}, {"speed_factor": 1.2}, {"batch_size": 2},
             {"streaming_mode": 2}, {"streaming_mode": 3}, {"prompt_text": ""},
             {"super_sampling": True}, {"unknown_option": "ignored before"})]
@@ -204,7 +204,8 @@ class ServerTests(unittest.TestCase):
                     on_fragment(result.pcm, result.sample_rate)
                 return result
         with patch("sakuratts.server.Inference", FakeInference), TestClient(create_app()) as client:
-            requests = [REQUEST]
+            requests = [REQUEST, dict(REQUEST, text_lang="auto", prompt_lang="en"),
+                        dict(REQUEST, text_lang="en", prompt_lang="auto")]
             for mode in (False, True, 0, 1):
                 requests.append(dict(REQUEST, streaming_mode=mode, media_type="raw", seed=42,
                     top_k=20, temperature=0.65, repetition_penalty=1.15, fragment_interval=0.2,

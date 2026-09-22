@@ -469,6 +469,19 @@ wheels = [
 ]
 
 [[package]]
+name = "inflect"
+version = "7.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "more-itertools", marker = "sys_platform == 'darwin' or sys_platform == 'win32'" },
+    { name = "typeguard", marker = "sys_platform == 'darwin' or sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/78/c6/943357d44a21fd995723d07ccaddd78023eace03c1846049a2645d4324a3/inflect-7.5.0.tar.gz", hash = "sha256:faf19801c3742ed5a05a8ce388e0d8fe1a07f8d095c82201eb904f5d27ad571f", size = 73751, upload-time = "2024-12-28T17:11:18.897Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8a/eb/427ed2b20a38a4ee29f24dbe4ae2dafab198674fe9a85e3d6adf9e5f5f41/inflect-7.5.0-py3-none-any.whl", hash = "sha256:2aea70e5e70c35d8350b8097396ec155ffd68def678c7ff97f51aa69c1d92344", size = 35197, upload-time = "2024-12-28T17:11:15.931Z" },
+]
+
+[[package]]
 name = "jieba-fast"
 version = "0.53"
 source = { registry = "https://pypi.org/simple" }
@@ -678,6 +691,15 @@ wheels = [
 ]
 
 [[package]]
+name = "more-itertools"
+version = "11.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/de/1d/f4da6f02cdffe04d6362210b807146a26044c88d839208aec273bb0d9184/more_itertools-11.1.0.tar.gz", hash = "sha256:48e8f4d9e7e5878571ecf6f2b4e57634f93cd474cc8cfbd2376f2d11b396e30d", size = 145772, upload-time = "2026-05-22T14:14:29.909Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/3d/1087453384dbde46a8c7f9356eead2c58be8a7bf156bca40243377c85715/more_itertools-11.1.0-py3-none-any.whl", hash = "sha256:4b65538ae22f6fed0ce4874efd317463a7489796a0939fa66824dd542125a192", size = 72226, upload-time = "2026-05-22T14:14:28.824Z" },
+]
+
+[[package]]
 name = "mpmath"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -745,6 +767,21 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/6a/51/63fe664f3908c97be9d2e4f1158eb633317598cfa6e1fc14af5383f17512/networkx-3.6.1.tar.gz", hash = "sha256:26b7c357accc0c8cde558ad486283728b65b6a95d85ee1cd66bafab4c8168509", size = 2517025, upload-time = "2025-12-08T17:02:39.908Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/9e/c9/b2622292ea83fbb4ec318f5b9ab867d0a28ab43c5717bb85b0a5f6b3b0a4/networkx-3.6.1-py3-none-any.whl", hash = "sha256:d47fbf302e7d9cbbb9e2555a0d267983d2aa476bac30e90dfbe5669bd57f3762", size = 2068504, upload-time = "2025-12-08T17:02:38.159Z" },
+]
+
+[[package]]
+name = "nltk"
+version = "3.9.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click", marker = "sys_platform == 'darwin' or sys_platform == 'win32'" },
+    { name = "joblib", marker = "sys_platform == 'darwin' or sys_platform == 'win32'" },
+    { name = "regex", marker = "sys_platform == 'darwin' or sys_platform == 'win32'" },
+    { name = "tqdm", marker = "sys_platform == 'darwin' or sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f9/76/3a5e4312c19a028770f86fd7c058cf9f4ec4321c6cf7526bab998a5b683c/nltk-3.9.2.tar.gz", hash = "sha256:0f409e9b069ca4177c1903c3e843eef90c7e92992fa4931ae607da6de49e1419", size = 2887629, upload-time = "2025-10-01T07:19:23.764Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/60/90/81ac364ef94209c100e12579629dc92bf7a709a84af32f8c551b02c07e94/nltk-3.9.2-py3-none-any.whl", hash = "sha256:1e209d2b3009110635ed9709a67a1a3e33a10f799490fa71cf4bec218c11c88a", size = 1513404, upload-time = "2025-10-01T07:19:21.648Z" },
 ]
 
 [[package]]
@@ -1230,6 +1267,11 @@ dev = [
     { name = "transformers", marker = "sys_platform == 'darwin' or sys_platform == 'win32'" },
     { name = "x-transformers", marker = "sys_platform == 'darwin' or sys_platform == 'win32'" },
 ]
+english = [
+    { name = "inflect", marker = "sys_platform == 'darwin' or sys_platform == 'win32'" },
+    { name = "nltk", marker = "sys_platform == 'darwin' or sys_platform == 'win32'" },
+    { name = "wordsegment", marker = "sys_platform == 'darwin' or sys_platform == 'win32'" },
+]
 japanese = [
     { name = "budoux", marker = "sys_platform == 'darwin' or sys_platform == 'win32'" },
     { name = "fast-langdetect", marker = "sys_platform == 'darwin' or sys_platform == 'win32'" },
@@ -1265,10 +1307,12 @@ requires-dist = [
     { name = "fastapi", marker = "extra == 'server'", specifier = "==0.141.1" },
     { name = "fasttext-predict", marker = "extra == 'japanese'", specifier = "==0.9.2.4" },
     { name = "httpx", marker = "extra == 'dev'", specifier = "==0.28.1" },
+    { name = "inflect", marker = "extra == 'english'", specifier = "==7.5.0" },
     { name = "jieba-fast", marker = "extra == 'chinese'", specifier = "==0.53" },
     { name = "librosa", marker = "extra == 'convert'", specifier = "==0.11.0" },
     { name = "mlx", marker = "sys_platform == 'darwin' and extra == 'mlx'", specifier = "==0.32.2" },
     { name = "mlx-metal", marker = "sys_platform == 'darwin' and extra == 'mlx'", specifier = "==0.32.2" },
+    { name = "nltk", marker = "extra == 'english'", specifier = "==3.9.2" },
     { name = "numpy", specifier = "==2.4.6" },
     { name = "nvidia-cublas-cu12", marker = "sys_platform == 'win32' and extra == 'nvidia'", specifier = "==12.9.2.10" },
     { name = "nvidia-cuda-nvrtc-cu12", marker = "sys_platform == 'win32' and extra == 'nvidia'", specifier = "==12.9.86" },
@@ -1291,9 +1335,10 @@ requires-dist = [
     { name = "tqdm", marker = "extra == 'server'", specifier = "==4.70.1" },
     { name = "transformers", marker = "extra == 'convert'", specifier = "==4.51.3" },
     { name = "uvicorn", marker = "extra == 'server'", specifier = "==0.53.0" },
+    { name = "wordsegment", marker = "extra == 'english'", specifier = "==1.3.1" },
     { name = "x-transformers", marker = "extra == 'convert'", specifier = "==2.28.8" },
 ]
-provides-extras = ["japanese", "nvidia", "server", "mlx", "chinese", "convert", "dev"]
+provides-extras = ["japanese", "nvidia", "english", "server", "mlx", "chinese", "convert", "dev"]
 
 [[package]]
 name = "scikit-learn"
@@ -1719,6 +1764,18 @@ wheels = [
 ]
 
 [[package]]
+name = "typeguard"
+version = "4.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions", marker = "sys_platform == 'darwin' or sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b4/de/4420db493fa8fc0856d5e5c1b159c63a323d2de2317babe36b01568928e8/typeguard-4.6.0.tar.gz", hash = "sha256:e7414f09111317de3e335de92cd397c5c0ca00b1cc1676de12e1d444a79b3f21", size = 82330, upload-time = "2026-07-26T08:40:23.207Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8f/eb/461d5f167b6f5c7d97696f397c82f82e3480e003fce3f0a1cd1dd26e2eb2/typeguard-4.6.0-py3-none-any.whl", hash = "sha256:79878165bb86f2cf5d41d159a0ff1792a796cf496882d2fe1b1c6c7049b9cdd7", size = 36884, upload-time = "2026-07-26T08:40:21.868Z" },
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1768,6 +1825,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b3/8f/705086c9d734d3b663af0e9bb3d4de6578d08f46b1b101c2442fd9aecaa2/win32_setctime-1.2.0.tar.gz", hash = "sha256:ae1fdf948f5640aae05c511ade119313fb6a30d7eabe25fef9764dca5873c4c0", size = 4867, upload-time = "2024-12-07T15:28:28.314Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e1/07/c6fe3ad3e685340704d314d765b7912993bcb8dc198f0e7a89382d37974b/win32_setctime-1.2.0-py3-none-any.whl", hash = "sha256:95d644c4e708aba81dc3704a116d8cbc974d70b3bdb8be1d150e36be6e9d1390", size = 4083, upload-time = "2024-12-07T15:28:26.465Z" },
+]
+
+[[package]]
+name = "wordsegment"
+version = "1.3.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/64/68/08112f4c2888f41520e54e2d0b22dcec5adb28cddf4eeca344eb9da04177/wordsegment-1.3.1.tar.gz", hash = "sha256:3dcc7cd1e9bba3f3ffe6a0e54d98377bc502fc34e9e9d8c8199ac5636924f023", size = 4828756, upload-time = "2018-07-07T03:51:29.142Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cf/6c/e6f4734d6f7d28305f52ec81377d7ce7d1856b97b814278e9960183235ad/wordsegment-1.3.1-py2.py3-none-any.whl", hash = "sha256:dd10e32fdb890079532ddffc1d179f839627af8345ecf52b84627a536449648d", size = 4827997, upload-time = "2018-07-07T03:51:19.955Z" },
 ]
 
 [[package]]

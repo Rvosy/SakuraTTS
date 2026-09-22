@@ -2,7 +2,7 @@
 
 模型目录包含 `model.json`、`gpt/`、`acoustic/` 和 `frontend/`。`references/` 为可选参考缓存，允许模型完全不带参考条件。格式示例见 [model.example.json](../examples/model.example.json)，字段和路径检查由 [Model.load](../src/sakuratts/model.py) 定义。
 
-`format` 固定为 `sakuratts-model-v1`；`name` 是显示名称；`languages` 是非空语言名称数组；`backend.preferred` 是建议使用的后端名称，省略时为 `cuda`。当前可执行的公共组合是 `languages: ["ja"]` 与 `backend.preferred: "cuda"`。
+`format` 固定为 `sakuratts-model-v1`；`name` 是显示名称；`languages` 是非空语言名称数组；`backend.preferred` 是建议使用的后端名称，省略时为 `cuda`。当前公共后端为 `cuda`；日文资源包声明 `["ja"]`，加入[英文资源](english-frontend.md)后可声明 `["ja", "en"]`。
 
 元数据可以描述未来的语言或后端。`Model.load` 检查字段和资源路径，`Model.info()` 返回这些声明；执行支持由 `Engine.load` 的后端选择与前端装配判断。`sakuratts capabilities` 列出已实现能力。修改声明不会转换权重或增加新的语言资源，尚未实现的组合会明确报错。
 

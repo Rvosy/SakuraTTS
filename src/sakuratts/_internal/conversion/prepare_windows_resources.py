@@ -174,10 +174,19 @@ def prepare_frontend(root, output, language_model=None, preflight=None):
             raise ValueError("Existing frontend package belongs to different official sources")
         if manifest.get("japanese_g2p") != profile:
             raise ValueError("Existing frontend package uses a different Japanese G2P profile; choose a new output directory")
-        if set(manifest["files"]) != {"symbols-v2.json", "user.dict", "lid.176.bin", *classic_files}:
+        english_files = set()
+        if "english_g2p" in manifest:
+            if manifest["english_g2p"] != {"implementation": "gpt-sovits-english-v1", "directory": "english"}:
+                raise ValueError("Unsupported English frontend profile")
+            english_files = {name for name in manifest["files"] if name.startswith("english/")}
+            if not {"english/g2p.json", "english/checkpoint.npz"}.issubset(english_files):
+                raise ValueError("Incomplete English frontend resources")
+        if set(manifest["files"]) != {"symbols-v2.json", "user.dict", "lid.176.bin", *classic_files, *english_files}:
             raise ValueError("Existing frontend package has a different resource inventory")
         for name in manifest["files"]:
             spec = manifest["files"][name]
+            if output not in (output / name).resolve(strict=True).parents:
+                raise ValueError("Frontend resources must remain inside their package")
             if digest(output / name) != spec["sha256"] or (output / name).stat().st_size != spec["bytes"]:
                 raise ValueError("Existing frontend package is damaged: " + name)
         if digest(output / "user.dict") != digest(user / "user.dict"):

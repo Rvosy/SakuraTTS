@@ -14,3 +14,7 @@ class JapaneseProcessor:
     def features(self, phones, word2ph, normalized):
         # The official Japanese input has no BERT model dependency.
         return np.zeros((1024, len(phones)), dtype=np.float32)
+
+
+class EnglishProcessor(JapaneseProcessor):
+    """English also uses zero BERT features in the upstream V2 frontend."""

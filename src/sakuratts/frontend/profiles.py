@@ -15,13 +15,18 @@ class LanguageProfile:
 JAPANESE = LanguageProfile(
     "ja", "Japanese", ("ja", "all_ja"), "。", "sakuratts-japanese-frontend-resources-v1",
 )
-LANGUAGE_PROFILES = {JAPANESE.code: JAPANESE}
+ENGLISH = LanguageProfile(
+    "en", "English", ("en",), ".", "sakuratts-japanese-frontend-resources-v1",
+)
+LANGUAGE_PROFILES = {profile.code: profile for profile in (JAPANESE, ENGLISH)}
 SUPPORTED_LANGUAGES = tuple(LANGUAGE_PROFILES)
-SUPPORTED_LANGUAGE_MODES = tuple(mode for profile in LANGUAGE_PROFILES.values() for mode in profile.modes)
+SUPPORTED_LANGUAGE_MODES = tuple(mode for profile in LANGUAGE_PROFILES.values() for mode in profile.modes) + ("auto",)
 DEFAULT_LANGUAGE = JAPANESE.code
 
 
 def language_profile(mode):
+    if mode == "auto":
+        return JAPANESE
     for profile in LANGUAGE_PROFILES.values():
         if mode in profile.modes:
             return profile

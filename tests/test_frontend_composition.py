@@ -37,7 +37,7 @@ class FrontendCompositionTests(unittest.TestCase):
             config = json.loads(config_path.read_text())
             config["languages"] = ["ja", "zh"]
             with patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P") as worker:
-                with self.assertRaisesRegex(ValueError, "Japanese.*only"):
+                with self.assertRaisesRegex(ValueError, "ja.*only"):
                     load_frontend(config_path, config, path.parent, manifest)
                 worker.assert_not_called()
 
@@ -67,6 +67,52 @@ class FrontendCompositionTests(unittest.TestCase):
         with self.assertRaisesRegex(NotImplementedError, "en"):
             frontend.segment("今日はhello", "all_ja")
         processor.clean.assert_not_called()
+
+    def test_mixed_routing_preserves_languages_and_features(self):
+        def processor(phone):
+            return SimpleNamespace(clean=lambda text: ([phone] * 6, None, text),
+                features=lambda phones, *_: np.zeros((1024, len(phones)), dtype=np.float32))
+        segments = [{"lang": "ja", "text": "今日は"}, {"lang": "en", "text": "Hello!"}]
+        router = Mock(return_value=segments)
+        frontend = TextFrontend({"ja": processor("a"), "en": processor("HH")}, ["UNK", "a", "HH"], router)
+        for mode in ("ja", "all_ja", "auto"):
+            result = frontend.segment("今日はHello!", mode)
+            self.assertEqual(result["phones"], [1] * 6 + [2] * 6)
+            self.assertEqual([s["language"] for s in result["segments"]], ["ja", "en"])
+            self.assertEqual(result["norm_text"], "今日はHello!")
+            np.testing.assert_array_equal(result["bert_features"], np.zeros((1024, 12)))
+        router.reset_mock()
+        self.assertEqual(frontend.segment("Hello!", "en")["phones"], [2] * 6)
+        router.assert_not_called()
+        router.return_value = [{"lang": "zh", "text": "你好"}]
+        with self.assertRaisesRegex(NotImplementedError, "zh"):
+            frontend.segment("你好", "auto")
+
+    def test_english_resources_are_loaded_only_when_declared_and_verified(self):
+        from sakuratts._internal.reference_condition import sha256_file
+        with tempfile.TemporaryDirectory() as folder:
+            config_path, path, manifest = fixture(Path(folder))
+            config = json.loads(config_path.read_text())
+            config["languages"] = ["ja", "en"]
+            english = path.parent / "english"
+            english.mkdir()
+            for name in ("g2p.json", "checkpoint.npz"):
+                resource = english / name
+                resource.write_bytes(b"test")
+                manifest["files"]["english/" + name] = {"bytes": 4, "sha256": sha256_file(resource)}
+            manifest["english_g2p"] = {"implementation": "gpt-sovits-english-v1", "directory": "english"}
+            with patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P"), \
+                    patch("sakuratts.frontend.text_frontend.LanguageSegmenter"), \
+                    patch("sakuratts.frontend.english.EnglishG2P") as g2p:
+                frontend = load_frontend(config_path, config, path.parent, manifest)
+                self.assertEqual(set(frontend.text.processors), {"ja", "en"})
+                self.assertEqual(g2p.call_args.args[0], english)
+                frontend.close()
+                (english / "g2p.json").write_bytes(b"corrupt")
+                g2p.reset_mock()
+                with self.assertRaisesRegex(ValueError, "checksum"):
+                    load_frontend(config_path, config, path.parent, manifest)
+                g2p.assert_not_called()
 
 
 if __name__ == "__main__":

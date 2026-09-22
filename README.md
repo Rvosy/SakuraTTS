@@ -2,7 +2,7 @@
 
 面向 GPT-SoVITS 模型的独立推理后端，提供 Python 引擎、命令行和兼容原版 `api_v2.py` 的 HTTP 服务。权重转换和新参考音频编码由独立准备进程完成，主推理进程不导入 PyTorch。
 
-项目处于开发者预览阶段，公共入口支持 Windows / NVIDIA、V2ProPlus 日文单请求及按句流式返回。完整的接口能力见 [API V2 使用说明](docs/api-v2-guide.md)，设备、模型与音质的实测范围见[兼容矩阵](docs/specs/compatibility-matrix.md)。
+项目处于开发者预览阶段，公共入口支持 Windows / NVIDIA、V2ProPlus 日文单请求及按句流式返回；增加[英文资源](docs/english-frontend.md)后支持英文与日英混合。完整的接口能力见 [API V2 使用说明](docs/api-v2-guide.md)，设备、模型与音质的实测范围见[兼容矩阵](docs/specs/compatibility-matrix.md)。
 
 ## 快速开始
 

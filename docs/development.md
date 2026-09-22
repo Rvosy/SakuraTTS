@@ -3,7 +3,7 @@
 先读与改动相关的 [Spec](specs/)、[ADR](adr/) 和测试。依赖声明在 [pyproject.toml](../pyproject.toml)；`requirements/` 是此前实测环境的冻结快照，不能当作额外功能声明。运行、转换与私有声学解释器仍分开安装。
 
 ```powershell
-python -m pip install -e ".[japanese,dev,server]"
+python -m pip install -e ".[japanese,english,dev,server]"
 python -m unittest discover -s tests
 python research/run_tests.py  # 仅 Git checkout，验证实验工具
 python benchmarks/run.py models/mika --text "こんにちは。" --output outputs/benchmark.json

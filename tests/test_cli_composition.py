@@ -72,8 +72,8 @@ assert not set(('numpy', 'torch', 'cupy', 'mlx', 'onnxruntime', 'pyopenjtalk',
         self.assertEqual(result.returncode, 0, result.stderr)
         capabilities = json.loads(result.stdout)
         self.assertEqual(capabilities["backends"], ["cuda"])
-        self.assertEqual(capabilities["languages"], ["ja"])
-        self.assertEqual(capabilities["language_modes"], ["ja", "all_ja"])
+        self.assertEqual(capabilities["languages"], ["ja", "en"])
+        self.assertEqual(capabilities["language_modes"], ["ja", "all_ja", "en", "auto"])
 
     def test_tts_passes_explicit_backend_and_language_to_the_public_engine(self):
         with tempfile.TemporaryDirectory() as temporary:

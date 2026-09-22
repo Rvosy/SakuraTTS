@@ -1,4 +1,4 @@
-"""One Japanese request using an offline prepared V2Pro reference.
+"""One supported-language request using an offline prepared V2Pro reference.
 
 This composition has no file or backend imports. Models and the real text
 frontend are supplied by the caller. Saved target features/tokens are never an
@@ -79,7 +79,7 @@ def single_fragment_pcm(waveform, sample_rate, fragment_interval=0.3):
 def _validate_model(reference, name, manifest):
     identity = reference.manifest["identity"]
     if identity["reference_language"] not in SUPPORTED_LANGUAGE_MODES:
-        raise ValueError("Only a prepared Japanese reference is currently supported")
+        raise ValueError("Unsupported prepared reference language: " + identity["reference_language"])
     if (manifest["source"]["checkpoint_sha256"] != identity[name + "_checkpoint_sha256"]
             or manifest["source"]["official_commit"] != identity["official_commit"]):
         raise ValueError(f"Loaded {name} model differs from the prepared reference")

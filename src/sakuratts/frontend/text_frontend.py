@@ -3,7 +3,7 @@
 Derived from GPT-SoVITS 48b1a0169a28582a8984402f82cf438d3bfa6aca:
 TextPreprocessor.py, text_segmentation_method.py and text/LangSegmenter/langsegmenter.py.
 MIT, Copyright (c) 2024 RVC-Boss; see docs/third-party/GPT-SoVITS-LICENSE.txt.
-Only Japanese phone and feature preparation is currently supported.
+Japanese and English phone and feature preparation are supported.
 The original split-lang/full-fastText routing remains active for every mode.
 """
 
@@ -425,6 +425,10 @@ def route_text(text, language, segmenter):
     """Apply the official mode rules to real LanguageSegmenter results."""
     profile = language_profile(language)
     text = re.sub(r" {2,}", " ", text)
+    if language == "en":
+        return [{"lang": "en", "text": text}]
+    if language == "auto":
+        return segmenter(text)
     if language.startswith("all_"):
         return segmenter(text, profile.code)
     result = []

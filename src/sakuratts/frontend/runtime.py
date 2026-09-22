@@ -23,13 +23,16 @@ class FrontendRuntime:
 def load_frontend(config_path, config, package, manifest):
     """Construct only the implementation declared by this resource package."""
     from .text_frontend import LanguageSegmenter, TextFrontend
-    from .processors import JapaneseProcessor
+    from .processors import JapaneseProcessor, EnglishProcessor
     from sakuratts._internal.reference_condition import sha256_file
 
     if manifest["format"] != JAPANESE.resource_format:
         raise ValueError("Unsupported frontend resource package")
-    if set(config.get("languages", (JAPANESE.code,))) != {JAPANESE.code}:
-        raise ValueError("This frontend resource package provides Japanese (ja) only")
+    languages = {JAPANESE.code}
+    if "english_g2p" in manifest:
+        languages.add("en")
+    if not set(config.get("languages", (JAPANESE.code,))).issubset(languages):
+        raise ValueError("This frontend resource package provides " + ", ".join(sorted(languages)) + " only")
     root = Path(config_path).parent
     package = Path(package).resolve()
     if not {"symbols-v2.json", "user.dict", "lid.176.bin"}.issubset(manifest["files"]):
@@ -67,7 +70,16 @@ def load_frontend(config_path, config, package, manifest):
             raise ValueError("Unsupported Japanese frontend implementation")
         segmenter = LanguageSegmenter(package)
         symbols = json.loads((package / "symbols-v2.json").read_text(encoding="utf-8"))
-        text = TextFrontend({JAPANESE.code: JapaneseProcessor(japanese)}, symbols, segmenter)
+        processors = {JAPANESE.code: JapaneseProcessor(japanese)}
+        if "english_g2p" in manifest:
+            from .english import EnglishG2P
+            english = manifest["english_g2p"]
+            if english != {"implementation": "gpt-sovits-english-v1", "directory": "english"}:
+                raise ValueError("Unsupported English frontend profile")
+            if not {"english/g2p.json", "english/checkpoint.npz"}.issubset(manifest["files"]):
+                raise ValueError("Incomplete English frontend resources")
+            processors["en"] = EnglishProcessor(EnglishG2P(package / "english", symbols))
+        text = TextFrontend(processors, symbols, segmenter)
         return FrontendRuntime(text, (japanese, segmenter), profile)
     except BaseException as error:
         for component in (segmenter, japanese):

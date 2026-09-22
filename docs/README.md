@@ -6,6 +6,7 @@
 | --- | --- |
 | 安装与首次生成 | [快速开始](quickstart.md) |
 | HTTP 客户端接入与当前能力表 | [API V2 使用说明](api-v2-guide.md) |
+| 英文与日英混合资源准备 | [英文前端](english-frontend.md) |
 | Windows 模型与运行资源准备 | [Windows 指南](setup-windows-nvidia.md)、[独立 ORT 组件](setup-ort-worker-offline.md) |
 | 精度、显存和延迟取舍 | [推理档位](inference-profiles.md) |
 | 模型目录与路径校验 | [模型格式](model-format.md) |

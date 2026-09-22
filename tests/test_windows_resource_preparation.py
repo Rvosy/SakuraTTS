@@ -17,6 +17,26 @@ spec.loader.exec_module(prepare)
 
 
 class WindowsResourcePreparationTests(unittest.TestCase):
+    def test_new_reference_preparation_reuses_english_frontend_without_rewriting_it(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root, _, language = self.fixture(directory)
+            output = Path(directory) / "frontend"
+            with patch.object(prepare, "LID_BYTES", language.stat().st_size), patch.object(prepare, "LID_SHA256", prepare.digest(language)):
+                manifest = prepare.prepare_frontend(root, output)
+                (output / "english").mkdir()
+                for name in ("g2p.json", "checkpoint.npz"):
+                    path = output / "english" / name
+                    path.write_bytes(b"english fixture")
+                    manifest["files"]["english/" + name] = {"bytes": path.stat().st_size, "sha256": prepare.digest(path)}
+                manifest["english_g2p"] = {"implementation": "gpt-sovits-english-v1", "directory": "english"}
+                prepare.write_json(output / "manifest.json", manifest)
+                before = (output / "manifest.json").read_bytes()
+                self.assertEqual(prepare.prepare_frontend(root, output), manifest)
+                self.assertEqual((output / "manifest.json").read_bytes(), before)
+                (output / "english/checkpoint.npz").write_bytes(b"broken")
+                with self.assertRaisesRegex(ValueError, "damaged"):
+                    prepare.prepare_frontend(root, output)
+
     def test_worker_network_guard_blocks_connections_before_they_are_made(self):
         code = ("import runpy,socket; m=runpy.run_path(" + repr(str(SCRIPT)) + "); "
                 "m['disable_network'](); socket.socket().connect(('127.0.0.1', 1))")

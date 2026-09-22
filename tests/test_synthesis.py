@@ -199,7 +199,7 @@ class SynthesisTests(unittest.TestCase):
 
     def test_unvalidated_reference_language_is_rejected_before_frontend(self):
         self.reference.manifest["identity"]["reference_language"] = "zh"
-        with self.assertRaisesRegex(ValueError, "Japanese reference"):
+        with self.assertRaisesRegex(ValueError, "Unsupported prepared reference language: zh"):
             self.request()
         self.assertFalse(hasattr(self.frontend, "request"))
 

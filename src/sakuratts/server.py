@@ -393,27 +393,22 @@ def create_app(model=None, *, tts_config=None, backend=None, experimental=None, 
             return error_response(error)
         if values["streaming_mode"]:
             return await stream_tts(values, connection)
-        stop = threading.Event() if app.state.runtime is not None else None
-        cancelled = stop.is_set if stop is not None else None
+        stop = threading.Event()
+        cancelled = stop.is_set
         operation = partial(run_synthesis, values, cancel_requested=cancelled)
         job = start_job(operation, cancel_requested=cancelled, cancel_event=stop)
         if job is None:
             return busy_response()
-        if stop is not None:
-            app.state.streams.add(stop)
+        app.state.streams.add(stop)
         try:
-            if stop is None:
-                audio, data = await asyncio.shield(job)
-            else:
-                disconnected, result = await wait_with_disconnect(job, connection, stop)
-                if disconnected:
-                    return Response(status_code=499)
-                audio, data = result
+            disconnected, result = await wait_with_disconnect(job, connection, stop)
+            if disconnected:
+                return Response(status_code=499)
+            audio, data = result
         except Exception as error:
             return error_response(error, synthesis=True)
         finally:
-            if stop is not None:
-                app.state.streams.discard(stop)
+            app.state.streams.discard(stop)
         return Response(data, media_type="audio/" + values["media_type"], headers={
             "X-SakuraTTS-Status": audio.report["status"],
             "X-SakuraTTS-Request-Ms": str(round(audio.report["request_ms"], 2)), "Cache-Control": "no-store"})
@@ -481,14 +476,11 @@ def create_app(model=None, *, tts_config=None, backend=None, experimental=None, 
                     await asyncio.gather(pending, return_exceptions=True)
 
         try:
-            if app.state.runtime is None:
-                first = await queue.get()
-            else:
-                first_task = asyncio.create_task(receive_item())
-                disconnected, first = await wait_with_disconnect(first_task, connection, stop, cancel_wait=True)
-                if disconnected:
-                    app.state.streams.discard(stop)
-                    return Response(status_code=499)
+            first_task = asyncio.create_task(receive_item())
+            disconnected, first = await wait_with_disconnect(first_task, connection, stop, cancel_wait=True)
+            if disconnected:
+                app.state.streams.discard(stop)
+                return Response(status_code=499)
         except BaseException:
             stop.set()
             app.state.streams.discard(stop)

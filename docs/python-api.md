@@ -29,7 +29,7 @@ start_server("models/sakura", runtime_mode="managed", idle_sleep_seconds=60,
 
 HTTP 的总体 `policy="staged"` 仅允许显式启用的 `managed` 模式。可读取 `examples/minimum-vram.json`，通过 `start_server("MODEL", experimental=options, runtime_mode="managed")` 使用 H 档，模型须匹配 FP16 chunk256 声学包。此时 `/runtime.preparation="runtime_init"`，`awake` 表示推理进程、前端和配置已准备；GPU 权重在执行时交替加载，`model_loaded` 始终为 `false`。其他档位仍为 `preparation="model_load"`，加载步骤完成后 `model_loaded=true`。`direct` 的加载时机和策略限制保持不变。
 
-`synthesize` 可指定 `reference`、`seed`、`language`（`ja` / `all_ja`）、`split_method`（`cut0` 至 `cut5`，默认 `cut0`）、`top_k`、`temperature`、`repetition_penalty`、`early_stop_num` 和 `cancel_requested`。完整签名与默认值见 [Engine.synthesize](../src/sakuratts/engine.py)。NumPy 与官方 Torch 使用不同随机数实现。
+`synthesize` 可指定 `reference`、`seed`、`language`（见[语言能力与资源要求](english-frontend.md)）、`split_method`（`cut0` 至 `cut5`，默认 `cut0`）、`top_k`、`temperature`、`repetition_penalty`、`early_stop_num` 和 `cancel_requested`。完整签名与默认值见 [Engine.synthesize](../src/sakuratts/engine.py)。NumPy 与官方 Torch 使用不同随机数实现。
 
 `tts` CLI 可通过 `--split-method cut5` 按标点分句，默认仍为 `cut0`。当前只提供 FP32、FP16 标准、FP16 低显存、FP16 极限[四档配置](inference-profiles.md)，分句作为独立选项。历史实验和实测范围见[低显存报告](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/low-vram-20260921.md)。
 

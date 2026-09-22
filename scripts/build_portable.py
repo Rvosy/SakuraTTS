@@ -18,7 +18,7 @@ from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 
 BACKEND_EXTRAS = {("windows-x64", "cuda"): "nvidia"}
-LANGUAGE_EXTRAS = {"ja": "japanese"}
+LANGUAGE_EXTRAS = {"ja": "japanese", "en": "english"}
 SERVICE_EXTRAS = {"http": "server"}
 
 
@@ -27,8 +27,8 @@ def read_recipe(path):
     recipe = tomllib.loads(Path(path).read_text(encoding="utf-8"))
     if (recipe["target"], recipe["backend"]) not in BACKEND_EXTRAS:
         raise ValueError("Portable assembly currently implements only windows-x64 with backend cuda")
-    if not recipe["languages"] or set(recipe["languages"]) - LANGUAGE_EXTRAS.keys():
-        raise ValueError("Portable assembly currently implements only the ja language component")
+    if "ja" not in recipe["languages"] or set(recipe["languages"]) - LANGUAGE_EXTRAS.keys():
+        raise ValueError("Portable language components require ja, with optional en")
     if set(recipe["services"]) - SERVICE_EXTRAS.keys():
         raise ValueError("Unknown service component; supported services: http")
     return {key: recipe[key] for key in ("target", "backend", "languages", "services", "workers")}

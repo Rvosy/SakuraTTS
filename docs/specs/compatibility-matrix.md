@@ -6,8 +6,8 @@
 
 | 项目 | 公共入口的范围 |
 | --- | --- |
-| 设备与模型 | Windows / NVIDIA CUDA，V2ProPlus 日文路径 |
-| 语言 | `ja`、`all_ja`；英文、中文及其他语言处理器尚未接入，日文夹英文可能进入未实现的分支 |
+| 设备与模型 | Windows / NVIDIA CUDA，V2ProPlus |
+| 语言 | `ja`、`all_ja`、`en`、`auto`；英文段需要[英文依赖与资源包](../english-frontend.md)，`auto` 检测到其他语言时明确报错 |
 | HTTP | GPT-SoVITS 固定版本 API V2；单活动请求，完整音频及按句流式 |
 | 精度 | 默认 GPT / 声学 FP32；FP16 为显式实验档位，选择条件见[推理档位](../inference-profiles.md) |
 | 生命周期 | 默认 `direct`；可选 `managed` 提供提前唤醒、保活与空闲休眠 |

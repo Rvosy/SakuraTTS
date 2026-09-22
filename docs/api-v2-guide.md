@@ -1,6 +1,6 @@
 # API V2 使用说明
 
-SakuraTTS 只以 GPT-SoVITS 的 `api_v2.py` 作为 HTTP 兼容目标。当前可用于 Windows / NVIDIA、V2ProPlus 模型的日文合成，尚未实现的 V2 功能返回 HTTP 400。旧版 `api.py` 协议、Gradio 接口和原版 Python 调用接口不在兼容范围内。
+SakuraTTS 只以 GPT-SoVITS 的 `api_v2.py` 作为 HTTP 兼容目标。当前可用于 Windows / NVIDIA、V2ProPlus 模型的日文合成，加入[英文资源](english-frontend.md)后可处理英文与日英混合。尚未实现的 V2 功能返回 HTTP 400。旧版 `api.py` 协议、Gradio 接口和原版 Python 调用接口不在兼容范围内。
 
 这份文档用于客户端接入；部署细节见[快速开始](quickstart.md)，接口实现与生命周期见 [HTTP 服务配置](http-api.md)。对照版本固定为 GPT-SoVITS [`48b1a016`](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/api_v2.py)。
 
@@ -110,13 +110,13 @@ with urlopen("http://127.0.0.1:9880/tts?" + urlencode(params)) as response:
 | 字段 | 默认值 | 当前行为 |
 | --- | --- | --- |
 | `text` | `null` | 必须传非空目标文本 |
-| `text_lang` | `null` | 必须传 `ja` 或 `all_ja`；其他语言返回 400 |
+| `text_lang` | `null` | `ja`、`all_ja`、`en` 或 `auto`；英文段需配置英文资源 |
 | `ref_audio_path` | `null` | 必须传服务端可读的参考音频路径 |
 | `aux_ref_audio_paths` | `null` | 多参考未实现；`null` / 空数组可用，非空数组返回 400 |
-| `prompt_lang` | `null` | 必须传 `ja` 或 `all_ja`，独立于目标语言生效 |
+| `prompt_lang` | `null` | 同上，独立于目标语言生效 |
 | `prompt_text` | `""` | 当前必须传参考音频的非空转写；无转写推理返回 400 |
 
-切换语言通过每次请求的 `text_lang` / `prompt_lang` 完成，没有单独的语言切换路由。当前只能在 `ja` 和 `all_ja` 间选择；英语、中文、韩语、粤语和自动多语言模式尚未接入。日文夹英文也可能进入未实现的英文处理分支而返回 400，`all_ja` 不能保证绕过该限制。
+切换语言通过每次请求的 `text_lang` / `prompt_lang` 完成，没有单独的语言切换路由。英文与日英混合的依赖、资源准备和 `auto` 检测限制见[英文前端](english-frontend.md)。中文、韩语和粤语处理器尚未接入，检测到这些语言段会返回 400。
 
 ### 分句与采样
 
