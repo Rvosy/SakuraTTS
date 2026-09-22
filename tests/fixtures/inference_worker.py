@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import threading
 import time
 
 import numpy as np
@@ -22,10 +23,13 @@ class FakeInference:
         self.reference_audio = None
         self.model = None
         self.children = []
+        self.close_gate = None
         if model is not None:
             self._activate(model if isinstance(model, Model) else Model(Path(model), {"name": "initial"}))
         if tts_config:
             config = json.loads(Path(tts_config).read_text(encoding="utf-8"))
+            if config.get("block_close"):
+                self.close_gate = threading.Event()
             if config.get("sleep"):
                 time.sleep(config["sleep"])
             if config.get("error"):
@@ -83,6 +87,9 @@ class FakeInference:
         self.reference_audio = path
 
     def close(self):
+        if self.close_gate is not None:
+            logging.getLogger("sakuratts.fixture").info("Cleanup started")
+            self.close_gate.wait()
         # Intentionally leave descendants alive to exercise process-tree ownership.
         self.model = None
 

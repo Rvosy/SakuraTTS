@@ -36,6 +36,7 @@ def main(inference_factory=None):
     logging.getLogger("sakuratts").setLevel(logging.DEBUG)
     commands = queue.Queue(maxsize=1)
     state = {"id": None, "cancel": threading.Event()}
+    shutdown_complete = threading.Event()
 
     def read_commands():
         try:
@@ -50,7 +51,9 @@ def main(inference_factory=None):
                 cancellation = threading.Event()
                 state.update(id=metadata.get("id"), cancel=cancellation)
                 commands.put((metadata, cancellation))
-        except (EOFError, OSError, ValueError):
+        except (EOFError, OSError, ValueError) as error:
+            if isinstance(error, EOFError) and shutdown_complete.is_set():
+                return
             # On POSIX, pipe EOF is also the parent-death notification. On Windows
             # the parent's noninheritable Job Object owns the complete tree.
             if os.name != "nt":
@@ -67,7 +70,8 @@ def main(inference_factory=None):
     import numpy as np
     state["id"] = initial.get("id")
     commands.put((initial, state["cancel"]))
-    threading.Thread(target=read_commands, daemon=True, name="sakuratts-control").start()
+    control_thread = threading.Thread(target=read_commands, daemon=True, name="sakuratts-control")
+    control_thread.start()
     inference = None
 
     def snapshot():
@@ -130,6 +134,8 @@ def main(inference_factory=None):
                     raise ValueError("Inference worker has not been initialized")
                 elif operation == "shutdown":
                     inference.close()
+                    inference = None
+                    shutdown_complete.set()
                     send({"id": serial, "type": "result", "info": None})
                     break
                 elif operation == "set_weights":
@@ -160,13 +166,18 @@ def main(inference_factory=None):
                 if info is not None:
                     reply["snapshot"] = snapshot()
                 send(reply)
-                if operation == "initialize":
+                if operation in ("initialize", "shutdown"):
                     break
     finally:
-        if inference is not None:
-            inference.close()
-        logging.getLogger("sakuratts").removeHandler(handler)
-        wire.close()
+        try:
+            if inference is not None:
+                inference.close()
+        finally:
+            # The parent closes stdin after a shutdown result; initialization
+            # failures are reaped by its existing process-tree cleanup.
+            control_thread.join()
+            logging.getLogger("sakuratts").removeHandler(handler)
+            wire.close()
 
 
 if __name__ == "__main__":

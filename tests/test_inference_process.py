@@ -3,9 +3,11 @@
 import gc
 import io
 import json
+import logging
 import os
 from pathlib import Path
 import queue
+import signal
 import struct
 import subprocess
 import sys
@@ -14,7 +16,7 @@ import textwrap
 import threading
 import time
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import weakref
 
 import numpy as np
@@ -258,9 +260,20 @@ class InferenceProcessTests(unittest.TestCase):
 
     def test_bad_initial_config_is_deferred_until_wake(self):
         proxy = self.proxy(tts_config=self.config({"error": True}))
-        with self.assertRaisesRegex(ValueError, "Invalid fake configuration"):
-            proxy.wake()
+        dispose = proxy._dispose
+        exit_codes = []
+        def record_disposal():
+            process = proxy._process
+            dispose()
+            if process is not None:
+                exit_codes.append(process.returncode)
+        with patch.object(proxy, "_dispose", side_effect=record_disposal):
+            with self.assertRaisesRegex(ValueError, "Invalid fake configuration"):
+                proxy.wake()
         self.assertFalse(proxy.alive)
+        self.assertEqual(len(exit_codes), 1)
+        self.assertIsNotNone(exit_codes[0])
+        self.assertNotEqual(exit_codes[0], -signal.SIGABRT)
 
     def test_startup_timeout_retires_worker(self):
         proxy = self.proxy(tts_config=self.config({"sleep": 120}), startup_timeout=.3)
@@ -299,6 +312,42 @@ class InferenceProcessTests(unittest.TestCase):
         proxy.close()
         child.wait(timeout=5)
         self.assertFalse(child.is_running())
+
+    @unittest.skipIf(os.name == "nt", "POSIX control-pipe parent-death notification")
+    def test_parent_eof_during_cleanup_reaps_worker_and_descendant(self):
+        import psutil
+        config = self.config({})
+        child_file = config.with_name("child.pid")
+        config.write_text(json.dumps({"sakuratts": {"model": "fixture-model"},
+            "child_file": str(child_file), "block_close": True}), encoding="utf-8")
+        proxy = self.proxy(tts_config=config)
+        proxy.wake()
+        process, tree = proxy._process, proxy._tree
+        child = psutil.Process(int(child_file.read_text()))
+        cleanup_started = threading.Event()
+        failures = []
+        def close_worker():
+            try:
+                proxy.sleep()
+            except BaseException as error:
+                failures.append(error)
+        with patch.object(logging.getLogger("sakuratts.fixture"), "log",
+                          side_effect=lambda *args, **kwargs: cleanup_started.set()):
+            caller = threading.Thread(target=close_worker)
+            caller.start()
+            try:
+                self.assertTrue(cleanup_started.wait(5))
+                process.stdin.close()
+                caller.join(timeout=5)
+                self.assertFalse(caller.is_alive())
+                self.assertIn(process.returncode, (1, -signal.SIGKILL))
+                child.wait(timeout=5)
+                self.assertFalse(child.is_running())
+            finally:
+                tree.close()
+                caller.join(timeout=5)
+        self.assertEqual(len(failures), 1)
+        self.assertIsInstance(failures[0], (EOFError, RuntimeError))
 
     def test_idle_worker_crash_reaps_descendant_without_another_proxy_call(self):
         import psutil
@@ -355,7 +404,7 @@ class InferenceProcessTests(unittest.TestCase):
         references = []
         def dispose_after_eof():
             if proxy._process is not None:
-                proxy._process.wait(timeout=5)
+                self.assertEqual(proxy._process.wait(timeout=5), 0)
                 proxy._reader.join(timeout=5)
                 self.assertFalse(proxy._reader.is_alive())
             dispose()
@@ -374,6 +423,62 @@ class InferenceProcessTests(unittest.TestCase):
         finally:
             if enabled:
                 gc.enable()
+
+    def test_worker_joins_control_reader_before_returning(self):
+        from sakuratts._internal import inference_worker
+        thread_type = threading.Thread
+        reader_returned, release_reader, worker_returned = (threading.Event() for _ in range(3))
+        shutdown_reply = threading.Event()
+        failures = []
+        def held_reader(*, target, **options):
+            def run():
+                try:
+                    target()
+                except BaseException as error:
+                    failures.append(error)
+                finally:
+                    reader_returned.set()
+                    release_reader.wait()
+            return thread_type(target=run, **options)
+        inference = Mock(model=None, settings={}, reference_audio=None)
+        inference.info.return_value = {"name": "fixture"}
+        frames = [({"id": 1, "operation": "initialize", "configuration": {
+            "model": None, "tts_config": None, "experimental": None}}, b""),
+            ({"id": 2, "operation": "shutdown"}, b"")]
+        def receive(stream):
+            if frames:
+                return frames.pop(0)
+            if not shutdown_reply.wait(5):
+                raise AssertionError("Shutdown did not complete")
+            raise EOFError("The parent closed the command pipe")
+        def send(stream, metadata, pcm=b""):
+            if metadata.get("id") == 2 and metadata.get("type") == "result":
+                shutdown_reply.set()
+        def run_worker():
+            try:
+                inference_worker.main(lambda *args, **kwargs: inference)
+            except BaseException as error:
+                failures.append(error)
+            finally:
+                worker_returned.set()
+        with patch.object(inference_worker.os, "dup", return_value=3), \
+                patch.object(inference_worker.os, "dup2"), \
+                patch.object(inference_worker.os, "fdopen", return_value=io.BytesIO()), \
+                patch.object(inference_worker.sys, "stdout", Mock(fileno=lambda: 1)), \
+                patch.object(inference_worker, "read_frame", side_effect=receive), \
+                patch.object(inference_worker, "write_frame", side_effect=send), \
+                patch.object(inference_worker.threading, "Thread", side_effect=held_reader):
+            worker = thread_type(target=run_worker)
+            worker.start()
+            try:
+                self.assertTrue(reader_returned.wait(5))
+                self.assertTrue(shutdown_reply.wait(5))
+                self.assertFalse(worker_returned.is_set())
+            finally:
+                release_reader.set()
+                worker.join(timeout=5)
+            self.assertFalse(worker.is_alive())
+        self.assertFalse(failures, failures)
 
     def test_transport_errors_do_not_retain_thread_frames_or_exception_chains(self):
         class BrokenPipe:

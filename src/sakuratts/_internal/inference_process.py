@@ -150,6 +150,8 @@ class ProcessInference:
                     message = outbound.get(timeout=.05)
                 except queue.Empty:
                     continue
+                if message is None:
+                    return
                 write_frame(stream, message)
         except Exception as error:
             error.__traceback__ = error.__context__ = error.__cause__ = None
@@ -279,6 +281,12 @@ class ProcessInference:
                 if operation == "tts":
                     report = metadata["report"]
                     return Audio(audio_pcm, metadata["sample_rate"], report)
+                if operation == "shutdown":
+                    # The terminal reply acknowledges every write. End the
+                    # writer before signaling normal EOF to the worker reader.
+                    self._outbound.put_nowait(None)
+                    self._writer.join()
+                    self._process.stdin.close()
                 return None
         except _RemoteError as error:
             metadata = error.metadata
