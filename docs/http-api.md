@@ -1,6 +1,8 @@
 # HTTP API 与原版兼容范围
 
-接口以本次对照的 GPT-SoVITS `api_v2.py` 为基准。当前是原生后端的部分兼容实现，支持 Windows / NVIDIA、V2ProPlus 和日文；尚未实现的能力返回明确错误，不静默替换参数。
+接口只以 GPT-SoVITS [`48b1a016` 的 `api_v2.py`](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/api_v2.py) 为兼容目标。当前支持 Windows / NVIDIA、V2ProPlus 和日文，未实现的 V2 功能返回 HTTP 400，后续逐项完善。旧版 `api.py` 协议、Gradio 客户端及原版 Python 模块接口不在兼容范围内。
+
+首次接入请从 [API v2 使用指南](api-v2-guide.md)开始，那里集中列出支持状态和可复制的调用示例。本页保留完整的服务配置、生命周期与诊断说明。所有合成请求当前都须显式传 `parallel_infer=false`；原版默认值 `true` 尚未实现，省略该字段也会返回 400。仓库中的 `api.py` 仅是启动本服务的别名，不提供旧协议。
 
 ## 启动
 
@@ -9,12 +11,13 @@
 ```powershell
 .\start-server.bat -c configs/tts_infer.yaml
 # 同等入口
+python api_v2.py -a 127.0.0.1 -p 9880 -c configs/tts_infer.yaml
 python api.py -a 127.0.0.1 -p 9880 -c configs/tts_infer.yaml
 ```
 
 路径按启动工作目录解析，和原版一样；建议使用绝对路径。脚本固定从仓库目录启动。配置提供 `custom.t2s_weights_path` / `vits_weights_path` 时，先转换或复用部署缓存，再加载权重。`sakuratts.model` 可引用已有部署包以跳过完整转换。原始模型和原版配置文件不会被修改。
 
-无参数时仅检查 `configs/tts_infer.yaml`，不会自动发现角色包。没有配置时 HTTP 可以启动，但 `model_loaded=false`，合成会提示配置模型。默认 `direct` 模式在启动时加载 GPU 权重；第一次合成仍可能有内核编译等开销。低级 `Engine.load` 保留延迟加载。总体 `policy="staged"` 可用于低级接口或显式启用的 `managed` HTTP 模式，`direct` 仍拒绝该策略。
+无参数时依次检查 `configs/tts_infer.yaml`、原版目录下的 `GPT_SoVITS/configs/tts_infer.yaml`，不会自动发现角色包。显式模型或 `-c` 优先。没有配置时 HTTP 可以启动，但 `model_loaded=false`，合成会提示配置模型。默认 `direct` 模式在启动时加载 GPU 权重；第一次合成仍可能有内核编译等开销。低级 `Engine.load` 保留延迟加载。总体 `policy="staged"` 可用于低级接口或显式启用的 `managed` HTTP 模式，`direct` 仍拒绝该策略。
 
 ## 可选后台控制模式
 
@@ -87,6 +90,8 @@ Invoke-RestMethod -Uri http://127.0.0.1:9880/runtime
 | `GET /control?command=restart` | 清理后恢复启动配置；`direct` 重新加载，`managed` 回到休眠；进程 PID 不保证变化 |
 | `GET /health`、`GET /models` | 附加诊断接口，查询忙碌和模型状态 |
 
+`/docs` 与 `/openapi.json` 列出 GET 的全部查询字段及 POST JSON 模型。两种方式共用字段、默认值和校验；GET 的 `streaming_mode` 可传 `0` 至 `3` 或 `true` / `false`。权重及参考切换成功返回 `{"message":"success"}`；操作失败保留原版的固定 `message` 和 `Exception` 字段。当前原版代码只注册 GET `/control`，这里与之保持一致。
+
 嵌入 ASGI 应用时，进程控制需要宿主提供回调；默认不退出宿主进程。权重切换不会保存到启动配置，重启恢复配置中的路径。初始模型组合通过配置提供，权重切换接口不承担资源安装。
 
 ```json
@@ -96,6 +101,7 @@ Invoke-RestMethod -Uri http://127.0.0.1:9880/runtime
   "ref_audio_path": "D:/Voices/reference.wav",
   "prompt_text": "参考音声です。",
   "prompt_lang": "ja",
+  "parallel_infer": false,
   "text_split_method": "cut5",
   "seed": -1,
   "media_type": "wav",
@@ -115,16 +121,36 @@ Invoke-RestMethod -Uri http://127.0.0.1:9880/runtime
 | 采样 | Top-k、温度、重复惩罚；`top_p` 当前仅接受 `1`，此前数值边界问题尚未解决 |
 | 参考 | 单个原始音频及非空转写，`ja` / `all_ja`；新增音频由独立准备进程编码 |
 | 间隔 | `fragment_interval` 控制每片尾部静音，默认 `0.3` |
-| 音频 | WAV、RAW；OGG / AAC 需要 PATH 中的 FFmpeg，压缩码流不承诺逐字节等同原版 |
+| 音频 | WAV、RAW；OGG / AAC 需要 PATH 中的 FFmpeg，分别具备 `libvorbis` / `aac` 编码器；压缩码流不承诺逐字节等同原版 |
 | `streaming_mode=0/false` | 整条请求成功后返回完整音频 |
 | `streaming_mode=1/true` | 每片合成完成后立即返回；WAV 先发原版形式的空数据头，后续为 PCM |
 | `streaming_mode=2/3` | 尚未实现语义 token 流式，返回 400 |
-| 批处理 | 当前 `batch_size=1`；并行及分桶参数在单项批次中没有额外计算效果，不代表已经实现批量并行 |
+| 分桶 | 非流式默认 `split_bucket=true`，按规范化文本长度稳定排序推理，最后恢复原文音频顺序；模式 1 自动关闭分桶 |
+| 批处理 | 当前 `batch_size=1`，`batch_threshold` 不改变单项批次 |
+| 并行开关 | 当前仅支持显式 `parallel_infer=false`；`true` 和省略字段均返回 400 |
 | 语速、多参考、无转写、超采样 | 尚未实现，明确返回 400 |
 | 模型与语言 | Windows V2ProPlus 日文路径；其他版本、中文等仍需实现或验证 |
 | 精度 | 默认 FP32；原版 `is_half=true` 尚未对齐，不能直接映射为某个实验 FP16 开关 |
 
-`sample_steps` 对 V2ProPlus 不适用，`overlap_length` / `min_chunk_length` 对模式 0/1 不适用，保留原版字段。参数非法或功能未实现返回 400，Pydantic 类型错误返回 422。合成失败使用原版的 `message: tts failed` / `Exception` 结构。
+`sample_steps` 对 V2ProPlus 不适用，`overlap_length` / `min_chunk_length` 对模式 0/1 不适用，保留原版字段，其数值不影响当前计算。参数非法、功能未实现或包含未知额外字段返回 400，Pydantic 类型错误返回 422。合成失败使用原版的 `message: tts failed` / `Exception` 结构。无对应路由的旧 API 请求返回 404；已有路径上的不支持方法返回 405，不转换成 V2 功能错误。
+
+此前 `parallel_infer` 和未知字段会被忽略。本次收紧后会明确拒绝这些请求，调用方需传 `parallel_infer=false` 并去掉未知字段。参数校验发生在提交推理工作前，managed 模式中的这类 400 不会唤醒推理进程。
+
+分桶会改变每句消耗随机数的顺序。先前版本忽略了该参数，本次修正后，多句非流式请求即使使用相同 seed，也可能生成不同音频；显式 `split_bucket=false` 保留原文推理顺序。报告的 `execution_order` 记录原文片段索引的执行顺序，`fragments` 和完整 PCM 按原文排列。此处对齐执行顺序，不表示 NumPy 与原版 Torch 采样逐值相同。
+
+## 语言选择与后续适配
+
+原版通过每次 `/tts` 请求中的 `text_lang` 和 `prompt_lang` 选择目标语言与参考转写语言，没有单独的语言切换接口。两个字段各自生效；更换参考语言时重新计算文本特征，音频条件可复用。当前可在 `ja`、`all_ja` 间切换，不能据此宣称已经支持中文或英文。
+
+| 原版语言模式 | 当前状态与下一步 |
+| --- | --- |
+| `ja` / `all_ja` | 日文处理已接入；两种路由仍可能保留英文段，遇英文处理器缺失明确报错 |
+| `en` | 下一步接英文规范化、G2P、词典和离线资源，同时补齐日英混合文本 |
+| `zh` / `all_zh` | 需要接通中文处理器、G2PW 与实际 BERT 特征执行，不能沿用日文零特征 |
+| `auto` | 中、英、日处理器齐备后，对齐自动识别与混合分段 |
+| `ko` / `all_ko`、`yue` / `all_yue`、`auto_yue` | 后续分别适配语言资源和原版路由 |
+
+每种新增语言同时验证目标文本、参考转写、同文本换语言、A→B→A 连续请求、失败后恢复，以及 Windows CUDA 生成与听音。HTTP 字段测试和离线前端对照不能替代实际语音验收。
 
 ## 生命周期与输出
 

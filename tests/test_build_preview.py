@@ -19,7 +19,7 @@ spec.loader.exec_module(preview)
 
 
 def source_tree(root):
-    files = {"README.md": "Preview\n", "LICENSE": "MIT\n", "MANIFEST.in": "graft src\n", "start-server.bat": "@echo off\n", "api.py": "pass\n",
+    files = {"README.md": "Preview\n", "LICENSE": "MIT\n", "MANIFEST.in": "graft src\n", "start-server.bat": "@echo off\n", "api.py": "pass\n", "api_v2.py": "pass\n",
              "pyproject.toml": '[project]\nname="sakuratts"\nversion="0.1.0a1"\n',
              "requirements/windows-runtime.txt": "numpy==2.4.6\n",
              "packaging/recipes/windows-nvidia-ja.toml": 'target="windows-x64"\nbackend="cuda"\n',
@@ -78,6 +78,7 @@ class PreviewBuildTests(unittest.TestCase):
             inventory = preview.stage_source(root, staged)
             self.assertIn("src/sakuratts/_internal/conversion/convert_gpt.py", inventory)
             self.assertIn("packaging/recipes/windows-nvidia-ja.toml", inventory)
+            self.assertIn("api_v2.py", inventory)
             self.assertFalse(any(name.startswith("research/") for name in inventory))
             self.assertFalse((staged / "research").exists())
             self.assertNotIn("data/local.json", inventory)

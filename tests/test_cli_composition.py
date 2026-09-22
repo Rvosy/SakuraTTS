@@ -5,6 +5,7 @@ import io
 import json
 from pathlib import Path
 import subprocess
+import runpy
 import sys
 import tempfile
 from types import SimpleNamespace
@@ -16,6 +17,34 @@ from sakuratts.engine import Engine
 
 
 class CliCompositionTests(unittest.TestCase):
+    def test_original_entrypoint_forwards_launch_flags(self):
+        entry = Path(__file__).resolve().parents[1] / "api_v2.py"
+        with patch("sakuratts.cli.main", return_value=0) as launch, \
+                patch.object(sys, "argv", [str(entry), "-a", "127.0.0.1", "-p", "9881", "-c", "voice.yaml"]):
+            with self.assertRaises(SystemExit) as stopped:
+                runpy.run_path(str(entry), run_name="__main__")
+        self.assertEqual(stopped.exception.code, 0)
+        launch.assert_called_once_with(["serve", "-a", "127.0.0.1", "-p", "9881", "-c", "voice.yaml"])
+
+    def test_default_configuration_preserves_local_precedence_and_accepts_upstream_layout(self):
+        with tempfile.TemporaryDirectory() as temporary, contextlib.chdir(temporary):
+            local = Path("configs/tts_infer.yaml")
+            original = Path("GPT_SoVITS/configs/tts_infer.yaml")
+            original.parent.mkdir(parents=True)
+            original.touch()
+            start = Mock()
+            with patch.dict(sys.modules, {"sakuratts.server": SimpleNamespace(start_server=start)}):
+                main(["serve"])
+                self.assertEqual(start.call_args.kwargs["tts_config"], original)
+                local.parent.mkdir(parents=True)
+                local.touch()
+                main(["serve"])
+                self.assertEqual(start.call_args.kwargs["tts_config"], local)
+                main(["serve", "-c", "explicit.yaml"])
+                self.assertEqual(start.call_args.kwargs["tts_config"], Path("explicit.yaml"))
+                main(["serve", "prepared-model"])
+                self.assertIsNone(start.call_args.kwargs["tts_config"])
+
     def test_capabilities_works_without_loading_inference_or_http(self):
         code = """
 import sys

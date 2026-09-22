@@ -1,10 +1,11 @@
 # 文档
 
-首次部署从[快速开始](quickstart.md)进入；作为其他程序的后端时，按调用方式选择 [HTTP API](http-api.md) 或 [Python API](python-api.md)。
+首次部署从[快速开始](quickstart.md)进入；接入桌宠或其他 HTTP 客户端先看 [API V2 使用说明](api-v2-guide.md)，其中列出当前支持的调用、全部参数和错误处理。实现细节见 [HTTP API](http-api.md)，在 Python 中直接使用自有 Engine 则看 [Python API](python-api.md)。
 
 | 需求 | 文档 |
 | --- | --- |
 | 安装与首次生成 | [快速开始](quickstart.md) |
+| HTTP 客户端接入与当前能力表 | [API V2 使用说明](api-v2-guide.md) |
 | Windows 模型与运行资源准备 | [Windows 指南](setup-windows-nvidia.md)、[独立 ORT 组件](setup-ort-worker-offline.md) |
 | 精度、显存和延迟取舍 | [推理档位](inference-profiles.md) |
 | 模型目录与路径校验 | [模型格式](model-format.md) |

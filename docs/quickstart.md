@@ -42,7 +42,7 @@ with sakuratts.load("models/mika") as engine:
     audio.save("outputs/greeting.wav")
 ```
 
-复制 [tts_infer.example.yaml](../examples/tts_infer.example.yaml) 为本地 `configs/tts_infer.yaml` 并填写路径，运行 `start-server.bat`。也可显式执行 `start-server.bat -c PATH` 或 `python api.py -c PATH`。已有部署包可用 `sakuratts serve models/mika` 启动，但准备新的原始参考音频仍需配置准备环境。终端持续显示加载、请求和推理日志，按 `Ctrl+C` 停止。服务默认绑定 `127.0.0.1:9880`，当前没有前端页面。请求格式、缓存和暂不支持的原版参数见 [HTTP API](http-api.md)。
+复制 [tts_infer.example.yaml](../examples/tts_infer.example.yaml) 为本地 `configs/tts_infer.yaml` 并填写路径，运行 `start-server.bat`。也可显式执行 `start-server.bat -c PATH` 或 `python api.py -c PATH`。已有部署包可用 `sakuratts serve models/mika` 启动，但准备新的原始参考音频仍需配置准备环境。终端持续显示加载、请求和推理日志，按 `Ctrl+C` 停止。服务默认绑定 `127.0.0.1:9880`，当前没有前端页面。首次调用见 [API v2 使用指南](api-v2-guide.md)。当前只兼容 API v2，合成请求须显式传 `parallel_infer=false`，未实现的 V2 功能返回 400；服务配置和缓存细节见 [HTTP API](http-api.md)。
 
 终端按请求显示进度和完成摘要，完整诊断保存到 `logs/sakuratts.log`。需要展开细节时使用 `start-server.bat --log-level debug`；`--log-file PATH` 可以更换日志文件。
 

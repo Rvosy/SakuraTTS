@@ -1,0 +1,303 @@
+{
+  "upstream_commit": "48b1a0169a28582a8984402f82cf438d3bfa6aca",
+  "sources": {
+    "api_v2.py": {
+      "sha256": "7a34a5bad6c06fb282b20463987ae5d6a0a65a9cfaa4aadbc520fafb4722f743",
+      "url": "https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/api_v2.py"
+    },
+    "GPT_SoVITS/TTS_infer_pack/TTS.py": {
+      "sha256": "ceb222b48166e47c088f15f365a8c26eadd9087457493a633da4ad02c54f6579",
+      "url": "https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/GPT_SoVITS/TTS_infer_pack/TTS.py"
+    }
+  },
+  "scope": "AST snapshot of upstream api_v2 wire fields and routes; language modes describe upstream model versions, not SakuraTTS implementation support.",
+  "request_fields": {
+    "text": {
+      "annotation": "str",
+      "default": null
+    },
+    "text_lang": {
+      "annotation": "str",
+      "default": null
+    },
+    "ref_audio_path": {
+      "annotation": "str",
+      "default": null
+    },
+    "aux_ref_audio_paths": {
+      "annotation": "list",
+      "default": null
+    },
+    "prompt_lang": {
+      "annotation": "str",
+      "default": null
+    },
+    "prompt_text": {
+      "annotation": "str",
+      "default": ""
+    },
+    "top_k": {
+      "annotation": "int",
+      "default": 15
+    },
+    "top_p": {
+      "annotation": "float",
+      "default": 1
+    },
+    "temperature": {
+      "annotation": "float",
+      "default": 1
+    },
+    "text_split_method": {
+      "annotation": "str",
+      "default": "cut5"
+    },
+    "batch_size": {
+      "annotation": "int",
+      "default": 1
+    },
+    "batch_threshold": {
+      "annotation": "float",
+      "default": 0.75
+    },
+    "split_bucket": {
+      "annotation": "bool",
+      "default": true
+    },
+    "speed_factor": {
+      "annotation": "float",
+      "default": 1.0
+    },
+    "fragment_interval": {
+      "annotation": "float",
+      "default": 0.3
+    },
+    "seed": {
+      "annotation": "int",
+      "default": -1
+    },
+    "media_type": {
+      "annotation": "str",
+      "default": "wav"
+    },
+    "streaming_mode": {
+      "annotation": "Union[bool, int]",
+      "default": false
+    },
+    "parallel_infer": {
+      "annotation": "bool",
+      "default": true
+    },
+    "repetition_penalty": {
+      "annotation": "float",
+      "default": 1.35
+    },
+    "sample_steps": {
+      "annotation": "int",
+      "default": 32
+    },
+    "super_sampling": {
+      "annotation": "bool",
+      "default": false
+    },
+    "overlap_length": {
+      "annotation": "int",
+      "default": 2
+    },
+    "min_chunk_length": {
+      "annotation": "int",
+      "default": 16
+    }
+  },
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/control",
+      "parameters": {
+        "command": {
+          "annotation": "str",
+          "default": null
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/tts",
+      "parameters": {
+        "text": {
+          "annotation": "str",
+          "default": null
+        },
+        "text_lang": {
+          "annotation": "str",
+          "default": null
+        },
+        "ref_audio_path": {
+          "annotation": "str",
+          "default": null
+        },
+        "aux_ref_audio_paths": {
+          "annotation": "list",
+          "default": null
+        },
+        "prompt_lang": {
+          "annotation": "str",
+          "default": null
+        },
+        "prompt_text": {
+          "annotation": "str",
+          "default": ""
+        },
+        "top_k": {
+          "annotation": "int",
+          "default": 15
+        },
+        "top_p": {
+          "annotation": "float",
+          "default": 1
+        },
+        "temperature": {
+          "annotation": "float",
+          "default": 1
+        },
+        "text_split_method": {
+          "annotation": "str",
+          "default": "cut5"
+        },
+        "batch_size": {
+          "annotation": "int",
+          "default": 1
+        },
+        "batch_threshold": {
+          "annotation": "float",
+          "default": 0.75
+        },
+        "split_bucket": {
+          "annotation": "bool",
+          "default": true
+        },
+        "speed_factor": {
+          "annotation": "float",
+          "default": 1.0
+        },
+        "fragment_interval": {
+          "annotation": "float",
+          "default": 0.3
+        },
+        "seed": {
+          "annotation": "int",
+          "default": -1
+        },
+        "media_type": {
+          "annotation": "str",
+          "default": "wav"
+        },
+        "parallel_infer": {
+          "annotation": "bool",
+          "default": true
+        },
+        "repetition_penalty": {
+          "annotation": "float",
+          "default": 1.35
+        },
+        "sample_steps": {
+          "annotation": "int",
+          "default": 32
+        },
+        "super_sampling": {
+          "annotation": "bool",
+          "default": false
+        },
+        "streaming_mode": {
+          "annotation": "Union[bool, int]",
+          "default": false
+        },
+        "overlap_length": {
+          "annotation": "int",
+          "default": 2
+        },
+        "min_chunk_length": {
+          "annotation": "int",
+          "default": 16
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/tts",
+      "parameters": {
+        "request": {
+          "annotation": "TTS_Request"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/set_refer_audio",
+      "parameters": {
+        "refer_audio_path": {
+          "annotation": "str",
+          "default": null
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/set_gpt_weights",
+      "parameters": {
+        "weights_path": {
+          "annotation": "str",
+          "default": null
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/set_sovits_weights",
+      "parameters": {
+        "weights_path": {
+          "annotation": "str",
+          "default": null
+        }
+      }
+    }
+  ],
+  "language_profiles": [
+    {
+      "model_versions": [
+        "v1"
+      ],
+      "modes": [
+        "auto",
+        "en",
+        "zh",
+        "ja",
+        "all_zh",
+        "all_ja"
+      ]
+    },
+    {
+      "model_versions": [
+        "v2",
+        "v3",
+        "v4",
+        "v2Pro",
+        "v2ProPlus"
+      ],
+      "modes": [
+        "auto",
+        "auto_yue",
+        "en",
+        "zh",
+        "ja",
+        "yue",
+        "ko",
+        "all_zh",
+        "all_ja",
+        "all_yue",
+        "all_ko"
+      ]
+    }
+  ],
+  "language_selection": "self.v1_languages if self.version == 'v1' else self.v2_languages"
+}

@@ -10,12 +10,12 @@ import math
 import shutil
 import subprocess
 import threading
-from typing import Optional, Union
+from typing import Annotated, Optional, Union
 import wave
 
-from fastapi import Body, FastAPI, Request
+from fastapi import Body, FastAPI, Query, Request
 from fastapi.responses import JSONResponse, Response, StreamingResponse
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from .engine import Audio, BusyError, Inference
 from ._internal.cancellation import SynthesisCancelled
 from ._internal.pcm import pcm_s16le_bytes
@@ -27,7 +27,9 @@ logger = logging.getLogger("sakuratts.server")
 
 class SpeechRequest(BaseModel):
     """Field names and defaults follow the pinned upstream api_v2.py."""
-    model_config = ConfigDict(allow_inf_nan=False)
+    # Retain unknown fields for the same HTTP 400 path as unsupported features.
+    model_config = ConfigDict(allow_inf_nan=False, extra="allow",
+                             json_schema_extra={"additionalProperties": False})
     text: Optional[str] = None
     text_lang: Optional[str] = None
     ref_audio_path: Optional[str] = None
@@ -53,7 +55,16 @@ class SpeechRequest(BaseModel):
     overlap_length: int = 2
     min_chunk_length: int = 16
 
+    @field_validator("streaming_mode", mode="before")
+    @classmethod
+    def parse_streaming_mode(cls, value):
+        if isinstance(value, str) and value in ("0", "1", "2", "3"):
+            return int(value)
+        return value
+
     def checked(self):
+        if self.model_extra:
+            raise NotImplementedError("Unknown api_v2 parameters: " + ", ".join(sorted(self.model_extra)))
         request = self.model_dump()
         for field in ("ref_audio_path", "text", "text_lang", "prompt_lang"):
             if not request[field] or not request[field].strip():
@@ -69,6 +80,8 @@ class SpeechRequest(BaseModel):
         if request["streaming_mode"] not in (0, 1, 2, 3):
             raise ValueError("streaming_mode must be 0, 1, 2, 3 or true/false")
         unsupported = []
+        if request["parallel_infer"]:
+            unsupported.append("parallel_infer=true (set parallel_infer=false for native single-request inference)")
         if request["top_p"] != 1:
             unsupported.append("top_p != 1 (sampling parity is not verified)")
         if request["speed_factor"] != 1:
@@ -120,12 +133,16 @@ def wave_header(rate):
     return stream.getvalue()
 
 
-def error_response(error, *, synthesis=False):
+def error_response(error, *, synthesis=False, message=None):
+    if message is not None:
+        content = {"message": message, "Exception": str(error)}
+    elif synthesis:
+        content = {"message": "tts failed", "Exception": str(error)}
+    else:
+        content = {"message": str(error)}
     if isinstance(error, NotImplementedError):
-        return JSONResponse({"message": str(error), "error": "unsupported_feature"}, status_code=400)
-    if synthesis:
-        return JSONResponse({"message": "tts failed", "Exception": str(error)}, status_code=400)
-    return JSONResponse({"message": str(error)}, status_code=400)
+        content["error"] = "unsupported_feature"
+    return JSONResponse(content, status_code=400)
 
 
 class WakeRequest(BaseModel):
@@ -284,7 +301,7 @@ def create_app(model=None, *, tts_config=None, backend=None, experimental=None, 
             except Exception as error:
                 return error_response(error)
 
-    async def run_control(operation):
+    async def run_control(operation, failure_message):
         job = start_job(operation)
         if job is None:
             return busy_response()
@@ -293,25 +310,28 @@ def create_app(model=None, *, tts_config=None, backend=None, experimental=None, 
             return JSONResponse({"message": "success"})
         except Exception as error:
             logger.exception("模型或参考音频操作失败")
-            return error_response(error)
+            return error_response(error, message=failure_message)
 
     @app.get("/set_gpt_weights")
     async def set_gpt_weights(weights_path: Optional[str] = None):
         if not weights_path:
             return error_response(ValueError("gpt weight path is required"))
-        return await run_control(partial(app.state.inference.set_weights, "gpt", weights_path))
+        return await run_control(partial(app.state.inference.set_weights, "gpt", weights_path),
+                                 "change gpt weight failed")
 
     @app.get("/set_sovits_weights")
     async def set_sovits_weights(weights_path: Optional[str] = None):
         if not weights_path:
             return error_response(ValueError("sovits weight path is required"))
-        return await run_control(partial(app.state.inference.set_weights, "sovits", weights_path))
+        return await run_control(partial(app.state.inference.set_weights, "sovits", weights_path),
+                                 "change sovits weight failed")
 
     @app.get("/set_refer_audio")
     async def set_refer_audio(refer_audio_path: Optional[str] = None):
         if not refer_audio_path:
             return error_response(ValueError("refer_audio_path is required"))
-        return await run_control(partial(app.state.inference.set_reference_audio, refer_audio_path))
+        return await run_control(partial(app.state.inference.set_reference_audio, refer_audio_path),
+                                 "set refer audio failed")
 
     @app.get("/control")
     async def control_endpoint(command: Optional[str] = None):
@@ -504,17 +524,8 @@ def create_app(model=None, *, tts_config=None, backend=None, experimental=None, 
         return await tts(request, connection)
 
     @app.get("/tts")
-    async def tts_get(request: Request):
-        values = dict(request.query_params)
-        if "aux_ref_audio_paths" in values:
-            values["aux_ref_audio_paths"] = request.query_params.getlist("aux_ref_audio_paths")
-        if values.get("streaming_mode") in ("0", "1", "2", "3"):
-            values["streaming_mode"] = int(values["streaming_mode"])
-        try:
-            parsed = SpeechRequest.model_validate(values)
-        except ValidationError as error:
-            return JSONResponse({"detail": error.errors(include_context=False)}, status_code=422)
-        return await tts(parsed, request)
+    async def tts_get(request: Annotated[SpeechRequest, Query()], connection: Request):
+        return await tts(request, connection)
 
     return app
 

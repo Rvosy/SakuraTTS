@@ -17,6 +17,29 @@ from sakuratts._internal.reference_condition import PreparedReference
 
 
 class ReferenceApiTests(unittest.TestCase):
+    def test_service_keeps_target_and_prompt_languages_independent_and_forwards_buckets(self):
+        from test_public_api import audio
+        from sakuratts.engine import Engine
+        current = Inference()
+        runtime = Mock()
+        current.engine = Engine(Mock(), runtime)
+        current.references = Mock()
+        current._log_weights = Mock()
+        reference = SimpleNamespace(reference_phones=np.array([1]), prompt_semantic=np.array([2]))
+        current.references.resolve.return_value = reference
+        request = dict(text="今日は晴れです。", text_lang="all_ja", ref_audio_path="ref.wav",
+                       prompt_lang="ja", prompt_text="参考音声です。", seed=1234, top_k=15,
+                       temperature=1., repetition_penalty=1.35, text_split_method="cut5",
+                       fragment_interval=.3, split_bucket=True)
+        for mode, bucketed in (("all_ja", True), ("ja", False), ("all_ja", True)):
+            result = audio()
+            runtime.synthesize.return_value = (result.pcm, dict(result.report, sample_rate=result.sample_rate))
+            current.tts(dict(request, text_lang=mode, split_bucket=bucketed))
+            current.references.resolve.assert_called_with("ref.wav", "参考音声です。", "ja")
+            self.assertEqual(runtime.synthesize.call_args.kwargs["language"], mode)
+            self.assertEqual(runtime.synthesize.call_args.kwargs["split_bucket"], bucketed)
+            self.assertIs(runtime.synthesize.call_args.kwargs["reference"], reference)
+
     def test_http_startup_does_not_silently_defer_staged_weights(self):
         with self.assertRaisesRegex(ValueError, "staged policy"):
             Inference(experimental={"policy": "staged"})
@@ -41,6 +64,12 @@ class ReferenceApiTests(unittest.TestCase):
             cache = ReferenceCache(engine, {})
             cache.audio_cache[audio_hash] = base
             first = cache.resolve(root / "audio.wav", "こんにちは", "ja")
+            switched = cache.resolve(root / "audio.wav", "こんにちは", "all_ja")
+            self.assertEqual(segment.call_args.args, ("こんにちは。", "all_ja"))
+            self.assertEqual(switched.manifest["identity"]["reference_language"], "all_ja")
+            self.assertEqual(first.manifest["identity"]["reference_language"], "ja")
+            self.assertIs(first.prompt_semantic, switched.prompt_semantic)
+            self.assertIsNot(first.reference_bert, switched.reference_bert)
             second = cache.resolve(root / "audio.wav", "おはよう", "all_ja")
             self.assertIs(first.ge, second.ge)
             self.assertIs(first.prompt_semantic, second.prompt_semantic)

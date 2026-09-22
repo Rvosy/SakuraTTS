@@ -282,8 +282,11 @@ def run_product_command(args):
         except ImportError as exc:
             raise ImportError('Install HTTP dependencies with: pip install "sakuratts[server]"') from exc
         config = args.tts_config
-        if config is None and args.model is None and Path("configs/tts_infer.yaml").is_file():
-            config = Path("configs/tts_infer.yaml")
+        if config is None and args.model is None:
+            for candidate in (Path("configs/tts_infer.yaml"), Path("GPT_SoVITS/configs/tts_infer.yaml")):
+                if candidate.is_file():
+                    config = candidate
+                    break
         runtime_options = {}
         if args.backend is not None:
             runtime_options["backend"] = args.backend

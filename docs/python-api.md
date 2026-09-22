@@ -33,6 +33,8 @@ HTTP 的总体 `policy="staged"` 仅允许显式启用的 `managed` 模式。可
 
 `tts` CLI 可通过 `--split-method cut5` 按标点分句，默认仍为 `cut0`。当前只提供 FP32、FP16 标准、FP16 低显存、FP16 极限[四档配置](inference-profiles.md)，分句作为独立选项。历史实验和实测范围见[低显存报告](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/low-vram-20260921.md)。
 
+低级 `Engine.synthesize` 默认 `split_bucket=False`，保留原文片段的推理顺序。显式设为 `True` 时，按规范化文本长度稳定排序推理，再恢复完整 PCM 和片段报告的原文顺序；报告用 `execution_order` 记录实际顺序。HTTP 沿用原版默认 `True`。传入 `on_fragment` 时关闭分桶，以便逐片按原文输出；排序会改变各句的随机数消耗顺序。
+
 一个 Engine 同时只处理一个请求，重入会抛出 `BusyError`。使用 `with` 或显式 `close()` 释放资源；关闭后不能继续合成。失败会沿原链路释放请求状态。宿主应在同一个线程中拥有、调用和关闭引擎，HTTP 服务已执行这一约束。
 
 CUDA 引擎默认在每片声学计算结束后收缩 ORT 显存池，释放不再使用的工作区，避免长文本将后续空闲占用一直抬高。权重和仍在使用的分配继续保留；这不保证显存回到加载时的数值，也不会降低计算过程所需的峰值。FP32 精度和采样规则保持不变。

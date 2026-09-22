@@ -1,4 +1,4 @@
-include README.md LICENSE AGENTS.md pyproject.toml MANIFEST.in start-server.bat api.py
+include README.md LICENSE AGENTS.md pyproject.toml MANIFEST.in start-server.bat api.py api_v2.py
 include uv.lock
 recursive-include requirements *.txt
 recursive-include packaging/recipes *.toml

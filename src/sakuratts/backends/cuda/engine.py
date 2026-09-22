@@ -140,7 +140,7 @@ class NVIDIAEngine:
     def synthesize(self, text, *, reference=None, seed=1234, language="ja", split_method="cut0",
                    top_k=15, temperature=1., repetition_penalty=1.35, early_stop_num=2700,
                    cancel_requested=None, random_inputs=None, fragment_interval=0.3,
-                   on_fragment=None, collect_audio=True):
+                   on_fragment=None, collect_audio=True, split_bucket=False):
         if self.busy:
             raise RuntimeError("This engine already has an active request")
         if not collect_audio and on_fragment is None:
@@ -179,8 +179,14 @@ class NVIDIAEngine:
                         extra={"block": "progress"})
             if random_inputs is not None and len(random_inputs)!=len(request.fragments):
                 raise ValueError("Replay random inputs must cover every prepared fragment")
+            # api_v2 sorts even singleton batches; fragment streaming disables it.
+            bucketed = split_bucket and on_fragment is None
+            execution_order = list(range(len(request.fragments)))
+            if bucketed:
+                execution_order.sort(key=lambda index: len(request.fragments[index].target["norm_text"]))
             rng = np.random.default_rng(seed)
-            for index, prepared in enumerate(request.fragments):
+            for index in execution_order:
+                prepared = request.fragments[index]
                 logger.debug("分句 %d/%d | %d 个音素 | 前端处理后的文本: %r",
                             index + 1, len(request.fragments), len(prepared.target["phones"]),
                             prepared.target["norm_text"])
@@ -212,7 +218,7 @@ class NVIDIAEngine:
                 logger.info("SoVITS  %.3f s", actual.timings["acoustic_seconds"], extra={"block": "progress"})
                 pcm_samples += actual.pcm.size
                 if collect_audio:
-                    parts.append(actual.pcm)
+                    parts.append((index, actual.pcm))
                 if on_fragment is not None:
                     on_fragment(actual.pcm, actual.sample_rate)
                 fragments.append({"index":index,"normalized_text":prepared.target["norm_text"],
@@ -227,20 +233,22 @@ class NVIDIAEngine:
                 if self.policy == "staged":
                     self.sovits.close()
                     self.sovits = None
-            pcm = np.concatenate(parts) if collect_audio else np.empty(0, dtype=np.int16)
+            pcm = np.concatenate([part for _, part in sorted(parts)]) if collect_audio else np.empty(0, dtype=np.int16)
+            fragments.sort(key=lambda fragment: fragment["index"])
             elapsed=time.perf_counter()-started
             limited=any(set(f["stop_reasons"]) & {"early_stop_num","iteration_limit"} for f in fragments)
             duration=sum(f["waveform_samples"] for f in fragments)/rate
             report={"status":"stopped_at_limit" if limited else "completed", "text":text,
                 "reference":reference,"reference_identity":ref.manifest["identity"],
                 "parameters":{"seed":seed,"rng":"numpy.default_rng (not Torch seed-equivalent)",
-                    "language":language,"split_method":split_method,"top_k":top_k,"top_p":1.,
+                    "language":language,"split_method":split_method,"split_bucket":bucketed,
+                    "top_k":top_k,"top_p":1.,
                     "temperature":temperature,"repetition_penalty":repetition_penalty,
                     "early_stop_num":early_stop_num,"noise_scale":0.5,"speed":1.,"fragment_interval":fragment_interval},
                 "policy":self.policy,"cuda_graph":self.use_graph,"capacity":self.capacity,
                 "request_ms":elapsed*1000,"frontend_ms":request.seconds*1000,
                 "sample_rate":rate,"audio_seconds":duration,"pcm_seconds":pcm_samples/rate,
-                "rtf":elapsed/duration,"fragments":fragments,
+                "rtf":elapsed/duration,"fragments":fragments,"execution_order":execution_order,
                 "timing_scope":"Original text through complete PCM, including missing model loads, transfers and sampling; file output separate",
                 "precision": f"GPT {self.gpt_precision.upper()}, acoustic {self.acoustic_precision.upper()}; FP16 paths are experimental; public logits and acoustic I/O remain FP32",
                 "gpt_precision":self.gpt_precision,"acoustic_precision":self.acoustic_precision,

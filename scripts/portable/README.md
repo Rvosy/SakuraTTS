@@ -8,11 +8,13 @@
 
 完整包带有 `runtime/preparation/`。使用完整 HTTP 包时，将自己的 GPT `.ckpt` 和 SoVITS `.pth` 放进 `models/`，复制 `configs/tts_infer.example.yaml` 为 `configs/tts_infer.yaml`，填写两份权重路径。双击 `start-server.bat` 即可自动转换并启动；第一次会显示前端准备、GPT 转换和 SoVITS 转换进度，后续启动复用缓存。
 
-按原版字段调用接口，传入自己的参考音频和转写：
+接口只兼容 GPT-SoVITS API v2，未实现的 V2 功能返回 400。传入自己的参考音频和转写，并显式设置 `parallel_infer=false`（省略或传 `true` 会返回 400）：
 
 ```powershell
-curl.exe -X POST http://127.0.0.1:9880/tts -H "Content-Type: application/json" --data-raw '{"text":"こんにちは。","text_lang":"ja","ref_audio_path":"D:/Voices/reference.wav","prompt_text":"参考音声です。","prompt_lang":"ja"}' --output hello.wav
+curl.exe -X POST http://127.0.0.1:9880/tts -H "Content-Type: application/json" --data-raw '{"text":"こんにちは。","text_lang":"ja","ref_audio_path":"D:/Voices/reference.wav","prompt_text":"参考音声です。","prompt_lang":"ja","parallel_infer":false}' --output hello.wav
 ```
+
+完整支持表、GET / POST 与错误处理示例见 [API v2 使用指南](https://github.com/Rvosy/SakuraTTS/blob/main/docs/api-v2-guide.md)。
 
 第一次使用该参考音频时会自动提取特征，之后复用。参考转写必须与录音一致，当前支持范围是 V2ProPlus、日文。准备过程使用独立 CPU 进程，完成后退出；准备组件只带 CPU 版 PyTorch，主推理服务不加载它。首次准备会占用额外主存和磁盘，转换结果和参考条件保存在包内缓存中。
 

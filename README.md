@@ -1,8 +1,10 @@
 # SakuraTTS
 
-面向 GPT-SoVITS 模型的独立推理后端，以原版 API 和推理行为为兼容目标。HTTP 接受原版的文本、参考音频路径和采样参数；权重转换和参考编码在独立环境完成，主推理进程不导入 PyTorch。
+面向 GPT-SoVITS 模型的独立推理后端，以原版 `api_v2.py` 和推理行为为兼容目标。HTTP 接受原版的文本、参考音频路径和采样参数；权重转换和参考编码在独立环境完成，主推理进程不导入 PyTorch。
 
-当前接通 Windows / NVIDIA、V2ProPlus 日文单请求，以及原版 `streaming_mode=1` 的按句返回。仍有未实现的原版功能，详见[HTTP 兼容清单](docs/http-api.md)。项目处于开发者预览阶段，不能视为完整替代原版。
+当前接通 Windows / NVIDIA、V2ProPlus 日文单请求，以及原版 `streaming_mode=1` 的按句返回。未实现的 V2 功能返回 HTTP 400，后续逐项补齐；旧版 API 和 Gradio 不在兼容范围内。项目处于开发者预览阶段，不能视为完整替代原版。
+
+接入桌宠或其他客户端，请先读 [API V2 使用说明](docs/api-v2-guide.md)：包含支持表、全部参数、可复制示例和错误处理。当前请求必须显式设置 `parallel_infer=false`。
 
 面向桌宠等本地应用，优先控制显存和分发体积。[Windows / NVIDIA 整合包](docs/portable-bundle.md)可从本地文件离线构建，自带 Python 和推理依赖，以 7z 分发。完整包另带独立准备组件，用于自动转换原始权重和处理新参考音频；PyTorch 只在准备进程中使用。精简推理包可省去该组件。两种包都不捆绑发声模型或个人参考，其他设备仍需兼容验收。
 
@@ -48,14 +50,14 @@ sakuratts tts models/mika --text "こんにちは。" --output hello.wav
 sakuratts serve models/mika --host 127.0.0.1 --port 9880
 ```
 
-推荐从 [tts_infer.example.yaml](examples/tts_infer.example.yaml) 配置模型和准备环境，再运行 `start-server.bat -c configs/tts_infer.yaml`。也支持 `python api.py -a 127.0.0.1 -p 9880 -c configs/tts_infer.yaml`。终端显示加载和推理日志，按 `Ctrl+C` 退出并释放模型。
+推荐从 [tts_infer.example.yaml](examples/tts_infer.example.yaml) 配置模型和准备环境，再运行 `start-server.bat -c configs/tts_infer.yaml`。也支持 `python api_v2.py -a 127.0.0.1 -p 9880 -c configs/tts_infer.yaml`。终端显示加载和推理日志，按 `Ctrl+C` 退出并释放模型。
 
-无参数启动只读取明确保存的 `configs/tts_infer.yaml`；没有该文件时服务保持未配置状态，不自动选择示例角色。显式传入现有模型目录仍可使用，新的原始参考音频需要配置独立准备环境。
+无参数启动优先读取 `configs/tts_infer.yaml`，其次读取 `GPT_SoVITS/configs/tts_infer.yaml`；都不存在时服务保持未配置状态，不自动选择示例角色。显式传入现有模型目录仍可使用，新的原始参考音频需要配置独立准备环境。
 
 `serve` 提供原版 `GET/POST /tts`、权重切换、参考音频设置和进程控制接口，另有 `/health`、`/models` 和 `/docs`。此版本没有前端页面。
 
 ```powershell
-curl.exe -X POST http://127.0.0.1:9880/tts -H "Content-Type: application/json" --data-raw '{"text":"こんにちは。","text_lang":"ja","ref_audio_path":"D:/Voices/reference.wav","prompt_text":"参考音声です。","prompt_lang":"ja"}' --output hello.wav
+curl.exe -X POST http://127.0.0.1:9880/tts -H "Content-Type: application/json" --data-raw '{"text":"こんにちは。","text_lang":"ja","ref_audio_path":"D:/Voices/reference.wav","prompt_text":"参考音声です。","prompt_lang":"ja","parallel_infer":false}' --output hello.wav
 ```
 
 各入口共用 Engine。一次只处理一条请求；服务忙碌时返回 HTTP 409。默认保留 FP32、baseline attention 和原采样参数。达到生成上限时，CLI 写出音频和报告后退出 `2`；HTTP 的 `X-SakuraTTS-Status` 返回 `stopped_at_limit`。
@@ -90,6 +92,7 @@ requirements/  已验证环境的冻结依赖快照
 | 文档 | 内容 |
 | --- | --- |
 | [快速开始](docs/quickstart.md) | 环境、模型转换、首次生成 |
+| [API V2 使用说明](docs/api-v2-guide.md) | 客户端接入、支持表、参数、调用示例与错误处理 |
 | [推理档位](docs/inference-profiles.md) | 四档配置、显存、耗时与旧配置迁移 |
 | [Python API](docs/python-api.md) / [HTTP API](docs/http-api.md) | 调用、输出、错误与生命周期 |
 | [模型目录](docs/model-format.md) | model.json、路径及身份校验 |

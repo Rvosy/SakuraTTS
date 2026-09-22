@@ -17,7 +17,7 @@ import tomllib
 import zipfile
 
 
-ROOT_FILES = {"README.md", "LICENSE", "MANIFEST.in", "pyproject.toml", "AGENTS.md", "uv.lock", "start-server.bat", "api.py"}
+ROOT_FILES = {"README.md", "LICENSE", "MANIFEST.in", "pyproject.toml", "AGENTS.md", "uv.lock", "start-server.bat", "api.py", "api_v2.py"}
 SOURCE_DIRS = ("src/sakuratts", "scripts", "tools", "requirements", "packaging/recipes", "benchmarks", "tests", "docs", "examples")
 TEXT_SUFFIXES = {".py", ".md", ".txt", ".toml", ".json", ".ps1", ".bat", ".yaml", ".yml", ".rst", ".ini", ".cfg"}
 EXCLUDED_DIRS = {"build", "dist", "__pycache__", "node_modules"}

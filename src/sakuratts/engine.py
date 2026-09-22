@@ -59,7 +59,7 @@ class Engine:
     def synthesize(self, text, *, reference=None, seed=1234, language="ja",
                    split_method="cut0", top_k=15, temperature=1.,
                    repetition_penalty=1.35, early_stop_num=2700, cancel_requested=None,
-                   fragment_interval=0.3, on_fragment=None, collect_audio=True):
+                   fragment_interval=0.3, on_fragment=None, collect_audio=True, split_bucket=False):
         if not self._lock.acquire(blocking=False):
             raise BusyError("This engine already has an active request")
         try:
@@ -69,7 +69,8 @@ class Engine:
                 language=language, split_method=split_method, top_k=top_k,
                 temperature=temperature, repetition_penalty=repetition_penalty,
                 early_stop_num=early_stop_num, cancel_requested=cancel_requested,
-                fragment_interval=fragment_interval, on_fragment=on_fragment, collect_audio=collect_audio)
+                fragment_interval=fragment_interval, on_fragment=on_fragment, collect_audio=collect_audio,
+                split_bucket=split_bucket)
             return Audio(pcm, report["sample_rate"], report)
         finally:
             self._lock.release()
@@ -338,6 +339,7 @@ class Inference:
             language=request["text_lang"], split_method=request["text_split_method"], top_k=request["top_k"],
             temperature=request["temperature"], repetition_penalty=request["repetition_penalty"],
             fragment_interval=request["fragment_interval"], on_fragment=on_fragment,
+            split_bucket=request["split_bucket"],
             collect_audio=on_fragment is None, cancel_requested=cancel_requested)
         result.report["reference_ms"] = reference_ms
         result.report["native_inference_ms"] = result.report["request_ms"]
