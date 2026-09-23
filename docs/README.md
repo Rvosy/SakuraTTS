@@ -5,6 +5,8 @@
 | 需求 | 文档 |
 | --- | --- |
 | 安装与首次生成 | [快速开始](quickstart.md) |
+| 桌宠的 LLM 并行接入、休眠与预热 | [后台驻留与提前唤醒](background-runtime.md) |
+| 服务启动、状态与生命周期接口 | [HTTP API](http-api.md) |
 | HTTP 客户端接入与当前能力表 | [API V2 使用说明](api-v2-guide.md) |
 | 英文与日英混合资源准备 | [英文前端](english-frontend.md) |
 | Windows 模型与运行资源准备 | [Windows 指南](setup-windows-nvidia.md)、[独立 ORT 组件](setup-ort-worker-offline.md) |
