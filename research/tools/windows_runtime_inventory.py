@@ -45,7 +45,9 @@ def file_identity(info, path):
 
 
 def signature(info):
-    return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
+    # Metadata-only ctime updates can differ between Windows path and handle
+    # queries even when identity, content size and modification time agree.
+    return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns
 
 
 def sha256(path, expected):

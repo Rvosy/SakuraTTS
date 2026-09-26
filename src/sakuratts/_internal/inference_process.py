@@ -67,13 +67,19 @@ class _RemoteError(Exception):
 class ProcessInference:
     """All operations run serially on the service's single inference thread."""
 
-    def __init__(self, model=None, *, tts_config=None, backend=None, experimental=None,
+    def __init__(self, model=None, *, tts_config=None, backend=None, profile=None, experimental=None,
                  startup_timeout=120, operation_timeout=300):
         for value in (startup_timeout, operation_timeout):
             if isinstance(value, bool) or not math.isfinite(value) or value <= 0:
                 raise ValueError("Inference timeouts must be finite and positive")
-        self.preparation = "runtime_init" if (experimental or {}).get("policy") == "staged" else "model_load"
         resolved_model, settings = read_inference_configuration(model, tts_config=tts_config)
+        experimental = {**settings.get("runtime_options", {}), **(experimental or {})}
+        from ..profiles import resolve_profile, uses_staged_policy
+        profile = settings.get("profile") if profile is None else profile
+        selected = backend or settings.get("backend") or (resolved_model.backend if isinstance(resolved_model, Model) else None)
+        if selected is not None:
+            profile, _ = resolve_profile(selected, profile, experimental)
+        self.preparation = "runtime_init" if uses_staged_policy(profile, experimental) else "model_load"
         configured = resolved_model is not None or bool(settings.get("gpt_checkpoint") and settings.get("sovits_checkpoint"))
         if tts_config and not configured:
             raise ValueError("TTS configuration requires both t2s_weights_path and vits_weights_path, or sakuratts.model")
@@ -81,6 +87,8 @@ class ProcessInference:
             "tts_config": str(tts_config) if tts_config else None, "experimental": dict(experimental or {})}
         if backend is not None:
             self._configuration["backend"] = backend
+        if profile is not None:
+            self._configuration["profile"] = profile
         # Validate serialization before creating any process, including user options.
         json.dumps(self._configuration, allow_nan=False)
         self.configured = configured

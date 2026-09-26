@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from sakuratts._internal.reference_condition import PreparedReference
 from sakuratts._internal.generation import SynthesisCancelled
 from sakuratts._internal.synthesis import (generate_prepared_semantic, prepare_text, prepare_text_request, synthesize,
-                                 synthesize_acoustic, synthesize_prepared)
+                                 single_fragment_pcm, synthesize_acoustic, synthesize_prepared)
 from sakuratts.frontend.text_frontend import TextFrontend
 from sakuratts.frontend.processors import JapaneseProcessor
 
@@ -61,6 +61,16 @@ class SoVITS:
 
 
 class SynthesisTests(unittest.TestCase):
+    def test_pcm_peak_normalization_and_nonfinite_rejection(self):
+        waveform = np.array([-2, -1, 0, 1], dtype=np.float32)
+        original = waveform.copy()
+        np.testing.assert_array_equal(single_fragment_pcm(waveform, 32000, 0), [-32768, -16384, 0, 16384])
+        np.testing.assert_array_equal(waveform, original)
+        np.testing.assert_array_equal(single_fragment_pcm([0, 0], 32000, 0), [0, 0])
+        for samples in ([], [0, np.nan], [0, np.inf], [0, -np.inf]):
+            with self.subTest(samples=samples), self.assertRaisesRegex(ValueError, "finite nonempty"):
+                single_fragment_pcm(samples, 32000, 0)
+
     def setUp(self):
         self.reference = PreparedReference(
             dict(model_family="v2Pro", identity=dict(gpt_checkpoint_sha256="gpt", sovits_checkpoint_sha256="sovits", official_commit="commit", reference_language="ja")),

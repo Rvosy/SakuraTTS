@@ -1,0 +1,10 @@
+{
+  "gpt_backend": "onnx",
+  "gpt_precision": "int8",
+  "gpt_threads": 4,
+  "threads": 8,
+  "policy": "resident",
+  "capacity": 2048,
+  "gpt_prefill_query_chunk_size": 0,
+  "enable_cpu_mem_arena": false
+}

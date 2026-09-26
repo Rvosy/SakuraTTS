@@ -1,0 +1,5 @@
+# 从仓库根目录启动；模型路径相对启动目录解析。
+sakuratts:
+  model: models/cpu-amd/model.json
+  backend: cpu
+  profile: int8

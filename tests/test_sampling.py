@@ -36,6 +36,25 @@ class SamplingTests(unittest.TestCase):
         token, _ = sample(logits.copy(), exponential_noise=np.array([[0.000001, 1, 1]], dtype=np.float32))
         self.assertEqual(token.item(), 0)
 
+    def test_generated_noise_matches_replay_and_advances_rng_once(self):
+        rng, replay_rng = np.random.default_rng(1234), np.random.default_rng(1234)
+        logits = np.array([[1, 2, 3]], dtype=np.float32)
+        for _ in range(8):
+            noise = replay_rng.exponential(size=logits.shape).astype(np.float32)
+            actual = sample(logits.copy(), rng=rng)
+            replay = sample(logits.copy(), exponential_noise=noise)
+            for generated, expected in zip(actual, replay):
+                np.testing.assert_array_equal(generated, expected)
+        self.assertEqual(rng.bit_generator.state, replay_rng.bit_generator.state)
+
+    def test_invalid_replay_noise_is_rejected(self):
+        logits = np.array([[1, 2, 3]], dtype=np.float32)
+        invalid = ([[1, 2]], [[1, 0, 1]], [[1, -1, 1]],
+                   [[1, np.nan, 1]], [[1, np.inf, 1]], [[1, -np.inf, 1]])
+        for noise in invalid:
+            with self.subTest(noise=noise), self.assertRaisesRegex(ValueError, "Exponential noise"):
+                sample(logits.copy(), exponential_noise=noise)
+
     def test_early_stop_preserves_strict_greater_and_idx_suffix(self):
         logits = np.array([3, 2, 1], dtype=np.float32)
         first = finish_nonstream_step([0], 1, logits, eos=2, step_index=0, prefix_length=1, early_stop_num=1)

@@ -56,10 +56,11 @@ def sample(logits, previous_tokens=None, *, exponential_noise=None, rng=None, **
     if exponential_noise is None:
         if rng is None:
             rng = np.random.default_rng()
-        exponential_noise = rng.exponential(size=probabilities.shape).astype(np.float32)
-    noise = np.asarray(exponential_noise, dtype=np.float32)
-    if noise.shape != probabilities.shape or not np.isfinite(noise).all() or np.any(noise <= 0):
-        raise ValueError("Exponential noise must be finite, strictly positive, and match probabilities")
+        noise = rng.exponential(size=probabilities.shape).astype(np.float32)
+    else:
+        noise = np.asarray(exponential_noise, dtype=np.float32)
+        if noise.shape != probabilities.shape or not np.isfinite(noise).all() or np.any(noise <= 0):
+            raise ValueError("Exponential noise must be finite, strictly positive, and match probabilities")
     token = np.argmax(probabilities / noise, axis=-1, keepdims=True).astype(np.int32)
     return token, probabilities
 

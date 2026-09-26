@@ -1,0 +1,13 @@
+{
+  "gpt_backend": "directml",
+  "gpt_precision": "fp16",
+  "gpt_threads": 4,
+  "threads": 2,
+  "device_id": 0,
+  "policy": "resident",
+  "capacity": 1280,
+  "gpt_prefill_query_chunk_size": 0,
+  "allow_experimental_acoustic_fp16": true,
+  "acoustic_fp16_acceptance": "finite",
+  "enable_cpu_mem_arena": false
+}

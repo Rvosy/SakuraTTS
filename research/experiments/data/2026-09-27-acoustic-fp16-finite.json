@@ -1,0 +1,605 @@
+{
+  "format": "sakuratts-acoustic-fp16-finite-evidence-v1",
+  "candidate": "models/navi-cpu-amd/sovits-fp16-directml-candidate",
+  "scope": "all convertible acoustic neural operators; FP32 public I/O and declared blocked operators retained",
+  "quality_accepted": false,
+  "strict_validation_preserved": {
+    "file": "validation.json",
+    "kind": "fp16-engineering-screen",
+    "passed": false
+  },
+  "graphs": {
+    "decode": {
+      "file": "acoustic.onnx",
+      "bytes": 1345666,
+      "sha256": "c6e2c0dae81d96a98bb6a52c1f7c776743ba160208e454831e96f33af5db5a26"
+    },
+    "diagnostic": {
+      "file": "acoustic-debug.onnx",
+      "bytes": 1346369,
+      "sha256": "32365b17e39dd96b080190d1981d8951643de091365d34fc95949b38ed597f1f"
+    }
+  },
+  "weights": {
+    "file": "weights.bin",
+    "bytes": 124183807,
+    "sha256": "6d4f9879a98be1121bcbc0131e6924c9f45662955685d8a875354cc1baef55d6"
+  },
+  "backends": {
+    "cpu": {
+      "report": ".cache/cpu-fp16-acoustic-20260927/result.json",
+      "report_sha256": "130b7b0e15272906970deb1ab65c1c888d4d85cb322fcaedda6004b9b6491a0a",
+      "onnxruntime": "1.24.4",
+      "hardware": {
+        "description": "AMD64 Family 25 Model 116 Stepping 1, AuthenticAMD",
+        "machine": "AMD64"
+      },
+      "saved_only": true,
+      "execution_options": {
+        "device_id": 0,
+        "intra_op_num_threads": 2,
+        "inter_op_num_threads": 1,
+        "enable_mem_pattern": false,
+        "enable_cpu_mem_arena": false,
+        "execution_mode": "ORT_SEQUENTIAL",
+        "allow_spinning": false
+      },
+      "finite_experiment": {
+        "version": 1,
+        "passed": true
+      },
+      "engineering_screen": {
+        "version": 1,
+        "passed": true,
+        "thresholds": {
+          "max_abs_error": 0.05,
+          "rmse": 0.005,
+          "minimum_snr_db": 25.0,
+          "max_peak_ratio": 1.05,
+          "peak_absolute_allowance": 0.0001,
+          "max_spectral_convergence": 0.05,
+          "max_active_log_spectral_rms_db": 1.0,
+          "stft_window": 1024,
+          "stft_hop": 256,
+          "active_magnitude_floor_db": -60.0
+        }
+      },
+      "typed_neural_events": {
+        "CPUExecutionProvider/Conv/float": 1640,
+        "CPUExecutionProvider/FusedMatMul/float": 208,
+        "CPUExecutionProvider/MatMul/float": 192,
+        "CPUExecutionProvider/LayerNormalization/float16": 192,
+        "CPUExecutionProvider/FusedConv/float": 104,
+        "CPUExecutionProvider/ConvTranspose/float": 40
+      },
+      "cpu_neural_compute_events": {
+        "Conv": 1640,
+        "FusedMatMul": 208,
+        "MatMul": 192,
+        "LayerNormalization": 192,
+        "FusedConv": 104,
+        "ConvTranspose": 40
+      },
+      "cases": {
+        "validation-0": {
+          "tokens": 1,
+          "finite": true,
+          "shape_matches_baseline": true,
+          "fp32_hot_median_ms": 43.631900000036694,
+          "fp16_hot_median_ms": 47.19009999826085,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 1280,
+            "max_abs_error": 1.6777339624240994e-06,
+            "rmse": 3.663825375564207e-07,
+            "snr_db": 55.45677811712048,
+            "peak": 0.0009031251538544893,
+            "reference_peak": 0.0009031762601807714,
+            "rms": 0.00021712509264375137,
+            "reference_rms": 0.00021715691939774625,
+            "absolute_peak_delta": -5.1106326282024384e-08,
+            "spectral_convergence": 0.0008875447562257636,
+            "active_log_spectral_rms_db": 0.03145285586352945,
+            "active_spectral_bins": 1024,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": true
+          }
+        },
+        "validation-1": {
+          "tokens": 2,
+          "finite": true,
+          "shape_matches_baseline": true,
+          "fp32_hot_median_ms": 59.60079999931622,
+          "fp16_hot_median_ms": 73.10040001175366,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 2560,
+            "max_abs_error": 1.0323943570256233e-05,
+            "rmse": 1.2050352887126878e-06,
+            "snr_db": 52.466582118283014,
+            "peak": 0.0024907300248742104,
+            "reference_peak": 0.0025010539684444666,
+            "rms": 0.0005059330416560529,
+            "reference_rms": 0.0005062078446102205,
+            "absolute_peak_delta": -1.0323943570256233e-05,
+            "spectral_convergence": 0.0016022898188194665,
+            "active_log_spectral_rms_db": 0.03489670471254936,
+            "active_spectral_bins": 3576,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": true
+          }
+        },
+        "validation-2": {
+          "tokens": 7,
+          "finite": true,
+          "shape_matches_baseline": true,
+          "fp32_hot_median_ms": 162.8947999997763,
+          "fp16_hot_median_ms": 231.61319999780972,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 8960,
+            "max_abs_error": 0.003912532702088356,
+            "rmse": 0.0003392354884385954,
+            "snr_db": 32.09667862833717,
+            "peak": 0.07106734812259674,
+            "reference_peak": 0.0706435814499855,
+            "rms": 0.013666235960747395,
+            "reference_rms": 0.013656367967472391,
+            "absolute_peak_delta": 0.00042376667261123657,
+            "spectral_convergence": 0.015186823892197353,
+            "active_log_spectral_rms_db": 0.30079358083513236,
+            "active_spectral_bins": 12633,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": true
+          }
+        },
+        "validation-3": {
+          "tokens": 19,
+          "finite": true,
+          "shape_matches_baseline": true,
+          "fp32_hot_median_ms": 462.7325000037672,
+          "fp16_hot_median_ms": 651.8431000004057,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 24320,
+            "max_abs_error": 0.019469231367111206,
+            "rmse": 0.0008927108614140156,
+            "snr_db": 35.81148031559325,
+            "peak": 0.40795889496803284,
+            "reference_peak": 0.4086637794971466,
+            "rms": 0.05509065485515718,
+            "reference_rms": 0.055116906531134505,
+            "absolute_peak_delta": -0.0007048845291137695,
+            "spectral_convergence": 0.00798090155848012,
+            "active_log_spectral_rms_db": 0.20274912754992777,
+            "active_spectral_bins": 23026,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": true
+          }
+        }
+      },
+      "archive_recovery": null
+    },
+    "directml": {
+      "report": ".cache/directml-fp16-20260927/finite-experiment-recovered.json",
+      "report_sha256": "7a74a32c1f98832d18815ea53e224f647a1db71cfe079014c1cf6ddb72d16a47",
+      "onnxruntime": "1.24.4",
+      "hardware": {
+        "api": "IDXGIFactory.EnumAdapters / IDXGIAdapter.GetDesc",
+        "device_id": 0,
+        "description": "AMD Radeon 780M Graphics",
+        "vendor_id": 4098,
+        "pci_device_id": 5567,
+        "subsystem_id": 571022706,
+        "revision": 199,
+        "display_drivers": [
+          {
+            "Name": "AMD Radeon 780M Graphics",
+            "PNPDeviceID": "PCI\\VEN_1002&DEV_15BF&SUBSYS_22091D72&REV_C7\\4&17857BC2&0&0041",
+            "DriverVersion": "31.0.14005.11001"
+          }
+        ],
+        "driver_inventory": [
+          {
+            "Name": "Virtual Desktop Monitor",
+            "PNPDeviceID": "ROOT\\DISPLAY\\0000",
+            "DriverVersion": "13.50.53.699"
+          },
+          {
+            "Name": "AMD Radeon 780M Graphics",
+            "PNPDeviceID": "PCI\\VEN_1002&DEV_15BF&SUBSYS_22091D72&REV_C7\\4&17857BC2&0&0041",
+            "DriverVersion": "31.0.14005.11001"
+          }
+        ],
+        "scope": "Hardware observed for this experiment; other adapters and driver versions are not validated"
+      },
+      "saved_only": false,
+      "execution_options": {
+        "device_id": 0,
+        "intra_op_num_threads": 2,
+        "inter_op_num_threads": 1,
+        "enable_mem_pattern": false,
+        "enable_cpu_mem_arena": false,
+        "execution_mode": "ORT_SEQUENTIAL",
+        "allow_spinning": false
+      },
+      "finite_experiment": {
+        "version": 1,
+        "passed": true
+      },
+      "engineering_screen": {
+        "version": 1,
+        "passed": false,
+        "thresholds": {
+          "max_abs_error": 0.05,
+          "rmse": 0.005,
+          "minimum_snr_db": 25.0,
+          "max_peak_ratio": 1.05,
+          "peak_absolute_allowance": 0.0001,
+          "max_spectral_convergence": 0.05,
+          "max_active_log_spectral_rms_db": 1.0,
+          "stft_window": 1024,
+          "stft_hop": 256,
+          "active_magnitude_floor_db": -60.0
+        }
+      },
+      "typed_neural_events": {
+        "DmlExecutionProvider/Conv/float16": 1860,
+        "DmlExecutionProvider/FusedMatMul/float16": 456,
+        "DmlExecutionProvider/Softmax/float16": 156,
+        "DmlExecutionProvider/MatMul/float16": 144,
+        "DmlExecutionProvider/LayerNormalization/float16": 288,
+        "DmlExecutionProvider/DmlFusedConv/float16": 696,
+        "DmlExecutionProvider/ConvTranspose/float16": 60
+      },
+      "cpu_neural_compute_events": {},
+      "cases": {
+        "validation-0": {
+          "tokens": 1,
+          "finite": true,
+          "shape_matches_baseline": true,
+          "fp32_hot_median_ms": 61.13210000330582,
+          "fp16_hot_median_ms": 67.01099999190774,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 1280,
+            "max_abs_error": 0.000739753246307373,
+            "rmse": 0.0002114393100812408,
+            "snr_db": 0.23187574255036233,
+            "peak": 0.0009765625,
+            "reference_peak": 0.0009031295776367188,
+            "rms": 0.00015440808887540915,
+            "reference_rms": 0.00021715984358225754,
+            "absolute_peak_delta": 7.343292236328125e-05,
+            "spectral_convergence": 0.6486202692977266,
+            "active_log_spectral_rms_db": 9.093045966211008,
+            "active_spectral_bins": 1024,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": false,
+              "amplitude": true,
+              "spectral_convergence": false,
+              "active_log_spectral_rms": false
+            },
+            "passed": false
+          }
+        },
+        "validation-1": {
+          "tokens": 2,
+          "finite": true,
+          "shape_matches_baseline": true,
+          "fp32_hot_median_ms": 201.34549999784213,
+          "fp16_hot_median_ms": 203.74670000455808,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 2560,
+            "max_abs_error": 0.0007454752922058105,
+            "rmse": 0.0003146931132560359,
+            "snr_db": 4.128929601410202,
+            "peak": 0.001953125,
+            "reference_peak": 0.002501070499420166,
+            "rms": 0.0005438639992662467,
+            "reference_rms": 0.0005062134953254156,
+            "absolute_peak_delta": -0.000547945499420166,
+            "spectral_convergence": 0.5100797373193877,
+            "active_log_spectral_rms_db": 10.501433163047093,
+            "active_spectral_bins": 3576,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": false,
+              "amplitude": true,
+              "spectral_convergence": false,
+              "active_log_spectral_rms": false
+            },
+            "passed": false
+          }
+        },
+        "validation-2": {
+          "tokens": 7,
+          "finite": true,
+          "shape_matches_baseline": true,
+          "fp32_hot_median_ms": 254.55100000544917,
+          "fp16_hot_median_ms": 230.60029999760445,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 8960,
+            "max_abs_error": 0.0044890642166137695,
+            "rmse": 0.0005689272172802128,
+            "snr_db": 27.60557202544572,
+            "peak": 0.0693359375,
+            "reference_peak": 0.07064330577850342,
+            "rms": 0.0135785704534489,
+            "reference_rms": 0.01365637116893976,
+            "absolute_peak_delta": -0.001307368278503418,
+            "spectral_convergence": 0.027067344656594095,
+            "active_log_spectral_rms_db": 2.348386208511178,
+            "active_spectral_bins": 12633,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": false
+            },
+            "passed": false
+          }
+        },
+        "validation-3": {
+          "tokens": 19,
+          "finite": true,
+          "shape_matches_baseline": true,
+          "fp32_hot_median_ms": 323.2253000023775,
+          "fp16_hot_median_ms": 298.3815999905346,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 24320,
+            "max_abs_error": 0.07878744602203369,
+            "rmse": 0.003312978106846244,
+            "snr_db": 24.4213261457545,
+            "peak": 0.4052734375,
+            "reference_peak": 0.4086635112762451,
+            "rms": 0.054636763398560606,
+            "reference_rms": 0.055116911440202455,
+            "absolute_peak_delta": -0.003390073776245117,
+            "spectral_convergence": 0.028932510710881345,
+            "active_log_spectral_rms_db": 0.790250841977022,
+            "active_spectral_bins": 23026,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": false,
+              "rmse": true,
+              "snr": false,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": false
+          }
+        },
+        "fixed-short-43": {
+          "tokens": 43,
+          "finite": true,
+          "shape_matches_baseline": true,
+          "fp32_hot_median_ms": 453.53820000309497,
+          "fp16_hot_median_ms": 390.6128999951761,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 55040,
+            "max_abs_error": 0.14040982723236084,
+            "rmse": 0.005852393102621094,
+            "snr_db": 19.145167803181593,
+            "peak": 0.5234375,
+            "reference_peak": 0.48628461360931396,
+            "rms": 0.05278402064875998,
+            "reference_rms": 0.053038578993193454,
+            "absolute_peak_delta": 0.037152886390686035,
+            "spectral_convergence": 0.04740432972551586,
+            "active_log_spectral_rms_db": 1.1382312418211542,
+            "active_spectral_bins": 49988,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": false,
+              "rmse": false,
+              "snr": false,
+              "amplitude": false,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": false
+            },
+            "passed": false
+          }
+        },
+        "fixed-long-256": {
+          "tokens": 256,
+          "finite": true,
+          "shape_matches_baseline": true,
+          "fp32_hot_median_ms": 1637.9101000056835,
+          "fp16_hot_median_ms": 1167.7576999936718,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 327680,
+            "max_abs_error": 0.14999377727508545,
+            "rmse": 0.006028368083840789,
+            "snr_db": 19.030435282526003,
+            "peak": 0.4970703125,
+            "reference_peak": 0.449601411819458,
+            "rms": 0.05369832937365482,
+            "reference_rms": 0.05391647937520601,
+            "absolute_peak_delta": 0.04746890068054199,
+            "spectral_convergence": 0.05611446392554629,
+            "active_log_spectral_rms_db": 1.1789336314151406,
+            "active_spectral_bins": 328582,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": false,
+              "rmse": false,
+              "snr": false,
+              "amplitude": false,
+              "spectral_convergence": false,
+              "active_log_spectral_rms": false
+            },
+            "passed": false
+          }
+        }
+      },
+      "archive_recovery": {
+        "original_report": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\result.json",
+        "original_report_sha256": "2e69a3b332de64020660815edb4c21638e15f5c91a05b46c400ddf4c98a097f6",
+        "outputs_and_profile": [
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp32-validation-0.npz",
+            "sha256": "04d3e7ed906843a9bdd4aa3f9ba4fb7e75b648f158a2413d49395a870609e90c"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp32-validation-1.npz",
+            "sha256": "66d3b51fc1155b81a2d1f414e493f567003aa7e9543c52f129ea891d55e07557"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp32-validation-2.npz",
+            "sha256": "457a6b56d8d5f792ea266cfebac3195fd2fed1d9ff966816c97d43bd71de7930"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp32-validation-3.npz",
+            "sha256": "a7270d4e51521c29346472bcca465c85edf5fbfb2168ec3b990a1a68fb531e5e"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp32-fixed-short-43.npz",
+            "sha256": "55db09b0f97f03c3d9b07b67933cfccc18f0c3630b7808590c2a28047dca1e4f"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp32-fixed-long-256.npz",
+            "sha256": "2d3446bc9488f0c939b965ecd77bb12f1899473f6bc7f50f923c2a8f4d37ef22"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp16-validation-0.npz",
+            "sha256": "b37cccaf27e619c60aeb18b98b0e3869f7934ba946896298a69bf8bded0f26ba"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp16-validation-1.npz",
+            "sha256": "3b4fcca30a69bcd64849d6140ac5880bd2649e51834e2a2fcded9c9437cc7889"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp16-validation-2.npz",
+            "sha256": "ff05ee4f5ec7924c3b8312ef4170e078912ada40496ae23a0d1f31eeb0c0ce23"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp16-validation-3.npz",
+            "sha256": "4571054b03b7df16cc2c288d2116c0a1f2e587e8bdcb036558a22d5ca56a5774"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp16-fixed-short-43.npz",
+            "sha256": "bd19224eba237bc66b351e9d73195be1a755c671f4b762124541dfca06dcd3e8"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp16-fixed-long-256.npz",
+            "sha256": "9faff5ad2e7ffd005ac2723f00df4ace9dc7fde0447b3e7751d2043bb9ca1259"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp16-diagnostic-validation-0.npz",
+            "sha256": "e1350ce2e6d4f9d971e7dd817327259eedf823a0dcace62810ffbec99365a162"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp16-diagnostic-validation-1.npz",
+            "sha256": "aa8df711ab4887c358cfedcf6deecbfef945b1b0dd6ce47ba854e5f6c7a28e07"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp16-diagnostic-validation-2.npz",
+            "sha256": "797401d9ec162831d50c41b089f7a0c6f9c3ffe6a1bd483432d89ad3c85658a2"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp16-diagnostic-validation-3.npz",
+            "sha256": "86643a4ab6c9a8e765aa44f9d51c77af5d046f0a9280da9b53e7e17066343a43"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp16-profile-validation-0.npz",
+            "sha256": "b37cccaf27e619c60aeb18b98b0e3869f7934ba946896298a69bf8bded0f26ba"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp16-profile-validation-1.npz",
+            "sha256": "3b4fcca30a69bcd64849d6140ac5880bd2649e51834e2a2fcded9c9437cc7889"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp16-profile-validation-2.npz",
+            "sha256": "ff05ee4f5ec7924c3b8312ef4170e078912ada40496ae23a0d1f31eeb0c0ce23"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp16-profile-validation-3.npz",
+            "sha256": "4571054b03b7df16cc2c288d2116c0a1f2e587e8bdcb036558a22d5ca56a5774"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp16-profile-fixed-short-43.npz",
+            "sha256": "bd19224eba237bc66b351e9d73195be1a755c671f4b762124541dfca06dcd3e8"
+          },
+          {
+            "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.cache\\directml-fp16-20260927\\fp16-profile-fixed-long-256.npz",
+            "sha256": "9faff5ad2e7ffd005ac2723f00df4ace9dc7fde0447b3e7751d2043bb9ca1259"
+          },
+          {
+            "file": ".cache\\directml-fp16-20260927\\dml_2026-09-27_02-13-17.json",
+            "sha256": "e8e473fc475ff6ca9fe1715f12afbd6432e4352f36bb428c6d3fbd70994fb642"
+          }
+        ],
+        "io_source": "Hash-matched graph protobuf and saved FP32 output arrays; no inference rerun",
+        "session_options_source": "Original DirectML harness settings explicitly supplied during archive recovery",
+        "hardware_source": "Same-host inventory captured after the archived run"
+      }
+    }
+  }
+}

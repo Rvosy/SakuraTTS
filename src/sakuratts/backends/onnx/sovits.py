@@ -26,6 +26,11 @@ FP16_SCREEN_VERSION = 2
 FP16_EXECUTION_OPTIONS = {"device_id": 0, "arena_extend_strategy": "kSameAsRequested",
                           "cudnn_conv_algo_search": "HEURISTIC", "cudnn_conv_use_max_workspace": False,
                           "enable_mem_pattern": False, "intra_op_num_threads": 4, "inter_op_num_threads": 1}
+DIRECTML_FP16_SCREEN_VERSION = 1
+DIRECTML_FP16_KIND = "fp16-directml-engineering-screen"
+DIRECTML_FP16_EXECUTION_OPTIONS = {"device_id": 0, "intra_op_num_threads": 2, "inter_op_num_threads": 1,
+    "enable_mem_pattern": False, "enable_cpu_mem_arena": False,
+    "execution_mode": "ORT_SEQUENTIAL", "allow_spinning": False}
 
 
 def _package_file(root, spec):
@@ -40,7 +45,11 @@ def _package_file(root, spec):
 
 def read_manifest(package, *, diagnostic=False, allow_experimental_fp16=False,
                   acoustic_chunk_frames=None, acoustic_arena_shrink=False,
-                  acoustic_session_policy="resident"):
+                  acoustic_session_policy="resident", fp16_acceptance="screened", execution_backend=None):
+    if fp16_acceptance not in ("screened", "finite"):
+        raise ValueError("fp16_acceptance must be screened or finite")
+    if fp16_acceptance == "finite" and execution_backend not in ("cpu", "directml"):
+        raise ValueError("Finite FP16 acceptance requires an explicit CPU or DirectML backend")
     if acoustic_session_policy not in ("resident", "staged"):
         raise ValueError("acoustic_session_policy must be resident or staged")
     package = Path(package).resolve()
@@ -68,22 +77,42 @@ def read_manifest(package, *, diagnostic=False, allow_experimental_fp16=False,
             raise ValueError("FP16 acoustic package must declare its tested ORT optimization level")
         if not isinstance(precision.get("ort_use_deterministic_compute"), bool):
             raise ValueError("FP16 acoustic package must declare its deterministic-compute policy")
+    finite_experiment = manifest["dtype"] == "float16" and fp16_acceptance == "finite"
+    if finite_experiment:
+        from .precision_experiment import EXPERIMENT_KIND, validate_experiment
+        spec = manifest.get("experimental_validations", {}).get(execution_backend, {})
+        if spec.get("kind") != EXPERIMENT_KIND or spec.get("passed") is not True:
+            raise ValueError(f"FP16 finite acceptance requires independent {execution_backend} execution evidence")
+        report = json.loads(_package_file(package, spec).read_text(encoding="utf-8"))
+        validate_experiment(manifest, report, execution_backend)
     validation = manifest.get("validation")
-    if not isinstance(validation, dict) or validation.get("passed") is not True:
+    if not finite_experiment and (not isinstance(validation, dict) or validation.get("passed") is not True):
         raise ValueError("Acoustic package did not pass export validation; inspect validation.json or export again")
-    if manifest["dtype"] == "float16":
-        if validation.get("kind") != "fp16-engineering-screen":
+    if manifest["dtype"] == "float16" and not finite_experiment:
+        kind = validation.get("kind")
+        if kind not in ("fp16-engineering-screen", DIRECTML_FP16_KIND):
             raise ValueError("FP16 acoustic package requires its own engineering screening")
         report = json.loads(_package_file(package, validation).read_text(encoding="utf-8"))
+        version, execution = ((DIRECTML_FP16_SCREEN_VERSION, DIRECTML_FP16_EXECUTION_OPTIONS)
+                              if kind == DIRECTML_FP16_KIND else (FP16_SCREEN_VERSION, FP16_EXECUTION_OPTIONS))
         if (report.get("engineering_screen", {}).get("passed") is not True
-                or report["engineering_screen"].get("version") != FP16_SCREEN_VERSION
-                or report.get("ort_execution_options") != FP16_EXECUTION_OPTIONS
+                or report["engineering_screen"].get("version") != version
+                or report.get("ort_execution_options") != execution
                 or report.get("candidate_graph_sha256") != manifest["graphs"]["decode"]["sha256"]
                 or report.get("candidate_diagnostic_sha256") != manifest["graphs"]["diagnostic"]["sha256"]
                 or report.get("candidate_weights_sha256") != manifest["weights"]["sha256"]
                 or report.get("ort_graph_optimization_level") != precision["ort_graph_optimization_level"]
                 or report.get("ort_use_deterministic_compute") != precision["ort_use_deterministic_compute"]):
             raise ValueError("FP16 engineering screening does not match the candidate package")
+        if kind == DIRECTML_FP16_KIND:
+            profile = report.get("runs", {}).get("fp16-profile", {}).get("profile", {})
+            hardware = report.get("hardware", {})
+            if (report.get("backend") != "directml" or profile.get("directml_fp16_convolution_observed") is not True
+                    or profile.get("cpu_neural_compute_events") != {}
+                    or report.get("source_manifest_sha256") != precision.get("source_manifest_sha256")
+                    or hardware.get("device_id") != execution["device_id"] or not hardware.get("description")
+                    or not hardware.get("display_drivers") or not report.get("onnxruntime")):
+                raise ValueError("DirectML FP16 screening requires matching GPU execution evidence")
     if manifest["config"]["semantic_upsample_factor"] != 2:
         raise ValueError("Acoustic package requires the supported 25 Hz semantic conversion")
     _package_file(package, manifest["weights"])
@@ -93,42 +122,73 @@ def read_manifest(package, *, diagnostic=False, allow_experimental_fp16=False,
 
 class ORTSoVITS:
     def __init__(self, manifest, session, *, diagnostic=False, acoustic_arena_shrink=False, device_id=0):
-        if not isinstance(acoustic_arena_shrink, bool):
-            raise ValueError("acoustic_arena_shrink must be a bool")
-        self.encoder = SimpleNamespace(manifest=manifest)
-        self.sample_rate = manifest["config"]["sample_rate"]
-        self.session = session
-        self.diagnostic = diagnostic
-        self.provider_options = session.get_provider_options()
-        self.providers = session.get_providers()
-        self.acoustic_arena_shrink = acoustic_arena_shrink
-        self._run_options = None
-        if acoustic_arena_shrink:
-            if not self.providers or self.providers[0] != "CUDAExecutionProvider":
-                raise ValueError("Acoustic arena shrinkage requires CUDA execution")
-            import onnxruntime as ort
-            self._run_options = ort.RunOptions()
-            self._run_options.add_run_config_entry("memory.enable_memory_arena_shrinkage", f"gpu:{device_id}")
+        self.session = None
+        try:
+            if not isinstance(acoustic_arena_shrink, bool):
+                raise ValueError("acoustic_arena_shrink must be a bool")
+            self.encoder = SimpleNamespace(manifest=manifest)
+            self.sample_rate = manifest["config"]["sample_rate"]
+            self.session = session
+            self.diagnostic = diagnostic
+            self.provider_options = session.get_provider_options()
+            self.providers = session.get_providers()
+            self.acoustic_arena_shrink = acoustic_arena_shrink
+            self._run_options = None
+            if acoustic_arena_shrink:
+                if not self.providers or self.providers[0] != "CUDAExecutionProvider":
+                    raise ValueError("Acoustic arena shrinkage requires CUDA execution")
+                import onnxruntime as ort
+                self._run_options = ort.RunOptions()
+                self._run_options.add_run_config_entry("memory.enable_memory_arena_shrinkage", f"gpu:{device_id}")
+        except BaseException:
+            self.session = session = None
+            raise
+
 
     @classmethod
     def load(cls, package, *, device="cuda", device_id=0, diagnostic=False,
              arena_extend_strategy="kSameAsRequested", cudnn_conv_algo_search="HEURISTIC",
              cudnn_conv_use_max_workspace=False, enable_mem_pattern=False,
-             intra_op_num_threads=4, profile_prefix=None, allow_experimental_fp16=False,
+             intra_op_num_threads=None, enable_cpu_mem_arena=True,
+             profile_prefix=None, allow_experimental_fp16=False, fp16_acceptance="screened",
              acoustic_arena_shrink=False, acoustic_chunk_frames=None,
              acoustic_session_policy="resident"):
-        if device not in ("cuda", "cpu"):
-            raise ValueError("Acoustic device must be cuda or cpu")
+        if device not in ("cuda", "cpu", "directml"):
+            raise ValueError("Acoustic device must be cuda, cpu or directml")
+        if intra_op_num_threads is None:
+            intra_op_num_threads = 4 if device == "cuda" else 2
+        if not isinstance(enable_cpu_mem_arena, bool):
+            raise ValueError("enable_cpu_mem_arena must be a bool")
+        if device == "cuda" and not enable_cpu_mem_arena:
+            raise ValueError("Disabling the CPU memory arena is supported only for CPU and DirectML execution")
+        if device == "directml":
+            if isinstance(device_id, bool) or not isinstance(device_id, int) or device_id < 0:
+                raise ValueError("DirectML device_id must be a nonnegative adapter index")
+            if enable_mem_pattern:
+                raise ValueError("DirectML execution requires enable_mem_pattern=False")
         if not isinstance(acoustic_arena_shrink, bool):
             raise ValueError("acoustic_arena_shrink must be a bool")
         if acoustic_arena_shrink and device != "cuda":
             raise ValueError("Acoustic arena shrinkage requires CUDA execution")
         manifest, graph = read_manifest(package, diagnostic=diagnostic,
             allow_experimental_fp16=allow_experimental_fp16, acoustic_chunk_frames=acoustic_chunk_frames,
-            acoustic_arena_shrink=acoustic_arena_shrink, acoustic_session_policy=acoustic_session_policy)
-        if manifest["dtype"] == "float16" and device != "cuda":
-            raise ValueError("Experimental FP16 acoustic execution currently requires CUDA")
-        if manifest["dtype"] == "float16" or graph is None:
+            acoustic_arena_shrink=acoustic_arena_shrink, acoustic_session_policy=acoustic_session_policy,
+            **({"fp16_acceptance": fp16_acceptance, "execution_backend": device} if fp16_acceptance != "screened" else {}))
+        if manifest["dtype"] == "float16" and device == "cpu" and fp16_acceptance != "finite":
+            raise ValueError("Experimental FP16 acoustic execution has not been screened for CPU")
+        if manifest["dtype"] == "float16" and device == "directml" and fp16_acceptance == "screened":
+            if manifest.get("validation", {}).get("kind") != DIRECTML_FP16_KIND:
+                raise ValueError("DirectML FP16 execution requires its own DirectML engineering screen")
+            requested = {"device_id": device_id, "intra_op_num_threads": intra_op_num_threads,
+                "inter_op_num_threads": 1, "enable_mem_pattern": enable_mem_pattern,
+                "enable_cpu_mem_arena": enable_cpu_mem_arena,
+                "execution_mode": "ORT_SEQUENTIAL", "allow_spinning": False}
+            if requested != DIRECTML_FP16_EXECUTION_OPTIONS:
+                raise ValueError("DirectML FP16 execution requires its screened session options: "
+                                 "device_id=0, threads=2, enable_cpu_mem_arena=False")
+        if graph is None and device != "cuda":
+            raise ValueError("Chunked acoustic execution requires CUDA")
+        if device == "cuda" and (manifest["dtype"] == "float16" or graph is None):
             requested = {"device_id": device_id, "arena_extend_strategy": arena_extend_strategy,
                          "cudnn_conv_algo_search": cudnn_conv_algo_search,
                          "cudnn_conv_use_max_workspace": cudnn_conv_use_max_workspace,
@@ -136,8 +196,8 @@ class ORTSoVITS:
                          "intra_op_num_threads": intra_op_num_threads, "inter_op_num_threads": 1}
             if requested != FP16_EXECUTION_OPTIONS:
                 raise ValueError("Experimental FP16 acoustic execution requires its screened CUDA/session options")
-        if graph is None and device != "cuda":
-            raise ValueError("Chunked acoustic execution requires CUDA")
+            if manifest.get("validation", {}).get("kind") == DIRECTML_FP16_KIND:
+                raise ValueError("CUDA FP16 execution requires its own CUDA engineering screen")
         if device == "cuda":
             from sakuratts.backends.cuda.runtime import configure_cuda
             configure_cuda()
@@ -153,6 +213,12 @@ class ORTSoVITS:
         options.intra_op_num_threads = intra_op_num_threads
         options.inter_op_num_threads = 1
         options.enable_mem_pattern = enable_mem_pattern
+        if device != "cuda":
+            options.enable_cpu_mem_arena = enable_cpu_mem_arena
+            options.add_session_config_entry("session.intra_op.allow_spinning", "0")
+            options.add_session_config_entry("session.inter_op.allow_spinning", "0")
+        if device == "directml" or (device == "cpu" and manifest["dtype"] == "float16"):
+            options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
         options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
         if manifest["dtype"] == "float16":
             options.graph_optimization_level = getattr(ort.GraphOptimizationLevel,
@@ -170,23 +236,38 @@ class ORTSoVITS:
                 "cudnn_conv_use_max_workspace": "1" if cudnn_conv_use_max_workspace else "0",
                 "use_tf32": "0",
             }), "CPUExecutionProvider"]
+        elif device == "directml":
+            if "DmlExecutionProvider" not in ort.get_available_providers():
+                raise RuntimeError("DirectML provider is unavailable; install the SakuraTTS DirectML runtime dependencies")
+            providers = [("DmlExecutionProvider", {"device_id": str(device_id)}), "CPUExecutionProvider"]
         else:
             providers = ["CPUExecutionProvider"]
         session = ort.InferenceSession(str(graph), sess_options=options, providers=providers)
-        if device == "cuda" and session.get_providers()[0] != "CUDAExecutionProvider":
-            raise RuntimeError("ONNX Runtime could not initialize CUDA; refusing silent CPU inference")
-        expected_outputs = STAGES if diagnostic else ("waveform",)
-        if tuple(item.name for item in session.get_inputs()) != INPUT_NAMES:
-            raise ValueError("Unexpected acoustic graph input schema")
-        if tuple(item.name for item in session.get_outputs()) != expected_outputs:
-            raise ValueError("Unexpected acoustic graph output schema")
-        if manifest["dtype"] == "float16":
-            expected_types = ("tensor(int64)", "tensor(int64)") + ("tensor(float)",) * 4
-            if (tuple(item.type for item in session.get_inputs()) != expected_types
-                    or any(item.type != "tensor(float)" for item in session.get_outputs())):
-                raise ValueError("FP16 acoustic graph does not preserve FP32 public tensors")
-        return cls(manifest, session, diagnostic=diagnostic,
-                   acoustic_arena_shrink=acoustic_arena_shrink, device_id=device_id)
+        try:
+            expected_provider = {"cuda": "CUDAExecutionProvider", "directml": "DmlExecutionProvider"}.get(device)
+            if expected_provider is not None and session.get_providers()[:1] != [expected_provider]:
+                raise RuntimeError(f"ONNX Runtime could not initialize {expected_provider}; refusing silent CPU inference")
+            if device == "cpu" and manifest["dtype"] == "float16" and session.get_providers() != ["CPUExecutionProvider"]:
+                raise RuntimeError("CPU FP16 execution requires the CPUExecutionProvider exclusively")
+            if device == "directml":
+                session.disable_fallback()
+            expected_outputs = STAGES if diagnostic else ("waveform",)
+            if tuple(item.name for item in session.get_inputs()) != INPUT_NAMES:
+                raise ValueError("Unexpected acoustic graph input schema")
+            if tuple(item.name for item in session.get_outputs()) != expected_outputs:
+                raise ValueError("Unexpected acoustic graph output schema")
+            if manifest["dtype"] == "float16":
+                expected_types = ("tensor(int64)", "tensor(int64)") + ("tensor(float)",) * 4
+                if (tuple(item.type for item in session.get_inputs()) != expected_types
+                        or any(item.type != "tensor(float)" for item in session.get_outputs())):
+                    raise ValueError("FP16 acoustic graph does not preserve FP32 public tensors")
+            return cls(manifest, session, diagnostic=diagnostic,
+                       acoustic_arena_shrink=acoustic_arena_shrink, device_id=device_id)
+        except BaseException:
+            # A retained initialization traceback must not keep the model session.
+            session = None
+            raise
+
 
     def validate_reference(self, reference):
         source = self.encoder.manifest["source"]
@@ -244,7 +325,7 @@ class ORTSoVITS:
         """Calls retain no request tensors; ORT's session arena may retain memory."""
 
     def unload(self):
-        """Release the session and its CUDA arena; driver context may remain."""
+        """Release the session and its allocations; driver context may remain."""
         self.session = None
         gc.collect()
 

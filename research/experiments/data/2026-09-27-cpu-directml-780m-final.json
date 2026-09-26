@@ -1,0 +1,2044 @@
+{
+  "format": "sakuratts-cpu-directml-780m-benchmark-v1",
+  "date_local": "2026-09-27",
+  "status": "completed",
+  "sources": [
+    {
+      "path": "results/cpu-amd-final/summary.json",
+      "sha256": "ce07fd7601a3a02b77ec89995727c7dd07eb411ce43f96e81de012e26c05fa35"
+    },
+    {
+      "path": "results/cpu-amd-final/job.json",
+      "sha256": "4d63201b29745d5884c1b6e20117a4a48c79a9ad1d85acc7cc68a1859cb02a90"
+    },
+    {
+      "path": "results/dxgi-adapters.json",
+      "sha256": "617215548edd57696017a13b331233e01f3a289575b920311bb2ec89687eab5c"
+    },
+    {
+      "path": "results/cpu-gpt-profile/layout-alternating.json",
+      "sha256": "729febac2a6f93b5320e1802f3614eb7a4bd8529c804a2c18a963a337e206752"
+    },
+    {
+      "path": "results/cpu-gpt-profile/sampling-fortran.json",
+      "sha256": "c6abcb153be0060f69f701cbdbe2a55c3876d0ca16d75250008ac2c969d0c1bf"
+    },
+    {
+      "path": "results/ort-directml-validation/result.json",
+      "sha256": "5a5a5cded6f635e0bc2bb0c56e130783431af8e9a7de0a4f9a67dbabf34f8323"
+    },
+    {
+      "path": "C:/Users/LBW/MyFile/sakura-project/SakuraTTS/results/ort-directml-validation/ort-profile_2026-09-27_01-53-15.json",
+      "sha256": "042f815612b3d2e2faa9dca6ef1e1dfff5d5ef9f4bd0c6de6435637b237de3bd"
+    },
+    {
+      "path": "results/cpu-amd-managed-smoke/summary.json",
+      "sha256": "9ad4cba987316b7da1f9dbd4dfb41f17e9bcd7f24e336a6e3662d3b468886390"
+    },
+    {
+      "path": ".cache/managed_cpu_amd_smoke.py",
+      "sha256": "ef1d2ee448f21c29b524a559f4c2b523bcb8cc82a2e8783940dc42b47ff40ef5"
+    },
+    {
+      "path": "results/cpu-amd-wddm-tree/result.json",
+      "sha256": "2ffd60a11a9e81dfd189a23ebbaf297a173cb588a0e8993d5f8ab3797cbc4d0e"
+    },
+    {
+      "path": ".cache/cpu_amd_wddm_tree.py",
+      "sha256": "f4658f443d26adf099882e50ec39dab703e3812178365c9e8eaaf64ca3d84f14"
+    },
+    {
+      "path": "research/tools/windows_wddm_memory.py",
+      "sha256": "0acf5c82fc4e1ec96bcfeec484f7dca343558ee24e9f81475eea1a9da2fde1cc"
+    },
+    {
+      "path": "results/cpu-amd-wddm/result.json",
+      "sha256": "db67c7e3f0ed396e1a3108f72930364edccd93bfc076a5699b1da10224b913b8"
+    },
+    {
+      "path": "results/cpu-amd-full-unit-tests-final.txt",
+      "sha256": "0201d0ca040aceb9dbc4e250ae25c032c3d29e78d4a3caf9859d16770283d073"
+    },
+    {
+      "path": "results/cpu-amd-doctor-cpu.json",
+      "sha256": "dc3a86bb89baf3c431d81351e2edaf9d7090e1816a40f8e5a568a3ea7f32e019"
+    },
+    {
+      "path": "results/cpu-amd-doctor-directml.json",
+      "sha256": "c88e69fa429ecbd32bcf929abeffed658bceea5829901db2fbeddb2f684b6a3a"
+    },
+    {
+      "path": "results/cpu-amd-full-unit-tests-release.txt",
+      "sha256": "a8aed9251ca7890c1b6a5d165ae86948b8cfbfdcef3a3aa66e87424fd0d8495b"
+    }
+  ],
+  "initial_measurement": {
+    "path": "research/experiments/data/2026-09-27-cpu-directml-780m-initial.json",
+    "sha256": "a339198881447a0d695f7822c40222a46439344802122a0ef20bce52044c6eab"
+  },
+  "hardware": {
+    "observation": "CIM inventory read at aggregation, not a per-request utilization measurement",
+    "cpu": "AMD Ryzen 7 7840HS w/ Radeon 780M Graphics",
+    "physical_cores": 8,
+    "logical_cores": 16,
+    "ram_bytes": 16295776256,
+    "gpu": "AMD Radeon 780M Graphics",
+    "driver_version": "31.0.14005.11001",
+    "wmi_adapter_ram_bytes": 536870912,
+    "gpu_memory_measurement": null,
+    "dxgi": {
+      "api": "IDXGIFactory.EnumAdapters / IDXGIAdapter.GetDesc",
+      "adapters": [
+        {
+          "device_id": 0,
+          "description": "AMD Radeon 780M Graphics",
+          "vendor_id": "0x1002",
+          "pci_device_id": "0x15bf",
+          "dedicated_video_memory_bytes": 436690944,
+          "shared_system_memory_capacity_bytes": 8147888128,
+          "luid": {
+            "high": 0,
+            "low": 58783
+          }
+        },
+        {
+          "device_id": 1,
+          "description": "Microsoft Basic Render Driver",
+          "vendor_id": "0x1414",
+          "pci_device_id": "0x8c",
+          "dedicated_video_memory_bytes": 0,
+          "shared_system_memory_capacity_bytes": 8147888128,
+          "luid": {
+            "high": 0,
+            "low": 63047
+          }
+        }
+      ],
+      "note": "Memory fields are adapter capacities, not measured inference usage."
+    }
+  },
+  "inputs": {
+    "texts": {
+      "short": "おはよう。今日もよろしくね。",
+      "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+    },
+    "reference_identity": {
+      "gpt_checkpoint_sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf",
+      "sovits_checkpoint_sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81",
+      "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+      "official_commit": "source-sha256:75398e84f6625044d794ebfc2f2ac6d6202f328259e13e032c405301e99efb6a",
+      "reference_text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+      "reference_language": "ja"
+    }
+  },
+  "package_identity": {
+    "gpt": {
+      "manifest": {
+        "path": "models/navi-cpu-amd/gpt/manifest.json",
+        "sha256": "e1cc4296095f65b98ccaf48501edb5558bbd1fec485a6a020d60b19de6d70a68"
+      },
+      "weights": {
+        "file": "weights.npz",
+        "sha256": "9864391a98ce2cd59c09e5b91e6521565ceb339991a4014ad60df33124257ae1",
+        "bytes": 318699510,
+        "tensor_count": 296
+      }
+    },
+    "sovits": {
+      "manifest": {
+        "path": "models/navi-cpu-amd/sovits/manifest.json",
+        "sha256": "799526d7bed6bae7b8bdd96ef0ec82164d80bda4379dc296cb16c3540ec28827"
+      },
+      "weights": {
+        "file": "weights.bin",
+        "sha256": "e1c51e53788f23fc44a6117b9769ca3faa53bef63108ceb9f8c02bd2d554d3d8",
+        "bytes": 248441344
+      },
+      "graphs": {
+        "decode": {
+          "file": "acoustic.onnx",
+          "sha256": "a552a5a69263bbd7a4f5422fc8bff319bc01050fbe13db99ded0f9ba548f6270",
+          "bytes": 1021195
+        },
+        "diagnostic": {
+          "file": "acoustic-debug.onnx",
+          "sha256": "d26150f299649095a023ff13280de23f400dfc3af470a97e88deda2d7ec53fcd",
+          "bytes": 1021898
+        }
+      }
+    },
+    "frontend": {
+      "manifest": {
+        "path": "models/navi-cpu-amd/frontend/manifest.json",
+        "sha256": "592e44c68ba7784a6ced4fe4a5e193e41617fdf80e4d33a7f84bb12ac326f912"
+      }
+    },
+    "references/reference": {
+      "manifest": {
+        "path": "models/navi-cpu-amd/references/reference/manifest.json",
+        "sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b"
+      },
+      "archive": {
+        "file": "conditions.npz",
+        "bytes": 353422,
+        "sha256": "5aa692e61ca799e8b07ce6b810306cd705a30447952898a4a3834d57828332cc"
+      }
+    }
+  },
+  "native_configuration": {
+    "parameters": {
+      "seed": 1234,
+      "rng": "numpy.default_rng (not Torch seed-equivalent)",
+      "language": "ja",
+      "split_method": "cut0",
+      "split_bucket": false,
+      "top_k": 15,
+      "top_p": 1.0,
+      "temperature": 1.0,
+      "repetition_penalty": 1.35,
+      "early_stop_num": 2700,
+      "noise_scale": 0.5,
+      "speed": 1.0,
+      "fragment_interval": 0.3
+    },
+    "policy": "resident",
+    "capacity": 2048,
+    "threads": 2,
+    "enable_cpu_mem_arena": false,
+    "gpt_prefill_query_chunk_size": 128,
+    "frontend_profile": {
+      "implementation": "pyopenjtalk-plus",
+      "version": "0.4.1.post9"
+    },
+    "gpt_precision": "fp32",
+    "acoustic_precision": "fp32"
+  },
+  "cpu_gpt_layout": "Fortran-contiguous FP32 linear weights; transposed views retain shared storage",
+  "measurement": {
+    "order": [
+      "genie",
+      "cpu",
+      "directml"
+    ],
+    "cold_requests_per_engine": 1,
+    "warmups_per_engine": 2,
+    "hot_requests_per_engine": 4,
+    "memory_sample_interval_s": 0.1,
+    "percentiles": "Two hot samples per case; median means their midpoint, not a stable population estimate",
+    "background_load": "Not independently quantified; no isolated-GPU claim",
+    "package_preparation": "Native model conversion/reference preparation completed before the process benchmarks",
+    "timing_scope": "Request timers end at complete PCM delivery; file writing is excluded; resource polling is active",
+    "memory_scope": "Process-tree sampled Windows working set and private bytes; shared pages may be double counted. Separate WDDM resource probe recorded below; do not add its counters to RSS.",
+    "source_revision": "Working tree measurement; harness hash retained, complete executed runtime-source snapshot not captured",
+    "hot_requests_per_case": 2,
+    "case_order": [
+      "short",
+      "long"
+    ]
+  },
+  "engines": {
+    "genie": {
+      "status": "completed",
+      "harness_sha256": "fa35d8189d0cde6ffec41f4395050ac9b30a3c790fe69c8cc6c846fbd3ea30ee",
+      "environment": {
+        "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+        "platform": "Windows-11-10.0.22631-SP0",
+        "available_providers": [
+          "AzureExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "thread_environment": {
+          "OMP_NUM_THREADS": null,
+          "OPENBLAS_NUM_THREADS": null,
+          "MKL_NUM_THREADS": null
+        }
+      },
+      "dependencies": {
+        "genie-tts": "2.0.2",
+        "numpy": "2.4.4",
+        "onnxruntime": "1.22.1",
+        "pyopenjtalk-plus": "0.4.1.post8"
+      },
+      "execution": {
+        "providers": [
+          "CPUExecutionProvider"
+        ],
+        "sampling": "Original ONNX RandomNormalLike/ArgMax and original stopping rules",
+        "seed": "Not exposed by the public API; graph RNG state advances across requests",
+        "threads": "Original ORT defaults; no session or model patches",
+        "model_identity": "Preconverted Genie assets are hashed; original checkpoint provenance is unverified"
+      },
+      "model_load_ms": 7520.141300003161,
+      "ready_ms": 13755.315200003679,
+      "reference_prepare_ms": 3999.0102000010666,
+      "process_peak_sampled_tree_rss_bytes": 4435677184,
+      "process_peak_sampled_tree_private_bytes": 6896513024,
+      "observed_process_tree_cpu_s": 189.03125,
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "index": 0,
+          "complete_pcm_ms": 3333.910500005004,
+          "first_pcm_ms": 3326.4897000044584,
+          "worker_cpu_s": 9.640625,
+          "samples": 71680,
+          "audio_seconds": 2.24,
+          "rtf": 1.488352901787948,
+          "memory": {
+            "sample_count": 28,
+            "sampled_tree_cpu_s": 9.46875,
+            "peak_sampled_tree_rss_bytes": 3168587776,
+            "peak_sampled_tree_private_bytes": 6051225600
+          },
+          "wav_sha256": "0e94e4993c507999661d183e6c61793eff397db6d56c8fd63c6eb55cebf0d2f5",
+          "wav": "results/cpu-amd-final/genie/cold-short-0.wav",
+          "termination": "not exposed by the public Genie API"
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "index": 0,
+          "complete_pcm_ms": 1863.3088000060525,
+          "first_pcm_ms": 1861.8954999983544,
+          "worker_cpu_s": 8.234375,
+          "samples": 74240,
+          "audio_seconds": 2.32,
+          "rtf": 0.8031503448301951,
+          "memory": {
+            "sample_count": 16,
+            "sampled_tree_cpu_s": 8.203125,
+            "peak_sampled_tree_rss_bytes": 3177775104,
+            "peak_sampled_tree_private_bytes": 6051479552
+          },
+          "wav_sha256": "f54c9e6a4dab2a361256e0321cf4724a9cb803c24c20e98fcc715972f3e2ef18",
+          "wav": "results/cpu-amd-final/genie/warmup-short-0.wav",
+          "termination": "not exposed by the public Genie API"
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 0,
+          "complete_pcm_ms": 1806.7625999974553,
+          "first_pcm_ms": 1804.994699996314,
+          "worker_cpu_s": 7.953125,
+          "samples": 71680,
+          "audio_seconds": 2.24,
+          "rtf": 0.8065904464274353,
+          "memory": {
+            "sample_count": 15,
+            "sampled_tree_cpu_s": 7.765625,
+            "peak_sampled_tree_rss_bytes": 3220320256,
+            "peak_sampled_tree_private_bytes": 6051741696
+          },
+          "wav_sha256": "1f38c62f8eda9b4251cd0310befe81753995867c5fa0fa05712046b005fd298d",
+          "wav": "results/cpu-amd-final/genie/hot-short-0.wav",
+          "termination": "not exposed by the public Genie API"
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 1,
+          "complete_pcm_ms": 1698.9819000009447,
+          "first_pcm_ms": 1697.3548000096343,
+          "worker_cpu_s": 7.203125,
+          "samples": 69120,
+          "audio_seconds": 2.16,
+          "rtf": 0.7865656944448818,
+          "memory": {
+            "sample_count": 15,
+            "sampled_tree_cpu_s": 7.5625,
+            "peak_sampled_tree_rss_bytes": 3220619264,
+            "peak_sampled_tree_private_bytes": 6051778560
+          },
+          "wav_sha256": "01d3a3f0154f75d8fbb7aae69f23f0fa71d8cda42deaa8ff512b657f8e1125fa",
+          "wav": "results/cpu-amd-final/genie/hot-short-1.wav",
+          "termination": "not exposed by the public Genie API"
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "index": 0,
+          "complete_pcm_ms": 16227.298099998734,
+          "first_pcm_ms": 16226.225899998099,
+          "worker_cpu_s": 61.765625,
+          "samples": 597760,
+          "audio_seconds": 18.68,
+          "rtf": 0.8686990417558209,
+          "memory": {
+            "sample_count": 137,
+            "sampled_tree_cpu_s": 61.671875,
+            "peak_sampled_tree_rss_bytes": 3785797632,
+            "peak_sampled_tree_private_bytes": 6645596160
+          },
+          "wav_sha256": "b7227c8e551a9e8a549e3a09b7b0f087a73508c99a337f96aae3eb951f8eeeb2",
+          "wav": "results/cpu-amd-final/genie/warmup-long-0.wav",
+          "termination": "not exposed by the public Genie API"
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 0,
+          "complete_pcm_ms": 16962.868799993885,
+          "first_pcm_ms": 16961.690099997213,
+          "worker_cpu_s": 63.984375,
+          "samples": 615680,
+          "audio_seconds": 19.24,
+          "rtf": 0.8816459875256698,
+          "memory": {
+            "sample_count": 141,
+            "sampled_tree_cpu_s": 64.109375,
+            "peak_sampled_tree_rss_bytes": 3803750400,
+            "peak_sampled_tree_private_bytes": 6646910976
+          },
+          "wav_sha256": "734e5d4a49a633c81fc18fab20cbd2595045f5653c1a3afaee34bbef2909a1ae",
+          "wav": "results/cpu-amd-final/genie/hot-long-0.wav",
+          "termination": "not exposed by the public Genie API"
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 1,
+          "complete_pcm_ms": 5853.4481000097,
+          "first_pcm_ms": 5851.892100006808,
+          "worker_cpu_s": 23.015625,
+          "samples": 225280,
+          "audio_seconds": 7.04,
+          "rtf": 0.8314556960241052,
+          "memory": {
+            "sample_count": 49,
+            "sampled_tree_cpu_s": 22.796875,
+            "peak_sampled_tree_rss_bytes": 3804020736,
+            "peak_sampled_tree_private_bytes": 6646947840
+          },
+          "wav_sha256": "6a8e5f567eb90de0c5c927e9dddc2d86dc3f29946b6c6136afa38128f6668e2e",
+          "wav": "results/cpu-amd-final/genie/hot-long-1.wav",
+          "termination": "not exposed by the public Genie API"
+        }
+      ],
+      "hot_aggregate": {
+        "short": {
+          "complete_pcm_ms": {
+            "median": 1752.8722499992,
+            "min": 1698.9819000009447,
+            "max": 1806.7625999974553
+          },
+          "worker_cpu_s": {
+            "median": 7.578125,
+            "min": 7.203125,
+            "max": 7.953125
+          },
+          "rtf": {
+            "median": 0.7965780704361585,
+            "min": 0.7865656944448818,
+            "max": 0.8065904464274353
+          },
+          "hot_peak_sampled_tree_rss_bytes": 3220619264,
+          "hot_peak_sampled_tree_private_bytes": 6051778560,
+          "repeated_wav_hashes_equal": false
+        },
+        "long": {
+          "complete_pcm_ms": {
+            "median": 11408.158450001793,
+            "min": 5853.4481000097,
+            "max": 16962.868799993885
+          },
+          "worker_cpu_s": {
+            "median": 43.5,
+            "min": 23.015625,
+            "max": 63.984375
+          },
+          "rtf": {
+            "median": 0.8565508417748875,
+            "min": 0.8314556960241052,
+            "max": 0.8816459875256698
+          },
+          "hot_peak_sampled_tree_rss_bytes": 3804020736,
+          "hot_peak_sampled_tree_private_bytes": 6646947840,
+          "repeated_wav_hashes_equal": false
+        }
+      }
+    },
+    "cpu": {
+      "status": "completed",
+      "harness_sha256": "fa35d8189d0cde6ffec41f4395050ac9b30a3c790fe69c8cc6c846fbd3ea30ee",
+      "environment": {
+        "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+        "platform": "Windows-11-10.0.22631-SP0",
+        "available_providers": [
+          "DmlExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "thread_environment": {
+          "OMP_NUM_THREADS": null,
+          "OPENBLAS_NUM_THREADS": null,
+          "MKL_NUM_THREADS": null
+        }
+      },
+      "dependencies": {
+        "numpy": "2.4.6",
+        "onnxruntime-directml": "1.24.4",
+        "pyopenjtalk-plus": "0.4.1.post9",
+        "threadpoolctl": "3.6.0"
+      },
+      "execution": {
+        "experimental": {
+          "threads": 2,
+          "policy": "resident",
+          "capacity": 2048,
+          "gpt_prefill_query_chunk_size": 128,
+          "enable_cpu_mem_arena": false
+        },
+        "seed": 1234,
+        "top_k": 15,
+        "temperature": 1.0,
+        "repetition_penalty": 1.35,
+        "split_method": "cut0",
+        "reference": "reference",
+        "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b"
+      },
+      "model_load_ms": 704.5572999923024,
+      "ready_ms": 1162.958200002322,
+      "reference_prepare_ms": null,
+      "process_peak_sampled_tree_rss_bytes": 1410146304,
+      "process_peak_sampled_tree_private_bytes": 1735172096,
+      "observed_process_tree_cpu_s": 42.578125,
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "index": 0,
+          "complete_pcm_ms": 7744.703999997,
+          "first_pcm_ms": 7722.632100005285,
+          "worker_cpu_s": 3.125,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "rtf": 2.2645333333324564,
+          "memory": {
+            "sample_count": 70,
+            "sampled_tree_cpu_s": 3.125,
+            "peak_sampled_tree_rss_bytes": 936738816,
+            "peak_sampled_tree_private_bytes": 1383530496
+          },
+          "wav_sha256": "f2243245148fbbfa4419b7d554beb960966b5c295b39f03bb5b9108adfa03d42",
+          "wav": "results/cpu-amd-final/cpu/cold-short-0.wav",
+          "waveform_seconds": 3.12,
+          "semantic_seconds": 2.3122873000102118,
+          "acoustic_seconds": 2.160180399994715,
+          "semantic_tokens": [
+            78
+          ],
+          "phone_tokens": [
+            27
+          ],
+          "semantic_tokens_sha256": "f442c5bfec218e5186283833988ffbb782686586c035556134f998ae06b72362",
+          "sampled_tokens_sha256": "4550e9657645a8671fc447e472c7ed71ad1df433a27fe9645e514c354fd47f79",
+          "phones_sha256": "503e41beb6db4877f4eec22b014471c7f36ed092e93e2a10a69c5753e9c32061",
+          "stop_reasons": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ],
+          "waveform_rtf": 2.4822769230759616
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "index": 0,
+          "complete_pcm_ms": 4423.193699985859,
+          "first_pcm_ms": 4423.084499998367,
+          "worker_cpu_s": 1.734375,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "rtf": 1.2933314912239353,
+          "memory": {
+            "sample_count": 40,
+            "sampled_tree_cpu_s": 1.703125,
+            "peak_sampled_tree_rss_bytes": 938508288,
+            "peak_sampled_tree_private_bytes": 1384865792
+          },
+          "wav_sha256": "f2243245148fbbfa4419b7d554beb960966b5c295b39f03bb5b9108adfa03d42",
+          "wav": "results/cpu-amd-final/cpu/warmup-short-0.wav",
+          "waveform_seconds": 3.12,
+          "semantic_seconds": 2.289216799996211,
+          "acoustic_seconds": 2.131919799998286,
+          "semantic_tokens": [
+            78
+          ],
+          "phone_tokens": [
+            27
+          ],
+          "semantic_tokens_sha256": "f442c5bfec218e5186283833988ffbb782686586c035556134f998ae06b72362",
+          "sampled_tokens_sha256": "4550e9657645a8671fc447e472c7ed71ad1df433a27fe9645e514c354fd47f79",
+          "phones_sha256": "503e41beb6db4877f4eec22b014471c7f36ed092e93e2a10a69c5753e9c32061",
+          "stop_reasons": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ],
+          "waveform_rtf": 1.417690288457006
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 0,
+          "complete_pcm_ms": 4352.30510000838,
+          "first_pcm_ms": 4352.200799999991,
+          "worker_cpu_s": 1.6875,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "rtf": 1.272603830411807,
+          "memory": {
+            "sample_count": 39,
+            "sampled_tree_cpu_s": 1.71875,
+            "peak_sampled_tree_rss_bytes": 937074688,
+            "peak_sampled_tree_private_bytes": 1384157184
+          },
+          "wav_sha256": "f2243245148fbbfa4419b7d554beb960966b5c295b39f03bb5b9108adfa03d42",
+          "wav": "results/cpu-amd-final/cpu/hot-short-0.wav",
+          "waveform_seconds": 3.12,
+          "semantic_seconds": 2.207049899996491,
+          "acoustic_seconds": 2.143464100008714,
+          "semantic_tokens": [
+            78
+          ],
+          "phone_tokens": [
+            27
+          ],
+          "semantic_tokens_sha256": "f442c5bfec218e5186283833988ffbb782686586c035556134f998ae06b72362",
+          "sampled_tokens_sha256": "4550e9657645a8671fc447e472c7ed71ad1df433a27fe9645e514c354fd47f79",
+          "phones_sha256": "503e41beb6db4877f4eec22b014471c7f36ed092e93e2a10a69c5753e9c32061",
+          "stop_reasons": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ],
+          "waveform_rtf": 1.3949695833360192
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 1,
+          "complete_pcm_ms": 4424.737999986974,
+          "first_pcm_ms": 4424.650699991616,
+          "worker_cpu_s": 1.59375,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "rtf": 1.2937830409318636,
+          "memory": {
+            "sample_count": 40,
+            "sampled_tree_cpu_s": 1.59375,
+            "peak_sampled_tree_rss_bytes": 938184704,
+            "peak_sampled_tree_private_bytes": 1384157184
+          },
+          "wav_sha256": "f2243245148fbbfa4419b7d554beb960966b5c295b39f03bb5b9108adfa03d42",
+          "wav": "results/cpu-amd-final/cpu/hot-short-1.wav",
+          "waveform_seconds": 3.12,
+          "semantic_seconds": 2.3100853000069037,
+          "acoustic_seconds": 2.112977899989346,
+          "semantic_tokens": [
+            78
+          ],
+          "phone_tokens": [
+            27
+          ],
+          "semantic_tokens_sha256": "f442c5bfec218e5186283833988ffbb782686586c035556134f998ae06b72362",
+          "sampled_tokens_sha256": "4550e9657645a8671fc447e472c7ed71ad1df433a27fe9645e514c354fd47f79",
+          "phones_sha256": "503e41beb6db4877f4eec22b014471c7f36ed092e93e2a10a69c5753e9c32061",
+          "stop_reasons": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ],
+          "waveform_rtf": 1.4181852564060813
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "index": 0,
+          "complete_pcm_ms": 27804.937600012636,
+          "first_pcm_ms": 27803.926599997794,
+          "worker_cpu_s": 10.4375,
+          "samples": 662400,
+          "audio_seconds": 20.7,
+          "rtf": 1.3432337004837023,
+          "memory": {
+            "sample_count": 250,
+            "sampled_tree_cpu_s": 10.4375,
+            "peak_sampled_tree_rss_bytes": 1409798144,
+            "peak_sampled_tree_private_bytes": 1735012352
+          },
+          "wav_sha256": "0a9e2596e47580b00c973394a0c88fc130bfdacff514cbe8147d3b1bab6751d0",
+          "wav": "results/cpu-amd-final/cpu/warmup-long-0.wav",
+          "waveform_seconds": 20.4,
+          "semantic_seconds": 14.096970300000976,
+          "acoustic_seconds": 13.553446200006874,
+          "semantic_tokens": [
+            510
+          ],
+          "phone_tokens": [
+            311
+          ],
+          "semantic_tokens_sha256": "e54448da3a76260daab161537bef560fa55ef80e61504d4d2a32e01009165af6",
+          "sampled_tokens_sha256": "7a6446f6a894bff642e5039814bdbb10b4be5380e76bf8e259c49a6ef8f0954f",
+          "phones_sha256": "d754c0ef473db08fde0092794da5735f5876df8a55fa53abb7643f062891c734",
+          "stop_reasons": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ],
+          "waveform_rtf": 1.3629871372555216
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 0,
+          "complete_pcm_ms": 28696.186500004842,
+          "first_pcm_ms": 28695.317300007446,
+          "worker_cpu_s": 11.296875,
+          "samples": 662400,
+          "audio_seconds": 20.7,
+          "rtf": 1.3862892028987848,
+          "memory": {
+            "sample_count": 257,
+            "sampled_tree_cpu_s": 11.3125,
+            "peak_sampled_tree_rss_bytes": 1410146304,
+            "peak_sampled_tree_private_bytes": 1735172096
+          },
+          "wav_sha256": "0a9e2596e47580b00c973394a0c88fc130bfdacff514cbe8147d3b1bab6751d0",
+          "wav": "results/cpu-amd-final/cpu/hot-long-0.wav",
+          "waveform_seconds": 20.4,
+          "semantic_seconds": 14.38243440000224,
+          "acoustic_seconds": 14.30441690000589,
+          "semantic_tokens": [
+            510
+          ],
+          "phone_tokens": [
+            311
+          ],
+          "semantic_tokens_sha256": "e54448da3a76260daab161537bef560fa55ef80e61504d4d2a32e01009165af6",
+          "sampled_tokens_sha256": "7a6446f6a894bff642e5039814bdbb10b4be5380e76bf8e259c49a6ef8f0954f",
+          "phones_sha256": "d754c0ef473db08fde0092794da5735f5876df8a55fa53abb7643f062891c734",
+          "stop_reasons": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ],
+          "waveform_rtf": 1.406675808823767
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 1,
+          "complete_pcm_ms": 29554.227700005868,
+          "first_pcm_ms": 29552.78549999639,
+          "worker_cpu_s": 12.25,
+          "samples": 662400,
+          "audio_seconds": 20.7,
+          "rtf": 1.4277404685993174,
+          "memory": {
+            "sample_count": 263,
+            "sampled_tree_cpu_s": 12.265625,
+            "peak_sampled_tree_rss_bytes": 1409044480,
+            "peak_sampled_tree_private_bytes": 1734529024
+          },
+          "wav_sha256": "0a9e2596e47580b00c973394a0c88fc130bfdacff514cbe8147d3b1bab6751d0",
+          "wav": "results/cpu-amd-final/cpu/hot-long-1.wav",
+          "waveform_seconds": 20.4,
+          "semantic_seconds": 15.522013900001184,
+          "acoustic_seconds": 14.01806139999826,
+          "semantic_tokens": [
+            510
+          ],
+          "phone_tokens": [
+            311
+          ],
+          "semantic_tokens_sha256": "e54448da3a76260daab161537bef560fa55ef80e61504d4d2a32e01009165af6",
+          "sampled_tokens_sha256": "7a6446f6a894bff642e5039814bdbb10b4be5380e76bf8e259c49a6ef8f0954f",
+          "phones_sha256": "d754c0ef473db08fde0092794da5735f5876df8a55fa53abb7643f062891c734",
+          "stop_reasons": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ],
+          "waveform_rtf": 1.448736651961072
+        }
+      ],
+      "hot_aggregate": {
+        "short": {
+          "complete_pcm_ms": {
+            "median": 4388.521549997677,
+            "min": 4352.30510000838,
+            "max": 4424.737999986974
+          },
+          "worker_cpu_s": {
+            "median": 1.640625,
+            "min": 1.59375,
+            "max": 1.6875
+          },
+          "rtf": {
+            "median": 1.2831934356718353,
+            "min": 1.272603830411807,
+            "max": 1.2937830409318636
+          },
+          "acoustic_seconds": {
+            "median": 2.12822099999903,
+            "min": 2.112977899989346,
+            "max": 2.143464100008714
+          },
+          "semantic_seconds": {
+            "median": 2.2585676000016974,
+            "min": 2.207049899996491,
+            "max": 2.3100853000069037
+          },
+          "waveform_rtf": {
+            "median": 1.4065774198710503,
+            "min": 1.3949695833360192,
+            "max": 1.4181852564060813
+          },
+          "hot_peak_sampled_tree_rss_bytes": 938184704,
+          "hot_peak_sampled_tree_private_bytes": 1384157184,
+          "repeated_wav_hashes_equal": true
+        },
+        "long": {
+          "complete_pcm_ms": {
+            "median": 29125.207100005355,
+            "min": 28696.186500004842,
+            "max": 29554.227700005868
+          },
+          "worker_cpu_s": {
+            "median": 11.7734375,
+            "min": 11.296875,
+            "max": 12.25
+          },
+          "rtf": {
+            "median": 1.407014835749051,
+            "min": 1.3862892028987848,
+            "max": 1.4277404685993174
+          },
+          "acoustic_seconds": {
+            "median": 14.161239150002075,
+            "min": 14.01806139999826,
+            "max": 14.30441690000589
+          },
+          "semantic_seconds": {
+            "median": 14.952224150001712,
+            "min": 14.38243440000224,
+            "max": 15.522013900001184
+          },
+          "waveform_rtf": {
+            "median": 1.4277062303924195,
+            "min": 1.406675808823767,
+            "max": 1.448736651961072
+          },
+          "hot_peak_sampled_tree_rss_bytes": 1410146304,
+          "hot_peak_sampled_tree_private_bytes": 1735172096,
+          "repeated_wav_hashes_equal": true
+        }
+      }
+    },
+    "directml": {
+      "status": "completed",
+      "harness_sha256": "fa35d8189d0cde6ffec41f4395050ac9b30a3c790fe69c8cc6c846fbd3ea30ee",
+      "environment": {
+        "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+        "platform": "Windows-11-10.0.22631-SP0",
+        "available_providers": [
+          "DmlExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "thread_environment": {
+          "OMP_NUM_THREADS": null,
+          "OPENBLAS_NUM_THREADS": null,
+          "MKL_NUM_THREADS": null
+        }
+      },
+      "dependencies": {
+        "numpy": "2.4.6",
+        "onnxruntime-directml": "1.24.4",
+        "pyopenjtalk-plus": "0.4.1.post9",
+        "threadpoolctl": "3.6.0"
+      },
+      "execution": {
+        "experimental": {
+          "threads": 2,
+          "policy": "resident",
+          "capacity": 2048,
+          "gpt_prefill_query_chunk_size": 128,
+          "enable_cpu_mem_arena": false,
+          "device_id": 0
+        },
+        "seed": 1234,
+        "top_k": 15,
+        "temperature": 1.0,
+        "repetition_penalty": 1.35,
+        "split_method": "cut0",
+        "reference": "reference",
+        "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b"
+      },
+      "model_load_ms": 434.35609999869484,
+      "ready_ms": 702.684700008831,
+      "reference_prepare_ms": null,
+      "process_peak_sampled_tree_rss_bytes": 1782677504,
+      "process_peak_sampled_tree_private_bytes": 2427162624,
+      "observed_process_tree_cpu_s": 19.0625,
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "index": 0,
+          "complete_pcm_ms": 7725.846200002707,
+          "first_pcm_ms": 7725.698199996259,
+          "worker_cpu_s": 1.984375,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "rtf": 2.2590193567259376,
+          "memory": {
+            "sample_count": 69,
+            "sampled_tree_cpu_s": 2.015625,
+            "peak_sampled_tree_rss_bytes": 1094664192,
+            "peak_sampled_tree_private_bytes": 1872838656
+          },
+          "wav_sha256": "bc73297093c7537b8945a3893e014768a42b3a2cb0f667397cb9b0638b2a014b",
+          "wav": "results/cpu-amd-final/directml/cold-short-0.wav",
+          "waveform_seconds": 3.12,
+          "semantic_seconds": 2.631306499999482,
+          "acoustic_seconds": 0.8435452000121586,
+          "semantic_tokens": [
+            78
+          ],
+          "phone_tokens": [
+            27
+          ],
+          "semantic_tokens_sha256": "f442c5bfec218e5186283833988ffbb782686586c035556134f998ae06b72362",
+          "sampled_tokens_sha256": "4550e9657645a8671fc447e472c7ed71ad1df433a27fe9645e514c354fd47f79",
+          "phones_sha256": "503e41beb6db4877f4eec22b014471c7f36ed092e93e2a10a69c5753e9c32061",
+          "stop_reasons": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ],
+          "waveform_rtf": 2.476232756411124
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "index": 0,
+          "complete_pcm_ms": 2900.225400007912,
+          "first_pcm_ms": 2900.0557999970624,
+          "worker_cpu_s": 0.265625,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "rtf": 0.848019122809331,
+          "memory": {
+            "sample_count": 26,
+            "sampled_tree_cpu_s": 0.25,
+            "peak_sampled_tree_rss_bytes": 1104875520,
+            "peak_sampled_tree_private_bytes": 1882791936
+          },
+          "wav_sha256": "bc73297093c7537b8945a3893e014768a42b3a2cb0f667397cb9b0638b2a014b",
+          "wav": "results/cpu-amd-final/directml/warmup-short-0.wav",
+          "waveform_seconds": 3.12,
+          "semantic_seconds": 2.448846200000844,
+          "acoustic_seconds": 0.4481918000092264,
+          "semantic_tokens": [
+            78
+          ],
+          "phone_tokens": [
+            27
+          ],
+          "semantic_tokens_sha256": "f442c5bfec218e5186283833988ffbb782686586c035556134f998ae06b72362",
+          "sampled_tokens_sha256": "4550e9657645a8671fc447e472c7ed71ad1df433a27fe9645e514c354fd47f79",
+          "phones_sha256": "503e41beb6db4877f4eec22b014471c7f36ed092e93e2a10a69c5753e9c32061",
+          "stop_reasons": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ],
+          "waveform_rtf": 0.9295594230794589
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 0,
+          "complete_pcm_ms": 2715.557700008503,
+          "first_pcm_ms": 2715.3820999956224,
+          "worker_cpu_s": 0.3125,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "rtf": 0.794022719300732,
+          "memory": {
+            "sample_count": 24,
+            "sampled_tree_cpu_s": 0.25,
+            "peak_sampled_tree_rss_bytes": 1105629184,
+            "peak_sampled_tree_private_bytes": 1883377664
+          },
+          "wav_sha256": "bc73297093c7537b8945a3893e014768a42b3a2cb0f667397cb9b0638b2a014b",
+          "wav": "results/cpu-amd-final/directml/hot-short-0.wav",
+          "waveform_seconds": 3.12,
+          "semantic_seconds": 2.2704093999927863,
+          "acoustic_seconds": 0.44259770000644494,
+          "semantic_tokens": [
+            78
+          ],
+          "phone_tokens": [
+            27
+          ],
+          "semantic_tokens_sha256": "f442c5bfec218e5186283833988ffbb782686586c035556134f998ae06b72362",
+          "sampled_tokens_sha256": "4550e9657645a8671fc447e472c7ed71ad1df433a27fe9645e514c354fd47f79",
+          "phones_sha256": "503e41beb6db4877f4eec22b014471c7f36ed092e93e2a10a69c5753e9c32061",
+          "stop_reasons": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ],
+          "waveform_rtf": 0.8703710576950331
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 1,
+          "complete_pcm_ms": 2682.8620999876875,
+          "first_pcm_ms": 2682.754900000873,
+          "worker_cpu_s": 0.375,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "rtf": 0.7844626023355812,
+          "memory": {
+            "sample_count": 24,
+            "sampled_tree_cpu_s": 0.375,
+            "peak_sampled_tree_rss_bytes": 1101803520,
+            "peak_sampled_tree_private_bytes": 1880027136
+          },
+          "wav_sha256": "bc73297093c7537b8945a3893e014768a42b3a2cb0f667397cb9b0638b2a014b",
+          "wav": "results/cpu-amd-final/directml/hot-short-1.wav",
+          "waveform_seconds": 3.12,
+          "semantic_seconds": 2.2542201000032946,
+          "acoustic_seconds": 0.4261646999948425,
+          "semantic_tokens": [
+            78
+          ],
+          "phone_tokens": [
+            27
+          ],
+          "semantic_tokens_sha256": "f442c5bfec218e5186283833988ffbb782686586c035556134f998ae06b72362",
+          "sampled_tokens_sha256": "4550e9657645a8671fc447e472c7ed71ad1df433a27fe9645e514c354fd47f79",
+          "phones_sha256": "503e41beb6db4877f4eec22b014471c7f36ed092e93e2a10a69c5753e9c32061",
+          "stop_reasons": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ],
+          "waveform_rtf": 0.8598916987140024
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "index": 0,
+          "complete_pcm_ms": 19940.75460000022,
+          "first_pcm_ms": 19936.06130000262,
+          "worker_cpu_s": 5.890625,
+          "samples": 662400,
+          "audio_seconds": 20.7,
+          "rtf": 0.9633214782608801,
+          "memory": {
+            "sample_count": 174,
+            "sampled_tree_cpu_s": 5.875,
+            "peak_sampled_tree_rss_bytes": 1761329152,
+            "peak_sampled_tree_private_bytes": 2405511168
+          },
+          "wav_sha256": "45db8d7c252a658281c2547ec547899f83dffc87d97d2a590da4ccc556a7ba5f",
+          "wav": "results/cpu-amd-final/directml/warmup-long-0.wav",
+          "waveform_seconds": 20.4,
+          "semantic_seconds": 15.406831700005569,
+          "acoustic_seconds": 4.487429800006794,
+          "semantic_tokens": [
+            510
+          ],
+          "phone_tokens": [
+            311
+          ],
+          "semantic_tokens_sha256": "e54448da3a76260daab161537bef560fa55ef80e61504d4d2a32e01009165af6",
+          "sampled_tokens_sha256": "7a6446f6a894bff642e5039814bdbb10b4be5380e76bf8e259c49a6ef8f0954f",
+          "phones_sha256": "d754c0ef473db08fde0092794da5735f5876df8a55fa53abb7643f062891c734",
+          "stop_reasons": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ],
+          "waveform_rtf": 0.9774879705882461
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 0,
+          "complete_pcm_ms": 18215.289500003564,
+          "first_pcm_ms": 18213.422500004526,
+          "worker_cpu_s": 4.640625,
+          "samples": 662400,
+          "audio_seconds": 20.7,
+          "rtf": 0.8799656763286746,
+          "memory": {
+            "sample_count": 159,
+            "sampled_tree_cpu_s": 4.609375,
+            "peak_sampled_tree_rss_bytes": 1782677504,
+            "peak_sampled_tree_private_bytes": 2427162624
+          },
+          "wav_sha256": "45db8d7c252a658281c2547ec547899f83dffc87d97d2a590da4ccc556a7ba5f",
+          "wav": "results/cpu-amd-final/directml/hot-long-0.wav",
+          "waveform_seconds": 20.4,
+          "semantic_seconds": 15.395959700006642,
+          "acoustic_seconds": 2.7991165999992518,
+          "semantic_tokens": [
+            510
+          ],
+          "phone_tokens": [
+            311
+          ],
+          "semantic_tokens_sha256": "e54448da3a76260daab161537bef560fa55ef80e61504d4d2a32e01009165af6",
+          "sampled_tokens_sha256": "7a6446f6a894bff642e5039814bdbb10b4be5380e76bf8e259c49a6ef8f0954f",
+          "phones_sha256": "d754c0ef473db08fde0092794da5735f5876df8a55fa53abb7643f062891c734",
+          "stop_reasons": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ],
+          "waveform_rtf": 0.8929063480393905
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 1,
+          "complete_pcm_ms": 18255.091800005175,
+          "first_pcm_ms": 18253.278299991507,
+          "worker_cpu_s": 5.046875,
+          "samples": 662400,
+          "audio_seconds": 20.7,
+          "rtf": 0.8818884927538733,
+          "memory": {
+            "sample_count": 160,
+            "sampled_tree_cpu_s": 5.046875,
+            "peak_sampled_tree_rss_bytes": 1781526528,
+            "peak_sampled_tree_private_bytes": 2425880576
+          },
+          "wav_sha256": "45db8d7c252a658281c2547ec547899f83dffc87d97d2a590da4ccc556a7ba5f",
+          "wav": "results/cpu-amd-final/directml/hot-long-1.wav",
+          "waveform_seconds": 20.4,
+          "semantic_seconds": 15.567724299995461,
+          "acoustic_seconds": 2.67068979999749,
+          "semantic_tokens": [
+            510
+          ],
+          "phone_tokens": [
+            311
+          ],
+          "semantic_tokens_sha256": "e54448da3a76260daab161537bef560fa55ef80e61504d4d2a32e01009165af6",
+          "sampled_tokens_sha256": "7a6446f6a894bff642e5039814bdbb10b4be5380e76bf8e259c49a6ef8f0954f",
+          "phones_sha256": "d754c0ef473db08fde0092794da5735f5876df8a55fa53abb7643f062891c734",
+          "stop_reasons": [
+            [
+              "argmax_eos",
+              "sample_eos"
+            ]
+          ],
+          "waveform_rtf": 0.8948574411767244
+        }
+      ],
+      "hot_aggregate": {
+        "short": {
+          "complete_pcm_ms": {
+            "median": 2699.2098999980954,
+            "min": 2682.8620999876875,
+            "max": 2715.557700008503
+          },
+          "worker_cpu_s": {
+            "median": 0.34375,
+            "min": 0.3125,
+            "max": 0.375
+          },
+          "rtf": {
+            "median": 0.7892426608181566,
+            "min": 0.7844626023355812,
+            "max": 0.794022719300732
+          },
+          "acoustic_seconds": {
+            "median": 0.43438120000064373,
+            "min": 0.4261646999948425,
+            "max": 0.44259770000644494
+          },
+          "semantic_seconds": {
+            "median": 2.2623147499980405,
+            "min": 2.2542201000032946,
+            "max": 2.2704093999927863
+          },
+          "waveform_rtf": {
+            "median": 0.8651313782045178,
+            "min": 0.8598916987140024,
+            "max": 0.8703710576950331
+          },
+          "hot_peak_sampled_tree_rss_bytes": 1105629184,
+          "hot_peak_sampled_tree_private_bytes": 1883377664,
+          "repeated_wav_hashes_equal": true
+        },
+        "long": {
+          "complete_pcm_ms": {
+            "median": 18235.19065000437,
+            "min": 18215.289500003564,
+            "max": 18255.091800005175
+          },
+          "worker_cpu_s": {
+            "median": 4.84375,
+            "min": 4.640625,
+            "max": 5.046875
+          },
+          "rtf": {
+            "median": 0.880927084541274,
+            "min": 0.8799656763286746,
+            "max": 0.8818884927538733
+          },
+          "acoustic_seconds": {
+            "median": 2.734903199998371,
+            "min": 2.67068979999749,
+            "max": 2.7991165999992518
+          },
+          "semantic_seconds": {
+            "median": 15.481842000001052,
+            "min": 15.395959700006642,
+            "max": 15.567724299995461
+          },
+          "waveform_rtf": {
+            "median": 0.8938818946080574,
+            "min": 0.8929063480393905,
+            "max": 0.8948574411767244
+          },
+          "hot_peak_sampled_tree_rss_bytes": 1782677504,
+          "hot_peak_sampled_tree_private_bytes": 2427162624,
+          "repeated_wav_hashes_equal": true
+        }
+      }
+    }
+  },
+  "native_comparison": {
+    "short": [
+      {
+        "hot_index": 0,
+        "same_shape": true,
+        "sample_count": 109440,
+        "max_abs_lsb": 1,
+        "rms_lsb": 0.061653625932651154,
+        "changed_samples": 416,
+        "semantic_tokens": true,
+        "sampled_tokens": true,
+        "phones": true
+      },
+      {
+        "hot_index": 1,
+        "same_shape": true,
+        "sample_count": 109440,
+        "max_abs_lsb": 1,
+        "rms_lsb": 0.061653625932651154,
+        "changed_samples": 416,
+        "semantic_tokens": true,
+        "sampled_tokens": true,
+        "phones": true
+      }
+    ],
+    "long": [
+      {
+        "hot_index": 0,
+        "same_shape": true,
+        "sample_count": 662400,
+        "max_abs_lsb": 1,
+        "rms_lsb": 0.0870979375452581,
+        "changed_samples": 5025,
+        "semantic_tokens": true,
+        "sampled_tokens": true,
+        "phones": true
+      },
+      {
+        "hot_index": 1,
+        "same_shape": true,
+        "sample_count": 662400,
+        "max_abs_lsb": 1,
+        "rms_lsb": 0.0870979375452581,
+        "changed_samples": 5025,
+        "semantic_tokens": true,
+        "sampled_tokens": true,
+        "phones": true
+      }
+    ]
+  },
+  "cpu_gpt_exploration": {
+    "c": {
+      "decode_ms": [
+        1756.6462000104366,
+        2226.6755000018748,
+        2154.025999989244
+      ],
+      "median_decode_ms": 2154.025999989244
+    },
+    "f": {
+      "decode_ms": [
+        1961.3838000077521,
+        2014.107499999227,
+        1908.1870000081835
+      ],
+      "median_decode_ms": 1961.3838000077521
+    },
+    "variants": {
+      "00-c-matmul": {
+        "median": {
+          "prefill_ms": 562.3653999937233,
+          "decode_ms": 1756.6462000104366,
+          "decode_cpu_ms": 453.125
+        },
+        "max_abs_logits_difference": 0.0,
+        "logits_rms_difference": 0.0,
+        "argmax_disagreements": 0,
+        "logits_sha256": "b9a105ebdb314685ec8adcb29cac4d9c9a08b96614f2075a77baea64cee75765"
+      },
+      "01-f-matmul": {
+        "median": {
+          "prefill_ms": 640.2022999973269,
+          "decode_ms": 1961.3838000077521,
+          "decode_cpu_ms": 156.25
+        },
+        "max_abs_logits_difference": 1.52587890625e-05,
+        "logits_rms_difference": 3.0955309284763644e-06,
+        "argmax_disagreements": 0,
+        "logits_sha256": "6efc71a828e298dfe2d44a3165c5047213a4afd08293cc5dc101ab3d1585d037"
+      },
+      "02-c-matmul": {
+        "median": {
+          "prefill_ms": 662.6415000064299,
+          "decode_ms": 2226.6755000018748,
+          "decode_cpu_ms": 265.625
+        },
+        "max_abs_logits_difference": 0.0,
+        "logits_rms_difference": 0.0,
+        "argmax_disagreements": 0,
+        "logits_sha256": "b9a105ebdb314685ec8adcb29cac4d9c9a08b96614f2075a77baea64cee75765"
+      },
+      "03-f-matmul": {
+        "median": {
+          "prefill_ms": 637.3388999927556,
+          "decode_ms": 2014.107499999227,
+          "decode_cpu_ms": 296.875
+        },
+        "max_abs_logits_difference": 1.52587890625e-05,
+        "logits_rms_difference": 3.0955309284763644e-06,
+        "argmax_disagreements": 0,
+        "logits_sha256": "6efc71a828e298dfe2d44a3165c5047213a4afd08293cc5dc101ab3d1585d037"
+      },
+      "04-c-matmul": {
+        "median": {
+          "prefill_ms": 661.7093000095338,
+          "decode_ms": 2154.025999989244,
+          "decode_cpu_ms": 328.125
+        },
+        "max_abs_logits_difference": 0.0,
+        "logits_rms_difference": 0.0,
+        "argmax_disagreements": 0,
+        "logits_sha256": "b9a105ebdb314685ec8adcb29cac4d9c9a08b96614f2075a77baea64cee75765"
+      },
+      "05-f-matmul": {
+        "median": {
+          "prefill_ms": 646.6416000039317,
+          "decode_ms": 1908.1870000081835,
+          "decode_cpu_ms": 531.25
+        },
+        "max_abs_logits_difference": 1.52587890625e-05,
+        "logits_rms_difference": 3.0955309284763644e-06,
+        "argmax_disagreements": 0,
+        "logits_sha256": "6efc71a828e298dfe2d44a3165c5047213a4afd08293cc5dc101ab3d1585d037"
+      }
+    },
+    "threads": 2,
+    "fixed_decode_tokens": 78,
+    "sampling_check": {
+      "sampled_tokens_equal": true,
+      "baseline_steps": 79,
+      "candidate_steps": 79,
+      "stop_reasons": [
+        "argmax_eos",
+        "sample_eos"
+      ]
+    },
+    "scope": "Alternating C/F layouts on this CPU, one saved fixed history. Decoder-only exploration, not a generalized end-to-end speedup."
+  },
+  "quality": {
+    "human_listening": "unverified",
+    "asr": "unverified",
+    "genie_equivalent_sampling": false
+  },
+  "acoustic_probe": {
+    "status": "passed",
+    "device": "directml",
+    "device_id": 0,
+    "threads": 2,
+    "repeats": 2,
+    "providers": [
+      "DmlExecutionProvider",
+      "CPUExecutionProvider"
+    ],
+    "package": {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\sovits",
+      "manifest_sha256": "799526d7bed6bae7b8bdd96ef0ec82164d80bda4379dc296cb16c3540ec28827",
+      "graphs": {
+        "decode": {
+          "file": "acoustic.onnx",
+          "sha256": "a552a5a69263bbd7a4f5422fc8bff319bc01050fbe13db99ded0f9ba548f6270",
+          "bytes": 1021195
+        },
+        "diagnostic": {
+          "file": "acoustic-debug.onnx",
+          "sha256": "d26150f299649095a023ff13280de23f400dfc3af470a97e88deda2d7ec53fcd",
+          "bytes": 1021898
+        }
+      },
+      "weights": {
+        "file": "weights.bin",
+        "sha256": "e1c51e53788f23fc44a6117b9769ca3faa53bef63108ceb9f8c02bd2d554d3d8",
+        "bytes": 248441344
+      },
+      "source": {
+        "checkpoint_sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81",
+        "official_commit": "source-sha256:75398e84f6625044d794ebfc2f2ac6d6202f328259e13e032c405301e99efb6a",
+        "official_git_commit": "48b1a0169a28582a8984402f82cf438d3bfa6aca"
+      }
+    },
+    "cases": [
+      {
+        "case": 0,
+        "file": "validation-0.npz",
+        "sha256": "58802045bb38ee8482d14ab0d24cb5e5b6514b248af75729045d1976fab1f3e8"
+      },
+      {
+        "case": 1,
+        "file": "validation-1.npz",
+        "sha256": "d2ec32f0023f469e12ad52adf329b0d525bbae8ba70100cc073b3922011be85c"
+      },
+      {
+        "case": 2,
+        "file": "validation-2.npz",
+        "sha256": "6345462a77b11c629efd78c33a6569df46917e226b1a1818692c3589293512b6"
+      },
+      {
+        "case": 3,
+        "file": "validation-3.npz",
+        "sha256": "8e2a680f23f02e0141e50397bfd4812bf149f0ddf50e1692f4f68a063fa1d82f"
+      }
+    ],
+    "requests": [
+      {
+        "case": 0,
+        "repeat": 0,
+        "first_for_case": true,
+        "status": "passed",
+        "semantic_tokens": 1,
+        "phone_tokens": 1,
+        "seconds": 0.2698412999889115,
+        "samples": 1280,
+        "audio_seconds": 0.04,
+        "comparison": {
+          "actual_shape": [
+            1,
+            1,
+            1280
+          ],
+          "expected_shape": [
+            1,
+            1,
+            1280
+          ],
+          "actual_dtype": "float32",
+          "expected_dtype": "float32",
+          "same_shape": true,
+          "finite_actual": true,
+          "finite_expected": true,
+          "passed": true,
+          "max_absolute_error": 1.2334203347563744e-07,
+          "rms_error": 4.622831866180322e-08,
+          "outside_tolerance_samples": 0
+        },
+        "waveform": "case-0-repeat-0.npy",
+        "waveform_sha256": "4411f9475cba04433100e084ab1d34b7a6e52eb41a7ad2510598f0353a66aea6"
+      },
+      {
+        "case": 0,
+        "repeat": 1,
+        "first_for_case": false,
+        "status": "passed",
+        "semantic_tokens": 1,
+        "phone_tokens": 1,
+        "seconds": 0.08638300000166055,
+        "samples": 1280,
+        "audio_seconds": 0.04,
+        "comparison": {
+          "actual_shape": [
+            1,
+            1,
+            1280
+          ],
+          "expected_shape": [
+            1,
+            1,
+            1280
+          ],
+          "actual_dtype": "float32",
+          "expected_dtype": "float32",
+          "same_shape": true,
+          "finite_actual": true,
+          "finite_expected": true,
+          "passed": true,
+          "max_absolute_error": 1.2334203347563744e-07,
+          "rms_error": 4.622831866180322e-08,
+          "outside_tolerance_samples": 0
+        },
+        "waveform": "case-0-repeat-1.npy",
+        "waveform_sha256": "4411f9475cba04433100e084ab1d34b7a6e52eb41a7ad2510598f0353a66aea6"
+      },
+      {
+        "case": 1,
+        "repeat": 0,
+        "first_for_case": true,
+        "status": "passed",
+        "semantic_tokens": 2,
+        "phone_tokens": 2,
+        "seconds": 0.24086169998918194,
+        "samples": 2560,
+        "audio_seconds": 0.08,
+        "comparison": {
+          "actual_shape": [
+            1,
+            1,
+            2560
+          ],
+          "expected_shape": [
+            1,
+            1,
+            2560
+          ],
+          "actual_dtype": "float32",
+          "expected_dtype": "float32",
+          "same_shape": true,
+          "finite_actual": true,
+          "finite_expected": true,
+          "passed": true,
+          "max_absolute_error": 1.3333919923752546e-07,
+          "rms_error": 4.894789561641248e-08,
+          "outside_tolerance_samples": 0
+        },
+        "waveform": "case-1-repeat-0.npy",
+        "waveform_sha256": "6cf4621c1ffac85984fa575a70457cd6ddf59963a7e73475f5e5283d132018a6"
+      },
+      {
+        "case": 1,
+        "repeat": 1,
+        "first_for_case": false,
+        "status": "passed",
+        "semantic_tokens": 2,
+        "phone_tokens": 2,
+        "seconds": 0.2371902000013506,
+        "samples": 2560,
+        "audio_seconds": 0.08,
+        "comparison": {
+          "actual_shape": [
+            1,
+            1,
+            2560
+          ],
+          "expected_shape": [
+            1,
+            1,
+            2560
+          ],
+          "actual_dtype": "float32",
+          "expected_dtype": "float32",
+          "same_shape": true,
+          "finite_actual": true,
+          "finite_expected": true,
+          "passed": true,
+          "max_absolute_error": 1.3333919923752546e-07,
+          "rms_error": 4.894789561641248e-08,
+          "outside_tolerance_samples": 0
+        },
+        "waveform": "case-1-repeat-1.npy",
+        "waveform_sha256": "6cf4621c1ffac85984fa575a70457cd6ddf59963a7e73475f5e5283d132018a6"
+      },
+      {
+        "case": 2,
+        "repeat": 0,
+        "first_for_case": true,
+        "status": "passed",
+        "semantic_tokens": 7,
+        "phone_tokens": 11,
+        "seconds": 0.27262960000371095,
+        "samples": 8960,
+        "audio_seconds": 0.28,
+        "comparison": {
+          "actual_shape": [
+            1,
+            1,
+            8960
+          ],
+          "expected_shape": [
+            1,
+            1,
+            8960
+          ],
+          "actual_dtype": "float32",
+          "expected_dtype": "float32",
+          "same_shape": true,
+          "finite_actual": true,
+          "finite_expected": true,
+          "passed": true,
+          "max_absolute_error": 1.4314427971839905e-06,
+          "rms_error": 2.145919518139e-07,
+          "outside_tolerance_samples": 0
+        },
+        "waveform": "case-2-repeat-0.npy",
+        "waveform_sha256": "c6e4240c3122446a5044686765fdad45de0e9d31ac03ba149c7eacfab863eaff"
+      },
+      {
+        "case": 2,
+        "repeat": 1,
+        "first_for_case": false,
+        "status": "passed",
+        "semantic_tokens": 7,
+        "phone_tokens": 11,
+        "seconds": 0.30677109998941887,
+        "samples": 8960,
+        "audio_seconds": 0.28,
+        "comparison": {
+          "actual_shape": [
+            1,
+            1,
+            8960
+          ],
+          "expected_shape": [
+            1,
+            1,
+            8960
+          ],
+          "actual_dtype": "float32",
+          "expected_dtype": "float32",
+          "same_shape": true,
+          "finite_actual": true,
+          "finite_expected": true,
+          "passed": true,
+          "max_absolute_error": 1.4314427971839905e-06,
+          "rms_error": 2.145919518139e-07,
+          "outside_tolerance_samples": 0
+        },
+        "waveform": "case-2-repeat-1.npy",
+        "waveform_sha256": "c6e4240c3122446a5044686765fdad45de0e9d31ac03ba149c7eacfab863eaff"
+      },
+      {
+        "case": 3,
+        "repeat": 0,
+        "first_for_case": true,
+        "status": "passed",
+        "semantic_tokens": 19,
+        "phone_tokens": 29,
+        "seconds": 0.39105550000385847,
+        "samples": 24320,
+        "audio_seconds": 0.76,
+        "comparison": {
+          "actual_shape": [
+            1,
+            1,
+            24320
+          ],
+          "expected_shape": [
+            1,
+            1,
+            24320
+          ],
+          "actual_dtype": "float32",
+          "expected_dtype": "float32",
+          "same_shape": true,
+          "finite_actual": true,
+          "finite_expected": true,
+          "passed": true,
+          "max_absolute_error": 1.500546932220459e-05,
+          "rms_error": 6.770636331360864e-07,
+          "outside_tolerance_samples": 0
+        },
+        "waveform": "case-3-repeat-0.npy",
+        "waveform_sha256": "0185aa2c73c4560e3d16dca86d7f21850969f97a6b220c51f38d194926ff4998"
+      },
+      {
+        "case": 3,
+        "repeat": 1,
+        "first_for_case": false,
+        "status": "passed",
+        "semantic_tokens": 19,
+        "phone_tokens": 29,
+        "seconds": 0.3180540000030305,
+        "samples": 24320,
+        "audio_seconds": 0.76,
+        "comparison": {
+          "actual_shape": [
+            1,
+            1,
+            24320
+          ],
+          "expected_shape": [
+            1,
+            1,
+            24320
+          ],
+          "actual_dtype": "float32",
+          "expected_dtype": "float32",
+          "same_shape": true,
+          "finite_actual": true,
+          "finite_expected": true,
+          "passed": true,
+          "max_absolute_error": 1.500546932220459e-05,
+          "rms_error": 6.770636331360864e-07,
+          "outside_tolerance_samples": 0
+        },
+        "waveform": "case-3-repeat-1.npy",
+        "waveform_sha256": "0185aa2c73c4560e3d16dca86d7f21850969f97a6b220c51f38d194926ff4998"
+      }
+    ],
+    "tolerance": {
+      "atol": 0.0001,
+      "rtol": 1e-05,
+      "source": "FP32 export validation: src/sakuratts/_internal/conversion/export_sovits_onnx.py"
+    },
+    "timing_scope": "Profiling enabled. Wall time covers CPU inputs to returned CPU waveform; repeat 0 is the first invocation of each case. Summed provider event durations can overlap and are not device utilization, exclusive GPU kernel time or end-to-end speed.",
+    "profile": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\ort-directml-validation\\ort-profile_2026-09-27_01-53-15.json",
+    "profile_sha256": "042f815612b3d2e2faa9dca6ef1e1dfff5d5ef9f4bd0c6de6435637b237de3bd",
+    "execution_verified": true,
+    "numeric_passed": true,
+    "harness_sha256": "2494923569f1dd55205d22c54ef1f7514acac6227be46fa2862657aaaf96b1a1",
+    "executed_providers": {
+      "DmlExecutionProvider": {
+        "node_events": 10096,
+        "profile_duration_us": 1207945.0,
+        "unique_node_names": 1262
+      },
+      "CPUExecutionProvider": {
+        "node_events": 6136,
+        "profile_duration_us": 64620.0,
+        "unique_node_names": 767
+      }
+    }
+  },
+  "managed_lifecycle": {
+    "scope": "Real HTTP wake, one short text request, explicit sleep; functionality checks, not hot throughput measurement",
+    "cycles": [
+      {
+        "backend": "cpu",
+        "cycle": 1,
+        "wake_s": 4.850534800003516,
+        "tts_s": 4.631081500003347,
+        "audio_seconds": 3.42,
+        "sleep_s": 0.08878789999289438,
+        "all_processes_exited": true,
+        "owned_pids": [
+          24004,
+          30596,
+          34728
+        ]
+      },
+      {
+        "backend": "cpu",
+        "cycle": 2,
+        "wake_s": 3.978890800004592,
+        "tts_s": 4.549104899997474,
+        "audio_seconds": 3.42,
+        "sleep_s": 0.08084939999389462,
+        "all_processes_exited": true,
+        "owned_pids": [
+          22788,
+          27004,
+          25024
+        ]
+      },
+      {
+        "backend": "directml",
+        "cycle": 1,
+        "wake_s": 4.613836999997147,
+        "tts_s": 3.1826568999968003,
+        "audio_seconds": 3.42,
+        "sleep_s": 0.3018757999961963,
+        "all_processes_exited": true,
+        "owned_pids": [
+          17028,
+          37276,
+          34764
+        ]
+      },
+      {
+        "backend": "directml",
+        "cycle": 2,
+        "wake_s": 4.405452999999397,
+        "tts_s": 3.397735200007446,
+        "audio_seconds": 3.42,
+        "sleep_s": 0.26915760000701994,
+        "all_processes_exited": true,
+        "owned_pids": [
+          33788,
+          36900,
+          1416
+        ]
+      }
+    ],
+    "all_process_trees_exited": true,
+    "all_sleeping": true
+  },
+  "wddm_resource_probe": {
+    "status": "completed",
+    "metadata": {
+      "source": "windows_pdh_gpu_memory",
+      "schema_version": 1,
+      "measurement": "process-attributed WDDM counters; not exclusive VRAM",
+      "aggregation": "none; shared allocations may be counted for multiple PIDs",
+      "residency": "Total Committed is not a residency measurement",
+      "sources": [
+        "https://devblogs.microsoft.com/directx/gpus-in-the-task-manager/",
+        "https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/gpu-process-memory-counters-report-wrong-value",
+        "https://learn.microsoft.com/en-us/windows/win32/api/pdh/nf-pdh-pdhgetformattedcounterarrayw",
+        "https://learn.microsoft.com/en-us/windows/win32/perfctrs/checking-pdh-interface-return-values"
+      ],
+      "counters": [
+        {
+          "scope": "process",
+          "metric": "dedicated_bytes",
+          "path": "\\GPU Process Memory(*)\\Dedicated Usage",
+          "add_status": "0x00000000",
+          "info_status": "0x00000000",
+          "counter_type": "0x00010100",
+          "default_scale": 0,
+          "localized_path": "\\GPU Process Memory(*)\\Dedicated Usage",
+          "explanation": "Dedicated memory used"
+        },
+        {
+          "scope": "process",
+          "metric": "shared_bytes",
+          "path": "\\GPU Process Memory(*)\\Shared Usage",
+          "add_status": "0x00000000",
+          "info_status": "0x00000000",
+          "counter_type": "0x00010100",
+          "default_scale": 0,
+          "localized_path": "\\GPU Process Memory(*)\\Shared Usage",
+          "explanation": "Shared memory used"
+        },
+        {
+          "scope": "process",
+          "metric": "committed_bytes",
+          "path": "\\GPU Process Memory(*)\\Total Committed",
+          "add_status": "0x00000000",
+          "info_status": "0x00000000",
+          "counter_type": "0x00010100",
+          "default_scale": 0,
+          "localized_path": "\\GPU Process Memory(*)\\Total Committed",
+          "explanation": "Total committed memory used"
+        }
+      ]
+    },
+    "scope": "Separate WDDM resource probe. Includes sampler overhead; do not replace end-to-end timing benchmark. Process-attributed counters may overlap process RSS and are not summed into total RAM.",
+    "sample_count": 247,
+    "sample_interval_s": 0.1,
+    "sampling_start": "after model wake/load",
+    "owned_pids": [
+      36920,
+      24004,
+      15776
+    ],
+    "observed_gpu_pids": [
+      15776
+    ],
+    "expected_dxgi_device_id": 0,
+    "matched_luid": "0x00000000_0x0000e59f",
+    "valid_rows": 714,
+    "invalid_rows": 0,
+    "duplicate_rows": 0,
+    "identity_mismatches": 0,
+    "phase_summary": {
+      "awake": {
+        "samples": 10,
+        "metrics": {
+          "dedicated_bytes": {
+            "min": 92954624,
+            "max": 92954624,
+            "first": 92954624,
+            "last": 92954624,
+            "valid_values": 10
+          },
+          "shared_bytes": {
+            "min": 242683904,
+            "max": 242683904,
+            "first": 242683904,
+            "last": 242683904,
+            "valid_values": 10
+          },
+          "committed_bytes": {
+            "min": 335638528,
+            "max": 335638528,
+            "first": 335638528,
+            "last": 335638528,
+            "valid_values": 10
+          }
+        },
+        "samples_without_gpu_instances": 0
+      },
+      "short": {
+        "samples": 33,
+        "metrics": {
+          "dedicated_bytes": {
+            "min": 92954624,
+            "max": 96747520,
+            "first": 92954624,
+            "last": 96747520,
+            "valid_values": 33
+          },
+          "shared_bytes": {
+            "min": 242683904,
+            "max": 394203136,
+            "first": 242683904,
+            "last": 394203136,
+            "valid_values": 33
+          },
+          "committed_bytes": {
+            "min": 335638528,
+            "max": 490950656,
+            "first": 335638528,
+            "last": 490950656,
+            "valid_values": 33
+          }
+        },
+        "samples_without_gpu_instances": 0
+      },
+      "long": {
+        "samples": 164,
+        "metrics": {
+          "dedicated_bytes": {
+            "min": 96747520,
+            "max": 98623488,
+            "first": 96747520,
+            "last": 98623488,
+            "valid_values": 164
+          },
+          "shared_bytes": {
+            "min": 394203136,
+            "max": 873402368,
+            "first": 394203136,
+            "last": 873402368,
+            "valid_values": 164
+          },
+          "committed_bytes": {
+            "min": 490950656,
+            "max": 972025856,
+            "first": 490950656,
+            "last": 972025856,
+            "valid_values": 164
+          }
+        },
+        "samples_without_gpu_instances": 0
+      },
+      "idle_after_long": {
+        "samples": 28,
+        "metrics": {
+          "dedicated_bytes": {
+            "min": 98623488,
+            "max": 98623488,
+            "first": 98623488,
+            "last": 98623488,
+            "valid_values": 28
+          },
+          "shared_bytes": {
+            "min": 873402368,
+            "max": 873402368,
+            "first": 873402368,
+            "last": 873402368,
+            "valid_values": 28
+          },
+          "committed_bytes": {
+            "min": 972025856,
+            "max": 972025856,
+            "first": 972025856,
+            "last": 972025856,
+            "valid_values": 28
+          }
+        },
+        "samples_without_gpu_instances": 0
+      },
+      "sleep": {
+        "samples": 12,
+        "metrics": {
+          "dedicated_bytes": {
+            "min": 0,
+            "max": 84148224,
+            "first": 84148224,
+            "last": 0,
+            "valid_values": 3
+          },
+          "shared_bytes": {
+            "min": 0,
+            "max": 757272576,
+            "first": 757272576,
+            "last": 0,
+            "valid_values": 3
+          },
+          "committed_bytes": {
+            "min": 4096,
+            "max": 841424896,
+            "first": 841424896,
+            "last": 4096,
+            "valid_values": 3
+          }
+        },
+        "samples_without_gpu_instances": 9
+      }
+    },
+    "all_processes_exited": true,
+    "missing_instance_interpretation": "Unavailable after process exit, not a measured zero allocation",
+    "initial_attempt": {
+      "path": "results/cpu-amd-wddm/result.json",
+      "result": "no GPU instances for the launcher PID",
+      "reason": "Windows venv launcher is not the model process; rerun sampled its complete owned process tree"
+    }
+  },
+  "verification": {
+    "product_unittest": {
+      "tests": 401,
+      "passed": 400,
+      "skipped": 1,
+      "status": "passed",
+      "log": "results/cpu-amd-full-unit-tests-release.txt"
+    },
+    "research_unittest": {
+      "benchmark_tests": 6,
+      "device_probe_tests": 2,
+      "status": "passed"
+    },
+    "doctor": {
+      "cpu": {
+        "checks_passed": true,
+        "scope": "Imports, providers, package and reference hashes; no model execution"
+      },
+      "directml": {
+        "checks_passed": true,
+        "scope": "Imports, providers, package and reference hashes; no model execution"
+      }
+    }
+  },
+  "request_count": 21
+}

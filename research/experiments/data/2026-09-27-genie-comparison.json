@@ -1,0 +1,3941 @@
+{
+  "status": "completed",
+  "date": "2026-09-27",
+  "machine": "Ryzen 7 7840HS / Radeon 780M / 16 GB RAM / Windows 11; DirectML driver 31.0.14005.11001",
+  "method": "Sequential fresh processes; cold short; 1 warmup then 3 hot samples per case. Genie before and after Sakura; pooled Genie n=6. Memory sampled every 100 ms throughout each process. Timers include full text to PCM, exclude WAV writing.",
+  "quality": {
+    "listening": "unverified",
+    "asr": "unverified",
+    "same_sampling": false,
+    "genie_original_checkpoint_provenance": "unverified"
+  },
+  "variants": {
+    "genie-before": {
+      "label": "Genie 原版 CPU（前测）",
+      "backend": "genie",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\genie-comparison-20260927\\genie-original",
+      "summary_sha256": "a02ba30e6219f98bd888c0cf46fd20ceb812d22a196fe5c65c0f9ace412b9c6a",
+      "job_sha256": "ee9972689ce8db8c66a47f760ea5dafba54b1254826d9986044a1b6160786684",
+      "harness_sha256": "076425d98a901902e6f31573ffc8b9a93a2ec9ceef678ea799020dd0178a33e8",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "genie_python": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\python.exe",
+        "genie_root": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu",
+        "genie_model": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I",
+        "profile": null,
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。",
+          "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+        },
+        "repeats": 3,
+        "warmups": 1,
+        "experimental": {},
+        "directml_experimental": {},
+        "genie_asset_sha256": {
+          "prompt_encoder_fp16.bin": "1c6ee723cf56f06b72dfa2ccc6e67e958314733b9d2e9502583cee42cbf7ae2e",
+          "prompt_encoder_fp32.onnx": "c4a3d8c1e385a17aecb7bd9c5ede5707ba390f85c3eb49b388deeaaaf53d2748",
+          "t2s_encoder_fp32.bin": "003191cc18b68a78b478cabf0ac235939b3a33063fa76a6d00eb31ae989601a9",
+          "t2s_encoder_fp32.onnx": "f6eb1acd47c8e6d36b777886981a49122e8e070a5eb9888d458fb188dc139f75",
+          "t2s_first_stage_decoder_fp32.onnx": "868f395999508905128c5325c5db4f4b37b2e70e04d6e2719fec64cbb60ee7f9",
+          "t2s_shared_fp16.bin": "472b6664512cf0e6718f774c490abb51e6be14627416c8fcc98fb025ae4acedb",
+          "t2s_stage_decoder_fp32.onnx": "3f02881c517423deb610f86d5441bd9825937c5069f3887cacefa1e9dc403b0d",
+          "vits_fp16.bin": "63f2a774ea4f26faaf58f875b68a83a876a6da9e6761dd30fc440e14ff23d922",
+          "vits_fp32.onnx": "2f918e08a1bfecc568de4cc5dc96135cb8baf37a07f4eb4ec9258a4854fcd3f3"
+        }
+      },
+      "execution": {
+        "providers": [
+          "CPUExecutionProvider"
+        ],
+        "sampling": "Original ONNX RandomNormalLike/ArgMax and original stopping rules",
+        "seed": "Not exposed by the public API; graph RNG state advances across requests",
+        "threads": "Original ORT defaults; no session or model patches",
+        "model_identity": "Preconverted Genie assets are hashed; original checkpoint provenance is unverified"
+      },
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "dependency_versions": {
+        "genie-tts": "2.0.2",
+        "numpy": "2.4.4",
+        "onnxruntime": "1.22.1",
+        "torch": "2.11.0"
+      },
+      "ready_ms": 10805.467199999839,
+      "cold_request_ms": 2325.8712999959243,
+      "worker_entry_to_first_pcm_approx_ms": 13128.561899997294,
+      "peak_rss_mib": 5053.8984375,
+      "peak_private_mib": 6579.24609375,
+      "process": {
+        "exit_code": 0,
+        "timed_out": false,
+        "terminated_pids": [],
+        "process_wall_s": 79.06634959999064,
+        "observed_tree_cpu_s": 327.359375,
+        "peak_sampled_tree_rss_bytes": 5299396608,
+        "peak_sampled_tree_private_bytes": 6898839552,
+        "sample_interval_s": 0.1,
+        "sample_count": 678,
+        "measurement": "Sampled working set/private bytes; sums may double-count shared pages. CPU time covers observed processes; brief children and memory peaks may be missed. Sampling remains active during all request timers. GPU memory is not measured.",
+        "status": "completed"
+      },
+      "cases": {
+        "short": {
+          "n": 3,
+          "median_seconds": 1.5238435999926878,
+          "min_seconds": 1.454962500007241,
+          "max_seconds": 1.6720560000103433,
+          "median_pcm_rtf": 0.6635142857183902,
+          "median_waveform_rtf": 0.6635142857183902,
+          "pcm_seconds": [
+            2.28,
+            2.52,
+            2.24
+          ],
+          "waveform_seconds": [
+            2.28,
+            2.52,
+            2.24
+          ],
+          "median_worker_cpu_s": 8.46875,
+          "median_sampled_tree_cpu_s": 8.71875,
+          "median_first_pcm_ms": 1522.657800000161
+        },
+        "long": {
+          "n": 3,
+          "median_seconds": 14.477542799999355,
+          "min_seconds": 13.750413200003095,
+          "max_seconds": 15.495627199998125,
+          "median_pcm_rtf": 0.7509098962655267,
+          "median_waveform_rtf": 0.7509098962655267,
+          "pcm_seconds": [
+            18.6,
+            19.2,
+            19.28
+          ],
+          "waveform_seconds": [
+            18.6,
+            19.2,
+            19.28
+          ],
+          "median_worker_cpu_s": 70.53125,
+          "median_sampled_tree_cpu_s": 70.265625,
+          "median_first_pcm_ms": 14476.567799996701
+        }
+      },
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 118908.4311915,
+          "monotonic_end_s": 118910.7570628,
+          "complete_pcm_ms": 2325.8712999959243,
+          "worker_cpu_s": 9.34375,
+          "samples": 60160,
+          "audio_seconds": 1.88,
+          "sample_rate": 32000,
+          "pcm_bytes": 120320,
+          "rtf": 1.2371655851042151,
+          "first_pcm_ms": 2323.094699997455,
+          "chunk_arrivals_ms": [
+            2323.094699997455
+          ],
+          "wav": "cold-short-0.wav",
+          "wav_sha256": "124a16c0f260c0c4b45adadf7af08f7dc7b4588a46082793e7937086543cdcde",
+          "memory": {
+            "sample_count": 20,
+            "sampled_tree_cpu_s": 8.875,
+            "peak_sampled_tree_rss_bytes": 4496801792,
+            "peak_sampled_tree_private_bytes": 5987790848
+          },
+          "waveform_seconds": 1.88,
+          "waveform_rtf": 1.2371655851042151,
+          "details": {
+            "status": "completed"
+          }
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 118910.7588651,
+          "monotonic_end_s": 118912.2871039,
+          "complete_pcm_ms": 1528.238800005056,
+          "worker_cpu_s": 8.25,
+          "samples": 72960,
+          "audio_seconds": 2.28,
+          "sample_rate": 32000,
+          "pcm_bytes": 145920,
+          "rtf": 0.6702801754408141,
+          "first_pcm_ms": 1526.9570000091335,
+          "chunk_arrivals_ms": [
+            1526.9570000091335
+          ],
+          "wav": "warmup-short-0.wav",
+          "wav_sha256": "756883c0069aa3b4b3058cb8dd7f087236c07677a3f5d19ea474e805b527fe09",
+          "memory": {
+            "sample_count": 13,
+            "sampled_tree_cpu_s": 8.25,
+            "peak_sampled_tree_rss_bytes": 4525744128,
+            "peak_sampled_tree_private_bytes": 5988298752
+          },
+          "waveform_seconds": 2.28,
+          "waveform_rtf": 0.6702801754408141,
+          "details": {
+            "status": "completed"
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 118912.2893364,
+          "monotonic_end_s": 118913.81318,
+          "complete_pcm_ms": 1523.8435999926878,
+          "worker_cpu_s": 8.46875,
+          "samples": 72960,
+          "audio_seconds": 2.28,
+          "sample_rate": 32000,
+          "pcm_bytes": 145920,
+          "rtf": 0.6683524561371438,
+          "first_pcm_ms": 1522.657800000161,
+          "chunk_arrivals_ms": [
+            1522.657800000161
+          ],
+          "wav": "hot-short-0.wav",
+          "wav_sha256": "9ec95b139904c4f012786ed333ae0880af7ed1c50fffef453bc06984957c234d",
+          "memory": {
+            "sample_count": 14,
+            "sampled_tree_cpu_s": 9.0625,
+            "peak_sampled_tree_rss_bytes": 4541833216,
+            "peak_sampled_tree_private_bytes": 5988356096
+          },
+          "waveform_seconds": 2.28,
+          "waveform_rtf": 0.6683524561371438,
+          "details": {
+            "status": "completed"
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 1,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 118913.8158091,
+          "monotonic_end_s": 118915.4878651,
+          "complete_pcm_ms": 1672.0560000103433,
+          "worker_cpu_s": 8.984375,
+          "samples": 80640,
+          "audio_seconds": 2.52,
+          "sample_rate": 32000,
+          "pcm_bytes": 161280,
+          "rtf": 0.6635142857183902,
+          "first_pcm_ms": 1670.8661000011489,
+          "chunk_arrivals_ms": [
+            1670.8661000011489
+          ],
+          "wav": "hot-short-1.wav",
+          "wav_sha256": "1e2a2107e1f086e0883c64eb11a4ae2f69e7276e5922d1476f53e47e3d3c4077",
+          "memory": {
+            "sample_count": 14,
+            "sampled_tree_cpu_s": 8.71875,
+            "peak_sampled_tree_rss_bytes": 4545531904,
+            "peak_sampled_tree_private_bytes": 5988356096
+          },
+          "waveform_seconds": 2.52,
+          "waveform_rtf": 0.6635142857183902,
+          "details": {
+            "status": "completed"
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 2,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 118915.4907061,
+          "monotonic_end_s": 118916.9456686,
+          "complete_pcm_ms": 1454.962500007241,
+          "worker_cpu_s": 8.328125,
+          "samples": 71680,
+          "audio_seconds": 2.24,
+          "sample_rate": 32000,
+          "pcm_bytes": 143360,
+          "rtf": 0.6495368303603754,
+          "first_pcm_ms": 1453.9856000046711,
+          "chunk_arrivals_ms": [
+            1453.9856000046711
+          ],
+          "wav": "hot-short-2.wav",
+          "wav_sha256": "aab97c2119815f579827b2dd05476e977e3022fbcb8b8298e8d7a25056291b92",
+          "memory": {
+            "sample_count": 13,
+            "sampled_tree_cpu_s": 8.5625,
+            "peak_sampled_tree_rss_bytes": 4545773568,
+            "peak_sampled_tree_private_bytes": 5988356096
+          },
+          "waveform_seconds": 2.24,
+          "waveform_rtf": 0.6495368303603754,
+          "details": {
+            "status": "completed"
+          }
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "index": 0,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 118916.9483411,
+          "monotonic_end_s": 118931.7222732,
+          "complete_pcm_ms": 14773.932099997182,
+          "worker_cpu_s": 63.28125,
+          "samples": 599040,
+          "audio_seconds": 18.72,
+          "sample_rate": 32000,
+          "pcm_bytes": 1198080,
+          "rtf": 0.7892057745724991,
+          "first_pcm_ms": 14772.757400001865,
+          "chunk_arrivals_ms": [
+            14772.757400001865
+          ],
+          "wav": "warmup-long-0.wav",
+          "wav_sha256": "ba60a59c0c05416b194b50f3b86939ac576c112c15d617d2c282fbc5b923d099",
+          "memory": {
+            "sample_count": 125,
+            "sampled_tree_cpu_s": 62.953125,
+            "peak_sampled_tree_rss_bytes": 5066235904,
+            "peak_sampled_tree_private_bytes": 6582005760
+          },
+          "waveform_seconds": 18.72,
+          "waveform_rtf": 0.7892057745724991,
+          "details": {
+            "status": "completed"
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 0,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 118931.7254047,
+          "monotonic_end_s": 118945.4758179,
+          "complete_pcm_ms": 13750.413200003095,
+          "worker_cpu_s": 70.640625,
+          "samples": 595200,
+          "audio_seconds": 18.6,
+          "sample_rate": 32000,
+          "pcm_bytes": 1190400,
+          "rtf": 0.7392695268818867,
+          "first_pcm_ms": 13749.362299990025,
+          "chunk_arrivals_ms": [
+            13749.362299990025
+          ],
+          "wav": "hot-long-0.wav",
+          "wav_sha256": "ecc764c3f660bb1c1b3a9015a1cb053f3d1289e315567c9762abcd8fb26c7f89",
+          "memory": {
+            "sample_count": 117,
+            "sampled_tree_cpu_s": 70.65625,
+            "peak_sampled_tree_rss_bytes": 5067440128,
+            "peak_sampled_tree_private_bytes": 6583205888
+          },
+          "waveform_seconds": 18.6,
+          "waveform_rtf": 0.7392695268818867,
+          "details": {
+            "status": "completed"
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 1,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 118945.4798605,
+          "monotonic_end_s": 118960.9754877,
+          "complete_pcm_ms": 15495.627199998125,
+          "worker_cpu_s": 69.390625,
+          "samples": 614400,
+          "audio_seconds": 19.2,
+          "sample_rate": 32000,
+          "pcm_bytes": 1228800,
+          "rtf": 0.8070639166665691,
+          "first_pcm_ms": 15494.553299999097,
+          "chunk_arrivals_ms": [
+            15494.553299999097
+          ],
+          "wav": "hot-long-1.wav",
+          "wav_sha256": "d637350ef057969bb0650d64ca2532f68ddd6465b04214986042605f5b31c044",
+          "memory": {
+            "sample_count": 131,
+            "sampled_tree_cpu_s": 69.78125,
+            "peak_sampled_tree_rss_bytes": 5075292160,
+            "peak_sampled_tree_private_bytes": 6584365056
+          },
+          "waveform_seconds": 19.2,
+          "waveform_rtf": 0.8070639166665691,
+          "details": {
+            "status": "completed"
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 2,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 118960.9784878,
+          "monotonic_end_s": 118975.4560306,
+          "complete_pcm_ms": 14477.542799999355,
+          "worker_cpu_s": 70.53125,
+          "samples": 616960,
+          "audio_seconds": 19.28,
+          "sample_rate": 32000,
+          "pcm_bytes": 1233920,
+          "rtf": 0.7509098962655267,
+          "first_pcm_ms": 14476.567799996701,
+          "chunk_arrivals_ms": [
+            14476.567799996701
+          ],
+          "wav": "hot-long-2.wav",
+          "wav_sha256": "a24672d0695881685d28a2cea503d1c0bc8fab715d7548fd541da74aef55fd51",
+          "memory": {
+            "sample_count": 123,
+            "sampled_tree_cpu_s": 70.265625,
+            "peak_sampled_tree_rss_bytes": 5076320256,
+            "peak_sampled_tree_private_bytes": 6583123968
+          },
+          "waveform_seconds": 19.28,
+          "waveform_rtf": 0.7509098962655267,
+          "details": {
+            "status": "completed"
+          }
+        }
+      ],
+      "genie_source_sha256": {
+        "__init__.py": "b6e0b97933b1551b27b78ae8d530471184fee7932f86b8616756fed176ca19e1",
+        "Audio\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "Audio\\Audio.py": "3f6d51e5b6bb3157da2a0599b0ca904b33adee1be3cdb2b4a3ccb7997a14bc98",
+        "Audio\\ReferenceAudio.py": "3ccf4c4ec1217d21572819691d269a294422cacd8d07fc2f0772ebb177a95bf8",
+        "Converter\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "Converter\\Converter.py": "f37000dc1c18faa2f19818e8931986a0c10c4bc201544901000a165e6c75c349",
+        "Converter\\load_state_dict.py": "f3c1711258a32ad9241c8503e37bdeafd6f90290760e90e97b723441728e1cf2",
+        "Converter\\utils.py": "61a6673a62f483a98d319a81f89dcfd19001d0475236ccd9ef602703607ec9fa",
+        "Converter\\v2\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "Converter\\v2\\Converter.py": "7048ecd01a494e8527a52d8abddf8f06fc7e1e6d4febb8999d04ba381c8cae14",
+        "Converter\\v2\\EncoderConverter.py": "b79b1c68621f1538dc578edb9355826c94de1e6f2786cc074196f9e8b7916fc8",
+        "Converter\\v2\\T2SConverter.py": "ba0e5a314bb4774981c17f850d38dfa1cb68ed5d285c3b161c4bb04fd7db659a",
+        "Converter\\v2\\VITSConverter.py": "260870351a035b424606c088538eade79821cbe83c7182902f23440c4ce92daa",
+        "Converter\\v2ProPlus\\Converter.py": "581274578a58f4ecc4b9a32d9f5fa0c144d4ed31e432f7200ba3de5591c69e92",
+        "Converter\\v2ProPlus\\PromptEncoderConverter.py": "4aea58a58219988e1ba63387ca39238821f2ada34f6ed480afbd5c6a283315cf",
+        "Core\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "Core\\Inference.py": "b37cee62975c711ee257484ffc767003712c5489034a3c63503fd6e787a18df2",
+        "Core\\Resources.py": "348c2d91ebfd5ebecd888789709ad805a44a8f6c8f810a8a9b63c6c1e2cd89c6",
+        "Core\\TTSPlayer.py": "5bf192a02cc4b6dc51e357a02d5a4b9184b063dd0ae26105dddbd22fdac7630a",
+        "G2P\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "G2P\\Chinese\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "G2P\\Chinese\\ChineseG2P.py": "883424316be9d61ed9a2bb7434d3cfa74f1ef1eddba489ba74ac185327978756",
+        "G2P\\Chinese\\CorrectPronunciation.py": "126ca3bdaf3ba2bff02df13e818213edb91cf00e7a00392abc508ddf8bf9bb11",
+        "G2P\\Chinese\\Erhua.py": "1eb0fba5e8345bad6990f4f9b8d61c27dffae12a906157b95fe1d31f43614c41",
+        "G2P\\Chinese\\Normalization\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "G2P\\Chinese\\Normalization\\char_convert.py": "8ad7c7e2fa62ad1aa8011f9e5117771f9083effba6dda86a3b249485659b1d49",
+        "G2P\\Chinese\\Normalization\\chronology.py": "4692b9847e6d37792c2e3921ad8fc77dbc8453b32988f1d55d88c8cb237720c7",
+        "G2P\\Chinese\\Normalization\\constants.py": "ffebb53d3992cedaea3252a787a837e917d50555be6db7d1c5125287ac589b41",
+        "G2P\\Chinese\\Normalization\\num.py": "a8a930b254b053e0a32e285a73b5950631f03af16d1865f6114a300dea229441",
+        "G2P\\Chinese\\Normalization\\phonecode.py": "d8279ca6ddf1af8f26119a75b4dfbb28c7da0adba5c51f807f4503c59d9816a5",
+        "G2P\\Chinese\\Normalization\\quantifier.py": "9a6c76fabf10f7457f3247f62db3ac294982adf9ad134cd8b464161a23f48e78",
+        "G2P\\Chinese\\Normalization\\text_normlization.py": "29776b20b166d9c08728f8170e115501d324fc8a2fc832cc2283a0eb00d7c1c7",
+        "G2P\\Chinese\\ToneSandhi.py": "7bcdc674bf703bbeb4a3d3e94b273899e9f4891f0e4e2850ff43d5331fbc2cb8",
+        "G2P\\English\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "G2P\\English\\EnglishG2P.py": "e270db7749059aa3887b73a3fd12a9d74a8b7d322d036d6f43ebb9b712c446f2",
+        "G2P\\English\\Normalization.py": "8c42986efa3a20e42e0554f137809f1109f197237b91810e55367f09ca0e3d76",
+        "G2P\\English\\WordSegment.py": "63271947cf16ddd307896df617dfcaad92e83bc840eb8b66126e6c8f15b04709",
+        "G2P\\Japanese\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "G2P\\Japanese\\JapaneseG2P.py": "16a5aa38597bd89ae6eb1da08d7f8dd4c34170f059e4913a35068c5776edc0c2",
+        "G2P\\SymbolsV2.py": "c5f6f92adf9b2a2c5c64708f143cb1f1b001b385e0e985c8959e9ecdb924b977",
+        "GetPhonesAndBert.py": "81fc9a9b36b5e2a41f63c001df3d782b225f6ce21f66dd4e323414c6a30f78f3",
+        "GUI\\AudioPlayer.py": "5bb57095f5442375978502881cdf2fcc5d1af46f86c4c0ba4e1e87bf70f03212",
+        "GUI\\ConverterWidget.py": "e7a311d9c017b60f3fdacf85c31979baaaae9b3e9964a9439575b841e7b67424",
+        "GUI\\GUI.py": "dbe25a706b121280bf45e9df6a0ce908819e214cfeed0785e851ced3a70e9477",
+        "GUI\\PresetManager.py": "6c050fde4b7ab2fed3d6e030ecd62d12bfa02d641d9e29907371fe6baa839765",
+        "GUI\\ServerManager.py": "54fa2861c6bf82e47d5a67159490f55db0bc1063c91b869dc48a3d0f64c4c4dd",
+        "GUI\\Utils.py": "1387813923f862486d63b9133440bce1822f6695d3f8ba110f3f209b9ade2c5a",
+        "Internal.py": "df8108a2b8cee2a052b6156642775e2a03e3ec5f7b59d6395ccc877014678c30",
+        "ModelManager.py": "a86beb264721d0dcb3bb984951e48f00908b7c7cffff6d02f450cdfeb7671628",
+        "PredefinedCharacter.py": "28a7560501f53acb2468819031cb5927a0376da57146a82834f167fe7a0a3688",
+        "Server.py": "5ac330b9eddfd45627d6d316b075573869f75a4112d2e409ee1c35546e1e56e2",
+        "Utils\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "Utils\\Constants.py": "69dc008739196d8070485315f245dfdb6342369d9a4ed0d48598c8a07b07597a",
+        "Utils\\Language.py": "a902c8ac38ab653a86577c3018f27afa10f2723cb0fb3de5ad4ba31be7b36b58",
+        "Utils\\Shared.py": "0f7bf059bb22860c2b13135c91994605e6e7dfeb2752f3ced3bea659fd3432d5",
+        "Utils\\TextSplitter.py": "05210793257ed537baee197b50d91a440cfdadd5a5b08b0beb3ab40a0ebed413",
+        "Utils\\UserData.py": "f009675b5e5ec4cc68915ef0085a2770358b10f38d26040c936b78ec046bc1d2",
+        "Utils\\Utils.py": "e44366f858a0a4e48f3e9eb97daf653e21d72dea76223abebc63afe8ad55e962"
+      }
+    },
+    "cpu-int8-threads8": {
+      "label": "CPU INT8 GPT + FP32 声学，8 线程",
+      "backend": "cpu",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\genie-comparison-20260927\\sakura\\cpu-int8-threads8",
+      "summary_sha256": "13177576da7174dedfca80e75d3ba804db2705854bb1769adeefd7969ae3bd53",
+      "job_sha256": "7c8c5afd05bf2d4f3fe24e5dfd4c373c934f1f0e1253fbae2027518cef31babe",
+      "harness_sha256": "076425d98a901902e6f31573ffc8b9a93a2ec9ceef678ea799020dd0178a33e8",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "python": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.venv-amd\\Scripts\\python.exe",
+        "model": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\model.json",
+        "profile": "int8",
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。",
+          "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+        },
+        "repeats": 3,
+        "warmups": 1,
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 8,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "directml_experimental": {}
+      },
+      "execution": {
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 8,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "seed": 1234,
+        "top_k": 15,
+        "temperature": 1.0,
+        "repetition_penalty": 1.35,
+        "split_method": "cut0",
+        "reference": "reference",
+        "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b"
+      },
+      "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+      "dependency_versions": {
+        "numpy": "2.4.6",
+        "onnxruntime-directml": "1.24.4"
+      },
+      "ready_ms": 839.6369999973103,
+      "cold_request_ms": 4253.621700001531,
+      "worker_entry_to_first_pcm_approx_ms": 5093.1335000059335,
+      "peak_rss_mib": 1123.6328125,
+      "peak_private_mib": 1451.55859375,
+      "process": {
+        "exit_code": 0,
+        "timed_out": false,
+        "terminated_pids": [],
+        "process_wall_s": 55.11472140000842,
+        "observed_tree_cpu_s": 78.15625,
+        "peak_sampled_tree_rss_bytes": 1178214400,
+        "peak_sampled_tree_private_bytes": 1522069504,
+        "sample_interval_s": 0.1,
+        "sample_count": 490,
+        "measurement": "Sampled working set/private bytes; sums may double-count shared pages. CPU time covers observed processes; brief children and memory peaks may be missed. Sampling remains active during all request timers. GPU memory is not measured.",
+        "status": "completed"
+      },
+      "cases": {
+        "short": {
+          "n": 3,
+          "median_seconds": 1.5210508000018308,
+          "min_seconds": 1.4927549999993062,
+          "max_seconds": 1.5328143999940949,
+          "median_pcm_rtf": 0.44475169590696806,
+          "median_waveform_rtf": 0.4875162820518688,
+          "pcm_seconds": [
+            3.42,
+            3.42,
+            3.42
+          ],
+          "waveform_seconds": [
+            3.12,
+            3.12,
+            3.12
+          ],
+          "median_worker_cpu_s": 1.4375,
+          "median_sampled_tree_cpu_s": 1.4375,
+          "median_first_pcm_ms": 1520.9490999986883
+        },
+        "long": {
+          "n": 3,
+          "median_seconds": 10.855497699987609,
+          "min_seconds": 10.456034599992563,
+          "max_seconds": 10.911702799989143,
+          "median_pcm_rtf": 0.5358093632767822,
+          "median_waveform_rtf": 0.5438626102198201,
+          "pcm_seconds": [
+            20.26,
+            20.26,
+            20.26
+          ],
+          "waveform_seconds": [
+            19.96,
+            19.96,
+            19.96
+          ],
+          "median_worker_cpu_s": 17.046875,
+          "median_sampled_tree_cpu_s": 17.03125,
+          "median_first_pcm_ms": 10854.798899992602
+        }
+      },
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 118989.1686532,
+          "monotonic_end_s": 118993.4222749,
+          "complete_pcm_ms": 4253.621700001531,
+          "worker_cpu_s": 3.65625,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 1.243749035088167,
+          "first_pcm_ms": 4253.496500008623,
+          "chunk_arrivals_ms": [
+            4253.496500008623
+          ],
+          "wav": "cold-short-0.wav",
+          "wav_sha256": "b013d8ee0205bcd5139de18c5e0330e5120f26b8552870cb1ed74c27ffc0ef34",
+          "memory": {
+            "sample_count": 39,
+            "sampled_tree_cpu_s": 3.6875,
+            "peak_sampled_tree_rss_bytes": 702652416,
+            "peak_sampled_tree_private_bytes": 1157693440
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 1.3633402884620291,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "int8",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 118993.4247623,
+          "monotonic_end_s": 118994.9777184,
+          "complete_pcm_ms": 1552.9561000003014,
+          "worker_cpu_s": 1.578125,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 0.4540807309942402,
+          "first_pcm_ms": 1552.8002999926684,
+          "chunk_arrivals_ms": [
+            1552.8002999926684
+          ],
+          "wav": "warmup-short-0.wav",
+          "wav_sha256": "b013d8ee0205bcd5139de18c5e0330e5120f26b8552870cb1ed74c27ffc0ef34",
+          "memory": {
+            "sample_count": 13,
+            "sampled_tree_cpu_s": 1.53125,
+            "peak_sampled_tree_rss_bytes": 712245248,
+            "peak_sampled_tree_private_bytes": 1167843328
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 0.4977423397436863,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "int8",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 118994.9824046,
+          "monotonic_end_s": 118996.515219,
+          "complete_pcm_ms": 1532.8143999940949,
+          "worker_cpu_s": 1.40625,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 0.4481913450275131,
+          "first_pcm_ms": 1532.6956000062637,
+          "chunk_arrivals_ms": [
+            1532.6956000062637
+          ],
+          "wav": "hot-short-0.wav",
+          "wav_sha256": "b013d8ee0205bcd5139de18c5e0330e5120f26b8552870cb1ed74c27ffc0ef34",
+          "memory": {
+            "sample_count": 14,
+            "sampled_tree_cpu_s": 1.390625,
+            "peak_sampled_tree_rss_bytes": 716054528,
+            "peak_sampled_tree_private_bytes": 1168404480
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 0.491286666664774,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "int8",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 1,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 118996.5191169,
+          "monotonic_end_s": 118998.0401677,
+          "complete_pcm_ms": 1521.0508000018308,
+          "worker_cpu_s": 1.4375,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 0.44475169590696806,
+          "first_pcm_ms": 1520.9490999986883,
+          "chunk_arrivals_ms": [
+            1520.9490999986883
+          ],
+          "wav": "hot-short-1.wav",
+          "wav_sha256": "b013d8ee0205bcd5139de18c5e0330e5120f26b8552870cb1ed74c27ffc0ef34",
+          "memory": {
+            "sample_count": 14,
+            "sampled_tree_cpu_s": 1.4375,
+            "peak_sampled_tree_rss_bytes": 710127616,
+            "peak_sampled_tree_private_bytes": 1169457152
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 0.4875162820518688,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "int8",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 2,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 118998.0438767,
+          "monotonic_end_s": 118999.5366317,
+          "complete_pcm_ms": 1492.7549999993062,
+          "worker_cpu_s": 1.484375,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 0.4364780701752357,
+          "first_pcm_ms": 1492.6364999992074,
+          "chunk_arrivals_ms": [
+            1492.6364999992074
+          ],
+          "wav": "hot-short-2.wav",
+          "wav_sha256": "b013d8ee0205bcd5139de18c5e0330e5120f26b8552870cb1ed74c27ffc0ef34",
+          "memory": {
+            "sample_count": 13,
+            "sampled_tree_cpu_s": 1.4375,
+            "peak_sampled_tree_rss_bytes": 708276224,
+            "peak_sampled_tree_private_bytes": 1169440768
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 0.478447115384393,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "int8",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "index": 0,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 118999.5417441,
+          "monotonic_end_s": 119010.8512458,
+          "complete_pcm_ms": 11309.50170000142,
+          "worker_cpu_s": 17.703125,
+          "samples": 648320,
+          "audio_seconds": 20.26,
+          "sample_rate": 32000,
+          "pcm_bytes": 1296640,
+          "rtf": 0.5582182477789447,
+          "first_pcm_ms": 11308.241100006853,
+          "chunk_arrivals_ms": [
+            11308.241100006853
+          ],
+          "wav": "warmup-long-0.wav",
+          "wav_sha256": "e4bc30059585fafdcd3a952c2e683866d04748522da85af0567a341c1567a61e",
+          "memory": {
+            "sample_count": 101,
+            "sampled_tree_cpu_s": 17.8125,
+            "peak_sampled_tree_rss_bytes": 1174421504,
+            "peak_sampled_tree_private_bytes": 1521041408
+          },
+          "waveform_seconds": 19.96,
+          "waveform_rtf": 0.5666083016032775,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "int8",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 0,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119010.8584185,
+          "monotonic_end_s": 119021.7139162,
+          "complete_pcm_ms": 10855.497699987609,
+          "worker_cpu_s": 17.046875,
+          "samples": 648320,
+          "audio_seconds": 20.26,
+          "sample_rate": 32000,
+          "pcm_bytes": 1296640,
+          "rtf": 0.5358093632767822,
+          "first_pcm_ms": 10854.798899992602,
+          "chunk_arrivals_ms": [
+            10854.798899992602
+          ],
+          "wav": "hot-long-0.wav",
+          "wav_sha256": "e4bc30059585fafdcd3a952c2e683866d04748522da85af0567a341c1567a61e",
+          "memory": {
+            "sample_count": 97,
+            "sampled_tree_cpu_s": 17.03125,
+            "peak_sampled_tree_rss_bytes": 1176338432,
+            "peak_sampled_tree_private_bytes": 1521487872
+          },
+          "waveform_seconds": 19.96,
+          "waveform_rtf": 0.5438626102198201,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "int8",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 1,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119021.7210344,
+          "monotonic_end_s": 119032.177069,
+          "complete_pcm_ms": 10456.034599992563,
+          "worker_cpu_s": 17.3125,
+          "samples": 648320,
+          "audio_seconds": 20.26,
+          "sample_rate": 32000,
+          "pcm_bytes": 1296640,
+          "rtf": 0.5160925271467207,
+          "first_pcm_ms": 10455.336300001363,
+          "chunk_arrivals_ms": [
+            10455.336300001363
+          ],
+          "wav": "hot-long-1.wav",
+          "wav_sha256": "e4bc30059585fafdcd3a952c2e683866d04748522da85af0567a341c1567a61e",
+          "memory": {
+            "sample_count": 93,
+            "sampled_tree_cpu_s": 17.328125,
+            "peak_sampled_tree_rss_bytes": 1177214976,
+            "peak_sampled_tree_private_bytes": 1521213440
+          },
+          "waveform_seconds": 19.96,
+          "waveform_rtf": 0.5238494288573429,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "int8",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 2,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119032.1855666,
+          "monotonic_end_s": 119043.0972694,
+          "complete_pcm_ms": 10911.702799989143,
+          "worker_cpu_s": 15.859375,
+          "samples": 648320,
+          "audio_seconds": 20.26,
+          "sample_rate": 32000,
+          "pcm_bytes": 1296640,
+          "rtf": 0.5385835538000564,
+          "first_pcm_ms": 10910.835700007738,
+          "chunk_arrivals_ms": [
+            10910.835700007738
+          ],
+          "wav": "hot-long-2.wav",
+          "wav_sha256": "e4bc30059585fafdcd3a952c2e683866d04748522da85af0567a341c1567a61e",
+          "memory": {
+            "sample_count": 96,
+            "sampled_tree_cpu_s": 15.84375,
+            "peak_sampled_tree_rss_bytes": 1178214400,
+            "peak_sampled_tree_private_bytes": 1522069504
+          },
+          "waveform_seconds": 19.96,
+          "waveform_rtf": 0.5466784969934441,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "int8",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        }
+      ]
+    },
+    "cpu-fp32-threads8": {
+      "label": "CPU FP32，8 线程",
+      "backend": "cpu",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\genie-comparison-20260927\\sakura\\cpu-fp32-threads8",
+      "summary_sha256": "ce59e3db7c82f8846700217a757832c4f4cbb7379633b291b2c16daad5b474cd",
+      "job_sha256": "a71fd9dc73ff06f13fdafdb84a6c756f7683f641283050cc170ac5a23d34d985",
+      "harness_sha256": "076425d98a901902e6f31573ffc8b9a93a2ec9ceef678ea799020dd0178a33e8",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "python": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.venv-amd\\Scripts\\python.exe",
+        "model": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\model.json",
+        "profile": "onnx-fp32",
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。",
+          "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+        },
+        "repeats": 3,
+        "warmups": 1,
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 8,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "directml_experimental": {}
+      },
+      "execution": {
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 8,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "seed": 1234,
+        "top_k": 15,
+        "temperature": 1.0,
+        "repetition_penalty": 1.35,
+        "split_method": "cut0",
+        "reference": "reference",
+        "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b"
+      },
+      "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+      "dependency_versions": {
+        "numpy": "2.4.6",
+        "onnxruntime-directml": "1.24.4"
+      },
+      "ready_ms": 546.2243999936618,
+      "cold_request_ms": 5455.696099990746,
+      "worker_entry_to_first_pcm_approx_ms": 6001.776100005372,
+      "peak_rss_mib": 1350.65234375,
+      "peak_private_mib": 1678.15625,
+      "process": {
+        "exit_code": 0,
+        "timed_out": false,
+        "terminated_pids": [],
+        "process_wall_s": 70.84411750000436,
+        "observed_tree_cpu_s": 94.75,
+        "peak_sampled_tree_rss_bytes": 1416261632,
+        "peak_sampled_tree_private_bytes": 1759674368,
+        "sample_interval_s": 0.1,
+        "sample_count": 625,
+        "measurement": "Sampled working set/private bytes; sums may double-count shared pages. CPU time covers observed processes; brief children and memory peaks may be missed. Sampling remains active during all request timers. GPU memory is not measured.",
+        "status": "completed"
+      },
+      "cases": {
+        "short": {
+          "n": 3,
+          "median_seconds": 2.0771174000110477,
+          "min_seconds": 2.074926300003426,
+          "max_seconds": 2.099365799993393,
+          "median_pcm_rtf": 0.6073442690090783,
+          "median_waveform_rtf": 0.6657427564137973,
+          "pcm_seconds": [
+            3.42,
+            3.42,
+            3.42
+          ],
+          "waveform_seconds": [
+            3.12,
+            3.12,
+            3.12
+          ],
+          "median_worker_cpu_s": 1.671875,
+          "median_sampled_tree_cpu_s": 1.671875,
+          "median_first_pcm_ms": 2077.0034000015585
+        },
+        "long": {
+          "n": 3,
+          "median_seconds": 13.491265399992699,
+          "min_seconds": 13.295565999986138,
+          "max_seconds": 14.224932700002682,
+          "median_pcm_rtf": 0.6517519516904685,
+          "median_waveform_rtf": 0.6613365392153284,
+          "pcm_seconds": [
+            20.7,
+            20.7,
+            20.7
+          ],
+          "waveform_seconds": [
+            20.4,
+            20.4,
+            20.4
+          ],
+          "median_worker_cpu_s": 20.125,
+          "median_sampled_tree_cpu_s": 20.15625,
+          "median_first_pcm_ms": 13490.481500004535
+        }
+      },
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119044.2703841,
+          "monotonic_end_s": 119049.7260802,
+          "complete_pcm_ms": 5455.696099990746,
+          "worker_cpu_s": 4.203125,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 1.5952327777750719,
+          "first_pcm_ms": 5455.551700011711,
+          "chunk_arrivals_ms": [
+            5455.551700011711
+          ],
+          "wav": "cold-short-0.wav",
+          "wav_sha256": "3b476bb11b726f8f75c8054bcdba979d4ab3bd92ec16f372a67e1e787aa8f57c",
+          "memory": {
+            "sample_count": 49,
+            "sampled_tree_cpu_s": 4.234375,
+            "peak_sampled_tree_rss_bytes": 931655680,
+            "peak_sampled_tree_private_bytes": 1392734208
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 1.7486205448688288,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp32",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119049.7286735,
+          "monotonic_end_s": 119051.8417502,
+          "complete_pcm_ms": 2113.0766999995103,
+          "worker_cpu_s": 1.875,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 0.6178586842103831,
+          "first_pcm_ms": 2112.9417000047397,
+          "chunk_arrivals_ms": [
+            2112.9417000047397
+          ],
+          "wav": "warmup-short-0.wav",
+          "wav_sha256": "3b476bb11b726f8f75c8054bcdba979d4ab3bd92ec16f372a67e1e787aa8f57c",
+          "memory": {
+            "sample_count": 18,
+            "sampled_tree_cpu_s": 1.796875,
+            "peak_sampled_tree_rss_bytes": 939417600,
+            "peak_sampled_tree_private_bytes": 1393291264
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 0.6772681730767661,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp32",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119051.8453506,
+          "monotonic_end_s": 119053.922468,
+          "complete_pcm_ms": 2077.1174000110477,
+          "worker_cpu_s": 1.625,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 0.6073442690090783,
+          "first_pcm_ms": 2077.0034000015585,
+          "chunk_arrivals_ms": [
+            2077.0034000015585
+          ],
+          "wav": "hot-short-0.wav",
+          "wav_sha256": "3b476bb11b726f8f75c8054bcdba979d4ab3bd92ec16f372a67e1e787aa8f57c",
+          "memory": {
+            "sample_count": 19,
+            "sampled_tree_cpu_s": 1.671875,
+            "peak_sampled_tree_rss_bytes": 935972864,
+            "peak_sampled_tree_private_bytes": 1393283072
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 0.6657427564137973,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp32",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 1,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119053.9275202,
+          "monotonic_end_s": 119056.0024465,
+          "complete_pcm_ms": 2074.926300003426,
+          "worker_cpu_s": 1.671875,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 0.6067035964922299,
+          "first_pcm_ms": 2074.8046999942744,
+          "chunk_arrivals_ms": [
+            2074.8046999942744
+          ],
+          "wav": "hot-short-1.wav",
+          "wav_sha256": "3b476bb11b726f8f75c8054bcdba979d4ab3bd92ec16f372a67e1e787aa8f57c",
+          "memory": {
+            "sample_count": 18,
+            "sampled_tree_cpu_s": 1.640625,
+            "peak_sampled_tree_rss_bytes": 941453312,
+            "peak_sampled_tree_private_bytes": 1394331648
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 0.6650404807703288,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp32",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 2,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119056.0073236,
+          "monotonic_end_s": 119058.1066894,
+          "complete_pcm_ms": 2099.365799993393,
+          "worker_cpu_s": 1.8125,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 0.6138496491208751,
+          "first_pcm_ms": 2099.2525999899954,
+          "chunk_arrivals_ms": [
+            2099.2525999899954
+          ],
+          "wav": "hot-short-2.wav",
+          "wav_sha256": "3b476bb11b726f8f75c8054bcdba979d4ab3bd92ec16f372a67e1e787aa8f57c",
+          "memory": {
+            "sample_count": 18,
+            "sampled_tree_cpu_s": 1.75,
+            "peak_sampled_tree_rss_bytes": 938270720,
+            "peak_sampled_tree_private_bytes": 1394319360
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 0.6728736538440362,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp32",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "index": 0,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119058.1135209,
+          "monotonic_end_s": 119073.1375996,
+          "complete_pcm_ms": 15024.07869999297,
+          "worker_cpu_s": 21.890625,
+          "samples": 662400,
+          "audio_seconds": 20.7,
+          "sample_rate": 32000,
+          "pcm_bytes": 1324800,
+          "rtf": 0.7258009033813029,
+          "first_pcm_ms": 15023.39970000321,
+          "chunk_arrivals_ms": [
+            15023.39970000321
+          ],
+          "wav": "warmup-long-0.wav",
+          "wav_sha256": "1ab6ddb2004a1b413ab6c630123f810c92587c423de3e61dba1c5f48a0e479ff",
+          "memory": {
+            "sample_count": 131,
+            "sampled_tree_cpu_s": 21.65625,
+            "peak_sampled_tree_rss_bytes": 1413324800,
+            "peak_sampled_tree_private_bytes": 1759547392
+          },
+          "waveform_seconds": 20.4,
+          "waveform_rtf": 0.7364744460780868,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp32",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 0,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119073.1440609,
+          "monotonic_end_s": 119087.3689936,
+          "complete_pcm_ms": 14224.932700002682,
+          "worker_cpu_s": 20.859375,
+          "samples": 662400,
+          "audio_seconds": 20.7,
+          "sample_rate": 32000,
+          "pcm_bytes": 1324800,
+          "rtf": 0.6871948164252504,
+          "first_pcm_ms": 14224.152599999798,
+          "chunk_arrivals_ms": [
+            14224.152599999798
+          ],
+          "wav": "hot-long-0.wav",
+          "wav_sha256": "1ab6ddb2004a1b413ab6c630123f810c92587c423de3e61dba1c5f48a0e479ff",
+          "memory": {
+            "sample_count": 125,
+            "sampled_tree_cpu_s": 21.046875,
+            "peak_sampled_tree_rss_bytes": 1414578176,
+            "peak_sampled_tree_private_bytes": 1759547392
+          },
+          "waveform_seconds": 20.4,
+          "waveform_rtf": 0.6973006225491512,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp32",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 1,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119087.3764304,
+          "monotonic_end_s": 119100.6719964,
+          "complete_pcm_ms": 13295.565999986138,
+          "worker_cpu_s": 20.125,
+          "samples": 662400,
+          "audio_seconds": 20.7,
+          "sample_rate": 32000,
+          "pcm_bytes": 1324800,
+          "rtf": 0.6422978743954656,
+          "first_pcm_ms": 13294.871799997054,
+          "chunk_arrivals_ms": [
+            13294.871799997054
+          ],
+          "wav": "hot-long-1.wav",
+          "wav_sha256": "1ab6ddb2004a1b413ab6c630123f810c92587c423de3e61dba1c5f48a0e479ff",
+          "memory": {
+            "sample_count": 118,
+            "sampled_tree_cpu_s": 20.15625,
+            "peak_sampled_tree_rss_bytes": 1416261632,
+            "peak_sampled_tree_private_bytes": 1759674368
+          },
+          "waveform_seconds": 20.4,
+          "waveform_rtf": 0.6517434313718695,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp32",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 2,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119100.6814362,
+          "monotonic_end_s": 119114.1727016,
+          "complete_pcm_ms": 13491.265399992699,
+          "worker_cpu_s": 19.953125,
+          "samples": 662400,
+          "audio_seconds": 20.7,
+          "sample_rate": 32000,
+          "pcm_bytes": 1324800,
+          "rtf": 0.6517519516904685,
+          "first_pcm_ms": 13490.481500004535,
+          "chunk_arrivals_ms": [
+            13490.481500004535
+          ],
+          "wav": "hot-long-2.wav",
+          "wav_sha256": "1ab6ddb2004a1b413ab6c630123f810c92587c423de3e61dba1c5f48a0e479ff",
+          "memory": {
+            "sample_count": 119,
+            "sampled_tree_cpu_s": 19.875,
+            "peak_sampled_tree_rss_bytes": 1415348224,
+            "peak_sampled_tree_private_bytes": 1758535680
+          },
+          "waveform_seconds": 20.4,
+          "waveform_rtf": 0.6613365392153284,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp32",
+            "acoustic_precision": "fp32",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": true,
+            "acoustic_finite_validation_passed": false
+          }
+        }
+      ]
+    },
+    "amd-fp16-cap1280": {
+      "label": "AMD FP16，容量 1280",
+      "backend": "directml",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\genie-comparison-20260927\\sakura\\amd-fp16-cap1280",
+      "summary_sha256": "4a49735893d695665d4bd80603478e6b6900d5e113944c2cea2f90468a0bde84",
+      "job_sha256": "edfb8fa13e8807a1ad6264a8f5003a811270f31053b8d2a804324dea22118ab2",
+      "harness_sha256": "076425d98a901902e6f31573ffc8b9a93a2ec9ceef678ea799020dd0178a33e8",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "python": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.venv-amd\\Scripts\\python.exe",
+        "model": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\model-fp16-experimental.json",
+        "profile": "fp16",
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。",
+          "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+        },
+        "repeats": 3,
+        "warmups": 1,
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 2,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident",
+          "capacity": 1280
+        },
+        "directml_experimental": {}
+      },
+      "execution": {
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 2,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident",
+          "capacity": 1280
+        },
+        "seed": 1234,
+        "top_k": 15,
+        "temperature": 1.0,
+        "repetition_penalty": 1.35,
+        "split_method": "cut0",
+        "reference": "reference",
+        "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b"
+      },
+      "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+      "dependency_versions": {
+        "numpy": "2.4.6",
+        "onnxruntime-directml": "1.24.4"
+      },
+      "ready_ms": 675.8783999976004,
+      "cold_request_ms": 6149.673099993379,
+      "worker_entry_to_first_pcm_approx_ms": 6825.421399989864,
+      "peak_rss_mib": 1783.171875,
+      "peak_private_mib": 2427.7265625,
+      "process": {
+        "exit_code": 0,
+        "timed_out": false,
+        "terminated_pids": [],
+        "process_wall_s": 46.32129379999242,
+        "observed_tree_cpu_s": 39.28125,
+        "peak_sampled_tree_rss_bytes": 1869791232,
+        "peak_sampled_tree_private_bytes": 2545655808,
+        "sample_interval_s": 0.1,
+        "sample_count": 415,
+        "measurement": "Sampled working set/private bytes; sums may double-count shared pages. CPU time covers observed processes; brief children and memory peaks may be missed. Sampling remains active during all request timers. GPU memory is not measured.",
+        "status": "completed"
+      },
+      "cases": {
+        "short": {
+          "n": 3,
+          "median_seconds": 1.2715099999913946,
+          "min_seconds": 1.2643786999979056,
+          "max_seconds": 1.2718603999965126,
+          "median_pcm_rtf": 0.3717865497050861,
+          "median_waveform_rtf": 0.40753525640749827,
+          "pcm_seconds": [
+            3.42,
+            3.42,
+            3.42
+          ],
+          "waveform_seconds": [
+            3.12,
+            3.12,
+            3.12
+          ],
+          "median_worker_cpu_s": 1.1875,
+          "median_sampled_tree_cpu_s": 1.1875,
+          "median_first_pcm_ms": 1271.4010000054259
+        },
+        "long": {
+          "n": 3,
+          "median_seconds": 8.277891199992155,
+          "min_seconds": 8.177503900005831,
+          "max_seconds": 8.506842599992524,
+          "median_pcm_rtf": 0.39989812560348575,
+          "median_waveform_rtf": 0.4057789803917723,
+          "pcm_seconds": [
+            20.7,
+            20.7,
+            20.7
+          ],
+          "waveform_seconds": [
+            20.4,
+            20.4,
+            20.4
+          ],
+          "median_worker_cpu_s": 7.640625,
+          "median_sampled_tree_cpu_s": 7.609375,
+          "median_first_pcm_ms": 8277.067499991972
+        }
+      },
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119115.4890061,
+          "monotonic_end_s": 119121.6386792,
+          "complete_pcm_ms": 6149.673099993379,
+          "worker_cpu_s": 3.796875,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 1.79815002923783,
+          "first_pcm_ms": 6149.5429999922635,
+          "chunk_arrivals_ms": [
+            6149.5429999922635
+          ],
+          "wav": "cold-short-0.wav",
+          "wav_sha256": "bb5c7b2879391d515d1b2454885af153cb0c5a0acf0d8d2596d57fc8befef6ce",
+          "memory": {
+            "sample_count": 55,
+            "sampled_tree_cpu_s": 3.6875,
+            "peak_sampled_tree_rss_bytes": 1411440640,
+            "peak_sampled_tree_private_bytes": 2031759360
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 1.9710490705106982,
+          "details": {
+            "status": "completed",
+            "backend": "directml",
+            "gpt_device": "directml",
+            "acoustic_device": "directml",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 1280,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119121.641383,
+          "monotonic_end_s": 119122.9026718,
+          "complete_pcm_ms": 1261.2888000003295,
+          "worker_cpu_s": 1.1875,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 0.36879789473693847,
+          "first_pcm_ms": 1261.1796999990474,
+          "chunk_arrivals_ms": [
+            1261.1796999990474
+          ],
+          "wav": "warmup-short-0.wav",
+          "wav_sha256": "bb5c7b2879391d515d1b2454885af153cb0c5a0acf0d8d2596d57fc8befef6ce",
+          "memory": {
+            "sample_count": 12,
+            "sampled_tree_cpu_s": 1.25,
+            "peak_sampled_tree_rss_bytes": 1415925760,
+            "peak_sampled_tree_private_bytes": 2096459776
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 0.40425923076933634,
+          "details": {
+            "status": "completed",
+            "backend": "directml",
+            "gpt_device": "directml",
+            "acoustic_device": "directml",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 1280,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119122.9060418,
+          "monotonic_end_s": 119124.1779022,
+          "complete_pcm_ms": 1271.8603999965126,
+          "worker_cpu_s": 1.234375,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 0.3718890058469335,
+          "first_pcm_ms": 1271.7539000004763,
+          "chunk_arrivals_ms": [
+            1271.7539000004763
+          ],
+          "wav": "hot-short-0.wav",
+          "wav_sha256": "bb5c7b2879391d515d1b2454885af153cb0c5a0acf0d8d2596d57fc8befef6ce",
+          "memory": {
+            "sample_count": 11,
+            "sampled_tree_cpu_s": 1.1875,
+            "peak_sampled_tree_rss_bytes": 1417244672,
+            "peak_sampled_tree_private_bytes": 2111356928
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 0.4076475641014463,
+          "details": {
+            "status": "completed",
+            "backend": "directml",
+            "gpt_device": "directml",
+            "acoustic_device": "directml",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 1280,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 1,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119124.1823101,
+          "monotonic_end_s": 119125.4538201,
+          "complete_pcm_ms": 1271.5099999913946,
+          "worker_cpu_s": 1.1875,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 0.3717865497050861,
+          "first_pcm_ms": 1271.4010000054259,
+          "chunk_arrivals_ms": [
+            1271.4010000054259
+          ],
+          "wav": "hot-short-1.wav",
+          "wav_sha256": "bb5c7b2879391d515d1b2454885af153cb0c5a0acf0d8d2596d57fc8befef6ce",
+          "memory": {
+            "sample_count": 12,
+            "sampled_tree_cpu_s": 1.25,
+            "peak_sampled_tree_rss_bytes": 1418207232,
+            "peak_sampled_tree_private_bytes": 2098147328
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 0.40753525640749827,
+          "details": {
+            "status": "completed",
+            "backend": "directml",
+            "gpt_device": "directml",
+            "acoustic_device": "directml",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 1280,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 2,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119125.4584532,
+          "monotonic_end_s": 119126.7228319,
+          "complete_pcm_ms": 1264.3786999979056,
+          "worker_cpu_s": 1.171875,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 0.36970137426839345,
+          "first_pcm_ms": 1264.2768999940017,
+          "chunk_arrivals_ms": [
+            1264.2768999940017
+          ],
+          "wav": "hot-short-2.wav",
+          "wav_sha256": "bb5c7b2879391d515d1b2454885af153cb0c5a0acf0d8d2596d57fc8befef6ce",
+          "memory": {
+            "sample_count": 11,
+            "sampled_tree_cpu_s": 1.140625,
+            "peak_sampled_tree_rss_bytes": 1419177984,
+            "peak_sampled_tree_private_bytes": 2111356928
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 0.40524958333266203,
+          "details": {
+            "status": "completed",
+            "backend": "directml",
+            "gpt_device": "directml",
+            "acoustic_device": "directml",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 1280,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "index": 0,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119126.7276118,
+          "monotonic_end_s": 119135.2959564,
+          "complete_pcm_ms": 8568.344600003911,
+          "worker_cpu_s": 7.1875,
+          "samples": 662400,
+          "audio_seconds": 20.7,
+          "sample_rate": 32000,
+          "pcm_bytes": 1324800,
+          "rtf": 0.413929690821445,
+          "first_pcm_ms": 8567.555000001448,
+          "chunk_arrivals_ms": [
+            8567.555000001448
+          ],
+          "wav": "warmup-long-0.wav",
+          "wav_sha256": "49faed05a0aa55d2486da114e8eb2d2d780757a63cf91be1aa395923fb49b98d",
+          "memory": {
+            "sample_count": 77,
+            "sampled_tree_cpu_s": 7.25,
+            "peak_sampled_tree_rss_bytes": 1860648960,
+            "peak_sampled_tree_private_bytes": 2449915904
+          },
+          "waveform_seconds": 20.4,
+          "waveform_rtf": 0.4200168921570545,
+          "details": {
+            "status": "completed",
+            "backend": "directml",
+            "gpt_device": "directml",
+            "acoustic_device": "directml",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 1280,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 0,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119135.3035449,
+          "monotonic_end_s": 119143.5814361,
+          "complete_pcm_ms": 8277.891199992155,
+          "worker_cpu_s": 7.296875,
+          "samples": 662400,
+          "audio_seconds": 20.7,
+          "sample_rate": 32000,
+          "pcm_bytes": 1324800,
+          "rtf": 0.39989812560348575,
+          "first_pcm_ms": 8277.067499991972,
+          "chunk_arrivals_ms": [
+            8277.067499991972
+          ],
+          "wav": "hot-long-0.wav",
+          "wav_sha256": "49faed05a0aa55d2486da114e8eb2d2d780757a63cf91be1aa395923fb49b98d",
+          "memory": {
+            "sample_count": 74,
+            "sampled_tree_cpu_s": 7.234375,
+            "peak_sampled_tree_rss_bytes": 1869791232,
+            "peak_sampled_tree_private_bytes": 2545655808
+          },
+          "waveform_seconds": 20.4,
+          "waveform_rtf": 0.4057789803917723,
+          "details": {
+            "status": "completed",
+            "backend": "directml",
+            "gpt_device": "directml",
+            "acoustic_device": "directml",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 1280,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 1,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119143.5893989,
+          "monotonic_end_s": 119152.0962415,
+          "complete_pcm_ms": 8506.842599992524,
+          "worker_cpu_s": 7.75,
+          "samples": 662400,
+          "audio_seconds": 20.7,
+          "sample_rate": 32000,
+          "pcm_bytes": 1324800,
+          "rtf": 0.4109585797097838,
+          "first_pcm_ms": 8505.917500006035,
+          "chunk_arrivals_ms": [
+            8505.917500006035
+          ],
+          "wav": "hot-long-1.wav",
+          "wav_sha256": "49faed05a0aa55d2486da114e8eb2d2d780757a63cf91be1aa395923fb49b98d",
+          "memory": {
+            "sample_count": 76,
+            "sampled_tree_cpu_s": 7.796875,
+            "peak_sampled_tree_rss_bytes": 1868865536,
+            "peak_sampled_tree_private_bytes": 2543337472
+          },
+          "waveform_seconds": 20.4,
+          "waveform_rtf": 0.4170020882349277,
+          "details": {
+            "status": "completed",
+            "backend": "directml",
+            "gpt_device": "directml",
+            "acoustic_device": "directml",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 1280,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 2,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119152.1087254,
+          "monotonic_end_s": 119160.2862293,
+          "complete_pcm_ms": 8177.503900005831,
+          "worker_cpu_s": 7.640625,
+          "samples": 662400,
+          "audio_seconds": 20.7,
+          "sample_rate": 32000,
+          "pcm_bytes": 1324800,
+          "rtf": 0.3950484975848228,
+          "first_pcm_ms": 8176.2890000100015,
+          "chunk_arrivals_ms": [
+            8176.2890000100015
+          ],
+          "wav": "hot-long-2.wav",
+          "wav_sha256": "49faed05a0aa55d2486da114e8eb2d2d780757a63cf91be1aa395923fb49b98d",
+          "memory": {
+            "sample_count": 73,
+            "sampled_tree_cpu_s": 7.609375,
+            "peak_sampled_tree_rss_bytes": 1868136448,
+            "peak_sampled_tree_private_bytes": 2545299456
+          },
+          "waveform_seconds": 20.4,
+          "waveform_rtf": 0.40085803431401135,
+          "details": {
+            "status": "completed",
+            "backend": "directml",
+            "gpt_device": "directml",
+            "acoustic_device": "directml",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 1280,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        }
+      ]
+    },
+    "cpu-fp16": {
+      "label": "CPU FP16，2 线程",
+      "backend": "cpu",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\genie-comparison-20260927\\sakura\\cpu-fp16",
+      "summary_sha256": "4e49f05cddbccbb8d8a7ba2019c5f777e16ffe1dd0e476a824749da6f9be92dd",
+      "job_sha256": "004f838406055c7dbd1964b80cfa289c5d21fab182975b8d525dc9535688b417",
+      "harness_sha256": "076425d98a901902e6f31573ffc8b9a93a2ec9ceef678ea799020dd0178a33e8",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "python": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.venv-amd\\Scripts\\python.exe",
+        "model": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\model-fp16-experimental.json",
+        "profile": "fp16",
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。",
+          "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+        },
+        "repeats": 3,
+        "warmups": 1,
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 2,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "directml_experimental": {}
+      },
+      "execution": {
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 2,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "seed": 1234,
+        "top_k": 15,
+        "temperature": 1.0,
+        "repetition_penalty": 1.35,
+        "split_method": "cut0",
+        "reference": "reference",
+        "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b"
+      },
+      "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+      "dependency_versions": {
+        "numpy": "2.4.6",
+        "onnxruntime-directml": "1.24.4"
+      },
+      "ready_ms": 691.881699996884,
+      "cold_request_ms": 9450.570599990897,
+      "worker_entry_to_first_pcm_approx_ms": 10142.257899991819,
+      "peak_rss_mib": 1494.6953125,
+      "peak_private_mib": 1996.2421875,
+      "process": {
+        "exit_code": 0,
+        "timed_out": false,
+        "terminated_pids": [],
+        "process_wall_s": 156.02723170000536,
+        "observed_tree_cpu_s": 172.46875,
+        "peak_sampled_tree_rss_bytes": 1567301632,
+        "peak_sampled_tree_private_bytes": 2093211648,
+        "sample_interval_s": 0.1,
+        "sample_count": 1395,
+        "measurement": "Sampled working set/private bytes; sums may double-count shared pages. CPU time covers observed processes; brief children and memory peaks may be missed. Sampling remains active during all request timers. GPU memory is not measured.",
+        "status": "completed"
+      },
+      "cases": {
+        "short": {
+          "n": 3,
+          "median_seconds": 4.351367600000231,
+          "min_seconds": 4.322662300008233,
+          "max_seconds": 4.53002409999317,
+          "median_pcm_rtf": 1.2723297076024067,
+          "median_waveform_rtf": 1.3946691025641764,
+          "pcm_seconds": [
+            3.42,
+            3.42,
+            3.42
+          ],
+          "waveform_seconds": [
+            3.12,
+            3.12,
+            3.12
+          ],
+          "median_worker_cpu_s": 4.59375,
+          "median_sampled_tree_cpu_s": 4.578125,
+          "median_first_pcm_ms": 4351.274200002081
+        },
+        "long": {
+          "n": 3,
+          "median_seconds": 31.372451100003673,
+          "min_seconds": 31.34568020000006,
+          "max_seconds": 32.296131900002365,
+          "median_pcm_rtf": 1.5303634682928622,
+          "median_waveform_rtf": 1.5530916386140432,
+          "pcm_seconds": [
+            20.5,
+            20.5,
+            20.5
+          ],
+          "waveform_seconds": [
+            20.2,
+            20.2,
+            20.2
+          ],
+          "median_worker_cpu_s": 35.6875,
+          "median_sampled_tree_cpu_s": 35.5625,
+          "median_first_pcm_ms": 31371.23089999659
+        }
+      },
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119298.6679694,
+          "monotonic_end_s": 119308.11854,
+          "complete_pcm_ms": 9450.570599990897,
+          "worker_cpu_s": 9.65625,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 2.7633247368394436,
+          "first_pcm_ms": 9450.376199994935,
+          "chunk_arrivals_ms": [
+            9450.376199994935
+          ],
+          "wav": "cold-short-0.wav",
+          "wav_sha256": "0cb7626e5c4b77c993d514307856bd052fb43763ebda7b2cab651587992cb9e4",
+          "memory": {
+            "sample_count": 85,
+            "sampled_tree_cpu_s": 9.640625,
+            "peak_sampled_tree_rss_bytes": 951967744,
+            "peak_sampled_tree_private_bytes": 1549778944
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 3.0290290384586207,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119308.12231,
+          "monotonic_end_s": 119312.4138211,
+          "complete_pcm_ms": 4291.511099989293,
+          "worker_cpu_s": 4.859375,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 1.2548278070144132,
+          "first_pcm_ms": 4291.40039999038,
+          "chunk_arrivals_ms": [
+            4291.40039999038
+          ],
+          "wav": "warmup-short-0.wav",
+          "wav_sha256": "0cb7626e5c4b77c993d514307856bd052fb43763ebda7b2cab651587992cb9e4",
+          "memory": {
+            "sample_count": 39,
+            "sampled_tree_cpu_s": 4.90625,
+            "peak_sampled_tree_rss_bytes": 960450560,
+            "peak_sampled_tree_private_bytes": 1551147008
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 1.3754843269196453,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119312.4166765,
+          "monotonic_end_s": 119316.7393388,
+          "complete_pcm_ms": 4322.662300008233,
+          "worker_cpu_s": 4.59375,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 1.263936345031647,
+          "first_pcm_ms": 4322.565299997223,
+          "chunk_arrivals_ms": [
+            4322.565299997223
+          ],
+          "wav": "hot-short-0.wav",
+          "wav_sha256": "0cb7626e5c4b77c993d514307856bd052fb43763ebda7b2cab651587992cb9e4",
+          "memory": {
+            "sample_count": 39,
+            "sampled_tree_cpu_s": 4.578125,
+            "peak_sampled_tree_rss_bytes": 972685312,
+            "peak_sampled_tree_private_bytes": 1561808896
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 1.3854686859000744,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 1,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119316.743145,
+          "monotonic_end_s": 119321.2731691,
+          "complete_pcm_ms": 4530.02409999317,
+          "worker_cpu_s": 4.359375,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 1.3245684502904007,
+          "first_pcm_ms": 4529.897200001869,
+          "chunk_arrivals_ms": [
+            4529.897200001869
+          ],
+          "wav": "hot-short-1.wav",
+          "wav_sha256": "0cb7626e5c4b77c993d514307856bd052fb43763ebda7b2cab651587992cb9e4",
+          "memory": {
+            "sample_count": 40,
+            "sampled_tree_cpu_s": 4.3125,
+            "peak_sampled_tree_rss_bytes": 960692224,
+            "peak_sampled_tree_private_bytes": 1552195584
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 1.4519308012798622,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 2,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119321.2775719,
+          "monotonic_end_s": 119325.6289395,
+          "complete_pcm_ms": 4351.367600000231,
+          "worker_cpu_s": 4.640625,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 1.2723297076024067,
+          "first_pcm_ms": 4351.274200002081,
+          "chunk_arrivals_ms": [
+            4351.274200002081
+          ],
+          "wav": "hot-short-2.wav",
+          "wav_sha256": "0cb7626e5c4b77c993d514307856bd052fb43763ebda7b2cab651587992cb9e4",
+          "memory": {
+            "sample_count": 39,
+            "sampled_tree_cpu_s": 4.609375,
+            "peak_sampled_tree_rss_bytes": 962961408,
+            "peak_sampled_tree_private_bytes": 1552199680
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 1.3946691025641764,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "index": 0,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119325.6334608,
+          "monotonic_end_s": 119358.5623008,
+          "complete_pcm_ms": 32928.839999993215,
+          "worker_cpu_s": 37.6875,
+          "samples": 656000,
+          "audio_seconds": 20.5,
+          "sample_rate": 32000,
+          "pcm_bytes": 1312000,
+          "rtf": 1.6062848780484495,
+          "first_pcm_ms": 32928.20959999517,
+          "chunk_arrivals_ms": [
+            32928.20959999517
+          ],
+          "wav": "warmup-long-0.wav",
+          "wav_sha256": "2879cf9216340dbf4a29de6c04ff329f5a1d67be07f1210eaea6897d97444671",
+          "memory": {
+            "sample_count": 295,
+            "sampled_tree_cpu_s": 37.796875,
+            "peak_sampled_tree_rss_bytes": 1546137600,
+            "peak_sampled_tree_private_bytes": 2092670976
+          },
+          "waveform_seconds": 20.2,
+          "waveform_rtf": 1.63014059405907,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 0,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119358.5688839,
+          "monotonic_end_s": 119389.9145641,
+          "complete_pcm_ms": 31345.68020000006,
+          "worker_cpu_s": 33.34375,
+          "samples": 656000,
+          "audio_seconds": 20.5,
+          "sample_rate": 32000,
+          "pcm_bytes": 1312000,
+          "rtf": 1.5290575707317102,
+          "first_pcm_ms": 31344.946600002004,
+          "chunk_arrivals_ms": [
+            31344.946600002004
+          ],
+          "wav": "hot-long-0.wav",
+          "wav_sha256": "2879cf9216340dbf4a29de6c04ff329f5a1d67be07f1210eaea6897d97444671",
+          "memory": {
+            "sample_count": 280,
+            "sampled_tree_cpu_s": 33.34375,
+            "peak_sampled_tree_rss_bytes": 1565995008,
+            "peak_sampled_tree_private_bytes": 2092576768
+          },
+          "waveform_seconds": 20.2,
+          "waveform_rtf": 1.5517663465346565,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 1,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119389.9227533,
+          "monotonic_end_s": 119422.2188852,
+          "complete_pcm_ms": 32296.131900002365,
+          "worker_cpu_s": 35.6875,
+          "samples": 656000,
+          "audio_seconds": 20.5,
+          "sample_rate": 32000,
+          "pcm_bytes": 1312000,
+          "rtf": 1.5754210682927983,
+          "first_pcm_ms": 32295.52440000407,
+          "chunk_arrivals_ms": [
+            32295.52440000407
+          ],
+          "wav": "hot-long-1.wav",
+          "wav_sha256": "2879cf9216340dbf4a29de6c04ff329f5a1d67be07f1210eaea6897d97444671",
+          "memory": {
+            "sample_count": 287,
+            "sampled_tree_cpu_s": 35.5625,
+            "peak_sampled_tree_rss_bytes": 1567301632,
+            "peak_sampled_tree_private_bytes": 2093211648
+          },
+          "waveform_seconds": 20.2,
+          "waveform_rtf": 1.5988184108912062,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 2,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119422.2272222,
+          "monotonic_end_s": 119453.5996733,
+          "complete_pcm_ms": 31372.451100003673,
+          "worker_cpu_s": 36.703125,
+          "samples": 656000,
+          "audio_seconds": 20.5,
+          "sample_rate": 32000,
+          "pcm_bytes": 1312000,
+          "rtf": 1.5303634682928622,
+          "first_pcm_ms": 31371.23089999659,
+          "chunk_arrivals_ms": [
+            31371.23089999659
+          ],
+          "wav": "hot-long-2.wav",
+          "wav_sha256": "2879cf9216340dbf4a29de6c04ff329f5a1d67be07f1210eaea6897d97444671",
+          "memory": {
+            "sample_count": 281,
+            "sampled_tree_cpu_s": 36.78125,
+            "peak_sampled_tree_rss_bytes": 1530687488,
+            "peak_sampled_tree_private_bytes": 2092998656
+          },
+          "waveform_seconds": 20.2,
+          "waveform_rtf": 1.5530916386140432,
+          "details": {
+            "status": "completed",
+            "backend": "cpu",
+            "gpt_device": "cpu",
+            "acoustic_device": "cpu",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 2048,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        }
+      ]
+    },
+    "amd-fp16-cap512": {
+      "label": "AMD FP16，容量 512，仅短句",
+      "backend": "directml",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\genie-comparison-20260927\\short\\amd-fp16-cap512",
+      "summary_sha256": "47e0e81ad3b4ec2f9ca4516e0bb4ebf487f7589e2e8371a3e634c742ad6d3a2a",
+      "job_sha256": "8b99b59ae7aae05ca7c5f7657636b729f8dbbedeee42fa25a95b0d8210fa1da6",
+      "harness_sha256": "076425d98a901902e6f31573ffc8b9a93a2ec9ceef678ea799020dd0178a33e8",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "python": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.venv-amd\\Scripts\\python.exe",
+        "model": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\model-fp16-experimental.json",
+        "profile": "fp16",
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。"
+        },
+        "repeats": 3,
+        "warmups": 1,
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 2,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident",
+          "capacity": 512
+        },
+        "directml_experimental": {}
+      },
+      "execution": {
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 2,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident",
+          "capacity": 512
+        },
+        "seed": 1234,
+        "top_k": 15,
+        "temperature": 1.0,
+        "repetition_penalty": 1.35,
+        "split_method": "cut0",
+        "reference": "reference",
+        "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b"
+      },
+      "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+      "dependency_versions": {
+        "numpy": "2.4.6",
+        "onnxruntime-directml": "1.24.4"
+      },
+      "ready_ms": 690.8072999940487,
+      "cold_request_ms": 5631.674700009171,
+      "worker_entry_to_first_pcm_approx_ms": 6322.364599996945,
+      "peak_rss_mib": 1222.328125,
+      "peak_private_mib": 1833.19140625,
+      "process": {
+        "exit_code": 0,
+        "timed_out": false,
+        "terminated_pids": [],
+        "process_wall_s": 11.071735200006515,
+        "observed_tree_cpu_s": 7.640625,
+        "peak_sampled_tree_rss_bytes": 1281703936,
+        "peak_sampled_tree_private_bytes": 1922240512,
+        "sample_interval_s": 0.1,
+        "sample_count": 100,
+        "measurement": "Sampled working set/private bytes; sums may double-count shared pages. CPU time covers observed processes; brief children and memory peaks may be missed. Sampling remains active during all request timers. GPU memory is not measured.",
+        "status": "completed"
+      },
+      "cases": {
+        "short": {
+          "n": 3,
+          "median_seconds": 1.0010357999999542,
+          "min_seconds": 0.9812830000009853,
+          "max_seconds": 1.004757000002428,
+          "median_pcm_rtf": 0.2927005263157761,
+          "median_waveform_rtf": 0.320844807692293,
+          "pcm_seconds": [
+            3.42,
+            3.42,
+            3.42
+          ],
+          "waveform_seconds": [
+            3.12,
+            3.12,
+            3.12
+          ],
+          "median_worker_cpu_s": 0.859375,
+          "median_sampled_tree_cpu_s": 0.859375,
+          "median_first_pcm_ms": 1000.9299999946961
+        }
+      },
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119462.4653551,
+          "monotonic_end_s": 119468.0970298,
+          "complete_pcm_ms": 5631.674700009171,
+          "worker_cpu_s": 3.265625,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 1.6466885087746115,
+          "first_pcm_ms": 5631.557300002896,
+          "chunk_arrivals_ms": [
+            5631.557300002896
+          ],
+          "wav": "cold-short-0.wav",
+          "wav_sha256": "bb5c7b2879391d515d1b2454885af153cb0c5a0acf0d8d2596d57fc8befef6ce",
+          "memory": {
+            "sample_count": 51,
+            "sampled_tree_cpu_s": 3.21875,
+            "peak_sampled_tree_rss_bytes": 1274068992,
+            "peak_sampled_tree_private_bytes": 1880584192
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 1.8050239423106316,
+          "details": {
+            "status": "completed",
+            "backend": "directml",
+            "gpt_device": "directml",
+            "acoustic_device": "directml",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 512,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119468.1003468,
+          "monotonic_end_s": 119469.0757389,
+          "complete_pcm_ms": 975.392100008321,
+          "worker_cpu_s": 0.859375,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 0.2852023684234857,
+          "first_pcm_ms": 975.2727000013692,
+          "chunk_arrivals_ms": [
+            975.2727000013692
+          ],
+          "wav": "warmup-short-0.wav",
+          "wav_sha256": "bb5c7b2879391d515d1b2454885af153cb0c5a0acf0d8d2596d57fc8befef6ce",
+          "memory": {
+            "sample_count": 9,
+            "sampled_tree_cpu_s": 0.90625,
+            "peak_sampled_tree_rss_bytes": 1278074880,
+            "peak_sampled_tree_private_bytes": 1921490944
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 0.31262567307959005,
+          "details": {
+            "status": "completed",
+            "backend": "directml",
+            "gpt_device": "directml",
+            "acoustic_device": "directml",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 512,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119469.0795368,
+          "monotonic_end_s": 119470.0842938,
+          "complete_pcm_ms": 1004.757000002428,
+          "worker_cpu_s": 0.890625,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 0.293788596491938,
+          "first_pcm_ms": 1004.6409999922616,
+          "chunk_arrivals_ms": [
+            1004.6409999922616
+          ],
+          "wav": "hot-short-0.wav",
+          "wav_sha256": "bb5c7b2879391d515d1b2454885af153cb0c5a0acf0d8d2596d57fc8befef6ce",
+          "memory": {
+            "sample_count": 9,
+            "sampled_tree_cpu_s": 0.875,
+            "peak_sampled_tree_rss_bytes": 1279778816,
+            "peak_sampled_tree_private_bytes": 1922240512
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 0.3220375000007782,
+          "details": {
+            "status": "completed",
+            "backend": "directml",
+            "gpt_device": "directml",
+            "acoustic_device": "directml",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 512,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 1,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119470.0889255,
+          "monotonic_end_s": 119471.0702085,
+          "complete_pcm_ms": 981.2830000009853,
+          "worker_cpu_s": 0.84375,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 0.2869248538014577,
+          "first_pcm_ms": 981.1683000007179,
+          "chunk_arrivals_ms": [
+            981.1683000007179
+          ],
+          "wav": "hot-short-1.wav",
+          "wav_sha256": "bb5c7b2879391d515d1b2454885af153cb0c5a0acf0d8d2596d57fc8befef6ce",
+          "memory": {
+            "sample_count": 9,
+            "sampled_tree_cpu_s": 0.859375,
+            "peak_sampled_tree_rss_bytes": 1280741376,
+            "peak_sampled_tree_private_bytes": 1922240512
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 0.31451378205159786,
+          "details": {
+            "status": "completed",
+            "backend": "directml",
+            "gpt_device": "directml",
+            "acoustic_device": "directml",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 512,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 2,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119471.0748395,
+          "monotonic_end_s": 119472.0758753,
+          "complete_pcm_ms": 1001.0357999999542,
+          "worker_cpu_s": 0.859375,
+          "samples": 109440,
+          "audio_seconds": 3.42,
+          "sample_rate": 32000,
+          "pcm_bytes": 218880,
+          "rtf": 0.2927005263157761,
+          "first_pcm_ms": 1000.9299999946961,
+          "chunk_arrivals_ms": [
+            1000.9299999946961
+          ],
+          "wav": "hot-short-2.wav",
+          "wav_sha256": "bb5c7b2879391d515d1b2454885af153cb0c5a0acf0d8d2596d57fc8befef6ce",
+          "memory": {
+            "sample_count": 9,
+            "sampled_tree_cpu_s": 0.859375,
+            "peak_sampled_tree_rss_bytes": 1281703936,
+            "peak_sampled_tree_private_bytes": 1922240512
+          },
+          "waveform_seconds": 3.12,
+          "waveform_rtf": 0.320844807692293,
+          "details": {
+            "status": "completed",
+            "backend": "directml",
+            "gpt_device": "directml",
+            "acoustic_device": "directml",
+            "gpt_precision": "fp16",
+            "acoustic_precision": "fp16",
+            "acoustic_precision_scope": "all",
+            "capacity": 512,
+            "acoustic_strict_validation_passed": false,
+            "acoustic_finite_validation_passed": true
+          }
+        }
+      ]
+    },
+    "genie-after": {
+      "label": "Genie 原版 CPU（后测）",
+      "backend": "genie",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\genie-comparison-20260927\\genie-confirmation",
+      "summary_sha256": "80de4ab0a4c4e8261414150e37db7e702de8ae695b601e2ca79a79d599ecc931",
+      "job_sha256": "ee9972689ce8db8c66a47f760ea5dafba54b1254826d9986044a1b6160786684",
+      "harness_sha256": "076425d98a901902e6f31573ffc8b9a93a2ec9ceef678ea799020dd0178a33e8",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "genie_python": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\python.exe",
+        "genie_root": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu",
+        "genie_model": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I",
+        "profile": null,
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。",
+          "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+        },
+        "repeats": 3,
+        "warmups": 1,
+        "experimental": {},
+        "directml_experimental": {},
+        "genie_asset_sha256": {
+          "prompt_encoder_fp16.bin": "1c6ee723cf56f06b72dfa2ccc6e67e958314733b9d2e9502583cee42cbf7ae2e",
+          "prompt_encoder_fp32.onnx": "c4a3d8c1e385a17aecb7bd9c5ede5707ba390f85c3eb49b388deeaaaf53d2748",
+          "t2s_encoder_fp32.bin": "003191cc18b68a78b478cabf0ac235939b3a33063fa76a6d00eb31ae989601a9",
+          "t2s_encoder_fp32.onnx": "f6eb1acd47c8e6d36b777886981a49122e8e070a5eb9888d458fb188dc139f75",
+          "t2s_first_stage_decoder_fp32.onnx": "868f395999508905128c5325c5db4f4b37b2e70e04d6e2719fec64cbb60ee7f9",
+          "t2s_shared_fp16.bin": "472b6664512cf0e6718f774c490abb51e6be14627416c8fcc98fb025ae4acedb",
+          "t2s_stage_decoder_fp32.onnx": "3f02881c517423deb610f86d5441bd9825937c5069f3887cacefa1e9dc403b0d",
+          "vits_fp16.bin": "63f2a774ea4f26faaf58f875b68a83a876a6da9e6761dd30fc440e14ff23d922",
+          "vits_fp32.onnx": "2f918e08a1bfecc568de4cc5dc96135cb8baf37a07f4eb4ec9258a4854fcd3f3"
+        }
+      },
+      "execution": {
+        "providers": [
+          "CPUExecutionProvider"
+        ],
+        "sampling": "Original ONNX RandomNormalLike/ArgMax and original stopping rules",
+        "seed": "Not exposed by the public API; graph RNG state advances across requests",
+        "threads": "Original ORT defaults; no session or model patches",
+        "model_identity": "Preconverted Genie assets are hashed; original checkpoint provenance is unverified"
+      },
+      "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "dependency_versions": {
+        "genie-tts": "2.0.2",
+        "numpy": "2.4.4",
+        "onnxruntime": "1.22.1",
+        "torch": "2.11.0"
+      },
+      "ready_ms": 8808.121399997617,
+      "cold_request_ms": 2634.931400010828,
+      "worker_entry_to_first_pcm_approx_ms": 11441.157099994598,
+      "peak_rss_mib": 5175.11328125,
+      "peak_private_mib": 6706.23046875,
+      "process": {
+        "exit_code": 0,
+        "timed_out": false,
+        "terminated_pids": [],
+        "process_wall_s": 75.87310660000367,
+        "observed_tree_cpu_s": 327.890625,
+        "peak_sampled_tree_rss_bytes": 5426499584,
+        "peak_sampled_tree_private_bytes": 7031992320,
+        "sample_interval_s": 0.1,
+        "sample_count": 648,
+        "measurement": "Sampled working set/private bytes; sums may double-count shared pages. CPU time covers observed processes; brief children and memory peaks may be missed. Sampling remains active during all request timers. GPU memory is not measured.",
+        "status": "completed"
+      },
+      "cases": {
+        "short": {
+          "n": 3,
+          "median_seconds": 1.4261489999917103,
+          "min_seconds": 1.291871599998558,
+          "max_seconds": 1.6425453999981983,
+          "median_pcm_rtf": 0.6728497916659156,
+          "median_waveform_rtf": 0.6728497916659156,
+          "pcm_seconds": [
+            2.32,
+            1.92,
+            2.16
+          ],
+          "waveform_seconds": [
+            2.32,
+            1.92,
+            2.16
+          ],
+          "median_worker_cpu_s": 8.296875,
+          "median_sampled_tree_cpu_s": 8.03125,
+          "median_first_pcm_ms": 1424.951199995121
+        },
+        "long": {
+          "n": 3,
+          "median_seconds": 14.602822300003027,
+          "min_seconds": 13.782366200000979,
+          "max_seconds": 15.147579600001336,
+          "median_pcm_rtf": 0.7480954047132699,
+          "median_waveform_rtf": 0.7480954047132699,
+          "pcm_seconds": [
+            18.8,
+            19.44,
+            19.52
+          ],
+          "waveform_seconds": [
+            18.8,
+            19.44,
+            19.52
+          ],
+          "median_worker_cpu_s": 69.1875,
+          "median_sampled_tree_cpu_s": 69.265625,
+          "median_first_pcm_ms": 14601.698400001624
+        }
+      },
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119568.4188395,
+          "monotonic_end_s": 119571.0537709,
+          "complete_pcm_ms": 2634.931400010828,
+          "worker_cpu_s": 10.515625,
+          "samples": 71680,
+          "audio_seconds": 2.24,
+          "sample_rate": 32000,
+          "pcm_bytes": 143360,
+          "rtf": 1.1763086607191195,
+          "first_pcm_ms": 2633.035699996981,
+          "chunk_arrivals_ms": [
+            2633.035699996981
+          ],
+          "wav": "cold-short-0.wav",
+          "wav_sha256": "9eab182c301bf8fc8742996a02054527b82ec3f5f55919fea2469b4ea4a3dc60",
+          "memory": {
+            "sample_count": 23,
+            "sampled_tree_cpu_s": 10.21875,
+            "peak_sampled_tree_rss_bytes": 4517109760,
+            "peak_sampled_tree_private_bytes": 6120685568
+          },
+          "waveform_seconds": 2.24,
+          "waveform_rtf": 1.1763086607191195,
+          "details": {
+            "status": "completed"
+          }
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119571.0556036,
+          "monotonic_end_s": 119572.7627473,
+          "complete_pcm_ms": 1707.1436999976868,
+          "worker_cpu_s": 8.375,
+          "samples": 76800,
+          "audio_seconds": 2.4,
+          "sample_rate": 32000,
+          "pcm_bytes": 153600,
+          "rtf": 0.7113098749990362,
+          "first_pcm_ms": 1705.9272999904351,
+          "chunk_arrivals_ms": [
+            1705.9272999904351
+          ],
+          "wav": "warmup-short-0.wav",
+          "wav_sha256": "bdad47f8d148c941f33ebf80fe8334b717dfc7b1b99f475402e9210c0dcf62f9",
+          "memory": {
+            "sample_count": 15,
+            "sampled_tree_cpu_s": 8.6875,
+            "peak_sampled_tree_rss_bytes": 4522254336,
+            "peak_sampled_tree_private_bytes": 6120841216
+          },
+          "waveform_seconds": 2.4,
+          "waveform_rtf": 0.7113098749990362,
+          "details": {
+            "status": "completed"
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 0,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119572.7655499,
+          "monotonic_end_s": 119574.4080953,
+          "complete_pcm_ms": 1642.5453999981983,
+          "worker_cpu_s": 8.34375,
+          "samples": 74240,
+          "audio_seconds": 2.32,
+          "sample_rate": 32000,
+          "pcm_bytes": 148480,
+          "rtf": 0.7079937068957751,
+          "first_pcm_ms": 1641.5750999876764,
+          "chunk_arrivals_ms": [
+            1641.5750999876764
+          ],
+          "wav": "hot-short-0.wav",
+          "wav_sha256": "cf6cb8dfc42e5f4a1d24e4ff6b3aaad46ecf62d12ac7d9385363ab3238ff25f2",
+          "memory": {
+            "sample_count": 14,
+            "sampled_tree_cpu_s": 8.3125,
+            "peak_sampled_tree_rss_bytes": 4522635264,
+            "peak_sampled_tree_private_bytes": 6121320448
+          },
+          "waveform_seconds": 2.32,
+          "waveform_rtf": 0.7079937068957751,
+          "details": {
+            "status": "completed"
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 1,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119574.410994,
+          "monotonic_end_s": 119575.7028656,
+          "complete_pcm_ms": 1291.871599998558,
+          "worker_cpu_s": 6.953125,
+          "samples": 61440,
+          "audio_seconds": 1.92,
+          "sample_rate": 32000,
+          "pcm_bytes": 122880,
+          "rtf": 0.6728497916659156,
+          "first_pcm_ms": 1290.8364000031725,
+          "chunk_arrivals_ms": [
+            1290.8364000031725
+          ],
+          "wav": "hot-short-1.wav",
+          "wav_sha256": "667eaa9b57a37073e33009218329bdc55812360156572c4f16418c584ba00af7",
+          "memory": {
+            "sample_count": 11,
+            "sampled_tree_cpu_s": 6.75,
+            "peak_sampled_tree_rss_bytes": 4522688512,
+            "peak_sampled_tree_private_bytes": 6121320448
+          },
+          "waveform_seconds": 1.92,
+          "waveform_rtf": 0.6728497916659156,
+          "details": {
+            "status": "completed"
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "index": 2,
+          "text": "おはよう。今日もよろしくね。",
+          "status": "completed",
+          "monotonic_start_s": 119575.7050461,
+          "monotonic_end_s": 119577.1311951,
+          "complete_pcm_ms": 1426.1489999917103,
+          "worker_cpu_s": 8.296875,
+          "samples": 69120,
+          "audio_seconds": 2.16,
+          "sample_rate": 32000,
+          "pcm_bytes": 138240,
+          "rtf": 0.6602541666628288,
+          "first_pcm_ms": 1424.951199995121,
+          "chunk_arrivals_ms": [
+            1424.951199995121
+          ],
+          "wav": "hot-short-2.wav",
+          "wav_sha256": "48493b5ba103c2d6ce95ca272ed4dc02e37af51af138c3588660fcd6e855e02c",
+          "memory": {
+            "sample_count": 12,
+            "sampled_tree_cpu_s": 8.03125,
+            "peak_sampled_tree_rss_bytes": 4522991616,
+            "peak_sampled_tree_private_bytes": 6121746432
+          },
+          "waveform_seconds": 2.16,
+          "waveform_rtf": 0.6602541666628288,
+          "details": {
+            "status": "completed"
+          }
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "index": 0,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119577.133318,
+          "monotonic_end_s": 119590.8696742,
+          "complete_pcm_ms": 13736.35620001005,
+          "worker_cpu_s": 68.140625,
+          "samples": 599040,
+          "audio_seconds": 18.72,
+          "sample_rate": 32000,
+          "pcm_bytes": 1198080,
+          "rtf": 0.7337797115389985,
+          "first_pcm_ms": 13735.26660000789,
+          "chunk_arrivals_ms": [
+            13735.26660000789
+          ],
+          "wav": "warmup-long-0.wav",
+          "wav_sha256": "d88857e793b649164cadcffd2aea9ec55686b1881ea893a535e6628c25c87de0",
+          "memory": {
+            "sample_count": 118,
+            "sampled_tree_cpu_s": 68.53125,
+            "peak_sampled_tree_rss_bytes": 5057978368,
+            "peak_sampled_tree_private_bytes": 6716080128
+          },
+          "waveform_seconds": 18.72,
+          "waveform_rtf": 0.7337797115389985,
+          "details": {
+            "status": "completed"
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 0,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119590.8724965,
+          "monotonic_end_s": 119604.6548627,
+          "complete_pcm_ms": 13782.366200000979,
+          "worker_cpu_s": 69.1875,
+          "samples": 601600,
+          "audio_seconds": 18.8,
+          "sample_rate": 32000,
+          "pcm_bytes": 1203200,
+          "rtf": 0.7331045851064351,
+          "first_pcm_ms": 13781.423799999175,
+          "chunk_arrivals_ms": [
+            13781.423799999175
+          ],
+          "wav": "hot-long-0.wav",
+          "wav_sha256": "db24f673b6bd8b1837688e5b53e0a5a6d8b57cb70912cb8c6efdb987eba83c62",
+          "memory": {
+            "sample_count": 117,
+            "sampled_tree_cpu_s": 69.265625,
+            "peak_sampled_tree_rss_bytes": 5062529024,
+            "peak_sampled_tree_private_bytes": 6717202432
+          },
+          "waveform_seconds": 18.8,
+          "waveform_rtf": 0.7331045851064351,
+          "details": {
+            "status": "completed"
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 1,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119604.6583185,
+          "monotonic_end_s": 119619.8058981,
+          "complete_pcm_ms": 15147.579600001336,
+          "worker_cpu_s": 64.609375,
+          "samples": 622080,
+          "audio_seconds": 19.44,
+          "sample_rate": 32000,
+          "pcm_bytes": 1244160,
+          "rtf": 0.7791964814815502,
+          "first_pcm_ms": 15146.313599994755,
+          "chunk_arrivals_ms": [
+            15146.313599994755
+          ],
+          "wav": "hot-long-1.wav",
+          "wav_sha256": "97385a0ce9be5afd0a1f135dca29eccda23214a0290f84159efaf3a52ad1a1cc",
+          "memory": {
+            "sample_count": 126,
+            "sampled_tree_cpu_s": 64.09375,
+            "peak_sampled_tree_rss_bytes": 5078331392,
+            "peak_sampled_tree_private_bytes": 6717313024
+          },
+          "waveform_seconds": 19.44,
+          "waveform_rtf": 0.7791964814815502,
+          "details": {
+            "status": "completed"
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "index": 2,
+          "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。",
+          "status": "completed",
+          "monotonic_start_s": 119619.8095006,
+          "monotonic_end_s": 119634.4123229,
+          "complete_pcm_ms": 14602.822300003027,
+          "worker_cpu_s": 73.921875,
+          "samples": 624640,
+          "audio_seconds": 19.52,
+          "sample_rate": 32000,
+          "pcm_bytes": 1249280,
+          "rtf": 0.7480954047132699,
+          "first_pcm_ms": 14601.698400001624,
+          "chunk_arrivals_ms": [
+            14601.698400001624
+          ],
+          "wav": "hot-long-2.wav",
+          "wav_sha256": "05725d14b9e2c89158e8bf3467950ba3b80071467fc1ad4b9b38040326c410c2",
+          "memory": {
+            "sample_count": 122,
+            "sampled_tree_cpu_s": 73.6875,
+            "peak_sampled_tree_rss_bytes": 5080698880,
+            "peak_sampled_tree_private_bytes": 6717251584
+          },
+          "waveform_seconds": 19.52,
+          "waveform_rtf": 0.7480954047132699,
+          "details": {
+            "status": "completed"
+          }
+        }
+      ],
+      "genie_source_sha256": {
+        "__init__.py": "b6e0b97933b1551b27b78ae8d530471184fee7932f86b8616756fed176ca19e1",
+        "Audio\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "Audio\\Audio.py": "3f6d51e5b6bb3157da2a0599b0ca904b33adee1be3cdb2b4a3ccb7997a14bc98",
+        "Audio\\ReferenceAudio.py": "3ccf4c4ec1217d21572819691d269a294422cacd8d07fc2f0772ebb177a95bf8",
+        "Converter\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "Converter\\Converter.py": "f37000dc1c18faa2f19818e8931986a0c10c4bc201544901000a165e6c75c349",
+        "Converter\\load_state_dict.py": "f3c1711258a32ad9241c8503e37bdeafd6f90290760e90e97b723441728e1cf2",
+        "Converter\\utils.py": "61a6673a62f483a98d319a81f89dcfd19001d0475236ccd9ef602703607ec9fa",
+        "Converter\\v2\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "Converter\\v2\\Converter.py": "7048ecd01a494e8527a52d8abddf8f06fc7e1e6d4febb8999d04ba381c8cae14",
+        "Converter\\v2\\EncoderConverter.py": "b79b1c68621f1538dc578edb9355826c94de1e6f2786cc074196f9e8b7916fc8",
+        "Converter\\v2\\T2SConverter.py": "ba0e5a314bb4774981c17f850d38dfa1cb68ed5d285c3b161c4bb04fd7db659a",
+        "Converter\\v2\\VITSConverter.py": "260870351a035b424606c088538eade79821cbe83c7182902f23440c4ce92daa",
+        "Converter\\v2ProPlus\\Converter.py": "581274578a58f4ecc4b9a32d9f5fa0c144d4ed31e432f7200ba3de5591c69e92",
+        "Converter\\v2ProPlus\\PromptEncoderConverter.py": "4aea58a58219988e1ba63387ca39238821f2ada34f6ed480afbd5c6a283315cf",
+        "Core\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "Core\\Inference.py": "b37cee62975c711ee257484ffc767003712c5489034a3c63503fd6e787a18df2",
+        "Core\\Resources.py": "348c2d91ebfd5ebecd888789709ad805a44a8f6c8f810a8a9b63c6c1e2cd89c6",
+        "Core\\TTSPlayer.py": "5bf192a02cc4b6dc51e357a02d5a4b9184b063dd0ae26105dddbd22fdac7630a",
+        "G2P\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "G2P\\Chinese\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "G2P\\Chinese\\ChineseG2P.py": "883424316be9d61ed9a2bb7434d3cfa74f1ef1eddba489ba74ac185327978756",
+        "G2P\\Chinese\\CorrectPronunciation.py": "126ca3bdaf3ba2bff02df13e818213edb91cf00e7a00392abc508ddf8bf9bb11",
+        "G2P\\Chinese\\Erhua.py": "1eb0fba5e8345bad6990f4f9b8d61c27dffae12a906157b95fe1d31f43614c41",
+        "G2P\\Chinese\\Normalization\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "G2P\\Chinese\\Normalization\\char_convert.py": "8ad7c7e2fa62ad1aa8011f9e5117771f9083effba6dda86a3b249485659b1d49",
+        "G2P\\Chinese\\Normalization\\chronology.py": "4692b9847e6d37792c2e3921ad8fc77dbc8453b32988f1d55d88c8cb237720c7",
+        "G2P\\Chinese\\Normalization\\constants.py": "ffebb53d3992cedaea3252a787a837e917d50555be6db7d1c5125287ac589b41",
+        "G2P\\Chinese\\Normalization\\num.py": "a8a930b254b053e0a32e285a73b5950631f03af16d1865f6114a300dea229441",
+        "G2P\\Chinese\\Normalization\\phonecode.py": "d8279ca6ddf1af8f26119a75b4dfbb28c7da0adba5c51f807f4503c59d9816a5",
+        "G2P\\Chinese\\Normalization\\quantifier.py": "9a6c76fabf10f7457f3247f62db3ac294982adf9ad134cd8b464161a23f48e78",
+        "G2P\\Chinese\\Normalization\\text_normlization.py": "29776b20b166d9c08728f8170e115501d324fc8a2fc832cc2283a0eb00d7c1c7",
+        "G2P\\Chinese\\ToneSandhi.py": "7bcdc674bf703bbeb4a3d3e94b273899e9f4891f0e4e2850ff43d5331fbc2cb8",
+        "G2P\\English\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "G2P\\English\\EnglishG2P.py": "e270db7749059aa3887b73a3fd12a9d74a8b7d322d036d6f43ebb9b712c446f2",
+        "G2P\\English\\Normalization.py": "8c42986efa3a20e42e0554f137809f1109f197237b91810e55367f09ca0e3d76",
+        "G2P\\English\\WordSegment.py": "63271947cf16ddd307896df617dfcaad92e83bc840eb8b66126e6c8f15b04709",
+        "G2P\\Japanese\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "G2P\\Japanese\\JapaneseG2P.py": "16a5aa38597bd89ae6eb1da08d7f8dd4c34170f059e4913a35068c5776edc0c2",
+        "G2P\\SymbolsV2.py": "c5f6f92adf9b2a2c5c64708f143cb1f1b001b385e0e985c8959e9ecdb924b977",
+        "GetPhonesAndBert.py": "81fc9a9b36b5e2a41f63c001df3d782b225f6ce21f66dd4e323414c6a30f78f3",
+        "GUI\\AudioPlayer.py": "5bb57095f5442375978502881cdf2fcc5d1af46f86c4c0ba4e1e87bf70f03212",
+        "GUI\\ConverterWidget.py": "e7a311d9c017b60f3fdacf85c31979baaaae9b3e9964a9439575b841e7b67424",
+        "GUI\\GUI.py": "dbe25a706b121280bf45e9df6a0ce908819e214cfeed0785e851ced3a70e9477",
+        "GUI\\PresetManager.py": "6c050fde4b7ab2fed3d6e030ecd62d12bfa02d641d9e29907371fe6baa839765",
+        "GUI\\ServerManager.py": "54fa2861c6bf82e47d5a67159490f55db0bc1063c91b869dc48a3d0f64c4c4dd",
+        "GUI\\Utils.py": "1387813923f862486d63b9133440bce1822f6695d3f8ba110f3f209b9ade2c5a",
+        "Internal.py": "df8108a2b8cee2a052b6156642775e2a03e3ec5f7b59d6395ccc877014678c30",
+        "ModelManager.py": "a86beb264721d0dcb3bb984951e48f00908b7c7cffff6d02f450cdfeb7671628",
+        "PredefinedCharacter.py": "28a7560501f53acb2468819031cb5927a0376da57146a82834f167fe7a0a3688",
+        "Server.py": "5ac330b9eddfd45627d6d316b075573869f75a4112d2e409ee1c35546e1e56e2",
+        "Utils\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "Utils\\Constants.py": "69dc008739196d8070485315f245dfdb6342369d9a4ed0d48598c8a07b07597a",
+        "Utils\\Language.py": "a902c8ac38ab653a86577c3018f27afa10f2723cb0fb3de5ad4ba31be7b36b58",
+        "Utils\\Shared.py": "0f7bf059bb22860c2b13135c91994605e6e7dfeb2752f3ced3bea659fd3432d5",
+        "Utils\\TextSplitter.py": "05210793257ed537baee197b50d91a440cfdadd5a5b08b0beb3ab40a0ebed413",
+        "Utils\\UserData.py": "f009675b5e5ec4cc68915ef0085a2770358b10f38d26040c936b78ec046bc1d2",
+        "Utils\\Utils.py": "e44366f858a0a4e48f3e9eb97daf653e21d72dea76223abebc63afe8ad55e962"
+      }
+    },
+    "genie-pooled": {
+      "label": "Genie 原版 CPU，前后两轮合并",
+      "cases": {
+        "short": {
+          "n": 6,
+          "median_seconds": 1.4894030499999644,
+          "min_seconds": 1.291871599998558,
+          "max_seconds": 1.6720560000103433,
+          "median_pcm_rtf": 0.665933370927767,
+          "median_waveform_rtf": 0.665933370927767,
+          "pcm_seconds": [
+            2.28,
+            2.52,
+            2.24,
+            2.32,
+            1.92,
+            2.16
+          ],
+          "waveform_seconds": [
+            2.28,
+            2.52,
+            2.24,
+            2.32,
+            1.92,
+            2.16
+          ],
+          "median_worker_cpu_s": 8.3359375,
+          "median_sampled_tree_cpu_s": 8.4375,
+          "median_first_pcm_ms": 1488.321700002416
+        },
+        "long": {
+          "n": 6,
+          "median_seconds": 14.540182550001191,
+          "min_seconds": 13.750413200003095,
+          "max_seconds": 15.495627199998125,
+          "median_pcm_rtf": 0.7495026504893982,
+          "median_waveform_rtf": 0.7495026504893982,
+          "pcm_seconds": [
+            18.6,
+            19.2,
+            19.28,
+            18.8,
+            19.44,
+            19.52
+          ],
+          "waveform_seconds": [
+            18.6,
+            19.2,
+            19.28,
+            18.8,
+            19.44,
+            19.52
+          ],
+          "median_worker_cpu_s": 69.9609375,
+          "median_sampled_tree_cpu_s": 70.0234375,
+          "median_first_pcm_ms": 14539.133099999162
+        }
+      },
+      "peak_rss_mib": 5175.11328125,
+      "peak_private_mib": 6706.23046875
+    }
+  },
+  "original_assets": [
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\prompt_encoder_fp16.bin",
+      "expected": "1c6ee723cf56f06b72dfa2ccc6e67e958314733b9d2e9502583cee42cbf7ae2e",
+      "actual": "1c6ee723cf56f06b72dfa2ccc6e67e958314733b9d2e9502583cee42cbf7ae2e",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\prompt_encoder_fp32.onnx",
+      "expected": "c4a3d8c1e385a17aecb7bd9c5ede5707ba390f85c3eb49b388deeaaaf53d2748",
+      "actual": "c4a3d8c1e385a17aecb7bd9c5ede5707ba390f85c3eb49b388deeaaaf53d2748",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\t2s_encoder_fp32.bin",
+      "expected": "003191cc18b68a78b478cabf0ac235939b3a33063fa76a6d00eb31ae989601a9",
+      "actual": "003191cc18b68a78b478cabf0ac235939b3a33063fa76a6d00eb31ae989601a9",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\t2s_encoder_fp32.onnx",
+      "expected": "f6eb1acd47c8e6d36b777886981a49122e8e070a5eb9888d458fb188dc139f75",
+      "actual": "f6eb1acd47c8e6d36b777886981a49122e8e070a5eb9888d458fb188dc139f75",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\t2s_first_stage_decoder_fp32.onnx",
+      "expected": "868f395999508905128c5325c5db4f4b37b2e70e04d6e2719fec64cbb60ee7f9",
+      "actual": "868f395999508905128c5325c5db4f4b37b2e70e04d6e2719fec64cbb60ee7f9",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\t2s_shared_fp16.bin",
+      "expected": "472b6664512cf0e6718f774c490abb51e6be14627416c8fcc98fb025ae4acedb",
+      "actual": "472b6664512cf0e6718f774c490abb51e6be14627416c8fcc98fb025ae4acedb",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\t2s_stage_decoder_fp32.onnx",
+      "expected": "3f02881c517423deb610f86d5441bd9825937c5069f3887cacefa1e9dc403b0d",
+      "actual": "3f02881c517423deb610f86d5441bd9825937c5069f3887cacefa1e9dc403b0d",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\vits_fp16.bin",
+      "expected": "63f2a774ea4f26faaf58f875b68a83a876a6da9e6761dd30fc440e14ff23d922",
+      "actual": "63f2a774ea4f26faaf58f875b68a83a876a6da9e6761dd30fc440e14ff23d922",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\vits_fp32.onnx",
+      "expected": "2f918e08a1bfecc568de4cc5dc96135cb8baf37a07f4eb4ec9258a4854fcd3f3",
+      "actual": "2f918e08a1bfecc568de4cc5dc96135cb8baf37a07f4eb4ec9258a4854fcd3f3",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+      "expected": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf",
+      "actual": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+      "expected": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81",
+      "actual": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+      "expected": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+      "actual": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+      "unchanged": true
+    }
+  ],
+  "genie_original_source": [
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\__init__.py",
+      "expected": "b6e0b97933b1551b27b78ae8d530471184fee7932f86b8616756fed176ca19e1",
+      "actual": "b6e0b97933b1551b27b78ae8d530471184fee7932f86b8616756fed176ca19e1",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Audio\\__init__.py",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Audio\\Audio.py",
+      "expected": "3f6d51e5b6bb3157da2a0599b0ca904b33adee1be3cdb2b4a3ccb7997a14bc98",
+      "actual": "3f6d51e5b6bb3157da2a0599b0ca904b33adee1be3cdb2b4a3ccb7997a14bc98",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Audio\\ReferenceAudio.py",
+      "expected": "3ccf4c4ec1217d21572819691d269a294422cacd8d07fc2f0772ebb177a95bf8",
+      "actual": "3ccf4c4ec1217d21572819691d269a294422cacd8d07fc2f0772ebb177a95bf8",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Converter\\__init__.py",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Converter\\Converter.py",
+      "expected": "f37000dc1c18faa2f19818e8931986a0c10c4bc201544901000a165e6c75c349",
+      "actual": "f37000dc1c18faa2f19818e8931986a0c10c4bc201544901000a165e6c75c349",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Converter\\load_state_dict.py",
+      "expected": "f3c1711258a32ad9241c8503e37bdeafd6f90290760e90e97b723441728e1cf2",
+      "actual": "f3c1711258a32ad9241c8503e37bdeafd6f90290760e90e97b723441728e1cf2",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Converter\\utils.py",
+      "expected": "61a6673a62f483a98d319a81f89dcfd19001d0475236ccd9ef602703607ec9fa",
+      "actual": "61a6673a62f483a98d319a81f89dcfd19001d0475236ccd9ef602703607ec9fa",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Converter\\v2\\__init__.py",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Converter\\v2\\Converter.py",
+      "expected": "7048ecd01a494e8527a52d8abddf8f06fc7e1e6d4febb8999d04ba381c8cae14",
+      "actual": "7048ecd01a494e8527a52d8abddf8f06fc7e1e6d4febb8999d04ba381c8cae14",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Converter\\v2\\EncoderConverter.py",
+      "expected": "b79b1c68621f1538dc578edb9355826c94de1e6f2786cc074196f9e8b7916fc8",
+      "actual": "b79b1c68621f1538dc578edb9355826c94de1e6f2786cc074196f9e8b7916fc8",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Converter\\v2\\T2SConverter.py",
+      "expected": "ba0e5a314bb4774981c17f850d38dfa1cb68ed5d285c3b161c4bb04fd7db659a",
+      "actual": "ba0e5a314bb4774981c17f850d38dfa1cb68ed5d285c3b161c4bb04fd7db659a",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Converter\\v2\\VITSConverter.py",
+      "expected": "260870351a035b424606c088538eade79821cbe83c7182902f23440c4ce92daa",
+      "actual": "260870351a035b424606c088538eade79821cbe83c7182902f23440c4ce92daa",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Converter\\v2ProPlus\\Converter.py",
+      "expected": "581274578a58f4ecc4b9a32d9f5fa0c144d4ed31e432f7200ba3de5591c69e92",
+      "actual": "581274578a58f4ecc4b9a32d9f5fa0c144d4ed31e432f7200ba3de5591c69e92",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Converter\\v2ProPlus\\PromptEncoderConverter.py",
+      "expected": "4aea58a58219988e1ba63387ca39238821f2ada34f6ed480afbd5c6a283315cf",
+      "actual": "4aea58a58219988e1ba63387ca39238821f2ada34f6ed480afbd5c6a283315cf",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Core\\__init__.py",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Core\\Inference.py",
+      "expected": "b37cee62975c711ee257484ffc767003712c5489034a3c63503fd6e787a18df2",
+      "actual": "b37cee62975c711ee257484ffc767003712c5489034a3c63503fd6e787a18df2",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Core\\Resources.py",
+      "expected": "348c2d91ebfd5ebecd888789709ad805a44a8f6c8f810a8a9b63c6c1e2cd89c6",
+      "actual": "348c2d91ebfd5ebecd888789709ad805a44a8f6c8f810a8a9b63c6c1e2cd89c6",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Core\\TTSPlayer.py",
+      "expected": "5bf192a02cc4b6dc51e357a02d5a4b9184b063dd0ae26105dddbd22fdac7630a",
+      "actual": "5bf192a02cc4b6dc51e357a02d5a4b9184b063dd0ae26105dddbd22fdac7630a",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\__init__.py",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\Chinese\\__init__.py",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\Chinese\\ChineseG2P.py",
+      "expected": "883424316be9d61ed9a2bb7434d3cfa74f1ef1eddba489ba74ac185327978756",
+      "actual": "883424316be9d61ed9a2bb7434d3cfa74f1ef1eddba489ba74ac185327978756",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\Chinese\\CorrectPronunciation.py",
+      "expected": "126ca3bdaf3ba2bff02df13e818213edb91cf00e7a00392abc508ddf8bf9bb11",
+      "actual": "126ca3bdaf3ba2bff02df13e818213edb91cf00e7a00392abc508ddf8bf9bb11",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\Chinese\\Erhua.py",
+      "expected": "1eb0fba5e8345bad6990f4f9b8d61c27dffae12a906157b95fe1d31f43614c41",
+      "actual": "1eb0fba5e8345bad6990f4f9b8d61c27dffae12a906157b95fe1d31f43614c41",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\Chinese\\Normalization\\__init__.py",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\Chinese\\Normalization\\char_convert.py",
+      "expected": "8ad7c7e2fa62ad1aa8011f9e5117771f9083effba6dda86a3b249485659b1d49",
+      "actual": "8ad7c7e2fa62ad1aa8011f9e5117771f9083effba6dda86a3b249485659b1d49",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\Chinese\\Normalization\\chronology.py",
+      "expected": "4692b9847e6d37792c2e3921ad8fc77dbc8453b32988f1d55d88c8cb237720c7",
+      "actual": "4692b9847e6d37792c2e3921ad8fc77dbc8453b32988f1d55d88c8cb237720c7",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\Chinese\\Normalization\\constants.py",
+      "expected": "ffebb53d3992cedaea3252a787a837e917d50555be6db7d1c5125287ac589b41",
+      "actual": "ffebb53d3992cedaea3252a787a837e917d50555be6db7d1c5125287ac589b41",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\Chinese\\Normalization\\num.py",
+      "expected": "a8a930b254b053e0a32e285a73b5950631f03af16d1865f6114a300dea229441",
+      "actual": "a8a930b254b053e0a32e285a73b5950631f03af16d1865f6114a300dea229441",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\Chinese\\Normalization\\phonecode.py",
+      "expected": "d8279ca6ddf1af8f26119a75b4dfbb28c7da0adba5c51f807f4503c59d9816a5",
+      "actual": "d8279ca6ddf1af8f26119a75b4dfbb28c7da0adba5c51f807f4503c59d9816a5",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\Chinese\\Normalization\\quantifier.py",
+      "expected": "9a6c76fabf10f7457f3247f62db3ac294982adf9ad134cd8b464161a23f48e78",
+      "actual": "9a6c76fabf10f7457f3247f62db3ac294982adf9ad134cd8b464161a23f48e78",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\Chinese\\Normalization\\text_normlization.py",
+      "expected": "29776b20b166d9c08728f8170e115501d324fc8a2fc832cc2283a0eb00d7c1c7",
+      "actual": "29776b20b166d9c08728f8170e115501d324fc8a2fc832cc2283a0eb00d7c1c7",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\Chinese\\ToneSandhi.py",
+      "expected": "7bcdc674bf703bbeb4a3d3e94b273899e9f4891f0e4e2850ff43d5331fbc2cb8",
+      "actual": "7bcdc674bf703bbeb4a3d3e94b273899e9f4891f0e4e2850ff43d5331fbc2cb8",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\English\\__init__.py",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\English\\EnglishG2P.py",
+      "expected": "e270db7749059aa3887b73a3fd12a9d74a8b7d322d036d6f43ebb9b712c446f2",
+      "actual": "e270db7749059aa3887b73a3fd12a9d74a8b7d322d036d6f43ebb9b712c446f2",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\English\\Normalization.py",
+      "expected": "8c42986efa3a20e42e0554f137809f1109f197237b91810e55367f09ca0e3d76",
+      "actual": "8c42986efa3a20e42e0554f137809f1109f197237b91810e55367f09ca0e3d76",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\English\\WordSegment.py",
+      "expected": "63271947cf16ddd307896df617dfcaad92e83bc840eb8b66126e6c8f15b04709",
+      "actual": "63271947cf16ddd307896df617dfcaad92e83bc840eb8b66126e6c8f15b04709",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\Japanese\\__init__.py",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\Japanese\\JapaneseG2P.py",
+      "expected": "16a5aa38597bd89ae6eb1da08d7f8dd4c34170f059e4913a35068c5776edc0c2",
+      "actual": "16a5aa38597bd89ae6eb1da08d7f8dd4c34170f059e4913a35068c5776edc0c2",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\G2P\\SymbolsV2.py",
+      "expected": "c5f6f92adf9b2a2c5c64708f143cb1f1b001b385e0e985c8959e9ecdb924b977",
+      "actual": "c5f6f92adf9b2a2c5c64708f143cb1f1b001b385e0e985c8959e9ecdb924b977",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\GetPhonesAndBert.py",
+      "expected": "81fc9a9b36b5e2a41f63c001df3d782b225f6ce21f66dd4e323414c6a30f78f3",
+      "actual": "81fc9a9b36b5e2a41f63c001df3d782b225f6ce21f66dd4e323414c6a30f78f3",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\GUI\\AudioPlayer.py",
+      "expected": "5bb57095f5442375978502881cdf2fcc5d1af46f86c4c0ba4e1e87bf70f03212",
+      "actual": "5bb57095f5442375978502881cdf2fcc5d1af46f86c4c0ba4e1e87bf70f03212",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\GUI\\ConverterWidget.py",
+      "expected": "e7a311d9c017b60f3fdacf85c31979baaaae9b3e9964a9439575b841e7b67424",
+      "actual": "e7a311d9c017b60f3fdacf85c31979baaaae9b3e9964a9439575b841e7b67424",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\GUI\\GUI.py",
+      "expected": "dbe25a706b121280bf45e9df6a0ce908819e214cfeed0785e851ced3a70e9477",
+      "actual": "dbe25a706b121280bf45e9df6a0ce908819e214cfeed0785e851ced3a70e9477",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\GUI\\PresetManager.py",
+      "expected": "6c050fde4b7ab2fed3d6e030ecd62d12bfa02d641d9e29907371fe6baa839765",
+      "actual": "6c050fde4b7ab2fed3d6e030ecd62d12bfa02d641d9e29907371fe6baa839765",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\GUI\\ServerManager.py",
+      "expected": "54fa2861c6bf82e47d5a67159490f55db0bc1063c91b869dc48a3d0f64c4c4dd",
+      "actual": "54fa2861c6bf82e47d5a67159490f55db0bc1063c91b869dc48a3d0f64c4c4dd",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\GUI\\Utils.py",
+      "expected": "1387813923f862486d63b9133440bce1822f6695d3f8ba110f3f209b9ade2c5a",
+      "actual": "1387813923f862486d63b9133440bce1822f6695d3f8ba110f3f209b9ade2c5a",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Internal.py",
+      "expected": "df8108a2b8cee2a052b6156642775e2a03e3ec5f7b59d6395ccc877014678c30",
+      "actual": "df8108a2b8cee2a052b6156642775e2a03e3ec5f7b59d6395ccc877014678c30",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\ModelManager.py",
+      "expected": "a86beb264721d0dcb3bb984951e48f00908b7c7cffff6d02f450cdfeb7671628",
+      "actual": "a86beb264721d0dcb3bb984951e48f00908b7c7cffff6d02f450cdfeb7671628",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\PredefinedCharacter.py",
+      "expected": "28a7560501f53acb2468819031cb5927a0376da57146a82834f167fe7a0a3688",
+      "actual": "28a7560501f53acb2468819031cb5927a0376da57146a82834f167fe7a0a3688",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Server.py",
+      "expected": "5ac330b9eddfd45627d6d316b075573869f75a4112d2e409ee1c35546e1e56e2",
+      "actual": "5ac330b9eddfd45627d6d316b075573869f75a4112d2e409ee1c35546e1e56e2",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Utils\\__init__.py",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Utils\\Constants.py",
+      "expected": "69dc008739196d8070485315f245dfdb6342369d9a4ed0d48598c8a07b07597a",
+      "actual": "69dc008739196d8070485315f245dfdb6342369d9a4ed0d48598c8a07b07597a",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Utils\\Language.py",
+      "expected": "a902c8ac38ab653a86577c3018f27afa10f2723cb0fb3de5ad4ba31be7b36b58",
+      "actual": "a902c8ac38ab653a86577c3018f27afa10f2723cb0fb3de5ad4ba31be7b36b58",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Utils\\Shared.py",
+      "expected": "0f7bf059bb22860c2b13135c91994605e6e7dfeb2752f3ced3bea659fd3432d5",
+      "actual": "0f7bf059bb22860c2b13135c91994605e6e7dfeb2752f3ced3bea659fd3432d5",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Utils\\TextSplitter.py",
+      "expected": "05210793257ed537baee197b50d91a440cfdadd5a5b08b0beb3ab40a0ebed413",
+      "actual": "05210793257ed537baee197b50d91a440cfdadd5a5b08b0beb3ab40a0ebed413",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Utils\\UserData.py",
+      "expected": "f009675b5e5ec4cc68915ef0085a2770358b10f38d26040c936b78ec046bc1d2",
+      "actual": "f009675b5e5ec4cc68915ef0085a2770358b10f38d26040c936b78ec046bc1d2",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\tts\\cpu\\runtime\\Lib\\site-packages\\genie_tts\\Utils\\Utils.py",
+      "expected": "e44366f858a0a4e48f3e9eb97daf653e21d72dea76223abebc63afe8ad55e962",
+      "actual": "e44366f858a0a4e48f3e9eb97daf653e21d72dea76223abebc63afe8ad55e962",
+      "unchanged": true
+    }
+  ],
+  "listening": [
+    {
+      "label": "Genie 原版 CPU（前测）",
+      "variant": "genie-before",
+      "case": "long",
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\outputs\\genie-comparison-20260927\\01-genie.wav",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\genie-comparison-20260927\\genie-original\\genie\\hot-long-0.wav",
+      "sha256": "ecc764c3f660bb1c1b3a9015a1cb053f3d1289e315567c9762abcd8fb26c7f89",
+      "pcm_seconds": 18.6,
+      "complete_pcm_ms": 13750.413200003095,
+      "selection": "hot index 0, unedited"
+    },
+    {
+      "label": "CPU INT8 GPT + FP32 声学，8 线程",
+      "variant": "cpu-int8-threads8",
+      "case": "long",
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\outputs\\genie-comparison-20260927\\02-cpu-int8.wav",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\genie-comparison-20260927\\sakura\\cpu-int8-threads8\\cpu\\hot-long-0.wav",
+      "sha256": "e4bc30059585fafdcd3a952c2e683866d04748522da85af0567a341c1567a61e",
+      "pcm_seconds": 20.26,
+      "complete_pcm_ms": 10855.497699987609,
+      "selection": "hot index 0, unedited"
+    },
+    {
+      "label": "AMD FP16，容量 1280",
+      "variant": "amd-fp16-cap1280",
+      "case": "long",
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\outputs\\genie-comparison-20260927\\03-amd-fp16-1280.wav",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\genie-comparison-20260927\\sakura\\amd-fp16-cap1280\\directml\\hot-long-0.wav",
+      "sha256": "49faed05a0aa55d2486da114e8eb2d2d780757a63cf91be1aa395923fb49b98d",
+      "pcm_seconds": 20.7,
+      "complete_pcm_ms": 8277.891199992155,
+      "selection": "hot index 0, unedited"
+    },
+    {
+      "label": "CPU FP32，8 线程",
+      "variant": "cpu-fp32-threads8",
+      "case": "long",
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\outputs\\genie-comparison-20260927\\04-cpu-fp32.wav",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\genie-comparison-20260927\\sakura\\cpu-fp32-threads8\\cpu\\hot-long-0.wav",
+      "sha256": "1ab6ddb2004a1b413ab6c630123f810c92587c423de3e61dba1c5f48a0e479ff",
+      "pcm_seconds": 20.7,
+      "complete_pcm_ms": 14224.932700002682,
+      "selection": "hot index 0, unedited"
+    },
+    {
+      "label": "CPU FP16，2 线程",
+      "variant": "cpu-fp16",
+      "case": "long",
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\outputs\\genie-comparison-20260927\\05-cpu-fp16.wav",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\genie-comparison-20260927\\sakura\\cpu-fp16\\cpu\\hot-long-0.wav",
+      "sha256": "2879cf9216340dbf4a29de6c04ff329f5a1d67be07f1210eaea6897d97444671",
+      "pcm_seconds": 20.5,
+      "complete_pcm_ms": 31345.68020000006,
+      "selection": "hot index 0, unedited"
+    },
+    {
+      "label": "Genie 原版 CPU（前测）",
+      "variant": "genie-before",
+      "case": "short",
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\outputs\\genie-comparison-20260927\\06-genie-short.wav",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\genie-comparison-20260927\\genie-original\\genie\\hot-short-0.wav",
+      "sha256": "9ec95b139904c4f012786ed333ae0880af7ed1c50fffef453bc06984957c234d",
+      "pcm_seconds": 2.28,
+      "complete_pcm_ms": 1523.8435999926878,
+      "selection": "hot index 0, unedited"
+    },
+    {
+      "label": "AMD FP16，容量 512，仅短句",
+      "variant": "amd-fp16-cap512",
+      "case": "short",
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\outputs\\genie-comparison-20260927\\07-amd-fp16-512-short.wav",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\genie-comparison-20260927\\short\\amd-fp16-cap512\\directml\\hot-short-0.wav",
+      "sha256": "bb5c7b2879391d515d1b2454885af153cb0c5a0acf0d8d2596d57fc8befef6ce",
+      "pcm_seconds": 3.42,
+      "complete_pcm_ms": 1004.757000002428,
+      "selection": "hot index 0, unedited"
+    }
+  ],
+  "rejected_configuration": {
+    "name": "CPU FP16 threads=8",
+    "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\genie-comparison-20260927\\sakura\\cpu-fp16-threads8\\summary.json",
+    "sha256": "881112c68820d5cee8febba0d7b917a5f0185384fde6859a675a3659bc50d088",
+    "error": "Traceback (most recent call last):\n  File \"C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\research\\tools\\cpu_amd_benchmark.py\", line 230, in worker\n    request(next(iter(job[\"cases\"])), \"cold\", 0)\n  File \"C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\research\\tools\\cpu_amd_benchmark.py\", line 212, in request\n    data, rate, arrivals, details = synthesize(row[\"text\"])\n                                    ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\research\\tools\\cpu_amd_benchmark.py\", line 190, in synthesize\n    audio = engine.synthesize(text, reference=reference_name, seed=job[\"seed\"],\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\src\\sakuratts\\engine.py\", line 81, in synthesize\n    pcm, report = self._runtime.synthesize(text, reference=reference, seed=seed,\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\src\\sakuratts\\_internal\\runtime.py\", line 145, in synthesize\n    self._load_sovits()\n  File \"C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\src\\sakuratts\\backends\\cpu\\engine.py\", line 83, in _load_sovits\n    self.sovits = ORTSoVITS.load(self.packages[\"sovits\"], device=self.name,\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\src\\sakuratts\\backends\\onnx\\sovits.py\", line 196, in load\n    raise ValueError(\"CPU FP16 execution requires its tested session options: \"\nValueError: CPU FP16 execution requires its tested session options: device_id=0, threads=2, enable_cpu_mem_arena=False\n",
+    "process": {
+      "exit_code": 1,
+      "timed_out": false,
+      "terminated_pids": [],
+      "process_wall_s": 2.437120300004608,
+      "observed_tree_cpu_s": 2.125,
+      "peak_sampled_tree_rss_bytes": 650600448,
+      "peak_sampled_tree_private_bytes": 1124970496,
+      "sample_interval_s": 0.1,
+      "sample_count": 22,
+      "measurement": "Sampled working set/private bytes; sums may double-count shared pages. CPU time covers observed processes; brief children and memory peaks may be missed. Sampling remains active during all request timers. GPU memory is not measured.",
+      "status": "failed"
+    }
+  }
+}

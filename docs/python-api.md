@@ -10,7 +10,11 @@ with Engine.load(model) as engine:
     audio.save("hello.wav")
 ```
 
-`Model.load` 读取描述和检查路径，不导入 GPU 库。`Engine.load` 准备前端、核对资源身份，GPU 权重在第一次请求中按需加载。包顶层导入不加载 NumPy、CuPy、ORT、MLX、FastAPI 或 PyTorch。
+`Model.load` 读取描述和检查路径，不导入 GPU 库。`Engine.load` 准备前端、核对资源身份，推理权重在第一次请求中按需加载。包顶层导入不加载 NumPy、CuPy、ORT、MLX、FastAPI 或 PyTorch。
+
+`Engine.load(model, backend="cpu")` 默认使用 CPU INT8 GPT 与 FP32 声学；`backend="directml"` 默认在 Windows GPU 上执行 FP16 GPT 与全图 FP16 声学，KV 容量为 1280。安装、资源要求和线程配置见 [CPU / DirectML 指南](cpu-amd.md)。省略 `backend` 时使用模型建议值。
+
+`profile` 显式选择后端预设，例如 `Engine.load(model, backend="cpu", profile="int8")`。CPU 只提供 `int8`，DirectML 只提供 `fp16`；省略时也选择各自默认档位。CLI 对应 `--profile`，服务 YAML 对应 `sakuratts.profile`。支持的组合、精度包要求和覆盖顺序见[推理档位](inference-profiles.md)；实际精度与策略继续写入音频报告。
 
 `Audio` 包含单声道 int16 `pcm`、`sample_rate` 和 `report`。`wav_bytes()` 返回 WAV 字节；`save(path)` 写入新文件，拒绝覆盖。`report["status"]` 为 `completed` 或 `stopped_at_limit`，停止原因、片段、参数和计时继续保存在报告中。
 
@@ -31,7 +35,7 @@ HTTP 的总体 `policy="staged"` 仅允许显式启用的 `managed` 模式。可
 
 `synthesize` 可指定 `reference`、`seed`、`language`（见[语言能力与资源要求](english-frontend.md)）、`split_method`（`cut0` 至 `cut5`，默认 `cut0`）、`top_k`、`temperature`、`repetition_penalty`、`early_stop_num` 和 `cancel_requested`。完整签名与默认值见 [Engine.synthesize](../src/sakuratts/engine.py)。NumPy 与官方 Torch 使用不同随机数实现。
 
-`tts` CLI 可通过 `--split-method cut5` 按标点分句，默认仍为 `cut0`。当前只提供 FP32、FP16 标准、FP16 低显存、FP16 极限[四档配置](inference-profiles.md)，分句作为独立选项。历史实验和实测范围见[低显存报告](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/low-vram-20260921.md)。
+`tts` CLI 可通过 `--split-method cut5` 按标点分句，默认仍为 `cut0`。CUDA 提供 FP32、FP16 标准、FP16 低显存、FP16 极限[四档配置](inference-profiles.md)，分句作为独立选项。历史实验和实测范围见[低显存报告](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/low-vram-20260921.md)。
 
 低级 `Engine.synthesize` 默认 `split_bucket=False`，保留原文片段的推理顺序。显式设为 `True` 时，按规范化文本长度稳定排序推理，再恢复完整 PCM 和片段报告的原文顺序；报告用 `execution_order` 记录实际顺序。HTTP 沿用原版默认 `True`。传入 `on_fragment` 时关闭分桶，以便逐片按原文输出；排序会改变各句的随机数消耗顺序。
 
@@ -41,10 +45,10 @@ CUDA 引擎默认在每片声学计算结束后收缩 ORT 显存池，释放不�
 
 需要对照旧策略时，可用 `Engine.load(path, experimental={"acoustic_arena_shrink": False})` 关闭收缩。CLI 的 `tts`、`serve`、`benchmark` 可通过 `--experimental` 读取同样的 JSON；旧 `synthesize` 命令可用 `--no-acoustic-arena-shrink`。实际策略记录在合成报告的 `acoustic_arena_shrink` 字段中。内部 `ORTSoVITS` / `ORTProcessSoVITS` 的直接调用仍需显式选择收缩，研究脚本应记录自己的选项。
 
-实验后端选项通过 `Engine.load(path, experimental={...})` 显式传入。支持的键与默认值由 [CUDA 后端的 create_runtime](../src/sakuratts/backends/cuda/__init__.py) 和 [NVIDIAEngine](../src/sakuratts/backends/cuda/engine.py) 定义；常用组合见[推理档位](inference-profiles.md)。
+后端选项通过 `Engine.load(path, experimental={...})` 显式传入。CUDA 的键与默认值由 [NVIDIAEngine](../src/sakuratts/backends/cuda/engine.py) 定义，CPU / DirectML 由 [CPUEngine](../src/sakuratts/backends/cpu/engine.py) 定义；常用组合分别见[CUDA 推理档位](inference-profiles.md)和 [CPU / DirectML 指南](cpu-amd.md)。
 
 `acoustic_session_policy` 默认 `"resident"`，保留 latent 和 vocoder 两个 Session。设为 `"staged"` 时，先加载 latent Session 并取回完整 CPU latent，再释放它、加载一次 vocoder Session 处理该片段的所有块，最后释放 vocoder。它只支持已经验证的分块声学包，必须同时指定 `acoustic_chunk_frames` 并开启 `acoustic_arena_shrink`；每个片段会重建 Session，增加加载时间。模型图、块长、完整上下文和输入噪声保持不变。此选项控制声学内部的驻留方式，与控制 GPT／声学模型驻留的 `policy` 分开设置。私有 worker 的 `session_initialization="deferred"` 表示模型包与进程已准备，CUDA Session 将在执行时创建并检查。
 
-`gpt_prefill_query_chunk_size` 默认 `0`，使用完整 Prefill 注意力矩阵；正整数指定每次计算的 query 行数，例如 `128`。每块仍读取全部 key，保留文本双向、音频因果的注意力关系。分块减少长前缀的临时分数矩阵，但 GEMM 形状变化可能改变浮点舍入和后续采样结果，需要单独验收；它不限制整条推理链的显存，也不改变 KV 容量。实际选项写入音频报告同名字段。
+`gpt_prefill_query_chunk_size` 在 CUDA 默认 `0`，CPU / DirectML 要求为 `0`，使用完整 Prefill 注意力矩阵。CUDA 可显式设置正整数，指定每次计算的 query 行数；每块仍读取全部 key，保留文本双向、音频因果的注意力关系。分块减少长前缀的临时分数矩阵，但 GEMM 形状变化可能改变浮点舍入和后续采样结果，需要单独验收；它不限制整条推理链的显存，也不改变 KV 容量。实际选项写入音频报告同名字段。
 
 旧版 `from sakuratts.nvidia import NVIDIAEngine, write_wav` 继续可用。其他内部模块已迁移；新的业务代码应使用包顶层 API。

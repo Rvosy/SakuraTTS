@@ -4,7 +4,7 @@ from importlib import import_module
 from typing import Protocol
 
 
-_IMPLEMENTATIONS = {"cuda": ".cuda"}
+_IMPLEMENTATIONS = {"cuda": ".cuda", "cpu": ".cpu", "directml": ".directml", "mlx": ".mlx"}
 SUPPORTED_BACKENDS = tuple(_IMPLEMENTATIONS)
 
 

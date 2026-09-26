@@ -44,7 +44,10 @@ def package_model(config, output, *, name=None):
     sources += [(root / path).resolve(strict=True) for path in config.get("references", {}).values()]
     if any(source == output or source in output.parents for source in sources):
         raise ValueError("Output must be outside the input resource directories")
-    from ._internal.diagnostics import check_windows_packages
+    if model.backend == "mlx":
+        from .backends.mlx.diagnostics import check_packages
+    else:
+        from ._internal.diagnostics import check_prepared_packages as check_packages
     output = _destination(output)
     with tempfile.TemporaryDirectory(prefix=".sakuratts-", dir=output.parent) as temporary:
         staged = Path(temporary) / "model"
@@ -61,14 +64,18 @@ def package_model(config, output, *, name=None):
             if key in config:
                 config[key] = str((root / config[key]).resolve(strict=True))
         _write_manifest(staged, config, name=name or model.name)
-        check_windows_packages(staged)
+        check_packages(staged)
         staged.rename(output)
     return Model.load(output)
 
 
 def convert(*, gpt, sovits, official_source, output, reference=None, reference_text=None,
-            name=None, python=None, acoustic_python=None, frontend_python=None, language_model=None):
+            name=None, python=None, acoustic_python=None, frontend_python=None, language_model=None, backend="cuda"):
     """Convert supported checkpoints; reference audio is optional."""
+    from .backends import require_backend
+    backend = require_backend(backend)
+    if backend == "mlx":
+        raise NotImplementedError("MLX raw checkpoint conversion is not supported; use prepared native V2Pro packages with Engine")
     if bool(reference) != bool(reference_text and reference_text.strip()):
         raise ValueError("Supply both reference and reference_text, or neither")
     paths = {key: Path(value).resolve(strict=True) for key, value in
@@ -104,7 +111,8 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
             run_conversion([interpreter, "-B", str(tools / script), "--checkpoint", str(checkpoint),
                 "--official-source", str(paths["source"]), "--output", str(prepared / target)], env=env)
         config = {"format": "sakuratts-windows-config-v1", "gpt": "gpt", "sovits": "sovits",
-                  "frontend": "frontend", "references": {"reference": "references/000"} if refs else {}}
+                  "frontend": "frontend", "references": {"reference": "references/000"} if refs else {},
+                  "backend": {"preferred": backend}}
         if worker:
             config["acoustic_python"] = worker
         elif not frontend_python and json.loads((prepared / "frontend/manifest.json").read_text(encoding="utf-8")).get(
@@ -120,8 +128,8 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
             (staged / "references").mkdir()
             (prepared / "references/reference").rename(staged / "references/000")
         _write_manifest(staged, config, name=name or output.name)
-        from ._internal.diagnostics import check_windows_packages
-        check_windows_packages(staged)
+        from ._internal.diagnostics import check_prepared_packages
+        check_prepared_packages(staged)
         staged.rename(output)
         model = Model.load(output)
         logger.info("模型准备完成，后续启动将复用缓存")

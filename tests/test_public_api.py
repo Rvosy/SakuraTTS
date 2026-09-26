@@ -110,15 +110,15 @@ class PublicApiTests(unittest.TestCase):
             self.assertEqual(run.call_args.args, ("model",))
             options = run.call_args.kwargs
             for name, default in (("host", "127.0.0.1"), ("port", 9880), ("tts_config", None),
-                                  ("backend", None), ("experimental", None), ("runtime_mode", "direct"),
+                                  ("backend", None), ("profile", None), ("experimental", None), ("runtime_mode", "direct"),
                                   ("idle_sleep_seconds", 60.), ("wake_timeout_seconds", 120.),
                                   ("operation_timeout_seconds", 300.)):
                 self.assertEqual(options.get(name, default), default)
             run.reset_mock()
-            start_server("model", runtime_mode="managed", idle_sleep_seconds=12.,
+            start_server("model", profile="fp32", runtime_mode="managed", idle_sleep_seconds=12.,
                          wake_timeout_seconds=40., operation_timeout_seconds=80.)
             run.assert_called_once_with("model", host="127.0.0.1", port=9880,
-                                        tts_config=None, backend=None, experimental=None, runtime_mode="managed",
+                                        tts_config=None, backend=None, profile="fp32", experimental=None, runtime_mode="managed",
                                         idle_sleep_seconds=12., wake_timeout_seconds=40.,
                                         operation_timeout_seconds=80.)
 
@@ -167,7 +167,7 @@ print(json.dumps(model.info()))
             frontend_worker.write_bytes(b"fake")
             model.path.write_text(json.dumps(dict(model.manifest, acoustic_python="../worker.exe",
                 frontend_python="../frontend.exe")), encoding="utf-8")
-            with patch("sakuratts._internal.diagnostics.check_windows_packages") as check:
+            with patch("sakuratts._internal.diagnostics.check_prepared_packages") as check:
                 packed = package_model(model.path, root / "new")
             check.assert_called_once()
             self.assertEqual(packed.name, "テスト")
@@ -175,14 +175,14 @@ print(json.dumps(model.info()))
             self.assertEqual(packed.manifest["frontend_python"], str(frontend_worker.resolve()))
             self.assertEqual(packed.references, ("通常",))
             self.assertTrue((root / "old/model.json").exists())
-            with self.assertRaises(FileExistsError), patch("sakuratts._internal.diagnostics.check_windows_packages"):
+            with self.assertRaises(FileExistsError), patch("sakuratts._internal.diagnostics.check_prepared_packages"):
                 package_model(model.path, root / "new")
 
     def test_failed_package_validation_does_not_publish_partial_model(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             model = model_directory(root / "old")
-            with patch("sakuratts._internal.diagnostics.check_windows_packages", side_effect=ValueError("bad hash")):
+            with patch("sakuratts._internal.diagnostics.check_prepared_packages", side_effect=ValueError("bad hash")):
                 with self.assertRaisesRegex(ValueError, "bad hash"):
                     package_model(model.path, root / "new")
             self.assertFalse((root / "new").exists())

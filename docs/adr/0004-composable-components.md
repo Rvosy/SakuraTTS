@@ -1,6 +1,6 @@
 # ADR 0004：分开模型描述、执行后端、语言与发行组合
 
-状态：已接受。日期：2026-09-22。更新 [ADR 0002](0002-product-layout.md) 中的后端与前端边界。
+状态：已接受。日期：2026-09-22。后续 CPU / DirectML 扩展见 [ADR 0005](0005-cpu-directml-runtime.md)。更新 [ADR 0002](0002-product-layout.md) 中的后端与前端边界。
 
 ## 原因
 

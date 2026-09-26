@@ -35,9 +35,9 @@ class ApiInferenceOrderTests(unittest.TestCase):
             result.pcm = np.array([generated.draw], dtype=np.int16)
             return result
 
-        with patch("sakuratts.backends.cuda.engine.prepare_text_request", return_value=request), \
-                patch("sakuratts.backends.cuda.engine.generate_prepared_semantic", side_effect=semantic), \
-                patch("sakuratts.backends.cuda.engine.synthesize_acoustic", side_effect=acoustic):
+        with patch("sakuratts._internal.runtime.prepare_text_request", return_value=request), \
+                patch("sakuratts._internal.runtime.generate_prepared_semantic", side_effect=semantic), \
+                patch("sakuratts._internal.runtime.synthesize_acoustic", side_effect=acoustic):
             options = {} if split_bucket is None else {"split_bucket": split_bucket}
             pcm, report = model.synthesize("original text", **options,
                 on_fragment=(lambda pcm, rate: emitted.extend(pcm.tolist())) if streaming else None,

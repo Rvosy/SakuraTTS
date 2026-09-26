@@ -118,6 +118,8 @@ def main(inference_factory=None):
                     configuration = message["configuration"]
                     saved = message.get("snapshot")
                     options = {"backend": configuration["backend"]} if "backend" in configuration else {}
+                    if "profile" in configuration:
+                        options["profile"] = configuration["profile"]
                     if saved is None:
                         inference = inference_factory(decode_model(configuration["model"]),
                             tts_config=configuration["tts_config"], experimental=configuration["experimental"], **options)

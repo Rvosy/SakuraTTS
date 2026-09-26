@@ -18,8 +18,8 @@ from sakuratts._internal.inference_worker import main
 
 
 class FakeInference:
-    def __init__(self, model=None, *, tts_config=None, experimental=None, backend=None):
-        self.settings = {"loads": 1, "backend": backend}
+    def __init__(self, model=None, *, tts_config=None, experimental=None, backend=None, profile=None):
+        self.settings = {"loads": 1, "backend": backend, "profile": profile}
         self.reference_audio = None
         self.model = None
         self.children = []
@@ -71,7 +71,8 @@ class FakeInference:
                 on_fragment(pcm, 32000)
         return Audio(np.empty(0, np.int16) if on_fragment else np.tile(pcm, count), 32000,
             {"sample_rate": 32000, "name": self.model.name if self.model else None,
-             "reference": self.reference_audio, "pid": os.getpid(), "backend": self.settings["backend"]})
+             "reference": self.reference_audio, "pid": os.getpid(), "backend": self.settings["backend"],
+             "profile": self.settings["profile"]})
 
     def set_weights(self, kind, path):
         if path == "bad":

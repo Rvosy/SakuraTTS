@@ -93,7 +93,9 @@ def aggregate(cases, cleanup):
 
 def _close_engine(engine, record):
     """Observe owned process exits, preserving an earlier request exception."""
-    components = [(name, getattr(engine, name, None)) for name in ("gpt", "sovits", "japanese", "segmenter")]
+    components = [(name, getattr(engine, name, None)) for name in ("gpt", "sovits")]
+    components.extend((f"frontend.{index}", component)
+                      for index, component in enumerate(engine.frontend_runtime.components))
     processes = [(name, getattr(component, "process", None)) for name, component in components]
     errors = []
     try:

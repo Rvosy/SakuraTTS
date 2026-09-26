@@ -27,4 +27,4 @@ __pycache__/
 /artifacts/
 /results/
 /.cache/
-/configs/tts_infer.yaml
+/configs/tts_infer*.yaml

@@ -1,6 +1,38 @@
 # 推理档位
 
-当前提供四档：FP32、FP16 标准、FP16 低显存、FP16 极限。对应此前实验的 A、C、E、H。FP16 标准是常用推荐候选；不传实验选项时，运行时仍沿用 FP32 默认。FP16 的人工听音验收尚未完成。
+公共入口通过 `backend` 选择设备，通过 `profile` 选择预设。后端名为 `cpu`、`cuda`、`directml`、`mlx`；具体模型范围和验证状态见[兼容矩阵](specs/compatibility-matrix.md)。`sakuratts capabilities` 可在不加载计算库的情况下列出可用组合。
+
+| 档位 | CPU | AMD DirectML | NVIDIA CUDA | Apple MLX（实验） |
+|---|---|---|---|---|
+| `int8` | 默认且唯一档位：ORT INT8 GPT，4 线程；FP32 声学，8 线程 | 不提供 | 不提供 | 不提供 |
+| `fp16` | 不提供 | 默认且唯一档位：GPU GPT + 全图 FP16 声学，KV 容量 1280 | FP16 GPT + FP16 分块声学，释放 GPT 请求状态 | 尚未实现 |
+| `fp32` | 不提供 | 不提供 | FP32，保留模型 | FP32 decode / 声学，CPU FP64 Prefill |
+| `low-memory` | 不提供 | 不提供 | FP16，声学 Session 错峰 | FP32，释放 GPT 请求状态 |
+| `minimum-memory` | 不提供 | 不提供 | FP16，GPT / 声学及声学 Session 错峰 | FP32，GPT / 声学错峰 |
+
+预设的具体选项由 [profiles.py](../src/sakuratts/profiles.py) 定义。CPU / DirectML 的详细参数见[设备指南](cpu-amd.md)。MLX 目前仅接受预制的原生 V2Pro 包；声学 encoder 在 CPU 执行，flow / decoder 在 Metal 执行，尚未在当前公共入口完成 Apple 真机复验。
+
+```powershell
+sakuratts tts MODEL_AMD --backend directml --profile fp16 --text "こんにちは。" --output outputs/hello.wav
+sakuratts serve MODEL_CPU --backend cpu --profile int8 --runtime-mode managed
+```
+
+```python
+from sakuratts import Engine
+
+with Engine.load("MODEL_AMD", backend="directml") as engine:
+    audio = engine.synthesize("こんにちは。")
+```
+
+YAML 使用 `sakuratts.backend`、`sakuratts.profile` 和 `sakuratts.runtime_options`。命令行或 Python 显式参数覆盖 YAML 对应字段；`runtime_options` 覆盖预设中的资源参数，显式 `experimental` 再覆盖 `runtime_options`。省略 `profile` 时，CPU 选择 `int8`，DirectML 选择 `fp16`；CUDA 与 MLX 保持原有默认行为。精度和设备必须满足档位要求，误用模型或覆盖为不匹配的 GPT 设备会报错。`minimum-memory` 用于低级 Engine、`tts` 或 `managed` HTTP，默认 `direct` HTTP 不接受错峰加载。
+
+选择档位不会转换模型。CPU 需要 GPT INT8 附加资源与 FP32 整图声学包；DirectML 需要 FP16 GPT、容量 1280 的静态 Decode 资源和有独立设备执行记录的全图 FP16 声学包。后者要求有限输出、I/O、重复性和资源哈希检查通过，允许保留未通过的 FP32 误差筛查，不代表音质验收。降精度可能改变采样序列和音频长度，准备和试听方法见[CPU / AMD 指南](cpu-amd.md)。
+
+CPU 模式不加载 GPU 执行器。DirectML 把 GPT Transformer 与声学模型放在 GPU，文本处理、embedding 和采样仍使用 CPU。默认 GPT 线程数为 4，DirectML 声学的 CPU 部分为 2 线程。两条路径都允许显式调整线程、容量和驻留策略；其他 CPU / AMD 候选仅保留在[历史实验](../research/notes/cpu-amd-precision-listening-20260927.md)，不再作为公开档位。
+
+## NVIDIA 既有档位与实测
+
+CUDA 当前提供四档：FP32、FP16 标准、FP16 低显存、FP16 极限。对应此前实验的 A、C、E、H。FP16 标准是常用推荐候选；不传实验选项时，运行时仍沿用 FP32 默认。FP16 的人工听音验收尚未完成。
 
 | 档位 | 配置文件 | 适用情况 |
 |---|---|---|

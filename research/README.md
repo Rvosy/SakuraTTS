@@ -20,6 +20,8 @@ python research/compare_official.py --help
 
 报告中的设备、模型和绝对路径属于当时记录。归档不会使数值失败变成通过；重跑需要准备对应平台、官方源码和模型资源。
 
+CPU / AMD 的当前入口只保留 CPU `int8` 和 DirectML `fp16`，默认参数见[推理档位](../docs/inference-profiles.md)。下列历史实验仍保留已停用配置的数据和失败记录，不作为当前可选档位。
+
 文档中的早期方案与交接记录按日期归档：
 
 - [原生 GPU 初始方案](notes/native-gpu-runtime-proposal-20260919.md)
@@ -28,3 +30,11 @@ python research/compare_official.py --help
 - [兼容性证据汇总](notes/compatibility-evidence-20260920.md)
 - [固定版本上游与本地整合包核查](notes/architecture-audit-20260922.md)
 - [早期精简运行包压缩与运行检查](notes/portable-runtime-bundle-20260922.md)
+- [Radeon 780M：CPU / DirectML 与 Genie 对照](notes/cpu-directml-780m-20260927.md)
+- [CPU GPT：统一 ONNX 图与 INT8 实验](notes/cpu-gpt-ort-20260927.md)
+- [Radeon 780M：声码器混合 FP16](notes/directml-mixed-vocoder-780m-20260927.md)
+- [CPU / Radeon 780M：完整请求与执行档位](notes/cpu-amd-performance-20260927.md)
+- [CPU 与 AMD 独立精度：完整请求和试听](notes/cpu-amd-precision-listening-20260927.md)
+- [Genie 与当前 CPU / AMD 配置：同机重测和试听](notes/genie-comparison-20260927.md)
+- [DirectML GPT：静态图与 GPU KV](notes/directml-gpt-static-20260927.md)
+- [CPU / DirectML：全图 FP16 声学实验](notes/acoustic-fp16-finite-20260927.md)

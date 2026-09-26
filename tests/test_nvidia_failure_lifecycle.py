@@ -79,8 +79,8 @@ class NvidiaFailureLifecycleTests(unittest.TestCase):
     def test_staged_semantic_cancellation_unloads_weights(self):
         model = engine("staged")
         cancelled = SynthesisCancelled("after_prefill")
-        with patch("sakuratts.backends.cuda.engine.prepare_text_request", return_value=prepared()), \
-             patch("sakuratts.backends.cuda.engine.generate_prepared_semantic", side_effect=cancelled):
+        with patch("sakuratts._internal.runtime.prepare_text_request", return_value=prepared()), \
+             patch("sakuratts._internal.runtime.generate_prepared_semantic", side_effect=cancelled):
             with self.assertRaises(SynthesisCancelled) as caught:
                 model.synthesize("test")
         self.assertIs(caught.exception, cancelled)
@@ -91,9 +91,9 @@ class NvidiaFailureLifecycleTests(unittest.TestCase):
     def test_staged_acoustic_cancellation_does_not_overlap_next_request(self):
         model = engine("staged")
         cancelled = SynthesisCancelled("before_acoustic")
-        with patch("sakuratts.backends.cuda.engine.prepare_text_request", return_value=prepared()), \
-             patch("sakuratts.backends.cuda.engine.generate_prepared_semantic", return_value=SimpleNamespace(generation=speech().generation)), \
-             patch("sakuratts.backends.cuda.engine.synthesize_acoustic", side_effect=[cancelled, speech()]):
+        with patch("sakuratts._internal.runtime.prepare_text_request", return_value=prepared()), \
+             patch("sakuratts._internal.runtime.generate_prepared_semantic", return_value=SimpleNamespace(generation=speech().generation)), \
+             patch("sakuratts._internal.runtime.synthesize_acoustic", side_effect=[cancelled, speech()]):
             with self.assertRaises(SynthesisCancelled):
                 model.synthesize("test")
             self.assertIsNone(model.sovits)
@@ -113,9 +113,9 @@ class NvidiaFailureLifecycleTests(unittest.TestCase):
                 kwargs["sovits"].process = None
                 raise failed
             return speech()
-        with patch("sakuratts.backends.cuda.engine.prepare_text_request", return_value=prepared()), \
-             patch("sakuratts.backends.cuda.engine.generate_prepared_semantic", return_value=SimpleNamespace(generation=speech().generation)), \
-             patch("sakuratts.backends.cuda.engine.synthesize_acoustic", side_effect=acoustic):
+        with patch("sakuratts._internal.runtime.prepare_text_request", return_value=prepared()), \
+             patch("sakuratts._internal.runtime.generate_prepared_semantic", return_value=SimpleNamespace(generation=speech().generation)), \
+             patch("sakuratts._internal.runtime.synthesize_acoustic", side_effect=acoustic):
             with self.assertRaises(RuntimeError) as caught:
                 model.synthesize("test")
             self.assertIs(caught.exception, failed)
@@ -130,9 +130,9 @@ class NvidiaFailureLifecycleTests(unittest.TestCase):
         def semantic(*args, **kwargs):
             random_generators.append(kwargs["rng"])
             return SimpleNamespace(generation=speech().generation)
-        with patch("sakuratts.backends.cuda.engine.prepare_text_request", return_value=prepared(2)), \
-             patch("sakuratts.backends.cuda.engine.generate_prepared_semantic", side_effect=semantic), \
-             patch("sakuratts.backends.cuda.engine.synthesize_acoustic", side_effect=[speech(), SynthesisCancelled("after_acoustic")]):
+        with patch("sakuratts._internal.runtime.prepare_text_request", return_value=prepared(2)), \
+             patch("sakuratts._internal.runtime.generate_prepared_semantic", side_effect=semantic), \
+             patch("sakuratts._internal.runtime.synthesize_acoustic", side_effect=[speech(), SynthesisCancelled("after_acoustic")]):
             with self.assertRaises(SynthesisCancelled):
                 model.synthesize("two complete fragments")
         self.assertIs(random_generators[0], random_generators[1])
@@ -149,9 +149,9 @@ class NvidiaFailureLifecycleTests(unittest.TestCase):
             model.gpt.release_error = RuntimeError("GPU cleanup failed")
             model.sovits.process = None
             raise failed
-        with patch("sakuratts.backends.cuda.engine.prepare_text_request", return_value=prepared()), \
-             patch("sakuratts.backends.cuda.engine.generate_prepared_semantic", return_value=SimpleNamespace(generation=speech().generation)), \
-             patch("sakuratts.backends.cuda.engine.synthesize_acoustic", side_effect=acoustic):
+        with patch("sakuratts._internal.runtime.prepare_text_request", return_value=prepared()), \
+             patch("sakuratts._internal.runtime.generate_prepared_semantic", return_value=SimpleNamespace(generation=speech().generation)), \
+             patch("sakuratts._internal.runtime.synthesize_acoustic", side_effect=acoustic):
             with self.assertRaises(RuntimeError) as caught:
                 model.synthesize("test")
         self.assertIs(caught.exception, failed)

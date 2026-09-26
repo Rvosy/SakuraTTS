@@ -27,7 +27,7 @@ python api.py -a 127.0.0.1 -p 9880 -c configs/tts_infer.yaml
 sakuratts serve models/sakura --runtime-mode managed
 ```
 
-控制模式启动后处于 `sleeping`，收到提前唤醒或需要推理的请求后再启动完整推理进程。空闲期结束后退出该进程及其子进程，HTTP 控制服务继续接受请求。默认保留 FP32；运行模式与显存档位分别选择。A / C / E 可用于两种模式，H 极限档的总体 `policy="staged"` 仅在 `managed` 中开放。
+控制模式启动后处于 `sleeping`，收到提前唤醒或需要推理的请求后再启动完整推理进程。空闲期结束后退出该进程及其子进程，HTTP 控制服务继续接受请求。运行模式不改变所选设备的精度档位；CUDA 默认保留 FP32。CUDA 的 A / C / E 可用于两种模式，H 极限档的总体 `policy="staged"` 仅在 `managed` 中开放。
 
 显存优先时，可在控制模式中显式选择 H 档：
 

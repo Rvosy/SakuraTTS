@@ -144,10 +144,74 @@ def graph_inventory(model):
             "node_counts": dict(Counter(node.op_type for node in model.graph.node))}
 
 
+def vocoder_nodes(model):
+    """Find the waveform subgraph while keeping the decoder input boundary FP32."""
+    producers = {name: node for node in model.graph.node for name in node.output}
+    public = {item.name for item in model.graph.input}
+    selected, visited = set(), set()
+
+    def visit(name):
+        if not name or name in visited:
+            return
+        visited.add(name)
+        if name == "decoder_input" or name in public or name not in producers:
+            return
+        node = producers[name]
+        selected.add(node.name)
+        for source in node.input:
+            visit(source)
+
+    visit("waveform")
+    if "decoder_input" not in visited or not selected:
+        raise ValueError("Vocoder FP16 conversion requires the decoder_input-to-waveform graph boundary")
+    return selected
+
+
+def convert_vocoder(model, *, block_ops, block_nodes):
+    """Convert an extracted vocoder so upstream FP32 edges never acquire half casts."""
+    from onnx.utils import Extractor
+
+    selected = vocoder_nodes(model)
+    nodes = [node for node in model.graph.node if node.name in selected]
+    produced = {name for node in nodes for name in node.output}
+    weights = {tensor.name for tensor in model.graph.initializer}
+    boundary = sorted({name for node in nodes for name in node.input if name and name not in produced and name not in weights})
+    part = Extractor(model).extract_model(boundary, ["waveform"])
+    converted = convert_float_to_float16(part, keep_io_types=True, op_block_list=block_ops,
+        node_block_list=[name for name in block_nodes if name in selected],
+        min_positive_val=5.96e-8, max_finite_val=65504.0)
+    public = set(boundary) | {"waveform"}
+
+    def renamed(name):
+        return name if not name or name in public else "vocoder_fp16/" + name
+
+    for node in converted.graph.node:
+        node.name = "vocoder_fp16/" + node.name
+        for items in (node.input, node.output):
+            for index, name in enumerate(items):
+                items[index] = renamed(name)
+    for items in (converted.graph.initializer, converted.graph.value_info):
+        for item in items:
+            item.name = renamed(item.name)
+    remaining = [node for node in model.graph.node if node.name not in selected]
+    needed = {name for node in remaining for name in node.input}
+    initializers = [tensor for tensor in model.graph.initializer if tensor.name in needed]
+    value_info = [item for item in model.graph.value_info if item.name not in produced]
+    del model.graph.node[:]
+    model.graph.node.extend([*remaining, *converted.graph.node])
+    del model.graph.initializer[:]
+    model.graph.initializer.extend([*initializers, *converted.graph.initializer])
+    del model.graph.value_info[:]
+    model.graph.value_info.extend([*value_info, *converted.graph.value_info])
+    return model
+
+
 def convert(source, output, *, extra_block_ops=(), block_nodes=(), optimization_level="all", deterministic_compute=False,
-            lower_transpose=False):
+            lower_transpose=False, fp16_scope="all"):
     if lower_transpose not in (False, True, "zero-insert", "polyphase"):
         raise ValueError("Unknown ConvTranspose lowering method")
+    if fp16_scope not in ("all", "vocoder"):
+        raise ValueError("FP16 scope must be all or vocoder")
     source, output = Path(source).resolve(), Path(output).resolve()
     if source == output or source in output.parents:
         raise ValueError("Candidate output must be separate from its FP32 source package")
@@ -173,9 +237,15 @@ def convert(source, output, *, extra_block_ops=(), block_nodes=(), optimization_
     if lower_transpose and not lowering:
         raise ValueError("Source graph contains no ConvTranspose nodes to lower")
     lowering_validation = validate_lowered_fp32(original, source) if lower_transpose else None
+    conversion_weights = None
+    if fp16_scope == "vocoder":
+        # DirectML half-precision Tanh loses low-amplitude waveform detail on the tested adapter.
+        extra_block_ops = set(extra_block_ops) | {"Tanh"}
+        selected = vocoder_nodes(original)
+        conversion_weights = {name for node in original.graph.node if node.name in selected for name in node.input}
     finite_overflow = []
     for tensor in original.graph.initializer:
-        if tensor.data_type == onnx.TensorProto.FLOAT:
+        if tensor.data_type == onnx.TensorProto.FLOAT and (conversion_weights is None or tensor.name in conversion_weights):
             values = onnx.numpy_helper.to_array(tensor)
             if not np.isfinite(values).all() or (np.abs(values) > 65504).any():
                 finite_overflow.append(tensor.name)
@@ -183,9 +253,12 @@ def convert(source, output, *, extra_block_ops=(), block_nodes=(), optimization_
         raise ValueError(f"FP16 conversion would overflow weight tensors: {finite_overflow}")
     output.mkdir(parents=True, exist_ok=False)
     block_ops = sorted(set(DEFAULT_OP_BLOCK_LIST) | set(extra_block_ops))
-    candidate = convert_float_to_float16(original, keep_io_types=True,
-        op_block_list=block_ops, node_block_list=list(block_nodes),
-        min_positive_val=5.96e-8, max_finite_val=65504.0)
+    if fp16_scope == "vocoder":
+        candidate = convert_vocoder(original, block_ops=block_ops, block_nodes=list(block_nodes))
+    else:
+        candidate = convert_float_to_float16(original, keep_io_types=True,
+            op_block_list=block_ops, node_block_list=list(block_nodes),
+            min_positive_val=5.96e-8, max_finite_val=65504.0)
     OnnxModel(candidate).topological_sort()
     for node in candidate.graph.node:
         if node.op_type == "LayerNormalization":
@@ -209,7 +282,7 @@ def convert(source, output, *, extra_block_ops=(), block_nodes=(), optimization_
     onnx.save_model(candidate, str(output / "acoustic.onnx"))
     for name in ("acoustic-debug.onnx", "acoustic.onnx"):
         onnx.checker.check_model(str(output / name), full_check=True)
-    precision = {"profile": PROFILE, "keep_io_types": True,
+    precision = {"profile": PROFILE, "keep_io_types": True, "fp16_scope": fp16_scope,
                  "input_dtype": "float32", "output_dtype": "float32",
                  "op_block_list": block_ops, "node_block_list": list(block_nodes),
                  "layer_normalization_accumulation": "float32 (ONNX stash_type=1)",
@@ -262,13 +335,15 @@ def main():
     parser.add_argument("--keep-fp32-node", action="append", default=[])
     parser.add_argument("--optimization-level", choices=("all", "basic", "disabled"), default="all")
     parser.add_argument("--deterministic-compute", action="store_true")
+    parser.add_argument("--fp16-scope", choices=("all", "vocoder"), default="all",
+                        help="Convert all eligible nodes, or only the vocoder with FP32 Tanh")
     parser.add_argument("--lower-conv-transpose", nargs="?", const="zero-insert", default=False,
                         choices=("zero-insert", "polyphase"))
     args = parser.parse_args()
     print(json.dumps(convert(args.source, args.output,
         extra_block_ops=args.keep_fp32_op, block_nodes=args.keep_fp32_node,
         optimization_level=args.optimization_level, deterministic_compute=args.deterministic_compute,
-        lower_transpose=args.lower_conv_transpose), indent=2))
+        lower_transpose=args.lower_conv_transpose, fp16_scope=args.fp16_scope), indent=2))
 
 
 if __name__ == "__main__":

@@ -43,18 +43,32 @@ class Audio:
 class Engine:
     """One model, one active request. Close explicitly or use a with block."""
 
-    def __init__(self, model, runtime):
+    def __init__(self, model, runtime, *, profile=None):
         self.model = model
         self._runtime = runtime
+        self.profile = profile
         self._lock = Lock()
         self._closed = False
 
     @classmethod
-    def load(cls, path, *, backend=None, experimental=None, load_references=True):
+    def load(cls, path, *, backend=None, profile=None, experimental=None, load_references=True):
         model = path if isinstance(path, Model) else Model.load(path)
         from .backends import create_runtime
-        return cls(model, create_runtime(model, backend=backend,
-            experimental=experimental, load_references=load_references))
+        from .profiles import resolve_profile, validate_runtime_precision
+        selected = model.backend if backend is None else backend
+        profile, options = resolve_profile(selected, profile, experimental)
+        runtime = create_runtime(model, backend=backend,
+            experimental=options, load_references=load_references)
+        try:
+            if profile is not None:
+                validate_runtime_precision(selected, profile, runtime)
+        except BaseException as error:
+            try:
+                runtime.close()
+            except BaseException as cleanup_error:
+                error.add_note(f"Runtime cleanup failed after profile validation: {cleanup_error!r}")
+            raise
+        return cls(model, runtime, profile=profile)
 
     def synthesize(self, text, *, reference=None, seed=1234, language="ja",
                    split_method="cut0", top_k=15, temperature=1.,
@@ -71,6 +85,8 @@ class Engine:
                 early_stop_num=early_stop_num, cancel_requested=cancel_requested,
                 fragment_interval=fragment_interval, on_fragment=on_fragment, collect_audio=collect_audio,
                 split_bucket=split_bucket)
+            if self.profile is not None:
+                report["profile"] = self.profile
             return Audio(pcm, report["sample_rate"], report)
         finally:
             self._lock.release()
@@ -123,16 +139,16 @@ def read_inference_configuration(model=None, *, tts_config=None):
             if custom.get("cnhuhbert_base_path"):
                 settings["cnhubert"] = custom["cnhuhbert_base_path"]
     from ._internal.portable import preparation_settings
+    if "runtime_options" in settings and not isinstance(settings["runtime_options"], dict):
+        raise ValueError("sakuratts.runtime_options must be a mapping")
     return model, preparation_settings(settings)
 
 
 class Inference:
     """Upstream API lifecycle, owned entirely by one service worker thread."""
 
-    def __init__(self, model=None, *, tts_config=None, backend=None, experimental=None, _allow_staged=False):
+    def __init__(self, model=None, *, tts_config=None, backend=None, profile=None, experimental=None, _allow_staged=False):
         import logging
-        if (experimental or {}).get("policy") == "staged" and not _allow_staged:
-            raise ValueError("Direct HTTP loads both models at startup; staged policy requires managed mode or the low-level Engine")
         self.logger = logging.getLogger("sakuratts.engine")
         self.engine = None
         self.references = None
@@ -140,11 +156,24 @@ class Inference:
         self.experimental = experimental
         self.reference_audio = None
         model, self.settings = read_inference_configuration(model, tts_config=tts_config)
+        if self.settings.get("runtime_options"):
+            self.experimental = {**self.settings["runtime_options"], **(experimental or {})}
+        if profile is not None:
+            self.settings["profile"] = profile
         if backend is not None:
             self.settings["backend"] = backend
+        from .profiles import resolve_profile, uses_staged_policy
+        if "backend" in self.settings:
+            effective, _ = resolve_profile(self.settings["backend"], self.settings.get("profile"), self.experimental)
+            if effective is not None:
+                self.settings["profile"] = effective
+        if uses_staged_policy(self.settings.get("profile"), self.experimental) and not _allow_staged:
+            raise ValueError("Direct HTTP loads both models at startup; staged policy requires managed mode or the low-level Engine")
         if "backend" in self.settings:
             from .backends import require_backend
             require_backend(self.settings["backend"])
+            if self.settings["backend"] == "mlx":
+                raise NotImplementedError("MLX currently supports prepared native V2Pro packages through Engine only; HTTP Inference is not supported")
         try:
             if model is not None:
                 self._activate(model if isinstance(model, Model) else Model.load(model))
@@ -166,6 +195,8 @@ class Inference:
             raise
 
     def _activate(self, model):
+        if self.settings.get("backend", model.backend) == "mlx":
+            raise NotImplementedError("MLX currently supports prepared native V2Pro packages through Engine only; HTTP Inference is not supported")
         from .reference import ReferenceCache
         workers = {name: str(Path(self.settings[name]).resolve()) for name in ("acoustic_python", "frontend_python")
                    if self.settings.get(name)}
@@ -174,6 +205,8 @@ class Inference:
         self.logger.info("加载 GPT / SoVITS…")
         self.logger.debug("Loading GPT and SoVITS weights: %s", model.path)
         options = {"backend": self.settings["backend"]} if "backend" in self.settings else {}
+        if "profile" in self.settings:
+            options["profile"] = self.settings["profile"]
         candidate = Engine.load(model, experimental=self.experimental, load_references=False, **options)
         try:
             references = ReferenceCache(candidate, self.settings)
@@ -236,7 +269,8 @@ class Inference:
                 output=output, name=Path(self.settings["sovits_checkpoint"]).stem,
                   acoustic_python=self.settings.get("acoustic_python"),
                   frontend_python=self.settings.get("frontend_python"),
-                  language_model=self.settings.get("language_model"), **options)
+                  language_model=self.settings.get("language_model"),
+                  backend=self.settings.get("backend", "cuda"), **options)
         else:
             self.logger.info("复用 GPT / SoVITS 转换缓存")
         self._activate(Model.load(output))

@@ -41,7 +41,7 @@ class ConversionPublishTests(unittest.TestCase):
                     options.update(reference=root / "reference.wav", reference_text="reference")
                 with patch("sakuratts.converter.run_conversion", side_effect=self.run_conversion), \
                      patch("sakuratts.converter.shutil.copytree", side_effect=AssertionError("Conversion should not copy resources")), \
-                     patch("sakuratts._internal.diagnostics.check_windows_packages") as check:
+                     patch("sakuratts._internal.diagnostics.check_prepared_packages") as check:
                     model = convert(**options)
                 check.assert_called_once()
                 self.assertEqual(model.path, root / "model/model.json")
@@ -67,7 +67,7 @@ class ConversionPublishTests(unittest.TestCase):
                         raise RuntimeError("conversion failed")
 
                 with patch("sakuratts.converter.run_conversion", side_effect=run), \
-                     patch("sakuratts._internal.diagnostics.check_windows_packages", side_effect=RuntimeError("invalid package")), \
+                     patch("sakuratts._internal.diagnostics.check_prepared_packages", side_effect=RuntimeError("invalid package")), \
                      self.assertRaises(RuntimeError):
                     convert(**options)
                 self.assertFalse((root / "model").exists())
@@ -80,7 +80,7 @@ class ConversionPublishTests(unittest.TestCase):
             frontend_python = root / "frontend.exe"
             frontend_python.write_bytes(b"frontend interpreter")
             with patch("sakuratts.converter.run_conversion", side_effect=self.run_conversion), \
-                 patch("sakuratts._internal.diagnostics.check_windows_packages"):
+                 patch("sakuratts._internal.diagnostics.check_prepared_packages"):
                 model = convert(**options, frontend_python=frontend_python)
             self.assertEqual(model.manifest["frontend_python"], str(frontend_python))
             self.assertNotIn("acoustic_python", model.manifest)

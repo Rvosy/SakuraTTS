@@ -71,7 +71,7 @@ assert not set(('numpy', 'torch', 'cupy', 'mlx', 'onnxruntime', 'pyopenjtalk',
         result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         capabilities = json.loads(result.stdout)
-        self.assertEqual(capabilities["backends"], ["cuda"])
+        self.assertEqual(capabilities["backends"], ["cuda", "cpu", "directml", "mlx"])
         self.assertEqual(capabilities["languages"], ["ja", "en"])
         self.assertEqual(capabilities["language_modes"], ["ja", "all_ja", "en", "auto"])
 

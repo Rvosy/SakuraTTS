@@ -1,0 +1,271 @@
+{
+  "version": 1,
+  "date": "2026-09-27",
+  "scope": "GPT only, saved short-request phones/reference and fixed 16-token history; not a complete TTS request, natural sampling, quality acceptance or controlled performance benchmark",
+  "environment": {
+    "cpu": "AMD Ryzen 7 7840HS",
+    "gpu": "AMD Radeon 780M",
+    "device_id": 0,
+    "onnxruntime": "1.24.4",
+    "precision": "FP16 Transformer graph and KV, FP32 CPU embeddings/sampling logits"
+  },
+  "capacity": 512,
+  "sessions": 2,
+  "graph": {
+    "source_graph_sha256": "f43a1f69b060ce75121e549e8f2fccb8d742a052d5967599a25c03967d6882c4",
+    "graph_sha256": "3813fa6fa9bbd95cbcc74b8990c5cee1f38b32ba0f3045541f8e099d19a9020c",
+    "graph_bytes": 152497072,
+    "capacity": 512,
+    "cache_shape_per_layer": [
+      513,
+      16,
+      32
+    ],
+    "graph_io_dtype": "FLOAT16",
+    "operators": {
+      "MatMul": 193,
+      "Add": 192,
+      "Slice": 120,
+      "Reshape": 96,
+      "Transpose": 168,
+      "Unsqueeze": 48,
+      "Concat": 26,
+      "Mul": 24,
+      "Softmax": 24,
+      "Shape": 24,
+      "Gather": 73,
+      "LayerNormalization": 48,
+      "Relu": 24,
+      "Identity": 1,
+      "ScatterND": 48
+    }
+  },
+  "identity": {
+    "case": "short",
+    "parameters": {
+      "seed": 1234,
+      "rng": "numpy.default_rng (not Torch seed-equivalent)",
+      "language": "ja",
+      "split_method": "cut0",
+      "split_bucket": false,
+      "top_k": 15,
+      "top_p": 1.0,
+      "temperature": 1.0,
+      "repetition_penalty": 1.35,
+      "early_stop_num": 2700,
+      "noise_scale": 0.5,
+      "speed": 1.0,
+      "fragment_interval": 0.3
+    },
+    "reference_identity": {
+      "gpt_checkpoint_sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf",
+      "sovits_checkpoint_sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81",
+      "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+      "official_commit": "source-sha256:75398e84f6625044d794ebfc2f2ac6d6202f328259e13e032c405301e99efb6a",
+      "reference_text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+      "reference_language": "ja"
+    },
+    "input_sha256": {
+      "phones": "be27cb2f6148ae306d4d1ec8fbade8e26832665b3140651ca14f3721df34722d",
+      "prompt": "67c4e3bccbcd5b6e09f42ea08c0c96fd54c67a0f6ccc2fa1368634339b884bcf",
+      "bert": "ddd7edb9d1a4e6d19cafb0aa417530dabac6d71b4f54385b27210fe84e9f980b",
+      "tokens": "288845351963de4a1f13d6e190d91cdfff39e7e45999cc582d3c959a73ce8690"
+    },
+    "gpt_manifest_sha256": "e1cc4296095f65b98ccaf48501edb5558bbd1fec485a6a020d60b19de6d70a68",
+    "result_sha256": "14481091dcf81291f94b7d178e1f9c4be299340d6fe2eb35eef8814079d90154"
+  },
+  "corrected": {
+    "load_ms": 1972.034899998107,
+    "measurements": [
+      {
+        "prefill_ms": 651.2788999971235,
+        "decode_ms": 187.45060000219382,
+        "decode_cpu_ms": 140.625,
+        "decode_steps_ms": [
+          25.44830000260845,
+          14.766599997528829,
+          14.400200001546182,
+          13.079299998935312,
+          12.273200001800433,
+          11.293199990177527,
+          10.721899991040118,
+          10.373100012657233,
+          9.903800004394725,
+          9.742399997776374,
+          9.616000010282733,
+          9.267599991289899,
+          9.227699993061833,
+          9.287399996537715,
+          8.95420000597369,
+          9.047699990333058
+        ],
+        "decode_tokens": 16,
+        "logits_finite": true,
+        "nonfinite_logit_rows": []
+      },
+      {
+        "prefill_ms": 83.1041999917943,
+        "decode_ms": 139.5602999982657,
+        "decode_cpu_ms": 125.0,
+        "decode_steps_ms": [
+          10.228400002233684,
+          9.298700009821914,
+          8.763200006796978,
+          8.381899999221787,
+          8.749300002818927,
+          8.522000003722496,
+          8.96880000072997,
+          8.470100001432002,
+          8.318200008943677,
+          8.356299993465655,
+          8.310799996252172,
+          8.375700010219589,
+          8.439600002020597,
+          8.636400001705624,
+          8.950300005380996,
+          8.757899995543994
+        ],
+        "decode_tokens": 16,
+        "logits_finite": true,
+        "nonfinite_logit_rows": []
+      }
+    ],
+    "profile": {
+      "DmlExecutionProvider:DmlFusedNode_0_0": 32
+    },
+    "cache_devices": [
+      "dml"
+    ],
+    "all_logits_finite": true,
+    "repeat_max_abs_error": 0.0,
+    "repeat_argmax_disagreements": 0
+  },
+  "dynamic_fp16_comparison": {
+    "dynamic_finite": true,
+    "static_finite": true,
+    "max_abs_error": 0.0546875,
+    "rmse": 0.019225455781644137,
+    "argmax_disagreements": 0,
+    "per_step_max_error": [
+      0.0,
+      0.033203125,
+      0.0390625,
+      0.0234375,
+      0.0498046875,
+      0.046875,
+      0.046875,
+      0.0546875,
+      0.0439453125,
+      0.03125,
+      0.046875,
+      0.0546875,
+      0.04296875,
+      0.0472412109375,
+      0.04296875,
+      0.03125,
+      0.03125
+    ]
+  },
+  "initial_failure": {
+    "symptom": "Prefill finite; first request decode logits all NaN; second request finite",
+    "cause": "Small CPU hidden/mask/write_index inputs were bound before mutation; BindInput copies to DirectML and later host mutation does not refresh the bound device tensor",
+    "excluded": "GPU KV upload checked by exact readback; automatic CPU logits output still reproduced failure",
+    "fix": "Rebind all three small host inputs after each update; GPU KV remains device-resident",
+    "initial_report_caveat": "The first prototype result.json logits_finite field covered the last repeat only. Initial failure is recorded here and in the archived logits; corrected tool records each repeat and aggregates all repeats."
+  },
+  "raw_reports": [
+    {
+      "path": ".cache/directml-gpt-static-tiny/result.json",
+      "sha256": "359e9cb2536103f20aad66303885e2cfee7b2b5b62689647a41d936611ef1fbb",
+      "bytes": 591
+    },
+    {
+      "path": ".cache/directml-gpt-static-fp16-short/result.json",
+      "sha256": "a3bd85d525cdfcec94a3853206d6a1817e816979cdcfa9b6f24039d5db3f696b",
+      "bytes": 4405
+    },
+    {
+      "path": ".cache/directml-gpt-static-fp16-verify-upload/result.json",
+      "sha256": "b04e1b6615b0461d41127bd17d0b9421c48f0f086ddd926e1dc39891176f677d",
+      "bytes": 3849
+    },
+    {
+      "path": ".cache/directml-gpt-static-fp16-auto-logits/result.json",
+      "sha256": "7fc01827825f99b2eec67094e8c9e34942f2167471cf8e7df07ec4c62c31cd3d",
+      "bytes": 3847
+    },
+    {
+      "path": ".cache/directml-gpt-static-fp16-rebind/result.json",
+      "sha256": "110a0e866826839f4f123d176b6807900149eb31d0006322714f3e21ccc787fe",
+      "bytes": 4536
+    },
+    {
+      "path": ".cache/directml-gpt-static-fp16-rebind/dynamic-compare.json",
+      "sha256": "6c4bb4987692d9080b73ef5939648698b6380a6d6c7c25a7aa11b1b31bbdbd15",
+      "bytes": 2180
+    },
+    {
+      "path": ".cache/directml-gpt-static-fp16-rebind/logits-0.npy",
+      "sha256": "3a7ecfb03cff67c7d9b6b43874d10bca9e73ff02103d3d99a575476bfa2f7445",
+      "bytes": 69828
+    },
+    {
+      "path": ".cache/directml-gpt-static-fp16-rebind/logits-1.npy",
+      "sha256": "3a7ecfb03cff67c7d9b6b43874d10bca9e73ff02103d3d99a575476bfa2f7445",
+      "bytes": 69828
+    },
+    {
+      "path": ".cache/directml-gpt-static-fp16-rebind/dynamic-logits.npy",
+      "sha256": "dbbd6d6407c6be16a3f48bf8c20a1ab7f16aff6b41894ec8e266b5481c1ed110",
+      "bytes": 69828
+    },
+    {
+      "path": ".cache/directml-gpt-static-fp16-rebind/decode-profile_2026-09-27_03-12-01.json",
+      "sha256": "2b5e8d4eedef6046f25cda14ffff87a3e56b9a645ebc9dbfcb84d1c3d1be4627",
+      "bytes": 104554
+    },
+    {
+      "path": ".cache/directml-gpt-static-fp16-short/logits-0.npy",
+      "sha256": "7f5c3995d5f03352f695a0e4cfc0c75e6c9da478e3a13fb245649db38e7ad6e1",
+      "bytes": 69828
+    },
+    {
+      "path": ".cache/directml-gpt-static-fp16-short/logits-1.npy",
+      "sha256": "1ee6c249518105064ed0b3ece0edb53670810ac2ab313bec7f799eb9a65fc49e",
+      "bytes": 69828
+    }
+  ],
+  "implementation": [
+    {
+      "path": "src/sakuratts/backends/directml/static_gpt.py",
+      "sha256": "b989dd06e5bccb778285b736e8b10811a18211af3b0d3a124b8f81cae86596da",
+      "bytes": 10276
+    },
+    {
+      "path": "src/sakuratts/_internal/conversion/export_gpt_directml.py",
+      "sha256": "191631cde251ba26fb85f64b85807c8b2a80869ea058f236e1f9434da037173b",
+      "bytes": 5810
+    },
+    {
+      "path": "research/tools/directml_gpt_static.py",
+      "sha256": "9b196b343bec5ce6370c5b6f1154599f304cb11be311e1d40de3aac6fa159675",
+      "bytes": 10025
+    },
+    {
+      "path": "tests/test_directml_static_gpt.py",
+      "sha256": "bdbe5e20a995edb6d4ed9217d8d01a45e513393fbb1d7db66d12320754fcbbf2",
+      "bytes": 9856
+    }
+  ],
+  "tests": {
+    "command": ".venv-amd/Scripts/python.exe -m unittest discover -s tests -p test_directml_static_gpt.py -v",
+    "passed": 5,
+    "scope": "Real small CPU ONNX graphs with simulated device binder that copies on bind; independent FP64 math, initial/reset requests, capacity, failed run, source hashes and retained traceback cleanup"
+  },
+  "unverified": [
+    "2048-capacity full TTS timing and resource use are recorded separately by the product benchmark",
+    "Human listening and ASR acceptance",
+    "Other GPU/driver versions",
+    "Long-input fixed-history quality"
+  ]
+}

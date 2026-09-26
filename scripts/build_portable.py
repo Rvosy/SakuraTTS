@@ -40,8 +40,18 @@ def main_requirements(project, recipe):
               *(LANGUAGE_EXTRAS[name] for name in recipe["languages"]),
               *(SERVICE_EXTRAS[name] for name in recipe["services"])]
     requirements = list(project["dependencies"])
-    for extra in extras:
-        requirements.extend(project["optional-dependencies"][extra])
+    visited = set()
+    while extras:
+        extra = extras.pop()
+        if extra in visited:
+            continue
+        visited.add(extra)
+        for value in project["optional-dependencies"][extra]:
+            requirement = Requirement(value)
+            if canonicalize_name(requirement.name) == canonicalize_name(project["name"]):
+                extras.extend(requirement.extras)
+            else:
+                requirements.append(value)
     return requirements
 
 

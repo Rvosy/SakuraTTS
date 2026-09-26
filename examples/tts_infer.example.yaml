@@ -1,16 +1,22 @@
 # Paths resolve from the launch working directory, as in upstream api_v2.py.
 custom:
   version: v2ProPlus
-  device: cuda
+  device: cuda  # cuda, cpu, or directml (Windows GPU, including AMD)
   is_half: false
   t2s_weights_path: D:/Voices/model.ckpt
   vits_weights_path: D:/Voices/model.pth
 
 sakuratts:
+  profile: fp32  # See sakuratts capabilities for backend-specific presets.
   official_source: D:/Tools/GPT-SoVITS
   python: D:/Tools/GPT-SoVITS/runtime/python.exe
   acoustic_python: D:/Runtime/SakuraTTS/acoustic/python.exe
   cache_dir: .cache/sakuratts
+  # CPU / DirectML only; omit these options for CUDA.
+  # runtime_options:
+  #   threads: 2
+  #   enable_cpu_mem_arena: false
+  #   device_id: 0  # DirectML DXGI adapter index
   # Optional existing deployment package; original weight paths above still apply.
   # model: models/example/model.json
   # Optional local full language detector for conversion.

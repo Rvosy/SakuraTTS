@@ -94,9 +94,10 @@ class EngineFactory:
         engine.gpt_attention, engine.gpt_attention_chunk_size = "baseline", 256
         engine.gpt_prefill_query_chunk_size = 0
         engine.gpt = engine.sovits = None
-        engine.japanese = Worker()
-        self.frontends.append(engine.japanese.process)
-        engine.segmenter = SimpleNamespace(close=lambda: None)
+        frontend = Worker()
+        self.frontends.append(frontend.process)
+        engine.frontend_runtime = SimpleNamespace(profile={"implementation": "fixture"},
+            components=(frontend,), close=frontend.close)
 
         def load_gpt():
             if engine.gpt is None:
@@ -138,9 +139,9 @@ class EngineFactory:
 class ChunkedLifecycleTests(unittest.TestCase):
     def run_fake_suite(self, output, *, pcm_delta=0, chunks=3):
         factory, result = EngineFactory(pcm_delta=pcm_delta, chunks=chunks), record()
-        with patch("sakuratts.backends.cuda.engine.prepare_text_request", side_effect=factory.prepare), \
-                patch("sakuratts.backends.cuda.engine.generate_prepared_semantic", side_effect=factory.semantic), \
-                patch("sakuratts.backends.cuda.engine.synthesize_acoustic", side_effect=factory.acoustic):
+        with patch("sakuratts._internal.runtime.prepare_text_request", side_effect=factory.prepare), \
+                patch("sakuratts._internal.runtime.generate_prepared_semantic", side_effect=factory.semantic), \
+                patch("sakuratts._internal.runtime.synthesize_acoustic", side_effect=factory.acoustic):
             probe.run_checks(factory, output, result)
         return factory, result
 
@@ -155,6 +156,9 @@ class ChunkedLifecycleTests(unittest.TestCase):
             self.assertEqual(sum(worker.kill_count for worker in factory.workers), 1)
             self.assertEqual(sum(process.kill_count for process in factory.frontends), 0)
             self.assertTrue(all(process.poll() is not None for process in factory.workers + factory.frontends))
+            observed_frontends = {process["pid"] for row in result["cleanup"]
+                                  for process in row["owned_processes"] if process["role"].startswith("frontend.")}
+            self.assertEqual(observed_frontends, {process.pid for process in factory.frontends})
             self.assertTrue(all(not engine.busy and engine.gpt is None and engine.sovits is None for engine in factory.engines))
             self.assertEqual(set(factory.texts), {probe.TEXT})
             stages = {case.get("cancellation_stage") for case in result["cases"] if "cancellation_stage" in case}
@@ -180,9 +184,9 @@ class ChunkedLifecycleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             factory, result = EngineFactory(), record()
             result.update(entrypoint="public-package", loads=[])
-            with patch("sakuratts.backends.cuda.engine.prepare_text_request", side_effect=factory.prepare), \
-                    patch("sakuratts.backends.cuda.engine.generate_prepared_semantic", side_effect=factory.semantic), \
-                    patch("sakuratts.backends.cuda.engine.synthesize_acoustic", side_effect=factory.acoustic):
+            with patch("sakuratts._internal.runtime.prepare_text_request", side_effect=factory.prepare), \
+                    patch("sakuratts._internal.runtime.generate_prepared_semantic", side_effect=factory.semantic), \
+                    patch("sakuratts._internal.runtime.synthesize_acoustic", side_effect=factory.acoustic):
                 probe.run_checks(factory, Path(directory), result)
         self.assertTrue(probe.aggregate(result["cases"], result["cleanup"])["lifecycle_passed"])
         self.assertEqual({row["worker_pid"] for row in result["loads"]}, {worker.pid for worker in factory.workers})
@@ -204,7 +208,8 @@ class ChunkedLifecycleTests(unittest.TestCase):
             self.assertTrue(checks["phones_equal"])
 
     def test_close_failure_is_recorded_without_replacing_request_error(self):
-        engine = SimpleNamespace(policy="resident", gpt=None, sovits=None, japanese=None, segmenter=None,
+        engine = SimpleNamespace(policy="resident", gpt=None, sovits=None,
+                                 frontend_runtime=SimpleNamespace(components=()),
                                  close=Mock(side_effect=RuntimeError("injected close failure")))
         result = record()
         original = RuntimeError("original request failure")

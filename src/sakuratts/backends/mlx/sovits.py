@@ -53,7 +53,7 @@ class MLXSoVITS:
         return self._bound_reference
 
     @classmethod
-    def load(cls, package, *, encoder_device=None, encoder_softmax="fp32", fold_weight_norm=False,
+    def load(cls, package, *, device=None, encoder_device=None, encoder_softmax="fp32", fold_weight_norm=False,
              reference=None):
         """Load acoustic modules; FP64 softmax accumulation is CPU-only.
 
@@ -65,9 +65,11 @@ class MLXSoVITS:
         weights. A different reference then requires loading a new instance.
         """
         package = Path(package)
+        if device not in (None, "cpu", "gpu"):
+            raise ValueError("Acoustic device must be cpu, gpu, or the current default")
         if encoder_device not in (None, "cpu", "gpu"):
             raise ValueError("Encoder device must be cpu, gpu, or the current default")
-        device = mx.default_device()
+        device = mx.default_device() if device is None else (mx.cpu if device == "cpu" else mx.gpu)
         encoder_device = device if encoder_device is None else (mx.cpu if encoder_device == "cpu" else mx.gpu)
         if encoder_softmax not in ("fp32", "fp64-accumulation"):
             raise ValueError("Encoder softmax must be fp32 or fp64-accumulation")
@@ -93,6 +95,15 @@ class MLXSoVITS:
         model._bound_reference = binding
         model.reference_projection_seconds = projection_seconds
         return model
+
+    def close(self):
+        """Drop model arrays and clear released Metal allocations."""
+        self.encoder = self.flow = self.decoder = None
+        self._bound_reference = None
+        mx.synchronize(self.encoder_device)
+        if self.device != self.encoder_device:
+            mx.synchronize(self.device)
+        mx.clear_cache()
 
     def validate_reference(self, reference):
         """Reject a mismatched bound request before it consumes acoustic RNG."""

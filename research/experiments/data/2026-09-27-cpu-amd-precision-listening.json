@@ -1,0 +1,1681 @@
+{
+  "status": "completed",
+  "variants": {
+    "cpu-fp16": {
+      "backend": "cpu",
+      "measurements": {
+        "short": {
+          "n": 2,
+          "median_ms": 5151.858899997023,
+          "min_ms": 5069.418400002178,
+          "max_ms": 5234.299399991869,
+          "median_rtf": 1.5063914912271998,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ],
+          "median_worker_cpu_s": 4.546875,
+          "median_sampled_tree_cpu_s": 4.5390625,
+          "semantic_steps": [
+            79,
+            79
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 33338.16954999929,
+          "min_ms": 32351.733200004674,
+          "max_ms": 34324.60589999391,
+          "median_rtf": 1.6262521731706974,
+          "audio_seconds": [
+            20.5,
+            20.5
+          ],
+          "median_worker_cpu_s": 31.9296875,
+          "median_sampled_tree_cpu_s": 31.9140625,
+          "semantic_steps": [
+            506,
+            506
+          ]
+        }
+      },
+      "peak_tree_rss_bytes": 1575854080,
+      "peak_tree_private_bytes": 2093285376,
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\complete\\cpu-fp16\\summary.json",
+      "source_sha256": "16f0f7afd952e8d04f4307d9242c4d707e42dfb81444f1b94bf6407f148c670a",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "python": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.venv-amd\\Scripts\\python.exe",
+        "model": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\model-fp16-experimental.json",
+        "profile": "fp16",
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。",
+          "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+        },
+        "repeats": 2,
+        "warmups": 1,
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 2,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "directml_experimental": {}
+      },
+      "all_processes_exited": true,
+      "result_directory": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\complete\\cpu-fp16\\cpu"
+    },
+    "cpu-fp32": {
+      "backend": "cpu",
+      "measurements": {
+        "short": {
+          "n": 2,
+          "median_ms": 2908.449449998443,
+          "min_ms": 2904.0513999934774,
+          "max_ms": 2912.8475000034086,
+          "median_rtf": 0.8504238157890185,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ],
+          "median_worker_cpu_s": 3.3515625,
+          "median_sampled_tree_cpu_s": 3.3515625,
+          "semantic_steps": [
+            79,
+            79
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 21688.87760000507,
+          "min_ms": 20997.836000009556,
+          "max_ms": 22379.919200000586,
+          "median_rtf": 1.0477718647345444,
+          "audio_seconds": [
+            20.7,
+            20.7
+          ],
+          "median_worker_cpu_s": 24.6171875,
+          "median_sampled_tree_cpu_s": 24.578125,
+          "semantic_steps": [
+            511,
+            511
+          ]
+        }
+      },
+      "peak_tree_rss_bytes": 1413963776,
+      "peak_tree_private_bytes": 1758867456,
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\complete\\cpu-fp32\\summary.json",
+      "source_sha256": "e164a4d3fa1b06506769adec03b4a815614faafba9a0fd63684133cf88bbb553",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "python": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.venv-amd\\Scripts\\python.exe",
+        "model": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\model.json",
+        "profile": "onnx-fp32",
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。",
+          "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+        },
+        "repeats": 2,
+        "warmups": 1,
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 2,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "directml_experimental": {}
+      },
+      "all_processes_exited": true,
+      "result_directory": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\complete\\cpu-fp32\\cpu"
+    },
+    "cpu-int8": {
+      "backend": "cpu",
+      "measurements": {
+        "short": {
+          "n": 2,
+          "median_ms": 2423.6553000082495,
+          "min_ms": 2414.6136000053957,
+          "max_ms": 2432.6970000111032,
+          "median_rtf": 0.7086711403532893,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ],
+          "median_worker_cpu_s": 2.359375,
+          "median_sampled_tree_cpu_s": 2.3671875,
+          "semantic_steps": [
+            79,
+            79
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 17257.15205000597,
+          "min_ms": 16552.226800005883,
+          "max_ms": 17962.077300006058,
+          "median_rtf": 0.8517844052322788,
+          "audio_seconds": [
+            20.26,
+            20.26
+          ],
+          "median_worker_cpu_s": 20.828125,
+          "median_sampled_tree_cpu_s": 20.7421875,
+          "semantic_steps": [
+            500,
+            500
+          ]
+        }
+      },
+      "peak_tree_rss_bytes": 1173684224,
+      "peak_tree_private_bytes": 1519312896,
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\complete\\cpu-int8\\summary.json",
+      "source_sha256": "17cec4f758af6bdbb321e2a77365de623ac0a0d038fafdce355c74c5ad0bf49a",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "python": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.venv-amd\\Scripts\\python.exe",
+        "model": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\model.json",
+        "profile": "int8",
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。",
+          "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+        },
+        "repeats": 2,
+        "warmups": 1,
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 2,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "directml_experimental": {}
+      },
+      "all_processes_exited": true,
+      "result_directory": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\complete\\cpu-int8\\cpu"
+    },
+    "cpu-int8-threads4": {
+      "backend": "cpu",
+      "measurements": {
+        "short": {
+          "n": 2,
+          "median_ms": 1777.55574999901,
+          "min_ms": 1772.697499996866,
+          "max_ms": 1782.414000001154,
+          "median_rtf": 0.5197531432745643,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ],
+          "median_worker_cpu_s": 1.6796875,
+          "median_sampled_tree_cpu_s": 1.6171875,
+          "semantic_steps": [
+            79,
+            79
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 12520.370650003315,
+          "min_ms": 12439.079200004926,
+          "max_ms": 12601.662100001704,
+          "median_rtf": 0.6179847309972021,
+          "audio_seconds": [
+            20.26,
+            20.26
+          ],
+          "median_worker_cpu_s": 17.8125,
+          "median_sampled_tree_cpu_s": 17.8046875,
+          "semantic_steps": [
+            500,
+            500
+          ]
+        }
+      },
+      "peak_tree_rss_bytes": 1176133632,
+      "peak_tree_private_bytes": 1520689152,
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\complete\\cpu-int8-threads4\\summary.json",
+      "source_sha256": "f8798d5728a7081e67385570a41b0fe1a775f2514709f83c376fc23aefaf3938",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "python": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.venv-amd\\Scripts\\python.exe",
+        "model": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\model.json",
+        "profile": "int8",
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。",
+          "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+        },
+        "repeats": 2,
+        "warmups": 1,
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 4,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "directml_experimental": {}
+      },
+      "all_processes_exited": true,
+      "result_directory": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\complete\\cpu-int8-threads4\\cpu"
+    },
+    "cpu-int8-threads8": {
+      "backend": "cpu",
+      "measurements": {
+        "short": {
+          "n": 2,
+          "median_ms": 1611.4515500012203,
+          "min_ms": 1583.1227000016952,
+          "max_ms": 1639.7804000007454,
+          "median_rtf": 0.4711846637430469,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ],
+          "median_worker_cpu_s": 1.9296875,
+          "median_sampled_tree_cpu_s": 1.9609375,
+          "semantic_steps": [
+            79,
+            79
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 10574.285750000854,
+          "min_ms": 10440.25660000625,
+          "max_ms": 10708.314899995457,
+          "median_rtf": 0.5219292077986601,
+          "audio_seconds": [
+            20.26,
+            20.26
+          ],
+          "median_worker_cpu_s": 17.9375,
+          "median_sampled_tree_cpu_s": 18.0,
+          "semantic_steps": [
+            500,
+            500
+          ]
+        }
+      },
+      "peak_tree_rss_bytes": 1175830528,
+      "peak_tree_private_bytes": 1519804416,
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\complete\\cpu-int8-threads8\\summary.json",
+      "source_sha256": "2620bdc243b211ab3c78a7f2291a6342b7fcf549c06a99dabe407a2fab2383be",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "python": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.venv-amd\\Scripts\\python.exe",
+        "model": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\model.json",
+        "profile": "int8",
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。",
+          "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+        },
+        "repeats": 2,
+        "warmups": 1,
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 8,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "directml_experimental": {}
+      },
+      "all_processes_exited": true,
+      "result_directory": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\complete\\cpu-int8-threads8\\cpu"
+    },
+    "amd-fp16": {
+      "backend": "directml",
+      "measurements": {
+        "short": {
+          "n": 2,
+          "median_ms": 2009.1097000040463,
+          "min_ms": 1881.3432000024477,
+          "max_ms": 2136.876200005645,
+          "median_rtf": 0.5874589766093703,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ],
+          "median_worker_cpu_s": 1.6328125,
+          "median_sampled_tree_cpu_s": 1.640625,
+          "semantic_steps": [
+            79,
+            79
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 11893.358699999226,
+          "min_ms": 11844.800899998518,
+          "max_ms": 11941.916499999934,
+          "median_rtf": 0.5745583913043104,
+          "audio_seconds": [
+            20.7,
+            20.7
+          ],
+          "median_worker_cpu_s": 10.796875,
+          "median_sampled_tree_cpu_s": 10.7734375,
+          "semantic_steps": [
+            511,
+            511
+          ]
+        }
+      },
+      "peak_tree_rss_bytes": 2076504064,
+      "peak_tree_private_bytes": 2868617216,
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\gpu-complete\\amd-fp16\\summary.json",
+      "source_sha256": "ec50aaa177a9576533c46cb863af9e81b1c038955a89b449b92ab25aaba96299",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "python": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.venv-amd\\Scripts\\python.exe",
+        "model": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\model-fp16-experimental.json",
+        "profile": "fp16",
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。",
+          "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+        },
+        "repeats": 2,
+        "warmups": 1,
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 2,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "directml_experimental": {}
+      },
+      "all_processes_exited": true,
+      "result_directory": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\gpu-complete\\amd-fp16\\directml"
+    },
+    "amd-fp32": {
+      "backend": "directml",
+      "measurements": {
+        "short": {
+          "n": 2,
+          "median_ms": 2457.839349997812,
+          "min_ms": 2431.4525999943726,
+          "max_ms": 2484.2261000012513,
+          "median_rtf": 0.7186664766075473,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ],
+          "median_worker_cpu_s": 2.078125,
+          "median_sampled_tree_cpu_s": 2.0859375,
+          "semantic_steps": [
+            79,
+            79
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 16275.802950003708,
+          "min_ms": 16213.135800004238,
+          "max_ms": 16338.470100003178,
+          "median_rtf": 0.7862706739132226,
+          "audio_seconds": [
+            20.7,
+            20.7
+          ],
+          "median_worker_cpu_s": 14.890625,
+          "median_sampled_tree_cpu_s": 14.8515625,
+          "semantic_steps": [
+            511,
+            511
+          ]
+        }
+      },
+      "peak_tree_rss_bytes": 3780816896,
+      "peak_tree_private_bytes": 4635590656,
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\gpu-complete\\amd-fp32\\summary.json",
+      "source_sha256": "3247dc392e67ca3c5593f213702f6e48f3e6ab135bae989072212194a51f55a1",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "python": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.venv-amd\\Scripts\\python.exe",
+        "model": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\model.json",
+        "profile": "fp32",
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。",
+          "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+        },
+        "repeats": 2,
+        "warmups": 1,
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 2,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "directml_experimental": {}
+      },
+      "all_processes_exited": true,
+      "result_directory": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\gpu-complete\\amd-fp32\\directml"
+    },
+    "amd-fp16-cap512": {
+      "backend": "directml",
+      "measurements": {
+        "short": {
+          "n": 3,
+          "median_ms": 972.4055000115186,
+          "min_ms": 963.810300003388,
+          "max_ms": 989.6814999956405,
+          "median_rtf": 0.2843290935706195,
+          "audio_seconds": [
+            3.42,
+            3.42,
+            3.42
+          ],
+          "median_worker_cpu_s": 0.921875,
+          "median_sampled_tree_cpu_s": 0.921875,
+          "semantic_steps": [
+            79,
+            79,
+            79
+          ]
+        }
+      },
+      "peak_tree_rss_bytes": 1249628160,
+      "peak_tree_private_bytes": 1920782336,
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\short-cache\\amd-fp16-cap512\\summary.json",
+      "source_sha256": "8e6e68dcd5f57d8e7012ea2113a119ededa20d8c18da3583f24d92b01c81f144",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "python": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.venv-amd\\Scripts\\python.exe",
+        "model": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\model-fp16-experimental.json",
+        "profile": "fp16",
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。"
+        },
+        "repeats": 3,
+        "warmups": 1,
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 2,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident",
+          "capacity": 512
+        },
+        "directml_experimental": {}
+      },
+      "all_processes_exited": true,
+      "result_directory": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\short-cache\\amd-fp16-cap512\\directml"
+    },
+    "amd-fp16-cap1280": {
+      "backend": "directml",
+      "measurements": {
+        "short": {
+          "n": 2,
+          "median_ms": 1761.6516500056605,
+          "min_ms": 1649.2925000056857,
+          "max_ms": 1874.0108000056352,
+          "median_rtf": 0.515102821639082,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ],
+          "median_worker_cpu_s": 1.4765625,
+          "median_sampled_tree_cpu_s": 1.4765625,
+          "semantic_steps": [
+            79,
+            79
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 9714.301600004546,
+          "min_ms": 9644.242000009399,
+          "max_ms": 9784.361199999694,
+          "median_rtf": 0.4692899323673694,
+          "audio_seconds": [
+            20.7,
+            20.7
+          ],
+          "median_worker_cpu_s": 8.75,
+          "median_sampled_tree_cpu_s": 8.6875,
+          "semantic_steps": [
+            511,
+            511
+          ]
+        }
+      },
+      "peak_tree_rss_bytes": 1846464512,
+      "peak_tree_private_bytes": 2570715136,
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\tuned\\amd-fp16-cap1280\\summary.json",
+      "source_sha256": "a905d17fcdd8187da4ea59e8ac767256c0192c1e86d34a40f1be9c1d03ab2a0a",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "python": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.venv-amd\\Scripts\\python.exe",
+        "model": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\model-fp16-experimental.json",
+        "profile": "fp16",
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。",
+          "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+        },
+        "repeats": 2,
+        "warmups": 1,
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 2,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident",
+          "capacity": 1280
+        },
+        "directml_experimental": {}
+      },
+      "all_processes_exited": true,
+      "result_directory": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\tuned\\amd-fp16-cap1280\\directml"
+    },
+    "cpu-fp32-threads8": {
+      "backend": "cpu",
+      "measurements": {
+        "short": {
+          "n": 2,
+          "median_ms": 2457.2914999953355,
+          "min_ms": 2447.1716999978526,
+          "max_ms": 2467.4112999928184,
+          "median_rtf": 0.7185062865483437,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ],
+          "median_worker_cpu_s": 2.3671875,
+          "median_sampled_tree_cpu_s": 2.375,
+          "semantic_steps": [
+            79,
+            79
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 17308.97570000525,
+          "min_ms": 16646.775200002594,
+          "max_ms": 17971.176200007903,
+          "median_rtf": 0.8361824009664371,
+          "audio_seconds": [
+            20.7,
+            20.7
+          ],
+          "median_worker_cpu_s": 21.8828125,
+          "median_sampled_tree_cpu_s": 21.8828125,
+          "semantic_steps": [
+            511,
+            511
+          ]
+        }
+      },
+      "peak_tree_rss_bytes": 1416032256,
+      "peak_tree_private_bytes": 1759477760,
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\tuned\\cpu-fp32-threads8\\summary.json",
+      "source_sha256": "f46aee720554642ab4deffef88416afe547a4db0248793665256caf32117c571",
+      "job": {
+        "character": "C:\\Users\\LBW\\AppData\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee",
+        "python": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.venv-amd\\Scripts\\python.exe",
+        "model": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\model.json",
+        "profile": "onnx-fp32",
+        "reference": {
+          "audio": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+          "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "language": "ja",
+          "tone": "中性",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "checkpoints": {
+            "gpt": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+              "sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+            },
+            "sovits": {
+              "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+              "sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+            }
+          }
+        },
+        "sakura_reference": null,
+        "seed": 1234,
+        "cases": {
+          "short": "おはよう。今日もよろしくね。",
+          "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+        },
+        "repeats": 2,
+        "warmups": 1,
+        "experimental": {
+          "gpt_threads": 4,
+          "threads": 8,
+          "device_id": 0,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "directml_experimental": {}
+      },
+      "all_processes_exited": true,
+      "result_directory": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\tuned\\cpu-fp32-threads8\\cpu"
+    }
+  },
+  "listening": [
+    {
+      "variant": "cpu-fp32-threads8",
+      "label": "CPU FP32",
+      "case": "long",
+      "metrics": {
+        "duration_s": 20.7,
+        "sample_rate": 32000,
+        "peak_pcm16": 23117.0,
+        "rms_pcm16": 3254.547542229897,
+        "clipped_samples": 0
+      },
+      "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\outputs\\precision-listening-20260927\\01-cpu-fp32-threads8.wav",
+      "sha256": "1ab6ddb2004a1b413ab6c630123f810c92587c423de3e61dba1c5f48a0e479ff",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\tuned\\cpu-fp32-threads8\\cpu\\hot-long-0.wav",
+      "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+    },
+    {
+      "variant": "cpu-fp16",
+      "label": "CPU FP16",
+      "case": "long",
+      "metrics": {
+        "duration_s": 20.5,
+        "sample_rate": 32000,
+        "peak_pcm16": 24357.0,
+        "rms_pcm16": 3234.6905724992534,
+        "clipped_samples": 0
+      },
+      "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\outputs\\precision-listening-20260927\\02-cpu-fp16.wav",
+      "sha256": "2879cf9216340dbf4a29de6c04ff329f5a1d67be07f1210eaea6897d97444671",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\complete\\cpu-fp16\\cpu\\hot-long-0.wav",
+      "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+    },
+    {
+      "variant": "cpu-int8-threads8",
+      "label": "CPU INT8 GPT + FP32 声学",
+      "case": "long",
+      "metrics": {
+        "duration_s": 20.26,
+        "sample_rate": 32000,
+        "peak_pcm16": 24998.0,
+        "rms_pcm16": 3200.76941947082,
+        "clipped_samples": 0
+      },
+      "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\outputs\\precision-listening-20260927\\03-cpu-int8-threads8.wav",
+      "sha256": "e4bc30059585fafdcd3a952c2e683866d04748522da85af0567a341c1567a61e",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\complete\\cpu-int8-threads8\\cpu\\hot-long-0.wav",
+      "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+    },
+    {
+      "variant": "amd-fp32",
+      "label": "AMD FP32",
+      "case": "long",
+      "metrics": {
+        "duration_s": 20.7,
+        "sample_rate": 32000,
+        "peak_pcm16": 23117.0,
+        "rms_pcm16": 3254.5474171413134,
+        "clipped_samples": 0
+      },
+      "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\outputs\\precision-listening-20260927\\04-amd-fp32.wav",
+      "sha256": "45db8d7c252a658281c2547ec547899f83dffc87d97d2a590da4ccc556a7ba5f",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\gpu-complete\\amd-fp32\\directml\\hot-long-0.wav",
+      "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+    },
+    {
+      "variant": "amd-fp16-cap1280",
+      "label": "AMD FP16，1280 缓存",
+      "case": "long",
+      "metrics": {
+        "duration_s": 20.7,
+        "sample_rate": 32000,
+        "peak_pcm16": 23488.0,
+        "rms_pcm16": 3228.9295080747647,
+        "clipped_samples": 0
+      },
+      "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\outputs\\precision-listening-20260927\\05-amd-fp16-cap1280.wav",
+      "sha256": "49faed05a0aa55d2486da114e8eb2d2d780757a63cf91be1aa395923fb49b98d",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\tuned\\amd-fp16-cap1280\\directml\\hot-long-0.wav",
+      "text": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+    },
+    {
+      "variant": "amd-fp16-cap512",
+      "label": "AMD FP16，512 短句缓存",
+      "case": "short",
+      "metrics": {
+        "duration_s": 3.42,
+        "sample_rate": 32000,
+        "peak_pcm16": 22112.0,
+        "rms_pcm16": 2743.1185296731633,
+        "clipped_samples": 0
+      },
+      "file": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\outputs\\precision-listening-20260927\\06-amd-fp16-cap512.wav",
+      "sha256": "bb5c7b2879391d515d1b2454885af153cb0c5a0acf0d8d2596d57fc8befef6ce",
+      "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\short-cache\\amd-fp16-cap512\\directml\\hot-short-0.wav",
+      "text": "おはよう。今日もよろしくね。"
+    }
+  ],
+  "human_listening": "unverified",
+  "asr": "unverified",
+  "comparison": "Same source model, reference and text; generation length may differ. Timers include process memory sampling. GPU counters are separate from RSS.",
+  "date": "2026-09-27",
+  "environment": {
+    "cpu": "AMD Ryzen 7 7840HS",
+    "gpu": "AMD Radeon 780M",
+    "driver": "31.0.14005.11001",
+    "ort": "1.24.4 DirectML",
+    "cpu_features": {
+      "numpy": "2.4.6",
+      "features": {
+        "MMX": true,
+        "SSE": true,
+        "SSE2": true,
+        "SSE3": true,
+        "SSSE3": true,
+        "SSE41": true,
+        "POPCNT": true,
+        "SSE42": true,
+        "X86_V2": true,
+        "AVX": true,
+        "F16C": true,
+        "XOP": false,
+        "FMA4": false,
+        "FMA3": true,
+        "AVX2": true,
+        "LAHF": true,
+        "CX16": true,
+        "MOVBE": true,
+        "BMI": true,
+        "BMI2": true,
+        "LZCNT": true,
+        "GFNI": true,
+        "VPCLMULQDQ": true,
+        "VAES": true,
+        "X86_V3": true,
+        "AVX512F": true,
+        "AVX512CD": true,
+        "AVX512ER": false,
+        "AVX512PF": false,
+        "AVX5124FMAPS": false,
+        "AVX5124VNNIW": false,
+        "AVX512VPOPCNTDQ": true,
+        "AVX512VL": true,
+        "AVX512BW": true,
+        "AVX512DQ": true,
+        "AVX512VNNI": true,
+        "AVX512IFMA": true,
+        "AVX512VBMI": true,
+        "AVX512VBMI2": true,
+        "AVX512BITALG": true,
+        "AVX512FP16": false,
+        "AVX512BF16": true,
+        "AVX512_KNL": false,
+        "AVX512_KNM": false,
+        "AVX512_SKX": true,
+        "X86_V4": true,
+        "AVX512_CLX": true,
+        "AVX512_CNL": true,
+        "AVX512_ICL": true,
+        "AVX512_SPR": false,
+        "VSX": false,
+        "VSX2": false,
+        "VSX3": false,
+        "VSX4": false,
+        "VX": false,
+        "VXE": false,
+        "VXE2": false,
+        "NEON": false,
+        "NEON_FP16": false,
+        "NEON_VFPV4": false,
+        "ASIMD": false,
+        "FPHP": false,
+        "ASIMDHP": false,
+        "ASIMDDP": false,
+        "ASIMDFHM": false,
+        "SVE": false,
+        "RVV": false,
+        "LSX": false
+      }
+    }
+  },
+  "managed": {
+    "status": "completed",
+    "cycles": [
+      {
+        "variant": "cpu-fp16",
+        "cycle": 0,
+        "duration_s": 3.42,
+        "owned_pids": [
+          23108,
+          13464,
+          36964
+        ],
+        "all_processes_exited": true
+      },
+      {
+        "variant": "cpu-fp16",
+        "cycle": 1,
+        "duration_s": 3.42,
+        "owned_pids": [
+          28852,
+          9940,
+          23252
+        ],
+        "all_processes_exited": true
+      },
+      {
+        "variant": "cpu-int8-threads8",
+        "cycle": 0,
+        "duration_s": 3.42,
+        "owned_pids": [
+          34784,
+          29196,
+          33092
+        ],
+        "all_processes_exited": true
+      },
+      {
+        "variant": "cpu-int8-threads8",
+        "cycle": 1,
+        "duration_s": 3.42,
+        "owned_pids": [
+          15804,
+          37344,
+          27036
+        ],
+        "all_processes_exited": true
+      },
+      {
+        "variant": "amd-fp32",
+        "cycle": 0,
+        "duration_s": 3.42,
+        "owned_pids": [
+          2704,
+          4412,
+          30520
+        ],
+        "all_processes_exited": true
+      },
+      {
+        "variant": "amd-fp32",
+        "cycle": 1,
+        "duration_s": 3.42,
+        "owned_pids": [
+          32168,
+          5396,
+          30740
+        ],
+        "all_processes_exited": true
+      },
+      {
+        "variant": "amd-fp16-cap1280",
+        "cycle": 0,
+        "duration_s": 3.42,
+        "owned_pids": [
+          28464,
+          30504,
+          14692
+        ],
+        "all_processes_exited": true
+      },
+      {
+        "variant": "amd-fp16-cap1280",
+        "cycle": 1,
+        "duration_s": 3.42,
+        "owned_pids": [
+          36248,
+          17236,
+          19324
+        ],
+        "all_processes_exited": true
+      }
+    ]
+  },
+  "wddm": {
+    "source": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\results\\precision-listening\\wddm\\result.json",
+    "sha256": "272c34359eb4a86b0c139aec3b19ecdf070ab88c5241040ccd1588c02318b84d",
+    "phases": {
+      "awake": {
+        "samples": 10,
+        "peaks": {
+          "dedicated_bytes": 83464192,
+          "shared_bytes": 561643520,
+          "committed_bytes": 645107712
+        }
+      },
+      "short": {
+        "samples": 18,
+        "peaks": {
+          "dedicated_bytes": 90316800,
+          "shared_bytes": 1021911040,
+          "committed_bytes": 1112227840
+        }
+      },
+      "long": {
+        "samples": 80,
+        "peaks": {
+          "dedicated_bytes": 91496448,
+          "shared_bytes": 1386618880,
+          "committed_bytes": 1477705728
+        }
+      },
+      "idle_after_long": {
+        "samples": 28,
+        "peaks": {
+          "dedicated_bytes": 91086848,
+          "shared_bytes": 1386618880,
+          "committed_bytes": 1477705728
+        }
+      },
+      "sleep": {
+        "samples": 15,
+        "peaks": {
+          "dedicated_bytes": 90124288,
+          "shared_bytes": 1151569920,
+          "committed_bytes": 1241694208
+        }
+      }
+    },
+    "luids": [
+      "0x00000000_0x0000e59f"
+    ],
+    "invalid": 0,
+    "duplicates": 0,
+    "unparsed": 0,
+    "all_processes_exited": true,
+    "scope": "Separate resource probe; not added to process RSS. Missing instances are not measured zero."
+  },
+  "original_assets": [
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\prompt_encoder_fp16.bin",
+      "expected": "1c6ee723cf56f06b72dfa2ccc6e67e958314733b9d2e9502583cee42cbf7ae2e",
+      "actual": "1c6ee723cf56f06b72dfa2ccc6e67e958314733b9d2e9502583cee42cbf7ae2e",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\prompt_encoder_fp32.onnx",
+      "expected": "c4a3d8c1e385a17aecb7bd9c5ede5707ba390f85c3eb49b388deeaaaf53d2748",
+      "actual": "c4a3d8c1e385a17aecb7bd9c5ede5707ba390f85c3eb49b388deeaaaf53d2748",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\t2s_encoder_fp32.bin",
+      "expected": "003191cc18b68a78b478cabf0ac235939b3a33063fa76a6d00eb31ae989601a9",
+      "actual": "003191cc18b68a78b478cabf0ac235939b3a33063fa76a6d00eb31ae989601a9",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\t2s_encoder_fp32.onnx",
+      "expected": "f6eb1acd47c8e6d36b777886981a49122e8e070a5eb9888d458fb188dc139f75",
+      "actual": "f6eb1acd47c8e6d36b777886981a49122e8e070a5eb9888d458fb188dc139f75",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\t2s_first_stage_decoder_fp32.onnx",
+      "expected": "868f395999508905128c5325c5db4f4b37b2e70e04d6e2719fec64cbb60ee7f9",
+      "actual": "868f395999508905128c5325c5db4f4b37b2e70e04d6e2719fec64cbb60ee7f9",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\t2s_shared_fp16.bin",
+      "expected": "472b6664512cf0e6718f774c490abb51e6be14627416c8fcc98fb025ae4acedb",
+      "actual": "472b6664512cf0e6718f774c490abb51e6be14627416c8fcc98fb025ae4acedb",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\t2s_stage_decoder_fp32.onnx",
+      "expected": "3f02881c517423deb610f86d5441bd9825937c5069f3887cacefa1e9dc403b0d",
+      "actual": "3f02881c517423deb610f86d5441bd9825937c5069f3887cacefa1e9dc403b0d",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\vits_fp16.bin",
+      "expected": "63f2a774ea4f26faaf58f875b68a83a876a6da9e6761dd30fc440e14ff23d922",
+      "actual": "63f2a774ea4f26faaf58f875b68a83a876a6da9e6761dd30fc440e14ff23d922",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\MyFile\\sakura-project\\sakura-v0.9.8-windows-x64\\data\\tts_bundles\\onnx\\N.A.V.I\\vits_fp32.onnx",
+      "expected": "2f918e08a1bfecc568de4cc5dc96135cb8baf37a07f4eb4ec9258a4854fcd3f3",
+      "actual": "2f918e08a1bfecc568de4cc5dc96135cb8baf37a07f4eb4ec9258a4854fcd3f3",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I.-e15.ckpt",
+      "expected": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf",
+      "actual": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\models\\N.A.V.I._e10_s1310.pth",
+      "expected": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81",
+      "actual": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81",
+      "unchanged": true
+    },
+    {
+      "path": "C:\\Users\\LBW\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\Sakura Development\\characters\\N.A.V.I-dab645ee\\voice\\refs\\tone_refs\\VO08_0011.ogg",
+      "expected": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+      "actual": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+      "unchanged": true
+    }
+  ],
+  "validation": {
+    "product_tests": {
+      "total": 469,
+      "passed": 468,
+      "skipped": 1,
+      "log": "results/precision-listening/full-tests.txt"
+    },
+    "research_tests_passed": 10,
+    "pip_check": "passed",
+    "human_listening": "unverified",
+    "asr": "unverified"
+  },
+  "model_manifests": {
+    "models\\navi-cpu-amd\\gpt\\directml-fp16-cap1280\\manifest.json": {
+      "sha256": "4c600c9f5456167a0f0bc2f21b027b72313be8c761e32234dd39ca25d954919f",
+      "manifest": {
+        "format": "sakuratts-gpt-directml-static-v1",
+        "cache": "fixed-capacity-ping-pong-masked-sentinel-v1",
+        "capacity": 1280,
+        "precision": "fp16",
+        "graph_io_dtype": "float16",
+        "config": {
+          "hidden_dim": 512,
+          "embedding_dim": 512,
+          "heads": 16,
+          "layers": 24,
+          "ffn_dim": 2048,
+          "vocab_size": 1025,
+          "phoneme_vocab_size": 732,
+          "bert_dim": 1024,
+          "eos": 1024,
+          "layer_norm_epsilon": 1e-05,
+          "position_scale": 1.0,
+          "max_positions": 4000
+        },
+        "experimental": true,
+        "source": {
+          "manifest_sha256": "3b858acd623cedf62a5018c8accd73305608b76de8e2964c2b9aa797dfa35b11",
+          "graph_sha256": "f43a1f69b060ce75121e549e8f2fccb8d742a052d5967599a25c03967d6882c4"
+        },
+        "graph": {
+          "file": "decode.onnx",
+          "sha256": "256b728c28278507586389807891fe58056db16f1522b84a3673a633532388d9",
+          "bytes": 152497072
+        },
+        "conversion": {
+          "script_sha256": "191631cde251ba26fb85f64b85807c8b2a80869ea058f236e1f9434da037173b",
+          "operators": {
+            "MatMul": 193,
+            "Add": 192,
+            "Slice": 120,
+            "Reshape": 96,
+            "Transpose": 168,
+            "Unsqueeze": 48,
+            "Concat": 26,
+            "Mul": 24,
+            "Softmax": 24,
+            "Shape": 24,
+            "Gather": 73,
+            "LayerNormalization": 48,
+            "Relu": 24,
+            "Identity": 1,
+            "ScatterND": 48
+          }
+        },
+        "execution": "Two DirectML sessions; FP32 CPU embeddings and sampling; GPU ping-pong KV; prefill cache uploads once"
+      }
+    },
+    "models\\navi-cpu-amd\\gpt\\directml-fp16-cap2048\\manifest.json": {
+      "sha256": "553803fabdc557a44fb054e90b4643992955f658861a1f4e03eb34f0911787bf",
+      "manifest": {
+        "format": "sakuratts-gpt-directml-static-v1",
+        "cache": "fixed-capacity-ping-pong-masked-sentinel-v1",
+        "capacity": 2048,
+        "precision": "fp16",
+        "graph_io_dtype": "float16",
+        "config": {
+          "hidden_dim": 512,
+          "embedding_dim": 512,
+          "heads": 16,
+          "layers": 24,
+          "ffn_dim": 2048,
+          "vocab_size": 1025,
+          "phoneme_vocab_size": 732,
+          "bert_dim": 1024,
+          "eos": 1024,
+          "layer_norm_epsilon": 1e-05,
+          "position_scale": 1.0,
+          "max_positions": 4000
+        },
+        "experimental": true,
+        "source": {
+          "manifest_sha256": "3b858acd623cedf62a5018c8accd73305608b76de8e2964c2b9aa797dfa35b11",
+          "graph_sha256": "f43a1f69b060ce75121e549e8f2fccb8d742a052d5967599a25c03967d6882c4"
+        },
+        "graph": {
+          "file": "decode.onnx",
+          "sha256": "febe15b63170a6c43bced9c1ba99df9af5ad177a5ed5089f160cb7800faf88be",
+          "bytes": 152497072
+        },
+        "conversion": {
+          "script_sha256": "bd7dc840263685dba65606a9e1a4e4497e11e5e07a3ae648758f650e13d9a9b2",
+          "operators": {
+            "MatMul": 193,
+            "Add": 192,
+            "Slice": 120,
+            "Reshape": 96,
+            "Transpose": 168,
+            "Unsqueeze": 48,
+            "Concat": 26,
+            "Mul": 24,
+            "Softmax": 24,
+            "Shape": 24,
+            "Gather": 73,
+            "LayerNormalization": 48,
+            "Relu": 24,
+            "Identity": 1,
+            "ScatterND": 48
+          }
+        },
+        "execution": "Two DirectML sessions; FP32 CPU embeddings and sampling; GPU ping-pong KV; prefill cache uploads once"
+      }
+    },
+    "models\\navi-cpu-amd\\gpt\\directml-fp16-cap512\\manifest.json": {
+      "sha256": "fcc528b21e17d9f7d9fde2b405f04692b03239b086e89e7b783a92a7e0921f2c",
+      "manifest": {
+        "format": "sakuratts-gpt-directml-static-v1",
+        "cache": "fixed-capacity-ping-pong-masked-sentinel-v1",
+        "capacity": 512,
+        "precision": "fp16",
+        "graph_io_dtype": "float16",
+        "config": {
+          "hidden_dim": 512,
+          "embedding_dim": 512,
+          "heads": 16,
+          "layers": 24,
+          "ffn_dim": 2048,
+          "vocab_size": 1025,
+          "phoneme_vocab_size": 732,
+          "bert_dim": 1024,
+          "eos": 1024,
+          "layer_norm_epsilon": 1e-05,
+          "position_scale": 1.0,
+          "max_positions": 4000
+        },
+        "experimental": true,
+        "source": {
+          "manifest_sha256": "3b858acd623cedf62a5018c8accd73305608b76de8e2964c2b9aa797dfa35b11",
+          "graph_sha256": "f43a1f69b060ce75121e549e8f2fccb8d742a052d5967599a25c03967d6882c4"
+        },
+        "graph": {
+          "file": "decode.onnx",
+          "sha256": "3813fa6fa9bbd95cbcc74b8990c5cee1f38b32ba0f3045541f8e099d19a9020c",
+          "bytes": 152497072
+        },
+        "conversion": {
+          "script_sha256": "191631cde251ba26fb85f64b85807c8b2a80869ea058f236e1f9434da037173b",
+          "operators": {
+            "MatMul": 193,
+            "Add": 192,
+            "Slice": 120,
+            "Reshape": 96,
+            "Transpose": 168,
+            "Unsqueeze": 48,
+            "Concat": 26,
+            "Mul": 24,
+            "Softmax": 24,
+            "Shape": 24,
+            "Gather": 73,
+            "LayerNormalization": 48,
+            "Relu": 24,
+            "Identity": 1,
+            "ScatterND": 48
+          }
+        },
+        "execution": "Two DirectML sessions; FP32 CPU embeddings and sampling; GPU ping-pong KV; prefill cache uploads once"
+      }
+    },
+    "models\\navi-cpu-amd\\gpt\\directml-fp32-cap2048\\manifest.json": {
+      "sha256": "8411da7fc0ce868bdcd64a63f0ba97d016de928956ea022c537f0e434ca45404",
+      "manifest": {
+        "format": "sakuratts-gpt-directml-static-v1",
+        "cache": "fixed-capacity-ping-pong-masked-sentinel-v1",
+        "capacity": 2048,
+        "precision": "fp32",
+        "graph_io_dtype": "float32",
+        "config": {
+          "hidden_dim": 512,
+          "embedding_dim": 512,
+          "heads": 16,
+          "layers": 24,
+          "ffn_dim": 2048,
+          "vocab_size": 1025,
+          "phoneme_vocab_size": 732,
+          "bert_dim": 1024,
+          "eos": 1024,
+          "layer_norm_epsilon": 1e-05,
+          "position_scale": 1.0,
+          "max_positions": 4000
+        },
+        "experimental": true,
+        "source": {
+          "manifest_sha256": "550efbedc20b42e4e6e2546d6bad0549c2c666a7b50993659c404f92509d91e0",
+          "graph_sha256": "35073ce519bfc6e646a3aad1c6b7c3de11e63fea5bec974a4c9c5086cb7fd2a4"
+        },
+        "graph": {
+          "file": "decode.onnx",
+          "sha256": "9dd52332d095b5295acf6aac32faacdf7c1aa14755457fbe6cc7e9988c08e920",
+          "bytes": 304861026
+        },
+        "conversion": {
+          "script_sha256": "bd7dc840263685dba65606a9e1a4e4497e11e5e07a3ae648758f650e13d9a9b2",
+          "operators": {
+            "MatMul": 193,
+            "Add": 192,
+            "Slice": 120,
+            "Reshape": 96,
+            "Transpose": 168,
+            "Unsqueeze": 48,
+            "Concat": 26,
+            "Mul": 24,
+            "Softmax": 24,
+            "Shape": 24,
+            "Gather": 73,
+            "LayerNormalization": 48,
+            "Relu": 24,
+            "Identity": 1,
+            "ScatterND": 48
+          }
+        },
+        "execution": "Two DirectML sessions; FP32 CPU embeddings and sampling; GPU ping-pong KV; prefill cache uploads once"
+      }
+    },
+    "models\\navi-cpu-amd\\gpt\\onnx\\manifest.json": {
+      "sha256": "550efbedc20b42e4e6e2546d6bad0549c2c666a7b50993659c404f92509d91e0",
+      "manifest": {
+        "format": "sakuratts-gpt-onnx-cpu-v1",
+        "config": {
+          "hidden_dim": 512,
+          "embedding_dim": 512,
+          "heads": 16,
+          "layers": 24,
+          "ffn_dim": 2048,
+          "vocab_size": 1025,
+          "phoneme_vocab_size": 732,
+          "bert_dim": 1024,
+          "eos": 1024,
+          "layer_norm_epsilon": 1e-05,
+          "position_scale": 1.0,
+          "max_positions": 4000
+        },
+        "architecture": "gpt-sovits-ar-postnorm-relu",
+        "source": {
+          "manifest_sha256": "e1cc4296095f65b98ccaf48501edb5558bbd1fec485a6a020d60b19de6d70a68",
+          "weights_sha256": "9864391a98ce2cd59c09e5b91e6521565ceb339991a4014ad60df33124257ae1",
+          "checkpoint_sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+        },
+        "conversion": {
+          "script_sha256": "5528ab99009219f1df3d4bdb20db5a46708697bbd032d4329ce48d496dce5c64",
+          "torch_imported": false
+        },
+        "prefill_query_chunk_size": 0,
+        "cache": "sequence-major-delta-with-masked-sentinel-v1",
+        "graphs": {
+          "fp32": {
+            "file": "transformer-fp32.onnx",
+            "sha256": "35073ce519bfc6e646a3aad1c6b7c3de11e63fea5bec974a4c9c5086cb7fd2a4",
+            "bytes": 304849362
+          }
+        },
+        "embedding": {
+          "file": "embedding.npz",
+          "sha256": "9e10012772e111bba6b493572f42cc9fc0339c6e14de271fa57dc97fe3e94b4b",
+          "bytes": 13891364
+        }
+      }
+    },
+    "models\\navi-cpu-amd\\gpt\\onnx-fp16\\manifest.json": {
+      "sha256": "3b858acd623cedf62a5018c8accd73305608b76de8e2964c2b9aa797dfa35b11",
+      "manifest": {
+        "format": "sakuratts-gpt-onnx-cpu-v1",
+        "config": {
+          "hidden_dim": 512,
+          "embedding_dim": 512,
+          "heads": 16,
+          "layers": 24,
+          "ffn_dim": 2048,
+          "vocab_size": 1025,
+          "phoneme_vocab_size": 732,
+          "bert_dim": 1024,
+          "eos": 1024,
+          "layer_norm_epsilon": 1e-05,
+          "position_scale": 1.0,
+          "max_positions": 4000
+        },
+        "architecture": "gpt-sovits-ar-postnorm-relu",
+        "source": {
+          "manifest_sha256": "e1cc4296095f65b98ccaf48501edb5558bbd1fec485a6a020d60b19de6d70a68",
+          "weights_sha256": "9864391a98ce2cd59c09e5b91e6521565ceb339991a4014ad60df33124257ae1",
+          "checkpoint_sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+        },
+        "precision": "fp16",
+        "experimental": true,
+        "graph_io_dtype": "float16",
+        "cache_dtype": "float16",
+        "embedding_dtype": "float32",
+        "sampling_logits_dtype": "float32",
+        "prefill_query_chunk_size": 0,
+        "cache": "sequence-major-delta-with-masked-sentinel-v1",
+        "conversion": {
+          "script_sha256": "bd75338878e4805ef8d75caa65f1af3b1880f490cd0e3e98d2c2899f35d420ab",
+          "onnx": "1.21.0",
+          "onnxruntime": "1.24.4",
+          "torch_imported": false,
+          "input_manifest_sha256": "550efbedc20b42e4e6e2546d6bad0549c2c666a7b50993659c404f92509d91e0",
+          "input_graph_sha256": "35073ce519bfc6e646a3aad1c6b7c3de11e63fea5bec974a4c9c5086cb7fd2a4"
+        },
+        "graphs": {
+          "fp16": {
+            "file": "transformer-fp16.onnx",
+            "sha256": "f43a1f69b060ce75121e549e8f2fccb8d742a052d5967599a25c03967d6882c4",
+            "bytes": 152537933
+          }
+        },
+        "embedding": {
+          "file": "embedding.npz",
+          "sha256": "9e10012772e111bba6b493572f42cc9fc0339c6e14de271fa57dc97fe3e94b4b",
+          "bytes": 13891364
+        },
+        "graph_audit": {
+          "operators": {
+            "MatMul": 193,
+            "Add": 192,
+            "Slice": 120,
+            "Reshape": 96,
+            "Transpose": 168,
+            "Unsqueeze": 48,
+            "Concat": 26,
+            "Mul": 24,
+            "Softmax": 24,
+            "Shape": 24,
+            "Gather": 25,
+            "LayerNormalization": 48,
+            "Relu": 24,
+            "Identity": 1
+          },
+          "initializer_dtypes": {
+            "FLOAT16": 290,
+            "INT64": 150
+          }
+        },
+        "validation_scope": "Conversion and graph dtype checks only; CPU and DirectML execution/quality require separate validation",
+        "compute": {
+          "graph": "float16",
+          "cpu": "provider-selected; may promote to FP32 kernels",
+          "native_fp16_acceleration_verified": false
+        }
+      }
+    },
+    "models\\navi-cpu-amd\\gpt\\onnx-int8\\manifest.json": {
+      "sha256": "8329f6e6da47edadaa635149a5db27385f4187587b1600965a40924b84b0cc96",
+      "manifest": {
+        "format": "sakuratts-gpt-onnx-cpu-v1",
+        "config": {
+          "hidden_dim": 512,
+          "embedding_dim": 512,
+          "heads": 16,
+          "layers": 24,
+          "ffn_dim": 2048,
+          "vocab_size": 1025,
+          "phoneme_vocab_size": 732,
+          "bert_dim": 1024,
+          "eos": 1024,
+          "layer_norm_epsilon": 1e-05,
+          "position_scale": 1.0,
+          "max_positions": 4000
+        },
+        "architecture": "gpt-sovits-ar-postnorm-relu",
+        "source": {
+          "manifest_sha256": "e1cc4296095f65b98ccaf48501edb5558bbd1fec485a6a020d60b19de6d70a68",
+          "weights_sha256": "9864391a98ce2cd59c09e5b91e6521565ceb339991a4014ad60df33124257ae1",
+          "checkpoint_sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+        },
+        "precision": "int8",
+        "experimental": true,
+        "graph_io_dtype": "float32",
+        "cache_dtype": "float32",
+        "embedding_dtype": "float32",
+        "sampling_logits_dtype": "float32",
+        "prefill_query_chunk_size": 0,
+        "cache": "sequence-major-delta-with-masked-sentinel-v1",
+        "conversion": {
+          "script_sha256": "bd75338878e4805ef8d75caa65f1af3b1880f490cd0e3e98d2c2899f35d420ab",
+          "onnx": "1.21.0",
+          "onnxruntime": "1.24.4",
+          "torch_imported": false,
+          "input_manifest_sha256": "550efbedc20b42e4e6e2546d6bad0549c2c666a7b50993659c404f92509d91e0",
+          "input_graph_sha256": "35073ce519bfc6e646a3aad1c6b7c3de11e63fea5bec974a4c9c5086cb7fd2a4"
+        },
+        "graphs": {
+          "int8": {
+            "file": "transformer-int8.onnx",
+            "sha256": "80598f867aec687ce695f4c6d1b9272c73d53828835c5f1b7ea38ede7d24a862",
+            "bytes": 77481556
+          }
+        },
+        "embedding": {
+          "file": "embedding.npz",
+          "sha256": "9e10012772e111bba6b493572f42cc9fc0339c6e14de271fa57dc97fe3e94b4b",
+          "bytes": 13891364
+        },
+        "graph_audit": {
+          "operators": {
+            "DynamicQuantizeLinear": 97,
+            "Transpose": 168,
+            "Shape": 24,
+            "Mul": 218,
+            "MatMulInteger": 97,
+            "Gather": 25,
+            "Cast": 97,
+            "Add": 192,
+            "Slice": 120,
+            "Reshape": 96,
+            "Unsqueeze": 48,
+            "MatMul": 96,
+            "Concat": 26,
+            "Softmax": 24,
+            "LayerNormalization": 48,
+            "Relu": 24,
+            "Identity": 1
+          },
+          "initializer_dtypes": {
+            "FLOAT": 290,
+            "INT64": 150,
+            "INT8": 194
+          }
+        },
+        "validation_scope": "Conversion and graph dtype checks only; CPU and DirectML execution/quality require separate validation",
+        "quantization": {
+          "scheme": "onnxruntime-dynamic",
+          "weight_dtype": "int8",
+          "activation_dtype": "uint8",
+          "per_channel": true,
+          "scope": "constant linear MatMul; embeddings, attention, normalization and KV remain FP32"
+        }
+      }
+    }
+  }
+}

@@ -25,8 +25,8 @@ Issues = "https://github.com/Rvosy/SakuraTTS/issues"
 Documentation = "https://github.com/Rvosy/SakuraTTS/blob/main/docs/quickstart.md"
 
 [project.optional-dependencies]
-japanese = [
-    "onnxruntime==1.30.0",
+japanese = ["sakuratts[japanese-text]", "onnxruntime==1.30.0"]
+japanese-text = [
     "pyopenjtalk-plus==0.4.1.post9",
     "SudachiPy==0.6.11",
     "SudachiDict-core==20260723",
@@ -35,6 +35,8 @@ japanese = [
     "fasttext-predict==0.9.2.4",
     "budoux==0.9.2",
 ]
+cpu = ["threadpoolctl==3.6.0", "onnxruntime==1.30.0"]
+directml = ["threadpoolctl==3.6.0", "onnxruntime-directml==1.24.4; sys_platform == 'win32'"]
 nvidia = [
     "cupy-cuda12x==14.2.0; sys_platform == 'win32'",
     "nvidia-cuda-runtime-cu12==12.9.79; sys_platform == 'win32'",
@@ -68,4 +70,9 @@ include = ["sakuratts*"]
 include-package-data = false
 
 [tool.uv]
-environments = ["sys_platform == 'win32'", "sys_platform == 'darwin'"]
+# The pinned conversion stack has no Python 3.14 wheels.
+environments = ["sys_platform == 'win32' and python_version < '3.14'", "sys_platform == 'darwin' and python_version < '3.14'"]
+conflicts = [
+    [{extra = "directml"}, {extra = "cpu"}],
+    [{extra = "directml"}, {extra = "japanese"}],
+]

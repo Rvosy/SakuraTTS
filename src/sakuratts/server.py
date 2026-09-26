@@ -150,7 +150,7 @@ class WakeRequest(BaseModel):
     keep_alive_seconds: float = Field(default=60, ge=0, le=3600)
 
 
-def create_app(model=None, *, tts_config=None, backend=None, experimental=None, control=None,
+def create_app(model=None, *, tts_config=None, backend=None, profile=None, experimental=None, control=None,
                runtime_mode="direct", idle_sleep_seconds=60, wake_timeout_seconds=120,
                operation_timeout_seconds=300):
     if runtime_mode not in ("direct", "managed"):
@@ -173,6 +173,8 @@ def create_app(model=None, *, tts_config=None, backend=None, experimental=None, 
         app.state.runtime = None
         try:
             options = {"backend": backend} if backend is not None else {}
+            if profile is not None:
+                options["profile"] = profile
             if runtime_mode == "managed":
                 from ._internal.inference_process import ProcessInference
                 from ._internal.managed_runtime import ManagedRuntime
@@ -522,7 +524,7 @@ def create_app(model=None, *, tts_config=None, backend=None, experimental=None, 
     return app
 
 
-def start_server(model=None, *, host="127.0.0.1", port=9880, tts_config=None, backend=None, experimental=None,
+def start_server(model=None, *, host="127.0.0.1", port=9880, tts_config=None, backend=None, profile=None, experimental=None,
                  log_file="logs/sakuratts.log", log_level="info", runtime_mode="direct",
                  idle_sleep_seconds=60, wake_timeout_seconds=120, operation_timeout_seconds=300):
     import uvicorn
@@ -535,7 +537,7 @@ def start_server(model=None, *, host="127.0.0.1", port=9880, tts_config=None, ba
             logger.info("SakuraTTS · 推理服务", extra={"block": "startup"})
             logger.info("地址  http://%s:%d", host, port)
             logger.info("日志  %s", path)
-            app = create_app(model, tts_config=tts_config, backend=backend, experimental=experimental, control=control,
+            app = create_app(model, tts_config=tts_config, backend=backend, profile=profile, experimental=experimental, control=control,
                              runtime_mode=runtime_mode, idle_sleep_seconds=idle_sleep_seconds,
                              wake_timeout_seconds=wake_timeout_seconds,
                              operation_timeout_seconds=operation_timeout_seconds)

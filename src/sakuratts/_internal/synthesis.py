@@ -67,9 +67,11 @@ class SpeechResult:
 def single_fragment_pcm(waveform, sample_rate, fragment_interval=0.3):
     """Pinned official non-streaming normalization, trailing silence and cast."""
     audio = np.asarray(waveform, dtype=np.float32).reshape(-1).copy()
-    if audio.size == 0 or not np.isfinite(audio).all():
+    if audio.size == 0:
         raise ValueError("Expected finite nonempty waveform samples")
     maximum = np.max(np.abs(audio))
+    if not np.isfinite(maximum):
+        raise ValueError("Expected finite nonempty waveform samples")
     if maximum > 1:
         audio /= maximum
     silence = np.zeros(int(sample_rate * fragment_interval), dtype=np.float32)

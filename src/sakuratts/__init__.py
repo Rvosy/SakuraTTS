@@ -13,10 +13,10 @@ def __getattr__(name):
     raise AttributeError("module 'sakuratts' has no attribute " + repr(name))
 
 
-def start_server(model=None, *, host="127.0.0.1", port=9880, tts_config=None, backend=None, experimental=None,
+def start_server(model=None, *, host="127.0.0.1", port=9880, tts_config=None, backend=None, profile=None, experimental=None,
                  runtime_mode="direct", idle_sleep_seconds=60., wake_timeout_seconds=120.,
                  operation_timeout_seconds=300.):
     from .server import start_server as run
-    return run(model, host=host, port=port, tts_config=tts_config, backend=backend, experimental=experimental,
+    return run(model, host=host, port=port, tts_config=tts_config, backend=backend, profile=profile, experimental=experimental,
                runtime_mode=runtime_mode, idle_sleep_seconds=idle_sleep_seconds,
                wake_timeout_seconds=wake_timeout_seconds, operation_timeout_seconds=operation_timeout_seconds)

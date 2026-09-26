@@ -113,7 +113,7 @@ class ReferenceApiTests(unittest.TestCase):
         current.engine = old
         with patch("sakuratts.engine.Engine.load", side_effect=ValueError("different source")):
             with self.assertRaisesRegex(ValueError, "different source"):
-                current._activate(SimpleNamespace(path="candidate"))
+                current._activate(Model(Path("candidate"), {}))
         self.assertIs(current.engine, old)
         old.close.assert_not_called()
 
@@ -125,7 +125,7 @@ class ReferenceApiTests(unittest.TestCase):
         with patch("sakuratts.engine.Engine.load", return_value=candidate), \
                 patch("sakuratts.reference.ReferenceCache"):
             with self.assertRaisesRegex(RuntimeError, "out of memory"):
-                current._activate(SimpleNamespace(path="candidate"))
+                current._activate(Model(Path("candidate"), {}))
         old.close.assert_called_once()
         candidate.close.assert_called_once()
         self.assertIsNone(current.info())

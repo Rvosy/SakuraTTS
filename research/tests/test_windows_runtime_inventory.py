@@ -1,9 +1,11 @@
 """Ensure inventories do not turn shared paths or hardlinks into claimed savings."""
 
 import importlib.util
+import hashlib
 import os
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 
 
@@ -14,6 +16,25 @@ spec.loader.exec_module(inventory)
 
 
 class WindowsRuntimeInventoryTests(unittest.TestCase):
+    def test_metadata_time_difference_does_not_reject_unchanged_content(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "same.dll"
+            path.write_bytes(b"unchanged")
+            current = os.lstat(path)
+            expected = SimpleNamespace(**{key: getattr(current, key)
+                for key in ("st_dev", "st_ino", "st_size", "st_mtime_ns")},
+                st_ctime_ns=current.st_ctime_ns - 1_000_000)
+            self.assertEqual(inventory.sha256(str(path), expected), hashlib.sha256(b"unchanged").hexdigest())
+
+    def test_changed_content_is_still_rejected_before_hashing(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "changed.dll"
+            path.write_bytes(b"before")
+            expected = os.lstat(path)
+            path.write_bytes(b"different content")
+            with self.assertRaisesRegex(RuntimeError, "File changed before hashing"):
+                inventory.sha256(str(path), expected)
+
     def test_overlapping_roots_count_each_path_once(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

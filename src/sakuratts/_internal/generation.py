@@ -123,6 +123,8 @@ def generate_semantic(model, phones, prompt, bert, *, eos, top_k=15, top_p=1.0,
         check_cancelled(cancel_requested, "after_prefill")
         for index in range(1500):
             raw = np.asarray(logits).copy()
+            if not np.isfinite(raw).all():
+                raise RuntimeError(f"GPT produced non-finite logits at semantic step {index}")
             active = exclude_initial_eos(raw.copy() if observer is not None else raw, index, eos)
             noise = None if random_draw is None else random_draw(index, active.shape)
             token, probabilities = sample(

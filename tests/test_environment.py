@@ -71,7 +71,8 @@ class EnvironmentTests(unittest.TestCase):
                 checked_file(root, "../outside.bin", spec)
 
     def test_configured_classic_workers_do_not_require_plus_or_ort_in_main_python(self):
-        resource_check = {"status": "passed", "japanese_g2p": {"implementation": "pyopenjtalk-classic"}}
+        resource_check = {"status": "passed", "profile": None,
+                          "japanese_g2p": {"implementation": "pyopenjtalk-classic"}}
         def import_selected(module):
             if module in ("pyopenjtalk", "onnxruntime", "sudachipy", "sudachidict_core"):
                 raise ImportError("This dependency belongs to another configured worker")

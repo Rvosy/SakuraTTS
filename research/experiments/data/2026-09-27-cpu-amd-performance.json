@@ -1,0 +1,2166 @@
+{
+  "scope": "Sequential fresh-process complete requests, same native tokens/noise seed; Genie lengths differ",
+  "variants": {
+    "baseline/genie": {
+      "status": "completed",
+      "peak_sampled_tree_rss_bytes": 5402877952,
+      "peak_sampled_tree_private_bytes": 6897344512,
+      "observed_tree_cpu_s": 258.359375,
+      "process_wall_s": 78.80248840000422,
+      "sample_interval_s": 0.1,
+      "terminated_pids": [],
+      "summary_path": "results\\cpu-amd-performance\\baseline\\summary.json",
+      "summary_sha256": "70669fba1351f4b85a555e77cdb85c8fb6b59e85bac82c9bc9941c7990e3282f",
+      "execution": {
+        "providers": [
+          "CPUExecutionProvider"
+        ],
+        "sampling": "Original ONNX RandomNormalLike/ArgMax and original stopping rules",
+        "seed": "Not exposed by the public API; graph RNG state advances across requests",
+        "threads": "Original ORT defaults; no session or model patches",
+        "model_identity": "Preconverted Genie assets are hashed; original checkpoint provenance is unverified"
+      },
+      "summary": {
+        "short": {
+          "n": 2,
+          "median_ms": 1492.0465000031982,
+          "min_ms": 1296.9855999981519,
+          "max_ms": 1687.1074000082444,
+          "median_rtf": 0.7470103906581456,
+          "audio_seconds": [
+            2.28,
+            1.72
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 22011.494700003823,
+          "min_ms": 18490.81400000432,
+          "max_ms": 25532.175400003325,
+          "median_rtf": 1.1799222243101117,
+          "audio_seconds": [
+            19.16,
+            18.0
+          ]
+        }
+      },
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "status": "completed",
+          "complete_pcm_ms": 2356.000799991307,
+          "audio_seconds": 1.12,
+          "rtf": 2.103572142849381,
+          "wav_sha256": "bd200c2085a462e4f7cb086546c4e775506b3274efb866c3c84721dba0bf42d1",
+          "worker_cpu_s": 9.515625,
+          "memory": {
+            "sample_count": 20,
+            "sampled_tree_cpu_s": 9.34375,
+            "peak_sampled_tree_rss_bytes": 4561707008,
+            "peak_sampled_tree_private_bytes": 5984133120
+          }
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 1313.9317000022857,
+          "audio_seconds": 1.84,
+          "rtf": 0.7140933152186335,
+          "wav_sha256": "60b09e9564834ab9dd548f98333d4a76621bdaefe269146a2e77ac5a21128ad8",
+          "worker_cpu_s": 6.90625,
+          "memory": {
+            "sample_count": 11,
+            "sampled_tree_cpu_s": 6.765625,
+            "peak_sampled_tree_rss_bytes": 4584718336,
+            "peak_sampled_tree_private_bytes": 5984325632
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 1687.1074000082444,
+          "audio_seconds": 2.28,
+          "rtf": 0.7399593859685283,
+          "wav_sha256": "704b1f7af847b1179ad7fbf4770412f4236840904c88e5d7cf7cbedd66a18e28",
+          "worker_cpu_s": 7.203125,
+          "memory": {
+            "sample_count": 14,
+            "sampled_tree_cpu_s": 6.859375,
+            "peak_sampled_tree_rss_bytes": 4590403584,
+            "peak_sampled_tree_private_bytes": 5984346112
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 1296.9855999981519,
+          "audio_seconds": 1.72,
+          "rtf": 0.7540613953477627,
+          "wav_sha256": "3954a4d695f2dc68ad934f2fb8cccd37af0719a8c43f87bc27d86b2e24f338c2",
+          "worker_cpu_s": 6.0625,
+          "memory": {
+            "sample_count": 11,
+            "sampled_tree_cpu_s": 6.125,
+            "peak_sampled_tree_rss_bytes": 4590850048,
+            "peak_sampled_tree_private_bytes": 5984563200
+          }
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 15486.244900006568,
+          "audio_seconds": 18.32,
+          "rtf": 0.8453190447601838,
+          "wav_sha256": "88dd3a6bcc92457d863816351b5907bbc7bc1aa1100db8fe32bce359d5f79130",
+          "worker_cpu_s": 65.125,
+          "memory": {
+            "sample_count": 131,
+            "sampled_tree_cpu_s": 65.1875,
+            "peak_sampled_tree_rss_bytes": 5114863616,
+            "peak_sampled_tree_private_bytes": 6578319360
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 25532.175400003325,
+          "audio_seconds": 19.16,
+          "rtf": 1.332577004175539,
+          "wav_sha256": "e258256c293f85c67b20ac2896d6b1c7a9f8e37324bc66da124b5e690a2f3259",
+          "worker_cpu_s": 78.484375,
+          "memory": {
+            "sample_count": 207,
+            "sampled_tree_cpu_s": 78.578125,
+            "peak_sampled_tree_rss_bytes": 5116051456,
+            "peak_sampled_tree_private_bytes": 6579494912
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 18490.81400000432,
+          "audio_seconds": 18.0,
+          "rtf": 1.0272674444446845,
+          "wav_sha256": "8a05ca300c34150974308c074108b72b2cc8f24160a8359eabd4509c6c477a44",
+          "worker_cpu_s": 76.3125,
+          "memory": {
+            "sample_count": 156,
+            "sampled_tree_cpu_s": 76.28125,
+            "peak_sampled_tree_rss_bytes": 4970061824,
+            "peak_sampled_tree_private_bytes": 6579552256
+          }
+        }
+      ]
+    },
+    "baseline/cpu": {
+      "status": "completed",
+      "peak_sampled_tree_rss_bytes": 1441505280,
+      "peak_sampled_tree_private_bytes": 1735467008,
+      "observed_tree_cpu_s": 70.625,
+      "process_wall_s": 95.85843720000412,
+      "sample_interval_s": 0.1,
+      "terminated_pids": [],
+      "summary_path": "results\\cpu-amd-performance\\baseline\\summary.json",
+      "summary_sha256": "70669fba1351f4b85a555e77cdb85c8fb6b59e85bac82c9bc9941c7990e3282f",
+      "execution": {
+        "experimental": {
+          "threads": 2,
+          "policy": "resident",
+          "capacity": 2048,
+          "gpt_prefill_query_chunk_size": 128,
+          "enable_cpu_mem_arena": false
+        },
+        "seed": 1234,
+        "top_k": 15,
+        "temperature": 1.0,
+        "repetition_penalty": 1.35,
+        "split_method": "cut0",
+        "reference": "reference",
+        "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b"
+      },
+      "summary": {
+        "short": {
+          "n": 2,
+          "median_ms": 3781.640899993363,
+          "min_ms": 3725.2337999962037,
+          "max_ms": 3838.047999990522,
+          "median_rtf": 1.1057429532144336,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 23602.64250000182,
+          "min_ms": 23489.700999998604,
+          "max_ms": 23715.584000005038,
+          "median_rtf": 1.1402242753624068,
+          "audio_seconds": [
+            20.7,
+            20.7
+          ]
+        }
+      },
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "status": "completed",
+          "complete_pcm_ms": 10246.632800000953,
+          "audio_seconds": 3.42,
+          "rtf": 2.996091461988583,
+          "wav_sha256": "f2243245148fbbfa4419b7d554beb960966b5c295b39f03bb5b9108adfa03d42",
+          "worker_cpu_s": 4.84375,
+          "memory": {
+            "sample_count": 80,
+            "sampled_tree_cpu_s": 4.828125,
+            "peak_sampled_tree_rss_bytes": 931987456,
+            "peak_sampled_tree_private_bytes": 1383624704
+          }
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 4106.434200002695,
+          "audio_seconds": 3.42,
+          "rtf": 1.2007117543867531,
+          "wav_sha256": "f2243245148fbbfa4419b7d554beb960966b5c295b39f03bb5b9108adfa03d42",
+          "worker_cpu_s": 2.328125,
+          "memory": {
+            "sample_count": 36,
+            "sampled_tree_cpu_s": 2.25,
+            "peak_sampled_tree_rss_bytes": 937271296,
+            "peak_sampled_tree_private_bytes": 1383608320
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 3838.047999990522,
+          "audio_seconds": 3.42,
+          "rtf": 1.1222362573071702,
+          "wav_sha256": "f2243245148fbbfa4419b7d554beb960966b5c295b39f03bb5b9108adfa03d42",
+          "worker_cpu_s": 2.359375,
+          "memory": {
+            "sample_count": 35,
+            "sampled_tree_cpu_s": 2.40625,
+            "peak_sampled_tree_rss_bytes": 938221568,
+            "peak_sampled_tree_private_bytes": 1384472576
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 3725.2337999962037,
+          "audio_seconds": 3.42,
+          "rtf": 1.089249649121697,
+          "wav_sha256": "f2243245148fbbfa4419b7d554beb960966b5c295b39f03bb5b9108adfa03d42",
+          "worker_cpu_s": 2.484375,
+          "memory": {
+            "sample_count": 34,
+            "sampled_tree_cpu_s": 2.53125,
+            "peak_sampled_tree_rss_bytes": 938459136,
+            "peak_sampled_tree_private_bytes": 1384468480
+          }
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 24632.377700007055,
+          "audio_seconds": 20.7,
+          "rtf": 1.1899699371984085,
+          "wav_sha256": "0a9e2596e47580b00c973394a0c88fc130bfdacff514cbe8147d3b1bab6751d0",
+          "worker_cpu_s": 19.78125,
+          "memory": {
+            "sample_count": 221,
+            "sampled_tree_cpu_s": 19.734375,
+            "peak_sampled_tree_rss_bytes": 1439674368,
+            "peak_sampled_tree_private_bytes": 1733853184
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 23715.584000005038,
+          "audio_seconds": 20.7,
+          "rtf": 1.1456803864736733,
+          "wav_sha256": "0a9e2596e47580b00c973394a0c88fc130bfdacff514cbe8147d3b1bab6751d0",
+          "worker_cpu_s": 18.953125,
+          "memory": {
+            "sample_count": 214,
+            "sampled_tree_cpu_s": 18.90625,
+            "peak_sampled_tree_rss_bytes": 1441505280,
+            "peak_sampled_tree_private_bytes": 1735467008
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 23489.700999998604,
+          "audio_seconds": 20.7,
+          "rtf": 1.1347681642511402,
+          "wav_sha256": "0a9e2596e47580b00c973394a0c88fc130bfdacff514cbe8147d3b1bab6751d0",
+          "worker_cpu_s": 19.078125,
+          "memory": {
+            "sample_count": 212,
+            "sampled_tree_cpu_s": 19.03125,
+            "peak_sampled_tree_rss_bytes": 1438662656,
+            "peak_sampled_tree_private_bytes": 1732616192
+          }
+        }
+      ]
+    },
+    "baseline/directml": {
+      "status": "completed",
+      "peak_sampled_tree_rss_bytes": 1820532736,
+      "peak_sampled_tree_private_bytes": 2420334592,
+      "observed_tree_cpu_s": 21.0,
+      "process_wall_s": 60.578867300006095,
+      "sample_interval_s": 0.1,
+      "terminated_pids": [],
+      "summary_path": "results\\cpu-amd-performance\\baseline\\summary.json",
+      "summary_sha256": "70669fba1351f4b85a555e77cdb85c8fb6b59e85bac82c9bc9941c7990e3282f",
+      "execution": {
+        "experimental": {
+          "threads": 2,
+          "policy": "resident",
+          "capacity": 2048,
+          "gpt_prefill_query_chunk_size": 128,
+          "enable_cpu_mem_arena": false
+        },
+        "seed": 1234,
+        "top_k": 15,
+        "temperature": 1.0,
+        "repetition_penalty": 1.35,
+        "split_method": "cut0",
+        "reference": "reference",
+        "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b"
+      },
+      "summary": {
+        "short": {
+          "n": 2,
+          "median_ms": 2476.022999995621,
+          "min_ms": 2431.1958000034792,
+          "max_ms": 2520.8501999877626,
+          "median_rtf": 0.7239833333320529,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 14499.715600002673,
+          "min_ms": 14034.935799994855,
+          "max_ms": 14964.495400010492,
+          "median_rtf": 0.700469352657134,
+          "audio_seconds": [
+            20.7,
+            20.7
+          ]
+        }
+      },
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "status": "completed",
+          "complete_pcm_ms": 6358.915699995123,
+          "audio_seconds": 3.42,
+          "rtf": 1.8593320760219658,
+          "wav_sha256": "bc73297093c7537b8945a3893e014768a42b3a2cb0f667397cb9b0638b2a014b",
+          "worker_cpu_s": 3.3125,
+          "memory": {
+            "sample_count": 57,
+            "sampled_tree_cpu_s": 3.21875,
+            "peak_sampled_tree_rss_bytes": 1150754816,
+            "peak_sampled_tree_private_bytes": 1870516224
+          }
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 2650.810300008743,
+          "audio_seconds": 3.42,
+          "rtf": 0.7750907309967086,
+          "wav_sha256": "bc73297093c7537b8945a3893e014768a42b3a2cb0f667397cb9b0638b2a014b",
+          "worker_cpu_s": 0.640625,
+          "memory": {
+            "sample_count": 24,
+            "sampled_tree_cpu_s": 0.671875,
+            "peak_sampled_tree_rss_bytes": 1161646080,
+            "peak_sampled_tree_private_bytes": 1881088000
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 2520.8501999877626,
+          "audio_seconds": 3.42,
+          "rtf": 0.7370907017508078,
+          "wav_sha256": "bc73297093c7537b8945a3893e014768a42b3a2cb0f667397cb9b0638b2a014b",
+          "worker_cpu_s": 1.0625,
+          "memory": {
+            "sample_count": 23,
+            "sampled_tree_cpu_s": 1.109375,
+            "peak_sampled_tree_rss_bytes": 1163825152,
+            "peak_sampled_tree_private_bytes": 1883783168
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 2431.1958000034792,
+          "audio_seconds": 3.42,
+          "rtf": 0.7108759649132981,
+          "wav_sha256": "bc73297093c7537b8945a3893e014768a42b3a2cb0f667397cb9b0638b2a014b",
+          "worker_cpu_s": 0.921875,
+          "memory": {
+            "sample_count": 22,
+            "sampled_tree_cpu_s": 0.921875,
+            "peak_sampled_tree_rss_bytes": 1162149888,
+            "peak_sampled_tree_private_bytes": 1881452544
+          }
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 16344.306399987545,
+          "audio_seconds": 20.7,
+          "rtf": 0.7895800193230699,
+          "wav_sha256": "45db8d7c252a658281c2547ec547899f83dffc87d97d2a590da4ccc556a7ba5f",
+          "worker_cpu_s": 5.484375,
+          "memory": {
+            "sample_count": 146,
+            "sampled_tree_cpu_s": 5.5,
+            "peak_sampled_tree_rss_bytes": 1800536064,
+            "peak_sampled_tree_private_bytes": 2397974528
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 14964.495400010492,
+          "audio_seconds": 20.7,
+          "rtf": 0.7229224830922943,
+          "wav_sha256": "45db8d7c252a658281c2547ec547899f83dffc87d97d2a590da4ccc556a7ba5f",
+          "worker_cpu_s": 4.28125,
+          "memory": {
+            "sample_count": 135,
+            "sampled_tree_cpu_s": 4.25,
+            "peak_sampled_tree_rss_bytes": 1820532736,
+            "peak_sampled_tree_private_bytes": 2420334592
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 14034.935799994855,
+          "audio_seconds": 20.7,
+          "rtf": 0.6780162222219737,
+          "wav_sha256": "45db8d7c252a658281c2547ec547899f83dffc87d97d2a590da4ccc556a7ba5f",
+          "worker_cpu_s": 4.765625,
+          "memory": {
+            "sample_count": 128,
+            "sampled_tree_cpu_s": 4.796875,
+            "peak_sampled_tree_rss_bytes": 1819930624,
+            "peak_sampled_tree_private_bytes": 2419650560
+          }
+        }
+      ]
+    },
+    "onnx-fp32/cpu": {
+      "status": "completed",
+      "peak_sampled_tree_rss_bytes": 1411862528,
+      "peak_sampled_tree_private_bytes": 1757773824,
+      "observed_tree_cpu_s": 92.890625,
+      "process_wall_s": 87.29785800000536,
+      "sample_interval_s": 0.1,
+      "terminated_pids": [],
+      "summary_path": "results\\cpu-amd-performance\\onnx-fp32\\summary.json",
+      "summary_sha256": "b04b46612df6e0e3773a1c7a4f438a50169c0a2997aba20b81cc3020f8769d7c",
+      "execution": {
+        "experimental": {
+          "gpt_backend": "onnx",
+          "gpt_prefill_query_chunk_size": 0,
+          "threads": 2,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "seed": 1234,
+        "top_k": 15,
+        "temperature": 1.0,
+        "repetition_penalty": 1.35,
+        "split_method": "cut0",
+        "reference": "reference",
+        "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b"
+      },
+      "summary": {
+        "short": {
+          "n": 2,
+          "median_ms": 3369.259500002954,
+          "min_ms": 3359.1474999993807,
+          "max_ms": 3379.3715000065276,
+          "median_rtf": 0.985163596492092,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 23005.669849997503,
+          "min_ms": 22160.775500000454,
+          "max_ms": 23850.56419999455,
+          "median_rtf": 1.1113850169080919,
+          "audio_seconds": [
+            20.7,
+            20.7
+          ]
+        }
+      },
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "status": "completed",
+          "complete_pcm_ms": 6344.9895000085235,
+          "audio_seconds": 3.42,
+          "rtf": 1.8552600877217906,
+          "wav_sha256": "f2243245148fbbfa4419b7d554beb960966b5c295b39f03bb5b9108adfa03d42",
+          "worker_cpu_s": 5.65625,
+          "memory": {
+            "sample_count": 57,
+            "sampled_tree_cpu_s": 5.609375,
+            "peak_sampled_tree_rss_bytes": 933662720,
+            "peak_sampled_tree_private_bytes": 1390866432
+          }
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 3398.16109999083,
+          "audio_seconds": 3.42,
+          "rtf": 0.9936143567224649,
+          "wav_sha256": "f2243245148fbbfa4419b7d554beb960966b5c295b39f03bb5b9108adfa03d42",
+          "worker_cpu_s": 3.15625,
+          "memory": {
+            "sample_count": 31,
+            "sampled_tree_cpu_s": 3.203125,
+            "peak_sampled_tree_rss_bytes": 937086976,
+            "peak_sampled_tree_private_bytes": 1391419392
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 3379.3715000065276,
+          "audio_seconds": 3.42,
+          "rtf": 0.9881203216393356,
+          "wav_sha256": "f2243245148fbbfa4419b7d554beb960966b5c295b39f03bb5b9108adfa03d42",
+          "worker_cpu_s": 3.265625,
+          "memory": {
+            "sample_count": 30,
+            "sampled_tree_cpu_s": 3.1875,
+            "peak_sampled_tree_rss_bytes": 935518208,
+            "peak_sampled_tree_private_bytes": 1391431680
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 3359.1474999993807,
+          "audio_seconds": 3.42,
+          "rtf": 0.9822068713448482,
+          "wav_sha256": "f2243245148fbbfa4419b7d554beb960966b5c295b39f03bb5b9108adfa03d42",
+          "worker_cpu_s": 3.40625,
+          "memory": {
+            "sample_count": 30,
+            "sampled_tree_cpu_s": 3.40625,
+            "peak_sampled_tree_rss_bytes": 937758720,
+            "peak_sampled_tree_private_bytes": 1391431680
+          }
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 23759.932899993146,
+          "audio_seconds": 20.7,
+          "rtf": 1.147822845410297,
+          "wav_sha256": "0a9e2596e47580b00c973394a0c88fc130bfdacff514cbe8147d3b1bab6751d0",
+          "worker_cpu_s": 26.734375,
+          "memory": {
+            "sample_count": 212,
+            "sampled_tree_cpu_s": 26.703125,
+            "peak_sampled_tree_rss_bytes": 1408749568,
+            "peak_sampled_tree_private_bytes": 1756696576
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 22160.775500000454,
+          "audio_seconds": 20.7,
+          "rtf": 1.0705688647343214,
+          "wav_sha256": "0a9e2596e47580b00c973394a0c88fc130bfdacff514cbe8147d3b1bab6751d0",
+          "worker_cpu_s": 24.5,
+          "memory": {
+            "sample_count": 197,
+            "sampled_tree_cpu_s": 24.53125,
+            "peak_sampled_tree_rss_bytes": 1405964288,
+            "peak_sampled_tree_private_bytes": 1752825856
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 23850.56419999455,
+          "audio_seconds": 20.7,
+          "rtf": 1.1522011690818623,
+          "wav_sha256": "0a9e2596e47580b00c973394a0c88fc130bfdacff514cbe8147d3b1bab6751d0",
+          "worker_cpu_s": 25.53125,
+          "memory": {
+            "sample_count": 210,
+            "sampled_tree_cpu_s": 25.609375,
+            "peak_sampled_tree_rss_bytes": 1411862528,
+            "peak_sampled_tree_private_bytes": 1757773824
+          }
+        }
+      ]
+    },
+    "onnx-fp32/directml": {
+      "status": "completed",
+      "peak_sampled_tree_rss_bytes": 1872969728,
+      "peak_sampled_tree_private_bytes": 2545876992,
+      "observed_tree_cpu_s": 43.59375,
+      "process_wall_s": 50.05132450000383,
+      "sample_interval_s": 0.1,
+      "terminated_pids": [],
+      "summary_path": "results\\cpu-amd-performance\\onnx-fp32\\summary.json",
+      "summary_sha256": "b04b46612df6e0e3773a1c7a4f438a50169c0a2997aba20b81cc3020f8769d7c",
+      "execution": {
+        "experimental": {
+          "gpt_backend": "onnx",
+          "gpt_prefill_query_chunk_size": 0,
+          "threads": 2,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "seed": 1234,
+        "top_k": 15,
+        "temperature": 1.0,
+        "repetition_penalty": 1.35,
+        "split_method": "cut0",
+        "reference": "reference",
+        "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b"
+      },
+      "summary": {
+        "short": {
+          "n": 2,
+          "median_ms": 1740.0073500029976,
+          "min_ms": 1739.3066000076942,
+          "max_ms": 1740.708099998301,
+          "median_rtf": 0.5087740789482449,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 12118.401650004671,
+          "min_ms": 11777.579500005231,
+          "max_ms": 12459.22380000411,
+          "median_rtf": 0.5854300314011919,
+          "audio_seconds": [
+            20.7,
+            20.7
+          ]
+        }
+      },
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "status": "completed",
+          "complete_pcm_ms": 6369.786199997179,
+          "audio_seconds": 3.42,
+          "rtf": 1.862510584794497,
+          "wav_sha256": "bc73297093c7537b8945a3893e014768a42b3a2cb0f667397cb9b0638b2a014b",
+          "worker_cpu_s": 4.4375,
+          "memory": {
+            "sample_count": 57,
+            "sampled_tree_cpu_s": 4.40625,
+            "peak_sampled_tree_rss_bytes": 1124962304,
+            "peak_sampled_tree_private_bytes": 1883045888
+          }
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 1965.7077000010759,
+          "audio_seconds": 3.42,
+          "rtf": 0.574768333333648,
+          "wav_sha256": "bc73297093c7537b8945a3893e014768a42b3a2cb0f667397cb9b0638b2a014b",
+          "worker_cpu_s": 1.53125,
+          "memory": {
+            "sample_count": 17,
+            "sampled_tree_cpu_s": 1.484375,
+            "peak_sampled_tree_rss_bytes": 1168297984,
+            "peak_sampled_tree_private_bytes": 1927852032
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 1740.708099998301,
+          "audio_seconds": 3.42,
+          "rtf": 0.5089789766076903,
+          "wav_sha256": "bc73297093c7537b8945a3893e014768a42b3a2cb0f667397cb9b0638b2a014b",
+          "worker_cpu_s": 1.515625,
+          "memory": {
+            "sample_count": 15,
+            "sampled_tree_cpu_s": 1.4375,
+            "peak_sampled_tree_rss_bytes": 1168465920,
+            "peak_sampled_tree_private_bytes": 1928404992
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 1739.3066000076942,
+          "audio_seconds": 3.42,
+          "rtf": 0.5085691812887995,
+          "wav_sha256": "bc73297093c7537b8945a3893e014768a42b3a2cb0f667397cb9b0638b2a014b",
+          "worker_cpu_s": 1.53125,
+          "memory": {
+            "sample_count": 16,
+            "sampled_tree_cpu_s": 1.578125,
+            "peak_sampled_tree_rss_bytes": 1171324928,
+            "peak_sampled_tree_private_bytes": 1928404992
+          }
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 12743.812100001378,
+          "audio_seconds": 20.7,
+          "rtf": 0.6156430966184241,
+          "wav_sha256": "45db8d7c252a658281c2547ec547899f83dffc87d97d2a590da4ccc556a7ba5f",
+          "worker_cpu_s": 11.03125,
+          "memory": {
+            "sample_count": 114,
+            "sampled_tree_cpu_s": 10.984375,
+            "peak_sampled_tree_rss_bytes": 1750753280,
+            "peak_sampled_tree_private_bytes": 2427371520
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 11777.579500005231,
+          "audio_seconds": 20.7,
+          "rtf": 0.5689651932369677,
+          "wav_sha256": "45db8d7c252a658281c2547ec547899f83dffc87d97d2a590da4ccc556a7ba5f",
+          "worker_cpu_s": 12.46875,
+          "memory": {
+            "sample_count": 106,
+            "sampled_tree_cpu_s": 12.46875,
+            "peak_sampled_tree_rss_bytes": 1872601088,
+            "peak_sampled_tree_private_bytes": 2545876992
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 12459.22380000411,
+          "audio_seconds": 20.7,
+          "rtf": 0.601894869565416,
+          "wav_sha256": "45db8d7c252a658281c2547ec547899f83dffc87d97d2a590da4ccc556a7ba5f",
+          "worker_cpu_s": 10.421875,
+          "memory": {
+            "sample_count": 111,
+            "sampled_tree_cpu_s": 10.453125,
+            "peak_sampled_tree_rss_bytes": 1872969728,
+            "peak_sampled_tree_private_bytes": 2545131520
+          }
+        }
+      ]
+    },
+    "onnx-mixed-fp16/directml": {
+      "status": "completed",
+      "peak_sampled_tree_rss_bytes": 1488666624,
+      "peak_sampled_tree_private_bytes": 2155433984,
+      "observed_tree_cpu_s": 40.328125,
+      "process_wall_s": 49.78599540000141,
+      "sample_interval_s": 0.1,
+      "terminated_pids": [],
+      "summary_path": "results\\cpu-amd-performance\\onnx-mixed-fp16\\summary.json",
+      "summary_sha256": "b471c9732094382496e08e3338215ed38c91c6774136297bb1eb399beaac752c",
+      "execution": {
+        "experimental": {
+          "gpt_backend": "onnx",
+          "gpt_prefill_query_chunk_size": 0,
+          "threads": 2,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident",
+          "allow_experimental_acoustic_fp16": true
+        },
+        "seed": 1234,
+        "top_k": 15,
+        "temperature": 1.0,
+        "repetition_penalty": 1.35,
+        "split_method": "cut0",
+        "reference": "reference",
+        "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b"
+      },
+      "summary": {
+        "short": {
+          "n": 2,
+          "median_ms": 1828.2823999979883,
+          "min_ms": 1755.6270000059158,
+          "max_ms": 1900.9377999900607,
+          "median_rtf": 0.5345854970754351,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 12084.407599999395,
+          "min_ms": 11947.569299998577,
+          "max_ms": 12221.245900000213,
+          "median_rtf": 0.5837878067632558,
+          "audio_seconds": [
+            20.7,
+            20.7
+          ]
+        }
+      },
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "status": "completed",
+          "complete_pcm_ms": 5763.117099995725,
+          "audio_seconds": 3.42,
+          "rtf": 1.6851219590630775,
+          "wav_sha256": "d958f9b4a2899ce5391c16f30de48c2e4932ea34b83d49099f970c5a9ffd6e4c",
+          "worker_cpu_s": 3.90625,
+          "memory": {
+            "sample_count": 52,
+            "sampled_tree_cpu_s": 3.84375,
+            "peak_sampled_tree_rss_bytes": 966303744,
+            "peak_sampled_tree_private_bytes": 1725657088
+          }
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 1841.9040000007953,
+          "audio_seconds": 3.42,
+          "rtf": 0.5385684210528642,
+          "wav_sha256": "d958f9b4a2899ce5391c16f30de48c2e4932ea34b83d49099f970c5a9ffd6e4c",
+          "worker_cpu_s": 1.640625,
+          "memory": {
+            "sample_count": 17,
+            "sampled_tree_cpu_s": 1.703125,
+            "peak_sampled_tree_rss_bytes": 1038000128,
+            "peak_sampled_tree_private_bytes": 1796513792
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 1755.6270000059158,
+          "audio_seconds": 3.42,
+          "rtf": 0.5133412280719052,
+          "wav_sha256": "d958f9b4a2899ce5391c16f30de48c2e4932ea34b83d49099f970c5a9ffd6e4c",
+          "worker_cpu_s": 1.5625,
+          "memory": {
+            "sample_count": 15,
+            "sampled_tree_cpu_s": 1.484375,
+            "peak_sampled_tree_rss_bytes": 1009528832,
+            "peak_sampled_tree_private_bytes": 1770729472
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 1900.9377999900607,
+          "audio_seconds": 3.42,
+          "rtf": 0.5558297660789652,
+          "wav_sha256": "d958f9b4a2899ce5391c16f30de48c2e4932ea34b83d49099f970c5a9ffd6e4c",
+          "worker_cpu_s": 1.21875,
+          "memory": {
+            "sample_count": 17,
+            "sampled_tree_cpu_s": 1.265625,
+            "peak_sampled_tree_rss_bytes": 1012285440,
+            "peak_sampled_tree_private_bytes": 1770729472
+          }
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 12973.646400001599,
+          "audio_seconds": 20.7,
+          "rtf": 0.6267462028986279,
+          "wav_sha256": "6c0b7d724f1957d2651a5f2cd6d26e268923171fe554a5285ba9c25279c5be26",
+          "worker_cpu_s": 10.703125,
+          "memory": {
+            "sample_count": 116,
+            "sampled_tree_cpu_s": 10.640625,
+            "peak_sampled_tree_rss_bytes": 1378664448,
+            "peak_sampled_tree_private_bytes": 2040827904
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 11947.569299998577,
+          "audio_seconds": 20.7,
+          "rtf": 0.5771772608694965,
+          "wav_sha256": "6c0b7d724f1957d2651a5f2cd6d26e268923171fe554a5285ba9c25279c5be26",
+          "worker_cpu_s": 10.609375,
+          "memory": {
+            "sample_count": 106,
+            "sampled_tree_cpu_s": 10.5625,
+            "peak_sampled_tree_rss_bytes": 1488666624,
+            "peak_sampled_tree_private_bytes": 2154946560
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 12221.245900000213,
+          "audio_seconds": 20.7,
+          "rtf": 0.5903983526570151,
+          "wav_sha256": "6c0b7d724f1957d2651a5f2cd6d26e268923171fe554a5285ba9c25279c5be26",
+          "worker_cpu_s": 10.125,
+          "memory": {
+            "sample_count": 108,
+            "sampled_tree_cpu_s": 10.09375,
+            "peak_sampled_tree_rss_bytes": 1487138816,
+            "peak_sampled_tree_private_bytes": 2155433984
+          }
+        }
+      ]
+    },
+    "onnx-fp32-gpt4/cpu": {
+      "status": "completed",
+      "peak_sampled_tree_rss_bytes": 1413844992,
+      "peak_sampled_tree_private_bytes": 1758547968,
+      "observed_tree_cpu_s": 92.390625,
+      "process_wall_s": 80.96492020000005,
+      "sample_interval_s": 0.1,
+      "terminated_pids": [],
+      "summary_path": "results\\cpu-amd-performance\\onnx-fp32-gpt4\\summary.json",
+      "summary_sha256": "e13edd7a43336c1157f19e9798eb835c4bd6be96caae93b17c0e74f6db93562e",
+      "execution": {
+        "experimental": {
+          "gpt_backend": "onnx",
+          "gpt_prefill_query_chunk_size": 0,
+          "gpt_threads": 4,
+          "threads": 2,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "seed": 1234,
+        "top_k": 15,
+        "temperature": 1.0,
+        "repetition_penalty": 1.35,
+        "split_method": "cut0",
+        "reference": "reference",
+        "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b"
+      },
+      "summary": {
+        "short": {
+          "n": 2,
+          "median_ms": 3491.5173500048695,
+          "min_ms": 3223.5336000012467,
+          "max_ms": 3759.5011000084924,
+          "median_rtf": 1.020911505849377,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 20690.899750006793,
+          "min_ms": 20193.21700000728,
+          "max_ms": 21188.582500006305,
+          "median_rtf": 0.9995603743964634,
+          "audio_seconds": [
+            20.7,
+            20.7
+          ]
+        }
+      },
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "status": "completed",
+          "complete_pcm_ms": 6213.070300000254,
+          "audio_seconds": 3.42,
+          "rtf": 1.8166872222222965,
+          "wav_sha256": "f2243245148fbbfa4419b7d554beb960966b5c295b39f03bb5b9108adfa03d42",
+          "worker_cpu_s": 6.46875,
+          "memory": {
+            "sample_count": 56,
+            "sampled_tree_cpu_s": 6.484375,
+            "peak_sampled_tree_rss_bytes": 935174144,
+            "peak_sampled_tree_private_bytes": 1390714880
+          }
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 3108.4238000039477,
+          "audio_seconds": 3.42,
+          "rtf": 0.9088958479543707,
+          "wav_sha256": "f2243245148fbbfa4419b7d554beb960966b5c295b39f03bb5b9108adfa03d42",
+          "worker_cpu_s": 3.25,
+          "memory": {
+            "sample_count": 28,
+            "sampled_tree_cpu_s": 3.21875,
+            "peak_sampled_tree_rss_bytes": 948396032,
+            "peak_sampled_tree_private_bytes": 1402314752
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 3223.5336000012467,
+          "audio_seconds": 3.42,
+          "rtf": 0.9425536842108908,
+          "wav_sha256": "f2243245148fbbfa4419b7d554beb960966b5c295b39f03bb5b9108adfa03d42",
+          "worker_cpu_s": 2.890625,
+          "memory": {
+            "sample_count": 28,
+            "sampled_tree_cpu_s": 2.828125,
+            "peak_sampled_tree_rss_bytes": 939036672,
+            "peak_sampled_tree_private_bytes": 1391656960
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 3759.5011000084924,
+          "audio_seconds": 3.42,
+          "rtf": 1.0992693274878633,
+          "wav_sha256": "f2243245148fbbfa4419b7d554beb960966b5c295b39f03bb5b9108adfa03d42",
+          "worker_cpu_s": 3.0,
+          "memory": {
+            "sample_count": 33,
+            "sampled_tree_cpu_s": 3.0,
+            "peak_sampled_tree_rss_bytes": 938545152,
+            "peak_sampled_tree_private_bytes": 1392709632
+          }
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 22215.322000003653,
+          "audio_seconds": 20.7,
+          "rtf": 1.0732039613528335,
+          "wav_sha256": "0a9e2596e47580b00c973394a0c88fc130bfdacff514cbe8147d3b1bab6751d0",
+          "worker_cpu_s": 26.765625,
+          "memory": {
+            "sample_count": 198,
+            "sampled_tree_cpu_s": 26.796875,
+            "peak_sampled_tree_rss_bytes": 1407946752,
+            "peak_sampled_tree_private_bytes": 1753796608
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 21188.582500006305,
+          "audio_seconds": 20.7,
+          "rtf": 1.023603019323976,
+          "wav_sha256": "0a9e2596e47580b00c973394a0c88fc130bfdacff514cbe8147d3b1bab6751d0",
+          "worker_cpu_s": 24.890625,
+          "memory": {
+            "sample_count": 187,
+            "sampled_tree_cpu_s": 24.828125,
+            "peak_sampled_tree_rss_bytes": 1413844992,
+            "peak_sampled_tree_private_bytes": 1758547968
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 20193.21700000728,
+          "audio_seconds": 20.7,
+          "rtf": 0.9755177294689508,
+          "wav_sha256": "0a9e2596e47580b00c973394a0c88fc130bfdacff514cbe8147d3b1bab6751d0",
+          "worker_cpu_s": 24.484375,
+          "memory": {
+            "sample_count": 179,
+            "sampled_tree_cpu_s": 24.453125,
+            "peak_sampled_tree_rss_bytes": 1413451776,
+            "peak_sampled_tree_private_bytes": 1757061120
+          }
+        }
+      ]
+    },
+    "onnx-fp32-gpt4/directml": {
+      "status": "completed",
+      "peak_sampled_tree_rss_bytes": 1918844928,
+      "peak_sampled_tree_private_bytes": 2589839360,
+      "observed_tree_cpu_s": 35.046875,
+      "process_wall_s": 46.189907699998,
+      "sample_interval_s": 0.1,
+      "terminated_pids": [],
+      "summary_path": "results\\cpu-amd-performance\\onnx-fp32-gpt4\\summary.json",
+      "summary_sha256": "e13edd7a43336c1157f19e9798eb835c4bd6be96caae93b17c0e74f6db93562e",
+      "execution": {
+        "experimental": {
+          "gpt_backend": "onnx",
+          "gpt_prefill_query_chunk_size": 0,
+          "gpt_threads": 4,
+          "threads": 2,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident"
+        },
+        "seed": 1234,
+        "top_k": 15,
+        "temperature": 1.0,
+        "repetition_penalty": 1.35,
+        "split_method": "cut0",
+        "reference": "reference",
+        "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b"
+      },
+      "summary": {
+        "short": {
+          "n": 2,
+          "median_ms": 1771.1819499963894,
+          "min_ms": 1763.575299992226,
+          "max_ms": 1778.7886000005528,
+          "median_rtf": 0.5178894590632718,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 10786.782349998248,
+          "min_ms": 10666.371700004674,
+          "max_ms": 10907.192999991821,
+          "median_rtf": 0.5211005966182729,
+          "audio_seconds": [
+            20.7,
+            20.7
+          ]
+        }
+      },
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "status": "completed",
+          "complete_pcm_ms": 5539.793900010409,
+          "audio_seconds": 3.42,
+          "rtf": 1.6198227777808214,
+          "wav_sha256": "bc73297093c7537b8945a3893e014768a42b3a2cb0f667397cb9b0638b2a014b",
+          "worker_cpu_s": 3.875,
+          "memory": {
+            "sample_count": 50,
+            "sampled_tree_cpu_s": 3.828125,
+            "peak_sampled_tree_rss_bytes": 1108725760,
+            "peak_sampled_tree_private_bytes": 1878818816
+          }
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 1665.8119999920018,
+          "audio_seconds": 3.42,
+          "rtf": 0.48707953216140404,
+          "wav_sha256": "bc73297093c7537b8945a3893e014768a42b3a2cb0f667397cb9b0638b2a014b",
+          "worker_cpu_s": 1.28125,
+          "memory": {
+            "sample_count": 15,
+            "sampled_tree_cpu_s": 1.296875,
+            "peak_sampled_tree_rss_bytes": 1165406208,
+            "peak_sampled_tree_private_bytes": 1936211968
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 1763.575299992226,
+          "audio_seconds": 3.42,
+          "rtf": 0.5156652923953877,
+          "wav_sha256": "bc73297093c7537b8945a3893e014768a42b3a2cb0f667397cb9b0638b2a014b",
+          "worker_cpu_s": 1.640625,
+          "memory": {
+            "sample_count": 15,
+            "sampled_tree_cpu_s": 1.59375,
+            "peak_sampled_tree_rss_bytes": 1172279296,
+            "peak_sampled_tree_private_bytes": 1949970432
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 1778.7886000005528,
+          "audio_seconds": 3.42,
+          "rtf": 0.5201136257311558,
+          "wav_sha256": "bc73297093c7537b8945a3893e014768a42b3a2cb0f667397cb9b0638b2a014b",
+          "worker_cpu_s": 1.546875,
+          "memory": {
+            "sample_count": 16,
+            "sampled_tree_cpu_s": 1.546875,
+            "peak_sampled_tree_rss_bytes": 1151348736,
+            "peak_sampled_tree_private_bytes": 1924612096
+          }
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 12595.613199999207,
+          "audio_seconds": 20.7,
+          "rtf": 0.6084837294685608,
+          "wav_sha256": "45db8d7c252a658281c2547ec547899f83dffc87d97d2a590da4ccc556a7ba5f",
+          "worker_cpu_s": 9.28125,
+          "memory": {
+            "sample_count": 111,
+            "sampled_tree_cpu_s": 9.328125,
+            "peak_sampled_tree_rss_bytes": 1749139456,
+            "peak_sampled_tree_private_bytes": 2416824320
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 10907.192999991821,
+          "audio_seconds": 20.7,
+          "rtf": 0.526917536231489,
+          "wav_sha256": "45db8d7c252a658281c2547ec547899f83dffc87d97d2a590da4ccc556a7ba5f",
+          "worker_cpu_s": 8.125,
+          "memory": {
+            "sample_count": 96,
+            "sampled_tree_cpu_s": 8.15625,
+            "peak_sampled_tree_rss_bytes": 1867157504,
+            "peak_sampled_tree_private_bytes": 2534510592
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 10666.371700004674,
+          "audio_seconds": 20.7,
+          "rtf": 0.5152836570050567,
+          "wav_sha256": "45db8d7c252a658281c2547ec547899f83dffc87d97d2a590da4ccc556a7ba5f",
+          "worker_cpu_s": 8.828125,
+          "memory": {
+            "sample_count": 94,
+            "sampled_tree_cpu_s": 8.796875,
+            "peak_sampled_tree_rss_bytes": 1918844928,
+            "peak_sampled_tree_private_bytes": 2589839360
+          }
+        }
+      ]
+    },
+    "onnx-mixed-fp16-gpt4/directml": {
+      "status": "completed",
+      "peak_sampled_tree_rss_bytes": 1523003392,
+      "peak_sampled_tree_private_bytes": 2225410048,
+      "observed_tree_cpu_s": 37.15625,
+      "process_wall_s": 42.18729590000294,
+      "sample_interval_s": 0.1,
+      "terminated_pids": [],
+      "summary_path": "results\\cpu-amd-performance\\onnx-mixed-fp16-gpt4\\summary.json",
+      "summary_sha256": "c8337118d0c7b9140ed927bc87a095e088e5ab68d39f33feaec29f64cf153011",
+      "execution": {
+        "experimental": {
+          "gpt_backend": "onnx",
+          "gpt_prefill_query_chunk_size": 0,
+          "gpt_threads": 4,
+          "threads": 2,
+          "enable_cpu_mem_arena": false,
+          "policy": "resident",
+          "allow_experimental_acoustic_fp16": true
+        },
+        "seed": 1234,
+        "top_k": 15,
+        "temperature": 1.0,
+        "repetition_penalty": 1.35,
+        "split_method": "cut0",
+        "reference": "reference",
+        "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b"
+      },
+      "summary": {
+        "short": {
+          "n": 2,
+          "median_ms": 1518.4096000011778,
+          "min_ms": 1479.8054999992019,
+          "max_ms": 1557.0137000031536,
+          "median_rtf": 0.44397941520502276,
+          "audio_seconds": [
+            3.42,
+            3.42
+          ]
+        },
+        "long": {
+          "n": 2,
+          "median_ms": 10201.13229999697,
+          "min_ms": 10098.664999997709,
+          "max_ms": 10303.599599996232,
+          "median_rtf": 0.49280832367135124,
+          "audio_seconds": [
+            20.7,
+            20.7
+          ]
+        }
+      },
+      "requests": [
+        {
+          "case": "short",
+          "kind": "cold",
+          "status": "completed",
+          "complete_pcm_ms": 5218.632400006754,
+          "audio_seconds": 3.42,
+          "rtf": 1.5259159064347234,
+          "wav_sha256": "d958f9b4a2899ce5391c16f30de48c2e4932ea34b83d49099f970c5a9ffd6e4c",
+          "worker_cpu_s": 3.796875,
+          "memory": {
+            "sample_count": 47,
+            "sampled_tree_cpu_s": 3.78125,
+            "peak_sampled_tree_rss_bytes": 934121472,
+            "peak_sampled_tree_private_bytes": 1741549568
+          }
+        },
+        {
+          "case": "short",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 1493.140400008997,
+          "audio_seconds": 3.42,
+          "rtf": 0.4365907602365488,
+          "wav_sha256": "d958f9b4a2899ce5391c16f30de48c2e4932ea34b83d49099f970c5a9ffd6e4c",
+          "worker_cpu_s": 1.234375,
+          "memory": {
+            "sample_count": 13,
+            "sampled_tree_cpu_s": 1.171875,
+            "peak_sampled_tree_rss_bytes": 965918720,
+            "peak_sampled_tree_private_bytes": 1785737216
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 1557.0137000031536,
+          "audio_seconds": 3.42,
+          "rtf": 0.4552671637436122,
+          "wav_sha256": "d958f9b4a2899ce5391c16f30de48c2e4932ea34b83d49099f970c5a9ffd6e4c",
+          "worker_cpu_s": 1.1875,
+          "memory": {
+            "sample_count": 14,
+            "sampled_tree_cpu_s": 1.1875,
+            "peak_sampled_tree_rss_bytes": 978968576,
+            "peak_sampled_tree_private_bytes": 1786380288
+          }
+        },
+        {
+          "case": "short",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 1479.8054999992019,
+          "audio_seconds": 3.42,
+          "rtf": 0.4326916666664333,
+          "wav_sha256": "d958f9b4a2899ce5391c16f30de48c2e4932ea34b83d49099f970c5a9ffd6e4c",
+          "worker_cpu_s": 1.328125,
+          "memory": {
+            "sample_count": 13,
+            "sampled_tree_cpu_s": 1.328125,
+            "peak_sampled_tree_rss_bytes": 982126592,
+            "peak_sampled_tree_private_bytes": 1786380288
+          }
+        },
+        {
+          "case": "long",
+          "kind": "warmup",
+          "status": "completed",
+          "complete_pcm_ms": 10715.002900004038,
+          "audio_seconds": 20.7,
+          "rtf": 0.5176329903383593,
+          "wav_sha256": "6c0b7d724f1957d2651a5f2cd6d26e268923171fe554a5285ba9c25279c5be26",
+          "worker_cpu_s": 10.15625,
+          "memory": {
+            "sample_count": 96,
+            "sampled_tree_cpu_s": 10.25,
+            "peak_sampled_tree_rss_bytes": 1351606272,
+            "peak_sampled_tree_private_bytes": 2056351744
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 10303.599599996232,
+          "audio_seconds": 20.7,
+          "rtf": 0.4977584347824267,
+          "wav_sha256": "6c0b7d724f1957d2651a5f2cd6d26e268923171fe554a5285ba9c25279c5be26",
+          "worker_cpu_s": 8.59375,
+          "memory": {
+            "sample_count": 91,
+            "sampled_tree_cpu_s": 8.609375,
+            "peak_sampled_tree_rss_bytes": 1523003392,
+            "peak_sampled_tree_private_bytes": 2225410048
+          }
+        },
+        {
+          "case": "long",
+          "kind": "hot",
+          "status": "completed",
+          "complete_pcm_ms": 10098.664999997709,
+          "audio_seconds": 20.7,
+          "rtf": 0.4878582125602758,
+          "wav_sha256": "6c0b7d724f1957d2651a5f2cd6d26e268923171fe554a5285ba9c25279c5be26",
+          "worker_cpu_s": 10.03125,
+          "memory": {
+            "sample_count": 89,
+            "sampled_tree_cpu_s": 9.9375,
+            "peak_sampled_tree_rss_bytes": 1469841408,
+            "peak_sampled_tree_private_bytes": 2174300160
+          }
+        }
+      ]
+    }
+  },
+  "pcm_checks": {
+    "cpu/short": {
+      "same_shape": true,
+      "exactly_equal": true,
+      "samples": 109440,
+      "max_lsb_error": 0.0
+    },
+    "cpu/long": {
+      "same_shape": true,
+      "exactly_equal": true,
+      "samples": 662400,
+      "max_lsb_error": 0.0
+    },
+    "directml/short": {
+      "same_shape": true,
+      "exactly_equal": true,
+      "samples": 109440,
+      "max_lsb_error": 0.0
+    },
+    "directml/long": {
+      "same_shape": true,
+      "exactly_equal": true,
+      "samples": 662400,
+      "max_lsb_error": 0.0
+    },
+    "directml-mixed/short": {
+      "same_shape": true,
+      "samples": 109440,
+      "max_lsb_error": 221.0,
+      "snr_db": 43.542448050599106
+    },
+    "directml-mixed/long": {
+      "same_shape": true,
+      "samples": 662400,
+      "max_lsb_error": 333.0,
+      "snr_db": 41.27733847585362
+    },
+    "onnx-fp32-gpt4/cpu/short": {
+      "same_shape": true,
+      "exactly_equal": true,
+      "samples": 109440,
+      "max_lsb_error": 0.0
+    },
+    "onnx-fp32-gpt4/cpu/long": {
+      "same_shape": true,
+      "exactly_equal": true,
+      "samples": 662400,
+      "max_lsb_error": 0.0
+    },
+    "onnx-fp32-gpt4/directml/short": {
+      "same_shape": true,
+      "exactly_equal": true,
+      "samples": 109440,
+      "max_lsb_error": 0.0
+    },
+    "onnx-fp32-gpt4/directml/long": {
+      "same_shape": true,
+      "exactly_equal": true,
+      "samples": 662400,
+      "max_lsb_error": 0.0
+    },
+    "onnx-mixed-fp16-gpt4/directml/short": {
+      "same_shape": true,
+      "exactly_equal": true,
+      "samples": 109440,
+      "max_lsb_error": 0.0
+    },
+    "onnx-mixed-fp16-gpt4/directml/long": {
+      "same_shape": true,
+      "exactly_equal": true,
+      "samples": 662400,
+      "max_lsb_error": 0.0
+    }
+  },
+  "cases": {
+    "short": "おはよう。今日もよろしくね。",
+    "long": "今日は朝から少し雨が降っていたけれど、窓を開けると涼しい風が入ってきて、気持ちがよかった。午後になったら図書館へ行って、前から読みたかった本を探してみようと思う。帰りには駅の近くのお店で温かいお茶を飲みながら、明日の予定をゆっくり考えたいな。"
+  },
+  "repeats": 2,
+  "warmups": 1,
+  "seed": 1234,
+  "reference_identity": {
+    "text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+    "language": "ja",
+    "tone": "中性",
+    "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5"
+  },
+  "checkpoint_sha256": {
+    "gpt": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf",
+    "sovits": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81"
+  },
+  "environment": {
+    "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+    "executable": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\.venv-amd\\Scripts\\python.exe",
+    "platform": "Windows-11-10.0.22631-SP0",
+    "available_providers": [
+      "DmlExecutionProvider",
+      "CPUExecutionProvider"
+    ],
+    "dependencies": {
+      "sakuratts": "0.1.0a1",
+      "annotated-doc": "0.0.5",
+      "annotated-types": "0.8.0",
+      "anyio": "4.15.1",
+      "budoux": "0.9.2",
+      "certifi": "2026.7.22",
+      "charset-normalizer": "3.5.1",
+      "click": "8.5.0",
+      "colorama": "0.4.6",
+      "colorlog": "6.12.0",
+      "fastapi": "0.141.1",
+      "fasttext-predict": "0.9.2.4",
+      "fast-langdetect": "1.0.1",
+      "flatbuffers": "25.12.19",
+      "h11": "0.16.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "idna": "3.20",
+      "ml_dtypes": "0.6.0",
+      "mpmath": "1.3.0",
+      "numpy": "2.4.6",
+      "onnx": "1.21.0",
+      "onnxruntime-directml": "1.24.4",
+      "packaging": "26.3",
+      "pip": "25.0.1",
+      "protobuf": "7.36.2",
+      "psutil": "7.2.2",
+      "pydantic": "2.13.5",
+      "pydantic_core": "2.46.5",
+      "pyopenjtalk-plus": "0.4.1.post9",
+      "PyYAML": "6.0.3",
+      "requests": "2.34.2",
+      "robust-downloader": "0.0.2",
+      "split-lang": "2.1.1",
+      "starlette": "1.7.0",
+      "SudachiDict-core": "20260723",
+      "SudachiPy": "0.6.11",
+      "sympy": "1.14.0",
+      "threadpoolctl": "3.6.0",
+      "tqdm": "4.70.1",
+      "typing_extensions": "4.16.0",
+      "typing-inspection": "0.4.4",
+      "urllib3": "2.8.0",
+      "uv": "0.12.19",
+      "uvicorn": "0.53.0"
+    },
+    "thread_environment": {
+      "OMP_NUM_THREADS": null,
+      "OPENBLAS_NUM_THREADS": null,
+      "MKL_NUM_THREADS": null
+    }
+  },
+  "source_files": {
+    "models/navi-cpu-amd/model.json": {
+      "sha256": "47c1ee11d4a19dc120fc3d45516c790edb136e5640c5d496f1ec03258d1dead2",
+      "bytes": 327
+    },
+    "models/navi-cpu-amd/model-directml-fp16.json": {
+      "sha256": "f0239a30ea68f6c54471728a6e17418ec764933a3174d4797466ae7d3f7f4db0",
+      "bytes": 371
+    },
+    "models/navi-cpu-amd/gpt/manifest.json": {
+      "sha256": "e1cc4296095f65b98ccaf48501edb5558bbd1fec485a6a020d60b19de6d70a68",
+      "bytes": 57373
+    },
+    "models/navi-cpu-amd/gpt/onnx/manifest.json": {
+      "sha256": "550efbedc20b42e4e6e2546d6bad0549c2c666a7b50993659c404f92509d91e0",
+      "bytes": 1304
+    },
+    "models/navi-cpu-amd/sovits/manifest.json": {
+      "sha256": "799526d7bed6bae7b8bdd96ef0ec82164d80bda4379dc296cb16c3540ec28827",
+      "bytes": 12198
+    },
+    "models/navi-cpu-amd/sovits-mixed-directml-vocoder-isolated/manifest.json": {
+      "sha256": "90cc84553e59e32947484cf44cec2f98621f265cb68012db9115f6a2bd9ead45",
+      "bytes": 14593
+    },
+    "research/tools/cpu_amd_benchmark.py": {
+      "sha256": "fa35d8189d0cde6ffec41f4395050ac9b30a3c790fe69c8cc6c846fbd3ea30ee",
+      "bytes": 24341
+    },
+    "src/sakuratts/backends/cpu/onnx_gpt.py": {
+      "sha256": "9ed3f47016b62b7f136a081ea252489948c7e5c9cd1ef07979d12e7355ef2865",
+      "bytes": 11523
+    }
+  },
+  "limitations": [
+    "Two hot samples per input and configuration; sequential runs without randomized order.",
+    "Native NumPy and ONNX FP32 output PCM is identical for both cases on each backend; other inputs are unverified.",
+    "Mixed FP16 changes waveform and is not quality-accepted by human listening or ASR.",
+    "Genie frontend, sampling and generated duration differ; latency does not establish equal-work speedup.",
+    "Sampled process-tree RSS and private bytes are different metrics, may overlap GPU shared allocations, and are not added."
+  ],
+  "managed_validation": {
+    "status": "completed",
+    "cycles": [
+      {
+        "variant": "cpu-onnx",
+        "cycle": 0,
+        "duration_s": 3.42,
+        "owned_pids": [
+          25028,
+          8412,
+          30788
+        ],
+        "memory_after_tts": {
+          "25028": {
+            "rss": 3715072,
+            "vms": 884736,
+            "num_page_faults": 954,
+            "peak_wset": 3715072,
+            "wset": 3715072,
+            "peak_paged_pool": 27536,
+            "paged_pool": 27344,
+            "peak_nonpaged_pool": 18312,
+            "nonpaged_pool": 5160,
+            "pagefile": 884736,
+            "peak_pagefile": 884736,
+            "private": 884736
+          },
+          "8412": {
+            "rss": 11272192,
+            "vms": 5632000,
+            "num_page_faults": 2848,
+            "peak_wset": 11272192,
+            "wset": 11272192,
+            "peak_paged_pool": 131320,
+            "paged_pool": 131320,
+            "peak_nonpaged_pool": 8552,
+            "nonpaged_pool": 8552,
+            "pagefile": 5632000,
+            "peak_pagefile": 5632000,
+            "private": 5632000
+          },
+          "30788": {
+            "rss": 862502912,
+            "vms": 1324486656,
+            "num_page_faults": 1324214,
+            "peak_wset": 919937024,
+            "wset": 862502912,
+            "peak_paged_pool": 1079456,
+            "paged_pool": 1022760,
+            "peak_nonpaged_pool": 226848,
+            "nonpaged_pool": 91232,
+            "pagefile": 1324486656,
+            "peak_pagefile": 1382211584,
+            "private": 1324486656
+          }
+        },
+        "all_processes_exited": true,
+        "sleep_state": {
+          "mode": "managed",
+          "state": "sleeping",
+          "busy": false,
+          "model_configured": true,
+          "model_loaded": false,
+          "model": null,
+          "worker_pid": null,
+          "generation": 1,
+          "last_error": null,
+          "last_wake_ms": 4031.0000000026776,
+          "idle_sleep_seconds": 60.0,
+          "keep_alive_remaining_seconds": 0.0,
+          "preparation": "model_load"
+        }
+      },
+      {
+        "variant": "cpu-onnx",
+        "cycle": 1,
+        "duration_s": 3.42,
+        "owned_pids": [
+          28840,
+          29296,
+          24748
+        ],
+        "memory_after_tts": {
+          "28840": {
+            "rss": 3702784,
+            "vms": 856064,
+            "num_page_faults": 949,
+            "peak_wset": 3702784,
+            "wset": 3702784,
+            "peak_paged_pool": 27536,
+            "paged_pool": 27344,
+            "peak_nonpaged_pool": 18176,
+            "nonpaged_pool": 5024,
+            "pagefile": 856064,
+            "peak_pagefile": 856064,
+            "private": 856064
+          },
+          "29296": {
+            "rss": 11280384,
+            "vms": 5627904,
+            "num_page_faults": 2854,
+            "peak_wset": 11280384,
+            "wset": 11280384,
+            "peak_paged_pool": 131320,
+            "paged_pool": 131320,
+            "peak_nonpaged_pool": 8552,
+            "nonpaged_pool": 8552,
+            "pagefile": 5627904,
+            "peak_pagefile": 5627904,
+            "private": 5627904
+          },
+          "24748": {
+            "rss": 861929472,
+            "vms": 1324572672,
+            "num_page_faults": 1241978,
+            "peak_wset": 919384064,
+            "wset": 861929472,
+            "peak_paged_pool": 1078912,
+            "paged_pool": 1022216,
+            "peak_nonpaged_pool": 226240,
+            "nonpaged_pool": 90960,
+            "pagefile": 1324572672,
+            "peak_pagefile": 1382289408,
+            "private": 1324572672
+          }
+        },
+        "all_processes_exited": true,
+        "sleep_state": {
+          "mode": "managed",
+          "state": "sleeping",
+          "busy": false,
+          "model_configured": true,
+          "model_loaded": false,
+          "model": null,
+          "worker_pid": null,
+          "generation": 2,
+          "last_error": null,
+          "last_wake_ms": 3452.999999994063,
+          "idle_sleep_seconds": 60.0,
+          "keep_alive_remaining_seconds": 0.0,
+          "preparation": "model_load"
+        }
+      },
+      {
+        "variant": "directml-onnx",
+        "cycle": 0,
+        "duration_s": 3.42,
+        "owned_pids": [
+          20404,
+          4512,
+          17144
+        ],
+        "memory_after_tts": {
+          "20404": {
+            "rss": 3702784,
+            "vms": 856064,
+            "num_page_faults": 950,
+            "peak_wset": 3702784,
+            "wset": 3702784,
+            "peak_paged_pool": 27536,
+            "paged_pool": 27344,
+            "peak_nonpaged_pool": 18176,
+            "nonpaged_pool": 5024,
+            "pagefile": 856064,
+            "peak_pagefile": 856064,
+            "private": 856064
+          },
+          "4512": {
+            "rss": 11288576,
+            "vms": 5644288,
+            "num_page_faults": 2857,
+            "peak_wset": 11288576,
+            "wset": 11288576,
+            "peak_paged_pool": 131320,
+            "paged_pool": 131320,
+            "peak_nonpaged_pool": 8552,
+            "nonpaged_pool": 8552,
+            "pagefile": 5644288,
+            "peak_pagefile": 5644288,
+            "private": 5644288
+          },
+          "17144": {
+            "rss": 1064529920,
+            "vms": 1871671296,
+            "num_page_faults": 1015363,
+            "peak_wset": 1064529920,
+            "wset": 1064529920,
+            "peak_paged_pool": 976440,
+            "paged_pool": 976248,
+            "peak_nonpaged_pool": 197232,
+            "nonpaged_pool": 61808,
+            "pagefile": 1871671296,
+            "peak_pagefile": 1871671296,
+            "private": 1871671296
+          }
+        },
+        "all_processes_exited": true,
+        "sleep_state": {
+          "mode": "managed",
+          "state": "sleeping",
+          "busy": false,
+          "model_configured": true,
+          "model_loaded": false,
+          "model": null,
+          "worker_pid": null,
+          "generation": 1,
+          "last_error": null,
+          "last_wake_ms": 4125.0,
+          "idle_sleep_seconds": 60.0,
+          "keep_alive_remaining_seconds": 0.0,
+          "preparation": "model_load"
+        }
+      },
+      {
+        "variant": "directml-onnx",
+        "cycle": 1,
+        "duration_s": 3.42,
+        "owned_pids": [
+          31380,
+          32668,
+          16564
+        ],
+        "memory_after_tts": {
+          "31380": {
+            "rss": 3702784,
+            "vms": 847872,
+            "num_page_faults": 948,
+            "peak_wset": 3702784,
+            "wset": 3702784,
+            "peak_paged_pool": 27536,
+            "paged_pool": 27344,
+            "peak_nonpaged_pool": 18176,
+            "nonpaged_pool": 5024,
+            "pagefile": 847872,
+            "peak_pagefile": 847872,
+            "private": 847872
+          },
+          "32668": {
+            "rss": 11288576,
+            "vms": 5644288,
+            "num_page_faults": 2856,
+            "peak_wset": 11288576,
+            "wset": 11288576,
+            "peak_paged_pool": 131320,
+            "paged_pool": 131320,
+            "peak_nonpaged_pool": 8552,
+            "nonpaged_pool": 8552,
+            "pagefile": 5644288,
+            "peak_pagefile": 5644288,
+            "private": 5644288
+          },
+          "16564": {
+            "rss": 1060360192,
+            "vms": 1874989056,
+            "num_page_faults": 933787,
+            "peak_wset": 1060360192,
+            "wset": 1060360192,
+            "peak_paged_pool": 975656,
+            "paged_pool": 975368,
+            "peak_nonpaged_pool": 197400,
+            "nonpaged_pool": 61784,
+            "pagefile": 1874989056,
+            "peak_pagefile": 1874989056,
+            "private": 1874989056
+          }
+        },
+        "all_processes_exited": true,
+        "sleep_state": {
+          "mode": "managed",
+          "state": "sleeping",
+          "busy": false,
+          "model_configured": true,
+          "model_loaded": false,
+          "model": null,
+          "worker_pid": null,
+          "generation": 2,
+          "last_error": null,
+          "last_wake_ms": 3875.0,
+          "idle_sleep_seconds": 60.0,
+          "keep_alive_remaining_seconds": 0.0,
+          "preparation": "model_load"
+        }
+      },
+      {
+        "variant": "directml-fp16",
+        "cycle": 0,
+        "duration_s": 3.42,
+        "owned_pids": [
+          1240,
+          17752,
+          17128
+        ],
+        "memory_after_tts": {
+          "1240": {
+            "rss": 3702784,
+            "vms": 851968,
+            "num_page_faults": 949,
+            "peak_wset": 3702784,
+            "wset": 3702784,
+            "peak_paged_pool": 27536,
+            "paged_pool": 27344,
+            "peak_nonpaged_pool": 18176,
+            "nonpaged_pool": 5024,
+            "pagefile": 851968,
+            "peak_pagefile": 851968,
+            "private": 851968
+          },
+          "17752": {
+            "rss": 11280384,
+            "vms": 5640192,
+            "num_page_faults": 2859,
+            "peak_wset": 11280384,
+            "wset": 11280384,
+            "peak_paged_pool": 131320,
+            "paged_pool": 131320,
+            "peak_nonpaged_pool": 8552,
+            "nonpaged_pool": 8552,
+            "pagefile": 5640192,
+            "peak_pagefile": 5660672,
+            "private": 5640192
+          },
+          "17128": {
+            "rss": 918134784,
+            "vms": 1732251648,
+            "num_page_faults": 994509,
+            "peak_wset": 918134784,
+            "wset": 918134784,
+            "peak_paged_pool": 976536,
+            "paged_pool": 976248,
+            "peak_nonpaged_pool": 196664,
+            "nonpaged_pool": 61240,
+            "pagefile": 1732251648,
+            "peak_pagefile": 1732251648,
+            "private": 1732251648
+          }
+        },
+        "all_processes_exited": true,
+        "sleep_state": {
+          "mode": "managed",
+          "state": "sleeping",
+          "busy": false,
+          "model_configured": true,
+          "model_loaded": false,
+          "model": null,
+          "worker_pid": null,
+          "generation": 1,
+          "last_error": null,
+          "last_wake_ms": 4250.0,
+          "idle_sleep_seconds": 60.0,
+          "keep_alive_remaining_seconds": 0.0,
+          "preparation": "model_load"
+        }
+      },
+      {
+        "variant": "directml-fp16",
+        "cycle": 1,
+        "duration_s": 3.42,
+        "owned_pids": [
+          18124,
+          35536,
+          4888
+        ],
+        "memory_after_tts": {
+          "18124": {
+            "rss": 3702784,
+            "vms": 851968,
+            "num_page_faults": 949,
+            "peak_wset": 3702784,
+            "wset": 3702784,
+            "peak_paged_pool": 27536,
+            "paged_pool": 27344,
+            "peak_nonpaged_pool": 18176,
+            "nonpaged_pool": 5024,
+            "pagefile": 851968,
+            "peak_pagefile": 851968,
+            "private": 851968
+          },
+          "35536": {
+            "rss": 11284480,
+            "vms": 5640192,
+            "num_page_faults": 2858,
+            "peak_wset": 11284480,
+            "wset": 11284480,
+            "peak_paged_pool": 131320,
+            "paged_pool": 131320,
+            "peak_nonpaged_pool": 8552,
+            "nonpaged_pool": 8552,
+            "pagefile": 5640192,
+            "peak_pagefile": 5640192,
+            "private": 5640192
+          },
+          "4888": {
+            "rss": 927674368,
+            "vms": 1725317120,
+            "num_page_faults": 914806,
+            "peak_wset": 927674368,
+            "wset": 927674368,
+            "peak_paged_pool": 975640,
+            "paged_pool": 975352,
+            "peak_nonpaged_pool": 195736,
+            "nonpaged_pool": 60312,
+            "pagefile": 1725317120,
+            "peak_pagefile": 1725317120,
+            "private": 1725317120
+          }
+        },
+        "all_processes_exited": true,
+        "sleep_state": {
+          "mode": "managed",
+          "state": "sleeping",
+          "busy": false,
+          "model_configured": true,
+          "model_loaded": false,
+          "model": null,
+          "worker_pid": null,
+          "generation": 2,
+          "last_error": null,
+          "last_wake_ms": 4188.000000009197,
+          "idle_sleep_seconds": 60.0,
+          "keep_alive_remaining_seconds": 0.0,
+          "preparation": "model_load"
+        }
+      }
+    ]
+  },
+  "wddm_validation": {
+    "status": "completed",
+    "source": "results\\cpu-amd-performance-wddm\\result.json",
+    "source_sha256": "ca9f6378e0b66c96c8385e04d933cb70ecd0d3b8ee379e3c993c44a7b33fca55",
+    "phases": {
+      "awake": {
+        "samples": 10,
+        "peaks": {
+          "dedicated_bytes": 114380800,
+          "shared_bytes": 143593472,
+          "committed_bytes": 257974272
+        },
+        "valid_rows": 30
+      },
+      "short": {
+        "samples": 19,
+        "peaks": {
+          "dedicated_bytes": 117116928,
+          "shared_bytes": 227610624,
+          "committed_bytes": 344727552
+        },
+        "valid_rows": 57
+      },
+      "long": {
+        "samples": 100,
+        "peaks": {
+          "dedicated_bytes": 118116352,
+          "shared_bytes": 482414592,
+          "committed_bytes": 600530944
+        },
+        "valid_rows": 300
+      },
+      "idle_after_long": {
+        "samples": 28,
+        "peaks": {
+          "dedicated_bytes": 118116352,
+          "shared_bytes": 482414592,
+          "committed_bytes": 600530944
+        },
+        "valid_rows": 84
+      },
+      "sleep": {
+        "samples": 11,
+        "peaks": {
+          "dedicated_bytes": 108814336,
+          "shared_bytes": 396562432,
+          "committed_bytes": 505380864
+        },
+        "valid_rows": 6
+      }
+    },
+    "invalid_rows": 0,
+    "duplicate_rows": 0,
+    "unparsed_instances": 0,
+    "all_processes_exited": true,
+    "scope": "Separate WDDM resource probe. Includes sampler overhead; do not replace end-to-end timing benchmark. Process-attributed counters may overlap process RSS and are not summed into total RAM.",
+    "configuration": "configs/tts_infer.directml-fp16.yaml",
+    "gpt_threads": 4,
+    "precision": "CPU GPT FP32; DirectML acoustic vocoder mixed FP16"
+  }
+}

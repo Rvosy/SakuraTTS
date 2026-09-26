@@ -1,0 +1,5 @@
+# 从仓库根目录启动；模型描述须指向已验证的全图 FP16 声学包。
+sakuratts:
+  model: models/cpu-amd/model-amd.json
+  backend: directml
+  profile: fp16

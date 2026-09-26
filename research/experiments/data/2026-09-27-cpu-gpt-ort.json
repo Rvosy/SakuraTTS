@@ -1,0 +1,1378 @@
+{
+  "format": "sakuratts-cpu-gpt-ort-study-v1",
+  "date_local": "2026-09-27",
+  "status": "completed",
+  "studies": {
+    "decode_only_short": {
+      "identity": {
+        "case": "short",
+        "parameters": {
+          "seed": 1234,
+          "rng": "numpy.default_rng (not Torch seed-equivalent)",
+          "language": "ja",
+          "split_method": "cut0",
+          "split_bucket": false,
+          "top_k": 15,
+          "top_p": 1.0,
+          "temperature": 1.0,
+          "repetition_penalty": 1.35,
+          "early_stop_num": 2700,
+          "noise_scale": 0.5,
+          "speed": 1.0,
+          "fragment_interval": 0.3
+        },
+        "reference_identity": {
+          "gpt_checkpoint_sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf",
+          "sovits_checkpoint_sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "official_commit": "source-sha256:75398e84f6625044d794ebfc2f2ac6d6202f328259e13e032c405301e99efb6a",
+          "reference_text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "reference_language": "ja"
+        },
+        "input_sha256": {
+          "phones": "be27cb2f6148ae306d4d1ec8fbade8e26832665b3140651ca14f3721df34722d",
+          "prompt": "67c4e3bccbcd5b6e09f42ea08c0c96fd54c67a0f6ccc2fa1368634339b884bcf",
+          "bert": "ddd7edb9d1a4e6d19cafb0aa417530dabac6d71b4f54385b27210fe84e9f980b",
+          "tokens": "288845351963de4a1f13d6e190d91cdfff39e7e45999cc582d3c959a73ce8690"
+        },
+        "gpt_manifest_sha256": "e1cc4296095f65b98ccaf48501edb5558bbd1fec485a6a020d60b19de6d70a68",
+        "result_sha256": "01cf7740120a3009b90fa765f5a575e8b4ad030437282beeb6e2484dffa46234"
+      },
+      "threads": 2,
+      "repeats": 2,
+      "scope": "Fixed saved history, decoder only. Shared NumPy prefill; no frontend/acoustic/sampling costs.",
+      "environment": {
+        "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+        "platform": "Windows-11-10.0.22631-SP0",
+        "numpy": "2.4.6",
+        "onnxruntime": "1.24.4"
+      },
+      "script_sha256": "a381d69695a99f2391245041d09ce398d100fd8e23893ae577ce82cb2d02d937",
+      "torch_imported": false,
+      "variants": {
+        "numpy": {
+          "median": {
+            "prefill_ms": 565.2238500042586,
+            "decode_ms": 1898.3171500003664,
+            "decode_cpu_ms": 414.0625
+          },
+          "max_abs_logits_error": 0.0,
+          "rms_logits_error": 0.0,
+          "argmax_disagreements": 0,
+          "logits_sha256": "6efc71a828e298dfe2d44a3165c5047213a4afd08293cc5dc101ab3d1585d037",
+          "logits_finite": true,
+          "measurements": [
+            {
+              "prefill_ms": 572.2409000009065,
+              "decode_ms": 1872.471199996653,
+              "decode_cpu_ms": 437.5,
+              "decode_tokens": 78
+            },
+            {
+              "prefill_ms": 558.2068000076106,
+              "decode_ms": 1924.1631000040798,
+              "decode_cpu_ms": 390.625,
+              "decode_tokens": 78
+            }
+          ],
+          "sampling": {
+            "elapsed_ms": 2293.0684000020847,
+            "sampled_token_count": 79,
+            "semantic_token_count": 78,
+            "sampled_tokens_sha256": "817fbe5e4202c15fb86326a027c5eef007a187e6d3c933877174c5693a30b039",
+            "semantic_tokens_sha256": "5ede8dba7a8782791527cc552137a2895c47fc7ebed8b0ede0ab2f461fc23635",
+            "stop_reasons": [
+              "argmax_eos",
+              "sample_eos"
+            ],
+            "tokens_equal_numpy": true,
+            "first_divergence_zero_based": null
+          }
+        },
+        "fp32": {
+          "median": {
+            "prefill_ms": 530.5886999994982,
+            "decode_ms": 1255.8342999909655,
+            "decode_cpu_ms": 421.875
+          },
+          "max_abs_logits_error": 2.765655517578125e-05,
+          "rms_logits_error": 5.323365890555943e-06,
+          "argmax_disagreements": 0,
+          "logits_sha256": "2c6b36da002e8659ec53738067f1d659e047f56ac2cbb16c65e1fee4d46274c0",
+          "logits_finite": true,
+          "measurements": [
+            {
+              "prefill_ms": 539.1837000061059,
+              "decode_ms": 1239.3693999911193,
+              "decode_cpu_ms": 531.25,
+              "decode_tokens": 78
+            },
+            {
+              "prefill_ms": 521.9936999928905,
+              "decode_ms": 1272.2991999908118,
+              "decode_cpu_ms": 312.5,
+              "decode_tokens": 78
+            }
+          ],
+          "graph_sha256": "3563405c91c87dd0d7c38ff78a379c1e5a2632e00a123a7f633bacda38f4f3b3",
+          "graph_bytes": 315125195,
+          "sampling": {
+            "elapsed_ms": 1756.0041999968234,
+            "sampled_token_count": 79,
+            "semantic_token_count": 78,
+            "sampled_tokens_sha256": "817fbe5e4202c15fb86326a027c5eef007a187e6d3c933877174c5693a30b039",
+            "semantic_tokens_sha256": "5ede8dba7a8782791527cc552137a2895c47fc7ebed8b0ede0ab2f461fc23635",
+            "stop_reasons": [
+              "argmax_eos",
+              "sample_eos"
+            ],
+            "tokens_equal_numpy": true,
+            "first_divergence_zero_based": null
+          }
+        },
+        "int8": {
+          "median": {
+            "prefill_ms": 555.7599000021582,
+            "decode_ms": 665.7287999987602,
+            "decode_cpu_ms": 273.4375
+          },
+          "max_abs_logits_error": 1.6058897972106934,
+          "rms_logits_error": 0.28950637793517703,
+          "argmax_disagreements": 1,
+          "logits_sha256": "b741f82e68c752ff95ca844e551dc1322f15186086ce9304d7e88d0f88de9235",
+          "logits_finite": true,
+          "measurements": [
+            {
+              "prefill_ms": 549.0082000032999,
+              "decode_ms": 654.5348000072408,
+              "decode_cpu_ms": 171.875,
+              "decode_tokens": 78
+            },
+            {
+              "prefill_ms": 562.5116000010166,
+              "decode_ms": 676.9227999902796,
+              "decode_cpu_ms": 375.0,
+              "decode_tokens": 78
+            }
+          ],
+          "graph_sha256": "e0b6671e30c9c1c030a2b9a027dcf8144dd7790387f15283eab78dd205023e0f",
+          "graph_bytes": 87183829,
+          "sampling": {
+            "elapsed_ms": 1222.5674999936018,
+            "sampled_token_count": 80,
+            "semantic_token_count": 79,
+            "sampled_tokens_sha256": "01aae03c4902cf8b06e4203b09438c0a778983417b874b2dd5bb24e79ea09cbb",
+            "semantic_tokens_sha256": "4d1f51dde01a70536088eeac97648e46512c91bc5bf1d553f661ea4415cf97e8",
+            "stop_reasons": [
+              "argmax_eos",
+              "sample_eos"
+            ],
+            "tokens_equal_numpy": false,
+            "first_divergence_zero_based": 26
+          }
+        },
+        "int8-channel": {
+          "median": {
+            "prefill_ms": 558.6011500054155,
+            "decode_ms": 738.4769000054803,
+            "decode_cpu_ms": 242.1875
+          },
+          "max_abs_logits_error": 0.8186521530151367,
+          "rms_logits_error": 0.1626140905943843,
+          "argmax_disagreements": 1,
+          "logits_sha256": "ee5a9de0110d45a64359813ed79432545aa7429970ad7f2f88893f1e4b65baad",
+          "logits_finite": true,
+          "measurements": [
+            {
+              "prefill_ms": 568.8353000005009,
+              "decode_ms": 754.0853000100469,
+              "decode_cpu_ms": 187.5,
+              "decode_tokens": 78
+            },
+            {
+              "prefill_ms": 548.3670000103302,
+              "decode_ms": 722.8685000009136,
+              "decode_cpu_ms": 296.875,
+              "decode_tokens": 78
+            }
+          ],
+          "graph_sha256": "8691155fd60b0861c89db041d2eabad7d6218fa6552cb5946825989388390245",
+          "graph_bytes": 87742399,
+          "sampling": {
+            "elapsed_ms": 1347.1912999957567,
+            "sampled_token_count": 79,
+            "semantic_token_count": 78,
+            "sampled_tokens_sha256": "775a4998ee9eebdb468c973c5ffb6d18dae83597ba1d23fac5a377c970f6336b",
+            "semantic_tokens_sha256": "ac63f95e9485f99dd7246f3a70c8d5b5ebee6d291d0c42e15cfc13bd69c1366b",
+            "stop_reasons": [
+              "argmax_eos",
+              "sample_eos"
+            ],
+            "tokens_equal_numpy": false,
+            "first_divergence_zero_based": 26
+          }
+        }
+      }
+    },
+    "unified_short": {
+      "identity": {
+        "case": "short",
+        "parameters": {
+          "seed": 1234,
+          "rng": "numpy.default_rng (not Torch seed-equivalent)",
+          "language": "ja",
+          "split_method": "cut0",
+          "split_bucket": false,
+          "top_k": 15,
+          "top_p": 1.0,
+          "temperature": 1.0,
+          "repetition_penalty": 1.35,
+          "early_stop_num": 2700,
+          "noise_scale": 0.5,
+          "speed": 1.0,
+          "fragment_interval": 0.3
+        },
+        "reference_identity": {
+          "gpt_checkpoint_sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf",
+          "sovits_checkpoint_sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "official_commit": "source-sha256:75398e84f6625044d794ebfc2f2ac6d6202f328259e13e032c405301e99efb6a",
+          "reference_text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "reference_language": "ja"
+        },
+        "input_sha256": {
+          "phones": "be27cb2f6148ae306d4d1ec8fbade8e26832665b3140651ca14f3721df34722d",
+          "prompt": "67c4e3bccbcd5b6e09f42ea08c0c96fd54c67a0f6ccc2fa1368634339b884bcf",
+          "bert": "ddd7edb9d1a4e6d19cafb0aa417530dabac6d71b4f54385b27210fe84e9f980b",
+          "tokens": "288845351963de4a1f13d6e190d91cdfff39e7e45999cc582d3c959a73ce8690"
+        },
+        "gpt_manifest_sha256": "e1cc4296095f65b98ccaf48501edb5558bbd1fec485a6a020d60b19de6d70a68",
+        "result_sha256": "01cf7740120a3009b90fa765f5a575e8b4ad030437282beeb6e2484dffa46234"
+      },
+      "threads": 2,
+      "repeats": 1,
+      "scope": "Fixed saved history, unified ORT prefill/decode. No frontend/acoustic/sampling costs in replay timing.",
+      "environment": {
+        "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+        "platform": "Windows-11-10.0.22631-SP0",
+        "numpy": "2.4.6",
+        "onnxruntime": "1.24.4"
+      },
+      "script_sha256": "a7134cf78189597fc5c647cde4986cadaef64d784999de00eff0f0c2b26053ad",
+      "torch_imported": false,
+      "variants": {
+        "numpy": {
+          "median": {
+            "prefill_ms": 566.0591000050772,
+            "decode_ms": 1633.4653999947477,
+            "decode_cpu_ms": 203.125
+          },
+          "max_abs_logits_error": 0.0,
+          "rms_logits_error": 0.0,
+          "argmax_disagreements": 0,
+          "logits_sha256": "6efc71a828e298dfe2d44a3165c5047213a4afd08293cc5dc101ab3d1585d037",
+          "logits_finite": true,
+          "measurements": [
+            {
+              "prefill_ms": 566.0591000050772,
+              "decode_ms": 1633.4653999947477,
+              "decode_cpu_ms": 203.125,
+              "decode_tokens": 78
+            }
+          ],
+          "sampling": {
+            "elapsed_ms": 2218.3875999908196,
+            "sampled_token_count": 79,
+            "semantic_token_count": 78,
+            "sampled_tokens_sha256": "817fbe5e4202c15fb86326a027c5eef007a187e6d3c933877174c5693a30b039",
+            "semantic_tokens_sha256": "5ede8dba7a8782791527cc552137a2895c47fc7ebed8b0ede0ab2f461fc23635",
+            "stop_reasons": [
+              "argmax_eos",
+              "sample_eos"
+            ],
+            "tokens_equal_numpy": true,
+            "first_divergence_zero_based": null
+          }
+        },
+        "fp32": {
+          "median": {
+            "prefill_ms": 336.0839999950258,
+            "decode_ms": 1216.6634000022896,
+            "decode_cpu_ms": 546.875
+          },
+          "max_abs_logits_error": 3.0517578125e-05,
+          "rms_logits_error": 5.551525914376242e-06,
+          "argmax_disagreements": 0,
+          "logits_sha256": "37ff7d1c8d9a0f707d0e9e5e09da20c1f28894c3bb06fda95cea5765200e2234",
+          "logits_finite": true,
+          "measurements": [
+            {
+              "prefill_ms": 336.0839999950258,
+              "decode_ms": 1216.6634000022896,
+              "decode_cpu_ms": 546.875,
+              "decode_tokens": 78
+            }
+          ],
+          "graph_sha256": "e43b5a7a0bf193a7142a1ead0300a78a2b66bda40a795e86792d3011ee0847fc",
+          "graph_bytes": 304849449,
+          "sampling": {
+            "elapsed_ms": 1622.195500007365,
+            "sampled_token_count": 79,
+            "semantic_token_count": 78,
+            "sampled_tokens_sha256": "817fbe5e4202c15fb86326a027c5eef007a187e6d3c933877174c5693a30b039",
+            "semantic_tokens_sha256": "5ede8dba7a8782791527cc552137a2895c47fc7ebed8b0ede0ab2f461fc23635",
+            "stop_reasons": [
+              "argmax_eos",
+              "sample_eos"
+            ],
+            "tokens_equal_numpy": true,
+            "first_divergence_zero_based": null
+          }
+        },
+        "int8": {
+          "median": {
+            "prefill_ms": 156.7332999984501,
+            "decode_ms": 693.3630999992602,
+            "decode_cpu_ms": 265.625
+          },
+          "max_abs_logits_error": 1.6576056480407715,
+          "rms_logits_error": 0.3308754895615395,
+          "argmax_disagreements": 2,
+          "logits_sha256": "a45e9beb3a0429c4555c9c1b46e624eafdc746cf16a33c5af435a2b1c1e965df",
+          "logits_finite": true,
+          "measurements": [
+            {
+              "prefill_ms": 156.7332999984501,
+              "decode_ms": 693.3630999992602,
+              "decode_cpu_ms": 265.625,
+              "decode_tokens": 78
+            }
+          ],
+          "graph_sha256": "c08d6a931a07261455eed3b277bab41eee0b0ef84dd5f94b19db61a89bcea09b",
+          "graph_bytes": 76922834,
+          "sampling": {
+            "elapsed_ms": 933.1275999866193,
+            "sampled_token_count": 80,
+            "semantic_token_count": 79,
+            "sampled_tokens_sha256": "76df20cee57e86fbaff2887cdf30036fc5643b95f73347e83a8cfe6c64251a33",
+            "semantic_tokens_sha256": "f92b9f8b55711b216ea336bca4735d9208aec1e29feb8f3123de3b2a2f6d6298",
+            "stop_reasons": [
+              "argmax_eos",
+              "sample_eos"
+            ],
+            "tokens_equal_numpy": false,
+            "first_divergence_zero_based": 26
+          }
+        },
+        "int8-channel": {
+          "median": {
+            "prefill_ms": 150.39150000666268,
+            "decode_ms": 682.3043000040343,
+            "decode_cpu_ms": 234.375
+          },
+          "max_abs_logits_error": 1.198984146118164,
+          "rms_logits_error": 0.1992151650038284,
+          "argmax_disagreements": 2,
+          "logits_sha256": "7579359b414ba41a96f06e33c3e5076a1f4d3676de2349ae17a31ba143da7fbe",
+          "logits_finite": true,
+          "measurements": [
+            {
+              "prefill_ms": 150.39150000666268,
+              "decode_ms": 682.3043000040343,
+              "decode_cpu_ms": 234.375,
+              "decode_tokens": 78
+            }
+          ],
+          "graph_sha256": "a832572fdad5be5c8048194bcdb36e68c1e245ae9682cc6e9ea7703fd3893435",
+          "graph_bytes": 77481404,
+          "sampling": {
+            "elapsed_ms": 850.2444000041578,
+            "sampled_token_count": 79,
+            "semantic_token_count": 78,
+            "sampled_tokens_sha256": "775a4998ee9eebdb468c973c5ffb6d18dae83597ba1d23fac5a377c970f6336b",
+            "semantic_tokens_sha256": "ac63f95e9485f99dd7246f3a70c8d5b5ebee6d291d0c42e15cfc13bd69c1366b",
+            "stop_reasons": [
+              "argmax_eos",
+              "sample_eos"
+            ],
+            "tokens_equal_numpy": false,
+            "first_divergence_zero_based": 26
+          }
+        }
+      }
+    },
+    "unified_long": {
+      "identity": {
+        "case": "long",
+        "parameters": {
+          "seed": 1234,
+          "rng": "numpy.default_rng (not Torch seed-equivalent)",
+          "language": "ja",
+          "split_method": "cut0",
+          "split_bucket": false,
+          "top_k": 15,
+          "top_p": 1.0,
+          "temperature": 1.0,
+          "repetition_penalty": 1.35,
+          "early_stop_num": 2700,
+          "noise_scale": 0.5,
+          "speed": 1.0,
+          "fragment_interval": 0.3
+        },
+        "reference_identity": {
+          "gpt_checkpoint_sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf",
+          "sovits_checkpoint_sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "official_commit": "source-sha256:75398e84f6625044d794ebfc2f2ac6d6202f328259e13e032c405301e99efb6a",
+          "reference_text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "reference_language": "ja"
+        },
+        "input_sha256": {
+          "phones": "f8bc1cacd87438ec408c612bb8f3075eea161b17bdaf363bd103f7347ef1ae50",
+          "prompt": "67c4e3bccbcd5b6e09f42ea08c0c96fd54c67a0f6ccc2fa1368634339b884bcf",
+          "bert": "66599080dd6f2d73051618a612b15f0485ee9c1cc4353a424a92c328483997b1",
+          "tokens": "587d89afd194f35356233a9edb4ecd5d5057b65064bd6ff2f8d45789412b3ad1"
+        },
+        "gpt_manifest_sha256": "e1cc4296095f65b98ccaf48501edb5558bbd1fec485a6a020d60b19de6d70a68",
+        "result_sha256": "01cf7740120a3009b90fa765f5a575e8b4ad030437282beeb6e2484dffa46234"
+      },
+      "threads": 2,
+      "repeats": 1,
+      "scope": "Fixed saved history, unified ORT prefill/decode. No frontend/acoustic/sampling costs in replay timing.",
+      "environment": {
+        "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+        "platform": "Windows-11-10.0.22631-SP0",
+        "numpy": "2.4.6",
+        "onnxruntime": "1.24.4"
+      },
+      "script_sha256": "a7134cf78189597fc5c647cde4986cadaef64d784999de00eff0f0c2b26053ad",
+      "torch_imported": false,
+      "variants": {
+        "numpy": {
+          "median": {
+            "prefill_ms": 1404.8970000003465,
+            "decode_ms": 12847.590099991066,
+            "decode_cpu_ms": 2984.375
+          },
+          "max_abs_logits_error": 0.0,
+          "rms_logits_error": 0.0,
+          "argmax_disagreements": 0,
+          "logits_sha256": "aaa604d439a7507b7f629281a5e11a17a28d782b201e74f2d7ceb3451207c948",
+          "logits_finite": true,
+          "measurements": [
+            {
+              "prefill_ms": 1404.8970000003465,
+              "decode_ms": 12847.590099991066,
+              "decode_cpu_ms": 2984.375,
+              "decode_tokens": 510
+            }
+          ],
+          "sampling": {
+            "elapsed_ms": 14476.401199994143,
+            "sampled_token_count": 511,
+            "semantic_token_count": 510,
+            "sampled_tokens_sha256": "aad5d6ed1a4b2737dda06bafb27cdbd33d8663ad28b4ddc0421165982d8d6530",
+            "semantic_tokens_sha256": "49025aeacde0f50e05366985b4335c1d4a9a6463426a3db710b02863c564d7af",
+            "stop_reasons": [
+              "argmax_eos",
+              "sample_eos"
+            ],
+            "tokens_equal_numpy": true,
+            "first_divergence_zero_based": null
+          }
+        },
+        "fp32": {
+          "median": {
+            "prefill_ms": 928.7723000015831,
+            "decode_ms": 10328.02349999838,
+            "decode_cpu_ms": 3687.5
+          },
+          "max_abs_logits_error": 3.4809112548828125e-05,
+          "rms_logits_error": 6.562134271778946e-06,
+          "argmax_disagreements": 0,
+          "logits_sha256": "b66e9bde33cd37206e2db30f44a226e1191f1d78cb288e47d070bb65a39f6f4c",
+          "logits_finite": true,
+          "measurements": [
+            {
+              "prefill_ms": 928.7723000015831,
+              "decode_ms": 10328.02349999838,
+              "decode_cpu_ms": 3687.5,
+              "decode_tokens": 510
+            }
+          ],
+          "graph_sha256": "e43b5a7a0bf193a7142a1ead0300a78a2b66bda40a795e86792d3011ee0847fc",
+          "graph_bytes": 304849449,
+          "sampling": {
+            "elapsed_ms": 10972.96240000287,
+            "sampled_token_count": 511,
+            "semantic_token_count": 510,
+            "sampled_tokens_sha256": "aad5d6ed1a4b2737dda06bafb27cdbd33d8663ad28b4ddc0421165982d8d6530",
+            "semantic_tokens_sha256": "49025aeacde0f50e05366985b4335c1d4a9a6463426a3db710b02863c564d7af",
+            "stop_reasons": [
+              "argmax_eos",
+              "sample_eos"
+            ],
+            "tokens_equal_numpy": true,
+            "first_divergence_zero_based": null
+          }
+        },
+        "int8-channel": {
+          "median": {
+            "prefill_ms": 532.4866000009933,
+            "decode_ms": 6930.427499988582,
+            "decode_cpu_ms": 3109.375
+          },
+          "max_abs_logits_error": 0.9355082511901855,
+          "rms_logits_error": 0.19202587870060675,
+          "argmax_disagreements": 14,
+          "logits_sha256": "f57cbbeb093ba057b375d6c2f49f6395b4b1cdae5c60db3a4107b841f48f1dbe",
+          "logits_finite": true,
+          "measurements": [
+            {
+              "prefill_ms": 532.4866000009933,
+              "decode_ms": 6930.427499988582,
+              "decode_cpu_ms": 3109.375,
+              "decode_tokens": 510
+            }
+          ],
+          "graph_sha256": "a832572fdad5be5c8048194bcdb36e68c1e245ae9682cc6e9ea7703fd3893435",
+          "graph_bytes": 77481404,
+          "sampling": {
+            "elapsed_ms": 7319.564799996442,
+            "sampled_token_count": 500,
+            "semantic_token_count": 499,
+            "sampled_tokens_sha256": "5e018491eda17797aa9813aac4a80e230305c384849381c627c3ee37a5a5450e",
+            "semantic_tokens_sha256": "eda712a0097a53dc93897f78b6081041d4b06b7430410a439aeda256d54bb73a",
+            "stop_reasons": [
+              "argmax_eos",
+              "sample_eos"
+            ],
+            "tokens_equal_numpy": false,
+            "first_divergence_zero_based": 53
+          }
+        }
+      }
+    }
+  },
+  "sources": [
+    {
+      "path": "results/cpu-gpt-ort-short/result.json",
+      "sha256": "34e4ad79bd3d82e32d10bf8465652844e518d81e6702f0c9e4224e212599c9f9"
+    },
+    {
+      "path": "results/cpu-gpt-ort-unified-short-v2/result.json",
+      "sha256": "7db78d777eb4063cc1ad85b402f95f5db62c55a25184b157718a05ab4516deef"
+    },
+    {
+      "path": "results/cpu-gpt-ort-unified-long/result.json",
+      "sha256": "4762f1fc8849195905acec207a4ae4ba34329cd3cc4649fae6428469a8597fcf"
+    },
+    {
+      "path": ".cache/gpt-ort-decode/manifest.json",
+      "sha256": "898af71ffb10d88871fc0ac0e4f8045d16b262c7ae86b02c250c57264fc4e76e"
+    },
+    {
+      "path": ".cache/gpt-ort-unified/manifest.json",
+      "sha256": "d2eb4c88d9ba9f6601769aa9681dc62e3a68f2bdd7f3a797d58c0589a7f81ee4"
+    },
+    {
+      "path": "models/navi-cpu-amd/gpt/onnx/manifest.json",
+      "sha256": "550efbedc20b42e4e6e2546d6bad0549c2c666a7b50993659c404f92509d91e0"
+    },
+    {
+      "path": "results/cpu-onnx-product-probe.json",
+      "sha256": "24def32a3524b80d872a31a2e72c3cf1cb64c5923c753e90dc0e01f3323f8268"
+    },
+    {
+      "path": "results/cpu-onnx-threads.json",
+      "sha256": "f9a81848fd44cb74d902debb90d5d9f735a060f80423ca6436472c95b218205a"
+    }
+  ],
+  "scope": "GPT only, saved Japanese phone/reference inputs from the same checkpoint. No acoustic inference or audio quality verdict.",
+  "official_runtime_precision": "FP32; explicit ONNX backend with prefill_query_chunk_size=0",
+  "experimental_precision": "dynamic INT8; token divergence recorded; not exposed by the product loader",
+  "limitations": [
+    "One timed replay and one sampled generation per unified variant/case after warmup",
+    "Variant order was not alternated; power, temperature and background load were not independently quantified",
+    "INT8 quality has no listening or ASR approval; own-history lengths differ",
+    "Executed harness hashes retained, but earlier complete script revisions were not frozen"
+  ],
+  "decode_only": {
+    "source_package": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\gpt",
+    "source_manifest_sha256": "e1cc4296095f65b98ccaf48501edb5558bbd1fec485a6a020d60b19de6d70a68",
+    "script_sha256": "f57c7ef686806580a65ef1a2f719f3f7210a2ad3728e301b62da431cb69daf7e",
+    "fp32_nodes": {
+      "Gather": 2,
+      "Mul": 49,
+      "Add": 169,
+      "MatMul": 169,
+      "Slice": 120,
+      "Reshape": 144,
+      "Transpose": 72,
+      "Concat": 26,
+      "Softmax": 24,
+      "LayerNormalization": 48,
+      "Relu": 24,
+      "Identity": 1
+    },
+    "graphs": {
+      "decode-fp32.onnx": {
+        "sha256": "3563405c91c87dd0d7c38ff78a379c1e5a2632e00a123a7f633bacda38f4f3b3",
+        "bytes": 315125195
+      },
+      "decode-int8-channel.onnx": {
+        "sha256": "8691155fd60b0861c89db041d2eabad7d6218fa6552cb5946825989388390245",
+        "bytes": 87742399
+      },
+      "decode-int8.onnx": {
+        "sha256": "e0b6671e30c9c1c030a2b9a027dcf8144dd7790387f15283eab78dd205023e0f",
+        "bytes": 87183829
+      }
+    },
+    "torch_imported": false
+  },
+  "unified": {
+    "source_package": "C:\\Users\\LBW\\MyFile\\sakura-project\\SakuraTTS\\models\\navi-cpu-amd\\gpt",
+    "source_manifest_sha256": "e1cc4296095f65b98ccaf48501edb5558bbd1fec485a6a020d60b19de6d70a68",
+    "script_sha256": "4aa2f8c1959809a0b75f527bae5443d822c779dc9d9c6dbea3f0ac89b44cb5c6",
+    "fp32_nodes": {
+      "MatMul": 193,
+      "Add": 192,
+      "Slice": 120,
+      "Reshape": 96,
+      "Transpose": 168,
+      "Unsqueeze": 48,
+      "Concat": 26,
+      "Mul": 24,
+      "Softmax": 24,
+      "Shape": 24,
+      "Gather": 25,
+      "LayerNormalization": 48,
+      "Relu": 24,
+      "Identity": 1
+    },
+    "graphs": {
+      "decode-fp32.onnx": {
+        "sha256": "e43b5a7a0bf193a7142a1ead0300a78a2b66bda40a795e86792d3011ee0847fc",
+        "bytes": 304849449
+      },
+      "decode-int8-channel.onnx": {
+        "sha256": "a832572fdad5be5c8048194bcdb36e68c1e245ae9682cc6e9ea7703fd3893435",
+        "bytes": 77481404
+      },
+      "decode-int8.onnx": {
+        "sha256": "c08d6a931a07261455eed3b277bab41eee0b0ef84dd5f94b19db61a89bcea09b",
+        "bytes": 76922834
+      }
+    },
+    "unified": true,
+    "config": {
+      "hidden_dim": 512,
+      "embedding_dim": 512,
+      "heads": 16,
+      "layers": 24,
+      "ffn_dim": 2048,
+      "vocab_size": 1025,
+      "phoneme_vocab_size": 732,
+      "bert_dim": 1024,
+      "eos": 1024,
+      "layer_norm_epsilon": 1e-05,
+      "position_scale": 1.0,
+      "max_positions": 4000
+    },
+    "torch_imported": false
+  },
+  "product_sidecar": {
+    "format": "sakuratts-gpt-onnx-cpu-v1",
+    "config": {
+      "hidden_dim": 512,
+      "embedding_dim": 512,
+      "heads": 16,
+      "layers": 24,
+      "ffn_dim": 2048,
+      "vocab_size": 1025,
+      "phoneme_vocab_size": 732,
+      "bert_dim": 1024,
+      "eos": 1024,
+      "layer_norm_epsilon": 1e-05,
+      "position_scale": 1.0,
+      "max_positions": 4000
+    },
+    "architecture": "gpt-sovits-ar-postnorm-relu",
+    "source": {
+      "manifest_sha256": "e1cc4296095f65b98ccaf48501edb5558bbd1fec485a6a020d60b19de6d70a68",
+      "weights_sha256": "9864391a98ce2cd59c09e5b91e6521565ceb339991a4014ad60df33124257ae1",
+      "checkpoint_sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf"
+    },
+    "conversion": {
+      "script_sha256": "5528ab99009219f1df3d4bdb20db5a46708697bbd032d4329ce48d496dce5c64",
+      "torch_imported": false
+    },
+    "prefill_query_chunk_size": 0,
+    "cache": "sequence-major-delta-with-masked-sentinel-v1",
+    "graphs": {
+      "fp32": {
+        "file": "transformer-fp32.onnx",
+        "sha256": "35073ce519bfc6e646a3aad1c6b7c3de11e63fea5bec974a4c9c5086cb7fd2a4",
+        "bytes": 304849362
+      }
+    },
+    "embedding": {
+      "file": "embedding.npz",
+      "sha256": "9e10012772e111bba6b493572f42cc9fc0339c6e14de271fa57dc97fe3e94b4b",
+      "bytes": 13891364
+    }
+  },
+  "product_loader_probe": {
+    "before_load": {
+      "rss": 38273024,
+      "private": 532328448
+    },
+    "requests": [
+      {
+        "case": "short",
+        "elapsed_ms": 1833.7497000029543,
+        "tokens_equal_saved_numpy": true,
+        "finite": true,
+        "stop_reasons": [
+          "argmax_eos",
+          "sample_eos"
+        ],
+        "memory_after": {
+          "rss": 435474432,
+          "private": 1114759168
+        },
+        "identity": {
+          "case": "short",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "split_bucket": false,
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf",
+            "sovits_checkpoint_sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81",
+            "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+            "official_commit": "source-sha256:75398e84f6625044d794ebfc2f2ac6d6202f328259e13e032c405301e99efb6a",
+            "reference_text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+            "reference_language": "ja"
+          },
+          "input_sha256": {
+            "phones": "be27cb2f6148ae306d4d1ec8fbade8e26832665b3140651ca14f3721df34722d",
+            "prompt": "67c4e3bccbcd5b6e09f42ea08c0c96fd54c67a0f6ccc2fa1368634339b884bcf",
+            "bert": "ddd7edb9d1a4e6d19cafb0aa417530dabac6d71b4f54385b27210fe84e9f980b",
+            "tokens": "288845351963de4a1f13d6e190d91cdfff39e7e45999cc582d3c959a73ce8690"
+          },
+          "gpt_manifest_sha256": "e1cc4296095f65b98ccaf48501edb5558bbd1fec485a6a020d60b19de6d70a68",
+          "result_sha256": "01cf7740120a3009b90fa765f5a575e8b4ad030437282beeb6e2484dffa46234"
+        },
+        "sampled_tokens_sha256": "817fbe5e4202c15fb86326a027c5eef007a187e6d3c933877174c5693a30b039"
+      },
+      {
+        "case": "long",
+        "elapsed_ms": 11501.272900000913,
+        "tokens_equal_saved_numpy": true,
+        "finite": true,
+        "stop_reasons": [
+          "argmax_eos",
+          "sample_eos"
+        ],
+        "memory_after": {
+          "rss": 521371648,
+          "private": 1129426944
+        },
+        "identity": {
+          "case": "long",
+          "parameters": {
+            "seed": 1234,
+            "rng": "numpy.default_rng (not Torch seed-equivalent)",
+            "language": "ja",
+            "split_method": "cut0",
+            "split_bucket": false,
+            "top_k": 15,
+            "top_p": 1.0,
+            "temperature": 1.0,
+            "repetition_penalty": 1.35,
+            "early_stop_num": 2700,
+            "noise_scale": 0.5,
+            "speed": 1.0,
+            "fragment_interval": 0.3
+          },
+          "reference_identity": {
+            "gpt_checkpoint_sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf",
+            "sovits_checkpoint_sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81",
+            "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+            "official_commit": "source-sha256:75398e84f6625044d794ebfc2f2ac6d6202f328259e13e032c405301e99efb6a",
+            "reference_text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+            "reference_language": "ja"
+          },
+          "input_sha256": {
+            "phones": "f8bc1cacd87438ec408c612bb8f3075eea161b17bdaf363bd103f7347ef1ae50",
+            "prompt": "67c4e3bccbcd5b6e09f42ea08c0c96fd54c67a0f6ccc2fa1368634339b884bcf",
+            "bert": "66599080dd6f2d73051618a612b15f0485ee9c1cc4353a424a92c328483997b1",
+            "tokens": "587d89afd194f35356233a9edb4ecd5d5057b65064bd6ff2f8d45789412b3ad1"
+          },
+          "gpt_manifest_sha256": "e1cc4296095f65b98ccaf48501edb5558bbd1fec485a6a020d60b19de6d70a68",
+          "result_sha256": "01cf7740120a3009b90fa765f5a575e8b4ad030437282beeb6e2484dffa46234"
+        },
+        "sampled_tokens_sha256": "aad5d6ed1a4b2737dda06bafb27cdbd33d8663ad28b4ddc0421165982d8d6530"
+      }
+    ],
+    "sample_interval_s": 0.05,
+    "scope": "GPT only, one process; no acoustic model. Two different input lengths, no warmup; not a throughput benchmark.",
+    "load_ms": 1480.7987999956822,
+    "after_load": {
+      "rss": 391172096,
+      "private": 873701376
+    },
+    "after_close": {
+      "rss": 77570048,
+      "private": 590196736
+    },
+    "torch_imported": false,
+    "onnx_imported": false,
+    "peak_sampled_process_memory": {
+      "rss": 526270464,
+      "private": 1207771136
+    },
+    "sources": [
+      {
+        "path": "src/sakuratts/backends/cpu/onnx_gpt.py",
+        "sha256": "9fc0c73016501ed592f5ab1c8eb8eee6ff820c4c904c55aff180aa41b8053f92"
+      },
+      {
+        "path": "src/sakuratts/_internal/conversion/export_gpt_onnx.py",
+        "sha256": "5528ab99009219f1df3d4bdb20db5a46708697bbd032d4329ce48d496dce5c64"
+      },
+      {
+        "path": "models/navi-cpu-amd/gpt/onnx/manifest.json",
+        "sha256": "550efbedc20b42e4e6e2546d6bad0549c2c666a7b50993659c404f92509d91e0"
+      },
+      {
+        "path": ".cache/cpu_onnx_product_probe.py",
+        "sha256": "0dd12f2e5ddad0398efd95a33c53558b90d7b01a37ab3d3f9145e5735a6a1af3"
+      }
+    ]
+  },
+  "thread_sweep": {
+    "format": "sakuratts-cpu-onnx-threads-v1",
+    "threads": [
+      1,
+      2,
+      4,
+      8
+    ],
+    "rounds": 2,
+    "warmup_steps_per_case": 8,
+    "resource_sample_interval_s": 0.05,
+    "scope": "Fixed GPT history with product CPU ONNX FP32. Warmup excluded, no frontend/acoustic/sampling. RSS/private are sampled model-process values.",
+    "script_sha256": "9c67c4e6c3e6ea90330287e0042469894f115c58ff3cb995232ba9faf3205244",
+    "loader_sha256": "9ed3f47016b62b7f136a081ea252489948c7e5c9cd1ef07979d12e7355ef2865",
+    "sidecar_manifest_sha256": "550efbedc20b42e4e6e2546d6bad0549c2c666a7b50993659c404f92509d91e0",
+    "inputs": {
+      "short": {
+        "case": "short",
+        "parameters": {
+          "seed": 1234,
+          "rng": "numpy.default_rng (not Torch seed-equivalent)",
+          "language": "ja",
+          "split_method": "cut0",
+          "split_bucket": false,
+          "top_k": 15,
+          "top_p": 1.0,
+          "temperature": 1.0,
+          "repetition_penalty": 1.35,
+          "early_stop_num": 2700,
+          "noise_scale": 0.5,
+          "speed": 1.0,
+          "fragment_interval": 0.3
+        },
+        "reference_identity": {
+          "gpt_checkpoint_sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf",
+          "sovits_checkpoint_sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "official_commit": "source-sha256:75398e84f6625044d794ebfc2f2ac6d6202f328259e13e032c405301e99efb6a",
+          "reference_text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "reference_language": "ja"
+        },
+        "input_sha256": {
+          "phones": "be27cb2f6148ae306d4d1ec8fbade8e26832665b3140651ca14f3721df34722d",
+          "prompt": "67c4e3bccbcd5b6e09f42ea08c0c96fd54c67a0f6ccc2fa1368634339b884bcf",
+          "bert": "ddd7edb9d1a4e6d19cafb0aa417530dabac6d71b4f54385b27210fe84e9f980b",
+          "tokens": "288845351963de4a1f13d6e190d91cdfff39e7e45999cc582d3c959a73ce8690"
+        },
+        "gpt_manifest_sha256": "e1cc4296095f65b98ccaf48501edb5558bbd1fec485a6a020d60b19de6d70a68",
+        "result_sha256": "01cf7740120a3009b90fa765f5a575e8b4ad030437282beeb6e2484dffa46234"
+      },
+      "long": {
+        "case": "long",
+        "parameters": {
+          "seed": 1234,
+          "rng": "numpy.default_rng (not Torch seed-equivalent)",
+          "language": "ja",
+          "split_method": "cut0",
+          "split_bucket": false,
+          "top_k": 15,
+          "top_p": 1.0,
+          "temperature": 1.0,
+          "repetition_penalty": 1.35,
+          "early_stop_num": 2700,
+          "noise_scale": 0.5,
+          "speed": 1.0,
+          "fragment_interval": 0.3
+        },
+        "reference_identity": {
+          "gpt_checkpoint_sha256": "250400bfebe8547ef9167dc0225239eb2cac57e8648afbaa0834ac3ff95d4fcf",
+          "sovits_checkpoint_sha256": "d12ec3ec4d6c859f4a24dac3b2ade01d722e1df9a366c291b99c26b888e22b81",
+          "audio_sha256": "82bd7a2f2221c779ed35c093b348700458b6caecf0ad5f67385bfaec1d2eefa5",
+          "official_commit": "source-sha256:75398e84f6625044d794ebfc2f2ac6d6202f328259e13e032c405301e99efb6a",
+          "reference_text": "私は“学園”の開発したナビゲーションシステム。通称Ｎ．ａ．ｖ．ｉ．です",
+          "reference_language": "ja"
+        },
+        "input_sha256": {
+          "phones": "f8bc1cacd87438ec408c612bb8f3075eea161b17bdaf363bd103f7347ef1ae50",
+          "prompt": "67c4e3bccbcd5b6e09f42ea08c0c96fd54c67a0f6ccc2fa1368634339b884bcf",
+          "bert": "66599080dd6f2d73051618a612b15f0485ee9c1cc4353a424a92c328483997b1",
+          "tokens": "587d89afd194f35356233a9edb4ecd5d5057b65064bd6ff2f8d45789412b3ad1"
+        },
+        "gpt_manifest_sha256": "e1cc4296095f65b98ccaf48501edb5558bbd1fec485a6a020d60b19de6d70a68",
+        "result_sha256": "01cf7740120a3009b90fa765f5a575e8b4ad030437282beeb6e2484dffa46234"
+      }
+    },
+    "rows": [
+      {
+        "prefill_ms": 519.3617000040831,
+        "decode_ms": 1475.5772999924375,
+        "total_ms": 1994.9389999965206,
+        "prefill_cpu_ms": 406.25,
+        "decode_cpu_ms": 1359.375,
+        "total_cpu_ms": 1765.625,
+        "decode_tokens": 78,
+        "round": 0,
+        "threads": 1,
+        "case": "short",
+        "peak_sampled_process_memory": {
+          "rss": 495550464,
+          "private": 1156476928
+        },
+        "memory_samples": 36,
+        "logits_sha256": "37ff7d1c8d9a0f707d0e9e5e09da20c1f28894c3bb06fda95cea5765200e2234",
+        "logits_finite": true,
+        "max_abs_logits_difference": 0.0,
+        "argmax_disagreements": 0
+      },
+      {
+        "prefill_ms": 1288.6730000027455,
+        "decode_ms": 13469.810999988113,
+        "total_ms": 14758.483999990858,
+        "prefill_cpu_ms": 984.375,
+        "decode_cpu_ms": 11312.5,
+        "total_cpu_ms": 12296.875,
+        "decode_tokens": 510,
+        "round": 0,
+        "threads": 1,
+        "case": "long",
+        "peak_sampled_process_memory": {
+          "rss": 631066624,
+          "private": 1291513856
+        },
+        "memory_samples": 257,
+        "logits_sha256": "b66e9bde33cd37206e2db30f44a226e1191f1d78cb288e47d070bb65a39f6f4c",
+        "logits_finite": true,
+        "max_abs_logits_difference": 0.0,
+        "argmax_disagreements": 0
+      },
+      {
+        "prefill_ms": 275.128000008408,
+        "decode_ms": 1155.868100002408,
+        "total_ms": 1430.996100010816,
+        "prefill_cpu_ms": 234.375,
+        "decode_cpu_ms": 1046.875,
+        "total_cpu_ms": 1281.25,
+        "decode_tokens": 78,
+        "round": 0,
+        "threads": 2,
+        "case": "short",
+        "peak_sampled_process_memory": {
+          "rss": 503934976,
+          "private": 1165017088
+        },
+        "memory_samples": 26,
+        "logits_sha256": "37ff7d1c8d9a0f707d0e9e5e09da20c1f28894c3bb06fda95cea5765200e2234",
+        "logits_finite": true,
+        "max_abs_logits_difference": 0.0,
+        "argmax_disagreements": 0
+      },
+      {
+        "prefill_ms": 793.4689999965485,
+        "decode_ms": 11155.441800001427,
+        "total_ms": 11948.910799997975,
+        "prefill_cpu_ms": 687.5,
+        "decode_cpu_ms": 10078.125,
+        "total_cpu_ms": 10765.625,
+        "decode_tokens": 510,
+        "round": 0,
+        "threads": 2,
+        "case": "long",
+        "peak_sampled_process_memory": {
+          "rss": 624418816,
+          "private": 1295536128
+        },
+        "memory_samples": 193,
+        "logits_sha256": "b66e9bde33cd37206e2db30f44a226e1191f1d78cb288e47d070bb65a39f6f4c",
+        "logits_finite": true,
+        "max_abs_logits_difference": 0.0,
+        "argmax_disagreements": 0
+      },
+      {
+        "prefill_ms": 215.09660000447184,
+        "decode_ms": 1196.5745000052266,
+        "total_ms": 1411.6711000096984,
+        "prefill_cpu_ms": 218.75,
+        "decode_cpu_ms": 1046.875,
+        "total_cpu_ms": 1265.625,
+        "decode_tokens": 78,
+        "round": 0,
+        "threads": 4,
+        "case": "short",
+        "peak_sampled_process_memory": {
+          "rss": 511848448,
+          "private": 1167020032
+        },
+        "memory_samples": 24,
+        "logits_sha256": "37ff7d1c8d9a0f707d0e9e5e09da20c1f28894c3bb06fda95cea5765200e2234",
+        "logits_finite": true,
+        "max_abs_logits_difference": 0.0,
+        "argmax_disagreements": 0
+      },
+      {
+        "prefill_ms": 639.2895999888424,
+        "decode_ms": 9124.561799995718,
+        "total_ms": 9763.85139998456,
+        "prefill_cpu_ms": 625.0,
+        "decode_cpu_ms": 8578.125,
+        "total_cpu_ms": 9203.125,
+        "decode_tokens": 510,
+        "round": 0,
+        "threads": 4,
+        "case": "long",
+        "peak_sampled_process_memory": {
+          "rss": 643325952,
+          "private": 1296584704
+        },
+        "memory_samples": 158,
+        "logits_sha256": "b66e9bde33cd37206e2db30f44a226e1191f1d78cb288e47d070bb65a39f6f4c",
+        "logits_finite": true,
+        "max_abs_logits_difference": 0.0,
+        "argmax_disagreements": 0
+      },
+      {
+        "prefill_ms": 173.47969999536872,
+        "decode_ms": 1345.1002000074368,
+        "total_ms": 1518.5799000028055,
+        "prefill_cpu_ms": 218.75,
+        "decode_cpu_ms": 1359.375,
+        "total_cpu_ms": 1578.125,
+        "decode_tokens": 78,
+        "round": 0,
+        "threads": 8,
+        "case": "short",
+        "peak_sampled_process_memory": {
+          "rss": 510586880,
+          "private": 1167855616
+        },
+        "memory_samples": 26,
+        "logits_sha256": "37ff7d1c8d9a0f707d0e9e5e09da20c1f28894c3bb06fda95cea5765200e2234",
+        "logits_finite": true,
+        "max_abs_logits_difference": 0.0,
+        "argmax_disagreements": 0
+      },
+      {
+        "prefill_ms": 629.2266999953426,
+        "decode_ms": 8758.932799988543,
+        "total_ms": 9388.159499983885,
+        "prefill_cpu_ms": 609.375,
+        "decode_cpu_ms": 5843.75,
+        "total_cpu_ms": 6453.125,
+        "decode_tokens": 510,
+        "round": 0,
+        "threads": 8,
+        "case": "long",
+        "peak_sampled_process_memory": {
+          "rss": 643997696,
+          "private": 1296961536
+        },
+        "memory_samples": 161,
+        "logits_sha256": "b66e9bde33cd37206e2db30f44a226e1191f1d78cb288e47d070bb65a39f6f4c",
+        "logits_finite": true,
+        "max_abs_logits_difference": 0.0,
+        "argmax_disagreements": 0
+      },
+      {
+        "prefill_ms": 460.64750000368804,
+        "decode_ms": 8214.312800002517,
+        "total_ms": 8674.960300006205,
+        "prefill_cpu_ms": 609.375,
+        "decode_cpu_ms": 6687.5,
+        "total_cpu_ms": 7296.875,
+        "decode_tokens": 510,
+        "round": 1,
+        "threads": 8,
+        "case": "long",
+        "peak_sampled_process_memory": {
+          "rss": 591667200,
+          "private": 1247739904
+        },
+        "memory_samples": 153,
+        "logits_sha256": "b66e9bde33cd37206e2db30f44a226e1191f1d78cb288e47d070bb65a39f6f4c",
+        "logits_finite": true,
+        "max_abs_logits_difference": 0.0,
+        "argmax_disagreements": 0
+      },
+      {
+        "prefill_ms": 193.55750000977423,
+        "decode_ms": 1334.1010000003735,
+        "total_ms": 1527.6585000101477,
+        "prefill_cpu_ms": 312.5,
+        "decode_cpu_ms": 843.75,
+        "total_cpu_ms": 1156.25,
+        "decode_tokens": 78,
+        "round": 1,
+        "threads": 8,
+        "case": "short",
+        "peak_sampled_process_memory": {
+          "rss": 606027776,
+          "private": 1209167872
+        },
+        "memory_samples": 27,
+        "logits_sha256": "37ff7d1c8d9a0f707d0e9e5e09da20c1f28894c3bb06fda95cea5765200e2234",
+        "logits_finite": true,
+        "max_abs_logits_difference": 0.0,
+        "argmax_disagreements": 0
+      },
+      {
+        "prefill_ms": 523.7283000024036,
+        "decode_ms": 8703.226400000858,
+        "total_ms": 9226.954700003262,
+        "prefill_cpu_ms": 718.75,
+        "decode_cpu_ms": 8062.5,
+        "total_cpu_ms": 8781.25,
+        "decode_tokens": 510,
+        "round": 1,
+        "threads": 4,
+        "case": "long",
+        "peak_sampled_process_memory": {
+          "rss": 587767808,
+          "private": 1241370624
+        },
+        "memory_samples": 161,
+        "logits_sha256": "b66e9bde33cd37206e2db30f44a226e1191f1d78cb288e47d070bb65a39f6f4c",
+        "logits_finite": true,
+        "max_abs_logits_difference": 0.0,
+        "argmax_disagreements": 0
+      },
+      {
+        "prefill_ms": 275.34200000809506,
+        "decode_ms": 1201.0167999978876,
+        "total_ms": 1476.3588000059826,
+        "prefill_cpu_ms": 156.25,
+        "decode_cpu_ms": 718.75,
+        "total_cpu_ms": 875.0,
+        "decode_tokens": 78,
+        "round": 1,
+        "threads": 4,
+        "case": "short",
+        "peak_sampled_process_memory": {
+          "rss": 584753152,
+          "private": 1193566208
+        },
+        "memory_samples": 27,
+        "logits_sha256": "37ff7d1c8d9a0f707d0e9e5e09da20c1f28894c3bb06fda95cea5765200e2234",
+        "logits_finite": true,
+        "max_abs_logits_difference": 0.0,
+        "argmax_disagreements": 0
+      },
+      {
+        "prefill_ms": 765.0313000049209,
+        "decode_ms": 11523.081199993612,
+        "total_ms": 12288.112499998533,
+        "prefill_cpu_ms": 640.625,
+        "decode_cpu_ms": 10265.625,
+        "total_cpu_ms": 10906.25,
+        "decode_tokens": 510,
+        "round": 1,
+        "threads": 2,
+        "case": "long",
+        "peak_sampled_process_memory": {
+          "rss": 589008896,
+          "private": 1240326144
+        },
+        "memory_samples": 200,
+        "logits_sha256": "b66e9bde33cd37206e2db30f44a226e1191f1d78cb288e47d070bb65a39f6f4c",
+        "logits_finite": true,
+        "max_abs_logits_difference": 0.0,
+        "argmax_disagreements": 0
+      },
+      {
+        "prefill_ms": 288.97159999178257,
+        "decode_ms": 1403.8533999992069,
+        "total_ms": 1692.8249999909895,
+        "prefill_cpu_ms": 296.875,
+        "decode_cpu_ms": 984.375,
+        "total_cpu_ms": 1281.25,
+        "decode_tokens": 78,
+        "round": 1,
+        "threads": 2,
+        "case": "short",
+        "peak_sampled_process_memory": {
+          "rss": 577380352,
+          "private": 1180409856
+        },
+        "memory_samples": 29,
+        "logits_sha256": "37ff7d1c8d9a0f707d0e9e5e09da20c1f28894c3bb06fda95cea5765200e2234",
+        "logits_finite": true,
+        "max_abs_logits_difference": 0.0,
+        "argmax_disagreements": 0
+      },
+      {
+        "prefill_ms": 1254.0816999971867,
+        "decode_ms": 13024.840400001267,
+        "total_ms": 14278.922099998454,
+        "prefill_cpu_ms": 1000.0,
+        "decode_cpu_ms": 10125.0,
+        "total_cpu_ms": 11125.0,
+        "decode_tokens": 510,
+        "round": 1,
+        "threads": 1,
+        "case": "long",
+        "peak_sampled_process_memory": {
+          "rss": 643190784,
+          "private": 1295073280
+        },
+        "memory_samples": 251,
+        "logits_sha256": "b66e9bde33cd37206e2db30f44a226e1191f1d78cb288e47d070bb65a39f6f4c",
+        "logits_finite": true,
+        "max_abs_logits_difference": 0.0,
+        "argmax_disagreements": 0
+      },
+      {
+        "prefill_ms": 502.1207000099821,
+        "decode_ms": 1397.4101000058,
+        "total_ms": 1899.530800015782,
+        "prefill_cpu_ms": 437.5,
+        "decode_cpu_ms": 1062.5,
+        "total_cpu_ms": 1500.0,
+        "decode_tokens": 78,
+        "round": 1,
+        "threads": 1,
+        "case": "short",
+        "peak_sampled_process_memory": {
+          "rss": 578621440,
+          "private": 1181364224
+        },
+        "memory_samples": 34,
+        "logits_sha256": "37ff7d1c8d9a0f707d0e9e5e09da20c1f28894c3bb06fda95cea5765200e2234",
+        "logits_finite": true,
+        "max_abs_logits_difference": 0.0,
+        "argmax_disagreements": 0
+      }
+    ],
+    "status": "completed",
+    "summary": {
+      "short": {
+        "1": {
+          "prefill_ms": 510.7412000070326,
+          "decode_ms": 1436.4936999991187,
+          "total_ms": 1947.2349000061513,
+          "prefill_cpu_ms": 421.875,
+          "decode_cpu_ms": 1210.9375,
+          "total_cpu_ms": 1632.8125
+        },
+        "2": {
+          "prefill_ms": 282.0498000000953,
+          "decode_ms": 1279.8607500008075,
+          "total_ms": 1561.9105500009027,
+          "prefill_cpu_ms": 265.625,
+          "decode_cpu_ms": 1015.625,
+          "total_cpu_ms": 1281.25
+        },
+        "4": {
+          "prefill_ms": 245.21930000628345,
+          "decode_ms": 1198.795650001557,
+          "total_ms": 1444.0149500078405,
+          "prefill_cpu_ms": 187.5,
+          "decode_cpu_ms": 882.8125,
+          "total_cpu_ms": 1070.3125
+        },
+        "8": {
+          "prefill_ms": 183.51860000257147,
+          "decode_ms": 1339.6006000039051,
+          "total_ms": 1523.1192000064766,
+          "prefill_cpu_ms": 265.625,
+          "decode_cpu_ms": 1101.5625,
+          "total_cpu_ms": 1367.1875
+        }
+      },
+      "long": {
+        "1": {
+          "prefill_ms": 1271.377349999966,
+          "decode_ms": 13247.32569999469,
+          "total_ms": 14518.703049994656,
+          "prefill_cpu_ms": 992.1875,
+          "decode_cpu_ms": 10718.75,
+          "total_cpu_ms": 11710.9375
+        },
+        "2": {
+          "prefill_ms": 779.2501500007347,
+          "decode_ms": 11339.26149999752,
+          "total_ms": 12118.511649998254,
+          "prefill_cpu_ms": 664.0625,
+          "decode_cpu_ms": 10171.875,
+          "total_cpu_ms": 10835.9375
+        },
+        "4": {
+          "prefill_ms": 581.508949995623,
+          "decode_ms": 8913.894099998288,
+          "total_ms": 9495.40304999391,
+          "prefill_cpu_ms": 671.875,
+          "decode_cpu_ms": 8320.3125,
+          "total_cpu_ms": 8992.1875
+        },
+        "8": {
+          "prefill_ms": 544.9370999995153,
+          "decode_ms": 8486.62279999553,
+          "total_ms": 9031.559899995045,
+          "prefill_cpu_ms": 609.375,
+          "decode_cpu_ms": 6265.625,
+          "total_cpu_ms": 6875.0
+        }
+      }
+    },
+    "torch_imported": false,
+    "onnx_imported": false
+  },
+  "verification": {
+    "product_loader_unit_tests": 6,
+    "passed": 6,
+    "scope": "Real tiny ONNX graph against independent FP64 full-prefix calculation, bounded cache, state cleanup, original and sidecar identity checks"
+  },
+  "references": [
+    "https://onnxruntime.ai/docs/performance/model-optimizations/quantization.html",
+    "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.24.4/onnxruntime/core/providers/cpu/math/gemm.cc"
+  ],
+  "initial_empty_history_failure": {
+    "runtime": "onnxruntime-directml 1.24.4 CPUExecutionProvider on Windows",
+    "failure": "Optimized MatMul with empty past axis caused native integer divide by zero during prefill",
+    "resolution": "One permanently masked zero cache slot keeps dimensions nonempty; logits and own-history output verified"
+  }
+}

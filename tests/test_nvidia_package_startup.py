@@ -117,7 +117,7 @@ class NvidiaPackageStartupTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaisesRegex(ValueError, "acoustic_chunk_frames"):
                 NVIDIAEngine("does-not-exist.json", acoustic_chunk_frames=value)
 
-    def test_split_admission_precedes_references_and_frontend_workers(self):
+    def test_acoustic_integrity_is_checked_once_at_actual_load(self):
         for package_format, chunk in (("sakuratts-sovits-split-onnx-v1", None),
                 ("sakuratts-sovits-split-onnx-v1", 256), ("sakuratts-sovits-onnx-v1", 0)):
             with self.subTest(package_format=package_format, chunk=chunk), tempfile.TemporaryDirectory() as directory:
@@ -126,15 +126,24 @@ class NvidiaPackageStartupTests(unittest.TestCase):
                 acoustic = json.loads(path.read_text(encoding="utf-8"))
                 acoustic["format"] = package_format
                 path.write_text(json.dumps(acoustic), encoding="utf-8")
+                configuration = json.loads(config.read_text(encoding="utf-8"))
+                configuration.pop("acoustic_python")
+                config.write_text(json.dumps(configuration), encoding="utf-8")
                 with patch("sakuratts.backends.onnx.sovits.read_manifest", side_effect=ValueError("package admission failed")) as read, \
-                        patch("sakuratts.backends.cuda.engine.PreparedReference.load") as reference, \
-                        patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P") as frontend:
-                    with self.assertRaisesRegex(ValueError, "package admission"):
-                        NVIDIAEngine(config, acoustic_chunk_frames=chunk, acoustic_arena_shrink=True)
-                read.assert_called_once_with(path.parent.resolve(), allow_experimental_fp16=False,
-                    acoustic_arena_shrink=True, acoustic_chunk_frames=chunk, acoustic_session_policy="resident")
-                reference.assert_not_called()
-                frontend.assert_not_called()
+                        patch("sakuratts._internal.runtime.PreparedReference.load"), \
+                        patch("sakuratts.frontend.runtime.load_frontend") as frontend:
+                    model = NVIDIAEngine(config, acoustic_chunk_frames=chunk, acoustic_arena_shrink=True)
+                    try:
+                        read.assert_not_called()
+                        with self.assertRaisesRegex(ValueError, "package admission"):
+                            model._load_sovits()
+                        read.assert_called_once()
+                        self.assertEqual(read.call_args.args, (path.parent.resolve(),))
+                        self.assertEqual(read.call_args.kwargs["acoustic_chunk_frames"], chunk)
+                        self.assertIsNone(model.sovits)
+                    finally:
+                        model.close()
+                    frontend.return_value.close.assert_called_once()
 
     def test_split_package_identity_is_used_without_original_package(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -145,7 +154,7 @@ class NvidiaPackageStartupTests(unittest.TestCase):
             acoustic["dtype"] = "float16"
             path.write_text(json.dumps(acoustic), encoding="utf-8")
             with patch("sakuratts.backends.onnx.sovits.read_manifest", return_value=(acoustic, None)), \
-                    patch("sakuratts.backends.cuda.engine.PreparedReference.load", return_value=object()) as reference, \
+                    patch("sakuratts._internal.runtime.PreparedReference.load", return_value=object()) as reference, \
                     patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P"), \
                     patch("sakuratts.frontend.text_frontend.LanguageSegmenter"), \
                     patch("sakuratts.frontend.text_frontend.TextFrontend"):
@@ -239,7 +248,7 @@ class NvidiaPackageStartupTests(unittest.TestCase):
                 with self.subTest(key=key):
                     manifest["japanese_g2p"] = dict(profile, **{key: "../outside"})
                     path.write_text(json.dumps(manifest), encoding="utf-8")
-                    with patch("sakuratts.backends.cuda.engine.PreparedReference.load", return_value=object()), \
+                    with patch("sakuratts._internal.runtime.PreparedReference.load", return_value=object()), \
                             patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P") as worker:
                         with self.assertRaisesRegex(ValueError, "inside their package"):
                             NVIDIAEngine(config)
@@ -251,7 +260,7 @@ class NvidiaPackageStartupTests(unittest.TestCase):
             worker = Mock()
             worker.close.side_effect = RuntimeError("cleanup failure")
             failed = RuntimeError("language resources unavailable")
-            with patch("sakuratts.backends.cuda.engine.PreparedReference.load", return_value=object()), \
+            with patch("sakuratts._internal.runtime.PreparedReference.load", return_value=object()), \
                     patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P", return_value=worker), \
                     patch("sakuratts.frontend.text_frontend.LanguageSegmenter", side_effect=failed):
                 with self.assertRaises(RuntimeError) as caught:
@@ -264,7 +273,7 @@ class NvidiaPackageStartupTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             config, _, _ = fixture(Path(directory))
             worker, segmenter = Mock(), Mock()
-            with patch("sakuratts.backends.cuda.engine.PreparedReference.load", return_value=object()), \
+            with patch("sakuratts._internal.runtime.PreparedReference.load", return_value=object()), \
                     patch("sakuratts.frontend.runtime.metadata.distribution", side_effect=AssertionError("classic must not resolve plus")), \
                     patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P", return_value=worker), \
                     patch("sakuratts.frontend.text_frontend.LanguageSegmenter", return_value=segmenter), \

@@ -17,6 +17,8 @@ def run(args, *, experimental=None):
     report = {"scope": "Complete non-streaming PCM; first request includes lazy GPU loads",
               "experimental": experimental or {}, "requests": []}
     options = {"backend": args.backend} if args.backend is not None else {}
+    if args.profile is not None:
+        options["profile"] = args.profile
     with Engine.load(args.model, experimental=experimental, **options) as engine:
         report["open_ms"] = (time.perf_counter() - started) * 1000
         report["model"] = engine.model.info()

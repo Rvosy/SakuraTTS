@@ -35,6 +35,7 @@ class MLXGPT:
     def __init__(self, config: dict, weights: dict, capacity: int):
         self.config = config
         self.weights = weights
+        self.device = mx.default_device()
         self.width = int(config["hidden_dim"])
         self.heads = int(config["heads"])
         self.layers = int(config["layers"])
@@ -91,6 +92,13 @@ class MLXGPT:
         self.keys, self.values = [], []
         self.length = self.text_length = 0
         self.prefill_profile = None
+
+    def close(self):
+        """Release weights and request state before reclaiming allocator cache."""
+        self.release_request_state()
+        self.weights = {}
+        mx.synchronize(self.device)
+        mx.clear_cache()
 
     def _linear(self, x, prefix):
         result = x @ self.weights[prefix + ".weight"].T

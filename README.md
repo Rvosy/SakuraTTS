@@ -6,7 +6,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/status-developer_preview-orange" alt="开发者预览版">
-  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20NVIDIA-0078D4" alt="Windows / NVIDIA">
+  <img src="https://img.shields.io/badge/platform-Windows-0078D4" alt="Windows">
   <img src="https://img.shields.io/badge/python-3.11%2B-3776AB" alt="Python 3.11+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
 </p>
@@ -23,13 +23,17 @@
 
 SakuraTTS 是面向 AI 桌宠的 GPT-SoVITS 推理引擎，沿用原版角色模型和 API V2 调用方式，专注于降低合成耗时、显存占用和长期待机成本。
 
-桌宠需要长时间挂机，却只在交互时说话。原版推理服务在合成结束后仍会保留模型和缓存，这部分常驻显存会与游戏及其他应用争用资源。SakuraTTS 为此提供四档推理配置，并支持空闲休眠：无交互时释放推理进程持有的 GPU 资源，桌宠发起 LLM 请求时提前唤醒，利用等待回复的时间启动和加载模型。
+桌宠需要长时间挂机，却只在交互时说话。原版推理服务在合成结束后仍会保留模型和缓存，这部分常驻显存会与游戏及其他应用争用资源。SakuraTTS 为此提供四档 CUDA 推理配置，并支持空闲休眠：无交互时释放推理进程持有的 GPU 资源，桌宠发起 LLM 请求时提前唤醒，利用等待回复的时间启动和加载模型。
 
 已有的 GPT `.ckpt`、SoVITS `.pth` 和参考音频可以继续使用，无需重新训练。完整整合包会在首次使用时自动转换并缓存支持的模型；客户端继续通过 `/tts` 请求语音，也可以使用 Python 或命令行接口。
 
-> 当前为开发者预览版，支持 Windows / NVIDIA、V2ProPlus、日文，以及配置[英文资源](docs/english-frontend.md)后的英文与日英混合。HTTP 兼容范围见 [API V2 文档](docs/api-v2-guide.md)，模型与设备验证情况见[兼容矩阵](docs/specs/compatibility-matrix.md)。
+> 当前为开发者预览版，提供 Windows CUDA、CPU 与 DirectML 后端，支持 V2ProPlus、日文，以及配置[英文资源](docs/english-frontend.md)后的英文与日英混合。HTTP 兼容范围见 [API V2 文档](docs/api-v2-guide.md)，模型与设备验证情况见[兼容矩阵](docs/specs/compatibility-matrix.md)。
+
+设备通过 `backend` 选择：CPU 默认使用 INT8 GPT、8 线程声学；AMD DirectML 默认使用 FP16、KV 容量 1280。两个设备各保留这一套配置，具体资源要求见[CPU / AMD 指南](docs/cpu-amd.md)。CUDA 与 [Apple MLX](docs/apple.md) 的现有[推理档位](docs/inference-profiles.md)保持独立；MLX 公共入口仍待 Apple 真机验收。
 
 ## 快速开始
+
+CPU 与 AMD 核显可通过源码安装并切换后端，见 [CPU / DirectML 指南](docs/cpu-amd.md)；下文整合包仍面向 NVIDIA。
 
 [Windows / NVIDIA 整合包](docs/portable-bundle.md)自带 Python 与运行依赖，完整包还带有模型转换和参考准备组件。模型与参考音频由使用者提供。解压后：
 
@@ -46,6 +50,8 @@ curl.exe -X POST http://127.0.0.1:9880/tts -H "Content-Type: application/json" -
 请求须显式传 `parallel_infer=false`。首次模型转换和参考准备可能比后续请求耗时更长，建议在正式对话前完成一次首次合成。源码安装、Python 示例和资源准备见[快速开始](docs/quickstart.md)。
 
 ## 性能对比
+
+CPU INT8 与 AMD FP16 的同机完整请求、Genie 前后复测、内存和试听见 [Genie 对比](research/notes/genie-comparison-20260927.md)。其他候选与取舍保留在[历史精度实验](research/notes/cpu-amd-precision-listening-20260927.md)。以下数据来自 NVIDIA 设备，不能直接用于比较不同硬件。
 
 测试环境：RTX 5060 8 GB、Windows 11 WDDM、Sakura V2ProPlus 日文。每组使用相同权重、参考音频、输入和采样参数，执行两轮共 12 次请求，覆盖短句、长句与多句文本。
 
@@ -84,7 +90,7 @@ curl.exe -X POST http://127.0.0.1:9880/tts -H "Content-Type: application/json" -
 | SakuraTTS FP16 低显存档 | 1.009 s | 3.560 s | 3.46 / 25.46 s |
 | SakuraTTS FP16 极限档 | 3.055 s | 5.481 s | 3.46 / 25.46 s |
 
-标准档适合连续短句；低显存档与极限档通过片段重载进一步节省显存，也增加等待。四档配置和使用条件见[推理档位](docs/inference-profiles.md)。默认仍为 FP32，FP16 需匹配的转换模型包，人工听感验收尚未完成。
+CUDA 标准档适合连续短句；低显存档与极限档通过片段重载进一步节省显存，也增加等待。四档配置和使用条件见[推理档位](docs/inference-profiles.md)。CUDA 默认仍为 FP32，FP16 需匹配的转换模型包，人工听感验收尚未完成。
 
 <details>
 <summary>测量口径与数据来源</summary>

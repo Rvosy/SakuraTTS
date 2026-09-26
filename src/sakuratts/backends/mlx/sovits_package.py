@@ -18,6 +18,15 @@ def sha256(path):
     return digest.hexdigest()
 
 
+def validate_manifest(manifest):
+    if manifest.get("dtype") != "float32":
+        raise ValueError("MLX acoustic execution requires FP32; FP16 is not implemented")
+    if manifest.get("config", {}).get("model", {}).get("version") != "v2Pro":
+        raise ValueError("MLX acoustic execution supports only V2Pro; V2ProPlus is not implemented")
+    if manifest.get("format") != "sakuratts-sovits-decode-fp32-v1":
+        raise ValueError("MLX requires a native sakuratts-sovits-decode-fp32-v1 package, not ONNX")
+
+
 class SoVITSPackage:
     def __init__(self, manifest, archive):
         self.manifest = manifest
@@ -28,10 +37,7 @@ class SoVITSPackage:
     def open(cls, directory):
         directory = Path(directory)
         manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
-        if (manifest["format"] != "sakuratts-sovits-decode-fp32-v1"
-                or manifest["config"]["model"]["version"] != "v2Pro"
-                or manifest["dtype"] != "float32"):
-            raise ValueError("Expected the current V2Pro FP32 acoustic package")
+        validate_manifest(manifest)
         path = directory / manifest["weights"]["file"]
         if sha256(path) != manifest["weights"]["sha256"]:
             raise ValueError("Acoustic weights checksum mismatch")

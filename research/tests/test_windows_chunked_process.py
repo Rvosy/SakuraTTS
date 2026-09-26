@@ -247,9 +247,9 @@ class ChunkedProcessTests(unittest.TestCase):
 
         model._load_sovits = load_sovits
         try:
-            with patch("sakuratts.backends.cuda.engine.prepare_text_request", return_value=prepared()), \
-                 patch("sakuratts.backends.cuda.engine.generate_prepared_semantic", return_value=SimpleNamespace(generation=speech().generation)), \
-                 patch("sakuratts.backends.cuda.engine.synthesize_acoustic", side_effect=acoustic):
+            with patch("sakuratts._internal.runtime.prepare_text_request", return_value=prepared()), \
+                 patch("sakuratts._internal.runtime.generate_prepared_semantic", return_value=SimpleNamespace(generation=speech().generation)), \
+                 patch("sakuratts._internal.runtime.synthesize_acoustic", side_effect=acoustic):
                 with self.assertRaisesRegex(RuntimeError, "worker failed"):
                     model.synthesize("first")
                 self.assertIsNone(model.sovits)

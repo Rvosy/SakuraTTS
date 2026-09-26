@@ -1,0 +1,1778 @@
+{
+  "format": "sakuratts-directml-mixed-experiment-v1",
+  "scope": "Acoustic computation only; fixed saved and tiled inputs, not natural speech quality validation",
+  "quality_accepted": false,
+  "experiments": [
+    {
+      "name": "all-fp16",
+      "candidate": "models\\navi-cpu-amd\\sovits-fp16-directml-candidate",
+      "candidate_manifest_sha256": "459472a0323adfd5109c9ab0f62176f8436d91af2893f9a5f8cdb6831637ee79",
+      "candidate_weights_bytes": 124183807,
+      "initializer_bytes": {
+        "float16": 124280768
+      },
+      "node_counts": {
+        "Cast": 174,
+        "Conv": 218,
+        "ConvTranspose": 5
+      },
+      "raw_report": ".cache\\directml-fp16-20260927\\result.json",
+      "raw_report_sha256": "2e69a3b332de64020660815edb4c21638e15f5c91a05b46c400ddf4c98a097f6",
+      "input_npz": ".cache\\directml-fp16-20260927\\fixed-inputs.npz",
+      "input_npz_sha256": "57a542ebeebd769d761399e5eaa98c9129a88c678d9952ae8f268f98dd9712fc",
+      "engineering_passed": false,
+      "profile": {
+        "path": ".cache\\directml-fp16-20260927\\dml_2026-09-27_02-13-17.json",
+        "provider_events": {
+          "DmlExecutionProvider": 15288,
+          "CPUExecutionProvider": 9204
+        }
+      },
+      "cases": [
+        {
+          "case": "validation-0",
+          "tokens": 1,
+          "fp32_hot_median_ms": 61.13210000330582,
+          "candidate_hot_median_ms": 67.01099999190774,
+          "candidate_hot_samples_ms": [
+            67.01099999190774,
+            67.35939999634866,
+            66.06209999881685
+          ],
+          "reduction_percent": -9.616715258078813,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 1280,
+            "max_abs_error": 0.000739753246307373,
+            "rmse": 0.0002114393100812408,
+            "snr_db": 0.23187574255036233,
+            "peak": 0.0009765625,
+            "reference_peak": 0.0009031295776367188,
+            "rms": 0.00015440808887540915,
+            "reference_rms": 0.00021715984358225754,
+            "absolute_peak_delta": 7.343292236328125e-05,
+            "spectral_convergence": 0.6486202692977266,
+            "active_log_spectral_rms_db": 9.093045966211008,
+            "active_spectral_bins": 1024,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": false,
+              "amplitude": true,
+              "spectral_convergence": false,
+              "active_log_spectral_rms": false
+            },
+            "passed": false
+          },
+          "original_fp32_check": {
+            "passed": false,
+            "max_abs_error": 0.000739814480766654,
+            "rmse": 0.00021143763696643958,
+            "outside_tolerance": 707,
+            "elements": 1280,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "repeat_passed": true
+        },
+        {
+          "case": "validation-1",
+          "tokens": 2,
+          "fp32_hot_median_ms": 201.34549999784213,
+          "candidate_hot_median_ms": 203.74670000455808,
+          "candidate_hot_samples_ms": [
+            203.74670000455808,
+            205.12120000785217,
+            200.26949999737553
+          ],
+          "reduction_percent": -1.1925769419935728,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 2560,
+            "max_abs_error": 0.0007454752922058105,
+            "rmse": 0.0003146931132560359,
+            "snr_db": 4.128929601410202,
+            "peak": 0.001953125,
+            "reference_peak": 0.002501070499420166,
+            "rms": 0.0005438639992662467,
+            "reference_rms": 0.0005062134953254156,
+            "absolute_peak_delta": -0.000547945499420166,
+            "spectral_convergence": 0.5100797373193877,
+            "active_log_spectral_rms_db": 10.501433163047093,
+            "active_spectral_bins": 3576,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": false,
+              "amplitude": true,
+              "spectral_convergence": false,
+              "active_log_spectral_rms": false
+            },
+            "passed": false
+          },
+          "original_fp32_check": {
+            "passed": false,
+            "max_abs_error": 0.0007455340819433331,
+            "rmse": 0.00031469558371040166,
+            "outside_tolerance": 1910,
+            "elements": 2560,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "repeat_passed": true
+        },
+        {
+          "case": "validation-2",
+          "tokens": 7,
+          "fp32_hot_median_ms": 254.55100000544917,
+          "candidate_hot_median_ms": 230.60029999760445,
+          "candidate_hot_samples_ms": [
+            226.6094999940833,
+            234.1207999998005,
+            230.60029999760445
+          ],
+          "reduction_percent": 9.408998592553953,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 8960,
+            "max_abs_error": 0.0044890642166137695,
+            "rmse": 0.0005689272172802128,
+            "snr_db": 27.60557202544572,
+            "peak": 0.0693359375,
+            "reference_peak": 0.07064330577850342,
+            "rms": 0.0135785704534489,
+            "reference_rms": 0.01365637116893976,
+            "absolute_peak_delta": -0.001307368278503418,
+            "spectral_convergence": 0.027067344656594095,
+            "active_log_spectral_rms_db": 2.348386208511178,
+            "active_spectral_bins": 12633,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": false
+            },
+            "passed": false
+          },
+          "original_fp32_check": {
+            "passed": false,
+            "max_abs_error": 0.0044904835522174835,
+            "rmse": 0.0005690296053249946,
+            "outside_tolerance": 7521,
+            "elements": 8960,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "repeat_passed": true
+        },
+        {
+          "case": "validation-3",
+          "tokens": 19,
+          "fp32_hot_median_ms": 323.2253000023775,
+          "candidate_hot_median_ms": 298.3815999905346,
+          "candidate_hot_samples_ms": [
+            304.8555999994278,
+            295.50120000203606,
+            298.3815999905346
+          ],
+          "reduction_percent": 7.686186697532693,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 24320,
+            "max_abs_error": 0.07878744602203369,
+            "rmse": 0.003312978106846244,
+            "snr_db": 24.4213261457545,
+            "peak": 0.4052734375,
+            "reference_peak": 0.4086635112762451,
+            "rms": 0.054636763398560606,
+            "reference_rms": 0.055116911440202455,
+            "absolute_peak_delta": -0.003390073776245117,
+            "spectral_convergence": 0.028932510710881345,
+            "active_log_spectral_rms_db": 0.790250841977022,
+            "active_spectral_bins": 23026,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": false,
+              "rmse": true,
+              "snr": false,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": false
+          },
+          "original_fp32_check": {
+            "passed": false,
+            "max_abs_error": 0.07880225777626038,
+            "rmse": 0.0033135620630903237,
+            "outside_tolerance": 21575,
+            "elements": 24320,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "repeat_passed": true
+        },
+        {
+          "case": "fixed-short-43",
+          "tokens": 43,
+          "fp32_hot_median_ms": 453.53820000309497,
+          "candidate_hot_median_ms": 390.6128999951761,
+          "candidate_hot_samples_ms": [
+            363.19419999199454,
+            390.7316999975592,
+            390.6128999951761
+          ],
+          "reduction_percent": 13.874310919673238,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 55040,
+            "max_abs_error": 0.14040982723236084,
+            "rmse": 0.005852393102621094,
+            "snr_db": 19.145167803181593,
+            "peak": 0.5234375,
+            "reference_peak": 0.48628461360931396,
+            "rms": 0.05278402064875998,
+            "reference_rms": 0.053038578993193454,
+            "absolute_peak_delta": 0.037152886390686035,
+            "spectral_convergence": 0.04740432972551586,
+            "active_log_spectral_rms_db": 1.1382312418211542,
+            "active_spectral_bins": 49988,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": false,
+              "rmse": false,
+              "snr": false,
+              "amplitude": false,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": false
+            },
+            "passed": false
+          },
+          "original_fp32_check": null,
+          "repeat_passed": true
+        },
+        {
+          "case": "fixed-long-256",
+          "tokens": 256,
+          "fp32_hot_median_ms": 1637.9101000056835,
+          "candidate_hot_median_ms": 1167.7576999936718,
+          "candidate_hot_samples_ms": [
+            1167.7576999936718,
+            1172.3181999986991,
+            1164.850100001786
+          ],
+          "reduction_percent": 28.704408136342785,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 327680,
+            "max_abs_error": 0.14999377727508545,
+            "rmse": 0.006028368083840789,
+            "snr_db": 19.030435282526003,
+            "peak": 0.4970703125,
+            "reference_peak": 0.449601411819458,
+            "rms": 0.05369832937365482,
+            "reference_rms": 0.05391647937520601,
+            "absolute_peak_delta": 0.04746890068054199,
+            "spectral_convergence": 0.05611446392554629,
+            "active_log_spectral_rms_db": 1.1789336314151406,
+            "active_spectral_bins": 328582,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": false,
+              "rmse": false,
+              "snr": false,
+              "amplitude": false,
+              "spectral_convergence": false,
+              "active_log_spectral_rms": false
+            },
+            "passed": false
+          },
+          "original_fp32_check": null,
+          "repeat_passed": true
+        }
+      ],
+      "diagnostic_validation_3": {
+        "waveform": {
+          "passed": false,
+          "max_abs_error": 0.07880225777626038,
+          "rmse": 0.0033135620630903237,
+          "outside_tolerance": 21575,
+          "elements": 24320,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "quantized": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 29184,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "ssl_encoded": {
+          "passed": false,
+          "max_abs_error": 0.014289438724517822,
+          "rmse": 0.0035290264482541454,
+          "outside_tolerance": 7099,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "text_encoded": {
+          "passed": false,
+          "max_abs_error": 0.004567742347717285,
+          "rmse": 0.0008458696025541543,
+          "outside_tolerance": 4968,
+          "elements": 5568,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "mrte": {
+          "passed": false,
+          "max_abs_error": 0.10965919494628906,
+          "rmse": 0.021181869576020734,
+          "outside_tolerance": 7260,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "encoder_hidden": {
+          "passed": false,
+          "max_abs_error": 0.009170770645141602,
+          "rmse": 0.0009307296300879238,
+          "outside_tolerance": 5164,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "mean": {
+          "passed": false,
+          "max_abs_error": 0.021004796028137207,
+          "rmse": 0.0019184243900430208,
+          "outside_tolerance": 6818,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "log_scale": {
+          "passed": false,
+          "max_abs_error": 0.0020695924758911133,
+          "rmse": 0.0006594273354948564,
+          "outside_tolerance": 6523,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "mask": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 38,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "flow_input": {
+          "passed": false,
+          "max_abs_error": 0.020633816719055176,
+          "rmse": 0.002486610775623142,
+          "outside_tolerance": 6944,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "flow_output": {
+          "passed": false,
+          "max_abs_error": 0.0529022216796875,
+          "rmse": 0.0052489391299614324,
+          "outside_tolerance": 7109,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "decoder_input": {
+          "passed": false,
+          "max_abs_error": 0.0529022216796875,
+          "rmse": 0.0052489391299614324,
+          "outside_tolerance": 7109,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      }
+    },
+    {
+      "name": "nonlinear-fp32",
+      "candidate": "models\\navi-cpu-amd\\sovits-fp16-directml-nonlinear-fp32",
+      "candidate_manifest_sha256": "13a215084d8ddfec951a67121ffd03fddee468a968a1c06a3fabb1fc74853198",
+      "candidate_weights_bytes": 124183807,
+      "initializer_bytes": {
+        "float16": 124280768
+      },
+      "node_counts": {
+        "Cast": 250,
+        "Conv": 218,
+        "ConvTranspose": 5
+      },
+      "raw_report": ".cache\\directml-fp16-nonlinear-20260927\\result.json",
+      "raw_report_sha256": "59bb58ad57c8ee4ff9ef4b5b093c896753f98b3308c81b9f7d704b58fb4666db",
+      "input_npz": ".cache\\directml-fp16-nonlinear-20260927\\fixed-inputs.npz",
+      "input_npz_sha256": "57a542ebeebd769d761399e5eaa98c9129a88c678d9952ae8f268f98dd9712fc",
+      "engineering_passed": false,
+      "profile": {
+        "path": ".cache\\directml-fp16-nonlinear-20260927\\dml_2026-09-27_02-14-28.json",
+        "provider_events": {
+          "DmlExecutionProvider": 16380,
+          "CPUExecutionProvider": 9204
+        }
+      },
+      "cases": [
+        {
+          "case": "validation-0",
+          "tokens": 1,
+          "fp32_hot_median_ms": 35.79219999664929,
+          "candidate_hot_median_ms": 50.30590000387747,
+          "candidate_hot_samples_ms": [
+            46.78309999871999,
+            50.30590000387747,
+            51.31809999875259
+          ],
+          "reduction_percent": -40.54989637012223,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 1280,
+            "max_abs_error": 2.586841583251953e-05,
+            "rmse": 6.940739506507509e-06,
+            "snr_db": 29.907475500036526,
+            "peak": 0.0008907318115234375,
+            "reference_peak": 0.0009031295776367188,
+            "rms": 0.00021585099964088368,
+            "reference_rms": 0.00021715984358225754,
+            "absolute_peak_delta": -1.239776611328125e-05,
+            "spectral_convergence": 0.025522263617503854,
+            "active_log_spectral_rms_db": 0.501601039976938,
+            "active_spectral_bins": 1024,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": true
+          },
+          "original_fp32_check": {
+            "passed": true,
+            "max_abs_error": 2.5899556931108236e-05,
+            "rmse": 6.937166684120304e-06,
+            "outside_tolerance": 0,
+            "elements": 1280,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "repeat_passed": true
+        },
+        {
+          "case": "validation-1",
+          "tokens": 2,
+          "fp32_hot_median_ms": 167.35220000555273,
+          "candidate_hot_median_ms": 196.8963000108488,
+          "candidate_hot_samples_ms": [
+            172.1959999995306,
+            196.8963000108488,
+            197.05199998861644
+          ],
+          "reduction_percent": -17.65384620238981,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 2560,
+            "max_abs_error": 4.279613494873047e-05,
+            "rmse": 9.702572541332623e-06,
+            "snr_db": 34.34893641116753,
+            "peak": 0.002498626708984375,
+            "reference_peak": 0.002501070499420166,
+            "rms": 0.0005067140010054487,
+            "reference_rms": 0.0005062134953254156,
+            "absolute_peak_delta": -2.4437904357910156e-06,
+            "spectral_convergence": 0.015500099302753772,
+            "active_log_spectral_rms_db": 0.41281343528797215,
+            "active_spectral_bins": 3576,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": true
+          },
+          "original_fp32_check": {
+            "passed": true,
+            "max_abs_error": 4.2774248868227005e-05,
+            "rmse": 9.701044342806002e-06,
+            "outside_tolerance": 0,
+            "elements": 2560,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "repeat_passed": true
+        },
+        {
+          "case": "validation-2",
+          "tokens": 7,
+          "fp32_hot_median_ms": 220.11989999737125,
+          "candidate_hot_median_ms": 241.74319999292493,
+          "candidate_hot_samples_ms": [
+            251.74530000367668,
+            241.74319999292493,
+            218.99930000654422
+          ],
+          "reduction_percent": -9.823418962034737,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 8960,
+            "max_abs_error": 0.0058547258377075195,
+            "rmse": 0.0005091621582557337,
+            "snr_db": 28.56958386624138,
+            "peak": 0.0694580078125,
+            "reference_peak": 0.07064330577850342,
+            "rms": 0.013562691478761362,
+            "reference_rms": 0.01365637116893976,
+            "absolute_peak_delta": -0.001185297966003418,
+            "spectral_convergence": 0.022674194110400024,
+            "active_log_spectral_rms_db": 0.42725571199528,
+            "active_spectral_bins": 12633,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": true
+          },
+          "original_fp32_check": {
+            "passed": false,
+            "max_abs_error": 0.0058561451733112335,
+            "rmse": 0.000509289909611481,
+            "outside_tolerance": 6241,
+            "elements": 8960,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "repeat_passed": true
+        },
+        {
+          "case": "validation-3",
+          "tokens": 19,
+          "fp32_hot_median_ms": 285.81889999622945,
+          "candidate_hot_median_ms": 267.2132000006968,
+          "candidate_hot_samples_ms": [
+            255.85590000264347,
+            267.2132000006968,
+            284.8302999918815
+          ],
+          "reduction_percent": 6.50961150427004,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 24320,
+            "max_abs_error": 0.12175619602203369,
+            "rmse": 0.005200580779499155,
+            "snr_db": 20.504660533278425,
+            "peak": 0.40771484375,
+            "reference_peak": 0.4086635112762451,
+            "rms": 0.05455018721078006,
+            "reference_rms": 0.055116911440202455,
+            "absolute_peak_delta": -0.0009486675262451172,
+            "spectral_convergence": 0.04194830442953072,
+            "active_log_spectral_rms_db": 1.0059449560133198,
+            "active_spectral_bins": 23026,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": false,
+              "rmse": false,
+              "snr": false,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": false
+            },
+            "passed": false
+          },
+          "original_fp32_check": {
+            "passed": false,
+            "max_abs_error": 0.12177100777626038,
+            "rmse": 0.0052011389524276655,
+            "outside_tolerance": 17051,
+            "elements": 24320,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "repeat_passed": true
+        },
+        {
+          "case": "fixed-short-43",
+          "tokens": 43,
+          "fp32_hot_median_ms": 481.32940000505187,
+          "candidate_hot_median_ms": 380.9371999959694,
+          "candidate_hot_samples_ms": [
+            371.9431999925291,
+            380.9371999959694,
+            394.298200000776
+          ],
+          "reduction_percent": 20.857275705167556,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 55040,
+            "max_abs_error": 0.13528287410736084,
+            "rmse": 0.005728520368464614,
+            "snr_db": 19.330988366762636,
+            "peak": 0.52294921875,
+            "reference_peak": 0.48628461360931396,
+            "rms": 0.052745825889536635,
+            "reference_rms": 0.053038578993193454,
+            "absolute_peak_delta": 0.036664605140686035,
+            "spectral_convergence": 0.04635715992970927,
+            "active_log_spectral_rms_db": 1.0768645914335033,
+            "active_spectral_bins": 49988,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": false,
+              "rmse": false,
+              "snr": false,
+              "amplitude": false,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": false
+            },
+            "passed": false
+          },
+          "original_fp32_check": null,
+          "repeat_passed": true
+        },
+        {
+          "case": "fixed-long-256",
+          "tokens": 256,
+          "fp32_hot_median_ms": 1580.782499993802,
+          "candidate_hot_median_ms": 1230.093799997121,
+          "candidate_hot_samples_ms": [
+            1230.093799997121,
+            1191.3985999999568,
+            1245.9716000012122
+          ],
+          "reduction_percent": 22.184500397623076,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 327680,
+            "max_abs_error": 0.15011584758758545,
+            "rmse": 0.005912981392752819,
+            "snr_db": 19.1983002731511,
+            "peak": 0.497314453125,
+            "reference_peak": 0.449601411819458,
+            "rms": 0.05365173312795529,
+            "reference_rms": 0.05391647937520601,
+            "absolute_peak_delta": 0.04771304130554199,
+            "spectral_convergence": 0.05512937608840463,
+            "active_log_spectral_rms_db": 1.0837208463087824,
+            "active_spectral_bins": 328582,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": false,
+              "rmse": false,
+              "snr": false,
+              "amplitude": false,
+              "spectral_convergence": false,
+              "active_log_spectral_rms": false
+            },
+            "passed": false
+          },
+          "original_fp32_check": null,
+          "repeat_passed": true
+        }
+      ],
+      "diagnostic_validation_3": {
+        "waveform": {
+          "passed": false,
+          "max_abs_error": 0.12177100777626038,
+          "rmse": 0.0052011389524276655,
+          "outside_tolerance": 17051,
+          "elements": 24320,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "quantized": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 29184,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "ssl_encoded": {
+          "passed": false,
+          "max_abs_error": 0.014289438724517822,
+          "rmse": 0.0035290264482541454,
+          "outside_tolerance": 7099,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "text_encoded": {
+          "passed": false,
+          "max_abs_error": 0.004567742347717285,
+          "rmse": 0.0008458696025541543,
+          "outside_tolerance": 4968,
+          "elements": 5568,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "mrte": {
+          "passed": false,
+          "max_abs_error": 0.10965919494628906,
+          "rmse": 0.021181869576020734,
+          "outside_tolerance": 7260,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "encoder_hidden": {
+          "passed": false,
+          "max_abs_error": 0.009170770645141602,
+          "rmse": 0.0009307296300879238,
+          "outside_tolerance": 5164,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "mean": {
+          "passed": false,
+          "max_abs_error": 0.021004796028137207,
+          "rmse": 0.0019184243900430208,
+          "outside_tolerance": 6818,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "log_scale": {
+          "passed": false,
+          "max_abs_error": 0.0020695924758911133,
+          "rmse": 0.0006594273354948564,
+          "outside_tolerance": 6523,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "mask": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 38,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "flow_input": {
+          "passed": false,
+          "max_abs_error": 0.020633816719055176,
+          "rmse": 0.002486610775623142,
+          "outside_tolerance": 6944,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "flow_output": {
+          "passed": false,
+          "max_abs_error": 0.07984447479248047,
+          "rmse": 0.006365555665542308,
+          "outside_tolerance": 7123,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "decoder_input": {
+          "passed": false,
+          "max_abs_error": 0.07984447479248047,
+          "rmse": 0.006365555665542308,
+          "outside_tolerance": 7123,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      }
+    },
+    {
+      "name": "blocked-upstream",
+      "candidate": "models\\navi-cpu-amd\\sovits-mixed-directml-vocoder",
+      "candidate_manifest_sha256": "4ab022c68735ce8aa0eff80dbb553f73734c4e943f719aaae4b77718450a6e50",
+      "candidate_weights_bytes": 180801279,
+      "initializer_bytes": {
+        "float32": 113282560,
+        "float16": 67639488
+      },
+      "node_counts": {
+        "Cast": 2754,
+        "Conv": 218,
+        "ConvTranspose": 5
+      },
+      "raw_report": ".cache\\directml-mixed-vocoder-20260927\\result.json",
+      "raw_report_sha256": "9edd6ddc8fda7af5a5a786c94f1f8b9f694b3a20eea41056baf3da807cbc8471",
+      "input_npz": ".cache\\directml-mixed-vocoder-20260927\\fixed-inputs.npz",
+      "input_npz_sha256": "57a542ebeebd769d761399e5eaa98c9129a88c678d9952ae8f268f98dd9712fc",
+      "engineering_passed": false,
+      "profile": {
+        "path": ".cache\\directml-mixed-vocoder-20260927\\dml_2026-09-27_02-19-20.json",
+        "provider_events": {
+          "DmlExecutionProvider": 39348,
+          "CPUExecutionProvider": 9204
+        }
+      },
+      "cases": [
+        {
+          "case": "validation-0",
+          "tokens": 1,
+          "fp32_hot_median_ms": 78.49020000139717,
+          "candidate_hot_median_ms": 129.28429999738,
+          "candidate_hot_samples_ms": [
+            129.28429999738,
+            130.84950001211837,
+            114.93159999372438
+          ],
+          "reduction_percent": -64.71393880392542,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 1280,
+            "max_abs_error": 2.7894973754882812e-05,
+            "rmse": 7.34944168208082e-06,
+            "snr_db": 29.410503440967833,
+            "peak": 0.0008921623229980469,
+            "reference_peak": 0.0009031295776367188,
+            "rms": 0.00021702761017914946,
+            "reference_rms": 0.00021715984358225754,
+            "absolute_peak_delta": -1.0967254638671875e-05,
+            "spectral_convergence": 0.025131866436441466,
+            "active_log_spectral_rms_db": 0.5040847368791855,
+            "active_spectral_bins": 1024,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": true
+          },
+          "original_fp32_check": {
+            "passed": true,
+            "max_abs_error": 2.7800619136542082e-05,
+            "rmse": 7.348657024471635e-06,
+            "outside_tolerance": 0,
+            "elements": 1280,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "repeat_passed": true
+        },
+        {
+          "case": "validation-1",
+          "tokens": 2,
+          "fp32_hot_median_ms": 217.69579999090638,
+          "candidate_hot_median_ms": 385.56229999812786,
+          "candidate_hot_samples_ms": [
+            385.56229999812786,
+            373.367899999721,
+            405.1547999988543
+          ],
+          "reduction_percent": -77.1105827554935,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 2560,
+            "max_abs_error": 4.64320182800293e-05,
+            "rmse": 1.0795598258217957e-05,
+            "snr_db": 33.42174008822745,
+            "peak": 0.00251007080078125,
+            "reference_peak": 0.002501070499420166,
+            "rms": 0.0005080284980273671,
+            "reference_rms": 0.0005062134953254156,
+            "absolute_peak_delta": 9.000301361083984e-06,
+            "spectral_convergence": 0.01665222900969446,
+            "active_log_spectral_rms_db": 0.42930515461678787,
+            "active_spectral_bins": 3576,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": true
+          },
+          "original_fp32_check": {
+            "passed": true,
+            "max_abs_error": 4.6452623791992664e-05,
+            "rmse": 1.0794723237182896e-05,
+            "outside_tolerance": 0,
+            "elements": 2560,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "repeat_passed": true
+        },
+        {
+          "case": "validation-2",
+          "tokens": 7,
+          "fp32_hot_median_ms": 280.6545999919763,
+          "candidate_hot_median_ms": 361.23110000335146,
+          "candidate_hot_samples_ms": [
+            348.61679999448825,
+            413.9627999975346,
+            361.23110000335146
+          ],
+          "reduction_percent": -28.710201084777797,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 8960,
+            "max_abs_error": 0.015399336814880371,
+            "rmse": 0.0011273699886216993,
+            "snr_db": 21.665376852382,
+            "peak": 0.0689697265625,
+            "reference_peak": 0.07064330577850342,
+            "rms": 0.013587755306018433,
+            "reference_rms": 0.01365637116893976,
+            "absolute_peak_delta": -0.001673579216003418,
+            "spectral_convergence": 0.04997787956011714,
+            "active_log_spectral_rms_db": 0.7309262274104941,
+            "active_spectral_bins": 12633,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": false,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": false
+          },
+          "original_fp32_check": {
+            "passed": false,
+            "max_abs_error": 0.015400547534227371,
+            "rmse": 0.0011275126855345952,
+            "outside_tolerance": 6202,
+            "elements": 8960,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "repeat_passed": true
+        },
+        {
+          "case": "validation-3",
+          "tokens": 19,
+          "fp32_hot_median_ms": 328.71549999981653,
+          "candidate_hot_median_ms": 453.8879000028828,
+          "candidate_hot_samples_ms": [
+            460.4252999997698,
+            421.4702000026591,
+            453.8879000028828
+          ],
+          "reduction_percent": -38.079250903330134,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 24320,
+            "max_abs_error": 0.2078005075454712,
+            "rmse": 0.011532357345520099,
+            "snr_db": 13.587335642213842,
+            "peak": 0.38818359375,
+            "reference_peak": 0.4086635112762451,
+            "rms": 0.054252582528162466,
+            "reference_rms": 0.055116911440202455,
+            "absolute_peak_delta": -0.020479917526245117,
+            "spectral_convergence": 0.08494135131128179,
+            "active_log_spectral_rms_db": 1.723977498524285,
+            "active_spectral_bins": 23026,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": false,
+              "rmse": false,
+              "snr": false,
+              "amplitude": true,
+              "spectral_convergence": false,
+              "active_log_spectral_rms": false
+            },
+            "passed": false
+          },
+          "original_fp32_check": {
+            "passed": false,
+            "max_abs_error": 0.20781531929969788,
+            "rmse": 0.01153284168902583,
+            "outside_tolerance": 17516,
+            "elements": 24320,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "repeat_passed": true
+        },
+        {
+          "case": "fixed-short-43",
+          "tokens": 43,
+          "fp32_hot_median_ms": 469.29439999803435,
+          "candidate_hot_median_ms": 518.574699992314,
+          "candidate_hot_samples_ms": [
+            470.31620000780094,
+            518.574699992314,
+            543.9050999993924
+          ],
+          "reduction_percent": -10.5009350195711,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 55040,
+            "max_abs_error": 0.05054938793182373,
+            "rmse": 0.0027293722205247437,
+            "snr_db": 25.770582259178887,
+            "peak": 0.48388671875,
+            "reference_peak": 0.48628461360931396,
+            "rms": 0.05264142102402946,
+            "reference_rms": 0.053038578993193454,
+            "absolute_peak_delta": -0.002397894859313965,
+            "spectral_convergence": 0.022428784743093934,
+            "active_log_spectral_rms_db": 0.6445113598696217,
+            "active_spectral_bins": 49988,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": false,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": false
+          },
+          "original_fp32_check": null,
+          "repeat_passed": true
+        },
+        {
+          "case": "fixed-long-256",
+          "tokens": 256,
+          "fp32_hot_median_ms": 1555.0493999908213,
+          "candidate_hot_median_ms": 1503.544500010321,
+          "candidate_hot_samples_ms": [
+            1503.544500010321,
+            1553.4010999981547,
+            1447.4405000073602
+          ],
+          "reduction_percent": 3.3121069967812167,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 327680,
+            "max_abs_error": 0.06784975528717041,
+            "rmse": 0.0033275484434413492,
+            "snr_db": 24.191942784388154,
+            "peak": 0.442626953125,
+            "reference_peak": 0.449601411819458,
+            "rms": 0.05325741329556941,
+            "reference_rms": 0.05391647937520601,
+            "absolute_peak_delta": -0.006974458694458008,
+            "spectral_convergence": 0.028082313111346204,
+            "active_log_spectral_rms_db": 0.673071121273132,
+            "active_spectral_bins": 328582,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": false,
+              "rmse": true,
+              "snr": false,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": false
+          },
+          "original_fp32_check": null,
+          "repeat_passed": true
+        }
+      ],
+      "diagnostic_validation_3": {
+        "waveform": {
+          "passed": false,
+          "max_abs_error": 0.20781531929969788,
+          "rmse": 0.01153284168902583,
+          "outside_tolerance": 17516,
+          "elements": 24320,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "quantized": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 29184,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "ssl_encoded": {
+          "passed": false,
+          "max_abs_error": 0.013716399669647217,
+          "rmse": 0.0034126330827829515,
+          "outside_tolerance": 7100,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "text_encoded": {
+          "passed": false,
+          "max_abs_error": 0.0027608871459960938,
+          "rmse": 0.000638317232567875,
+          "outside_tolerance": 4791,
+          "elements": 5568,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "mrte": {
+          "passed": false,
+          "max_abs_error": 0.0896453857421875,
+          "rmse": 0.019179934559018903,
+          "outside_tolerance": 7255,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "encoder_hidden": {
+          "passed": false,
+          "max_abs_error": 0.0070174336433410645,
+          "rmse": 0.000691275918504603,
+          "outside_tolerance": 4618,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "mean": {
+          "passed": false,
+          "max_abs_error": 0.021004796028137207,
+          "rmse": 0.0016984903021318725,
+          "outside_tolerance": 6719,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "log_scale": {
+          "passed": false,
+          "max_abs_error": 0.0018486976623535156,
+          "rmse": 0.0005280811512041848,
+          "outside_tolerance": 6290,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "mask": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 38,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "flow_input": {
+          "passed": false,
+          "max_abs_error": 0.022547364234924316,
+          "rmse": 0.00277163864926433,
+          "outside_tolerance": 6979,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "flow_output": {
+          "passed": false,
+          "max_abs_error": 0.15015697479248047,
+          "rmse": 0.01138703271011346,
+          "outside_tolerance": 7164,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "decoder_input": {
+          "passed": false,
+          "max_abs_error": 0.15015697479248047,
+          "rmse": 0.01138703271011346,
+          "outside_tolerance": 7164,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      }
+    },
+    {
+      "name": "isolated-vocoder",
+      "candidate": "models\\navi-cpu-amd\\sovits-mixed-directml-vocoder-isolated",
+      "candidate_manifest_sha256": "90cc84553e59e32947484cf44cec2f98621f265cb68012db9115f6a2bd9ead45",
+      "candidate_weights_bytes": 180801279,
+      "initializer_bytes": {
+        "float32": 113282560,
+        "float16": 67639488
+      },
+      "node_counts": {
+        "Cast": 162,
+        "Conv": 218,
+        "ConvTranspose": 5
+      },
+      "raw_report": ".cache\\directml-mixed-vocoder-isolated-20260927\\result.json",
+      "raw_report_sha256": "e7e82946f6c5e98d1458a01cd6298b7b9f2bd1d28ef99170be37179f48a8f32a",
+      "input_npz": ".cache\\directml-mixed-vocoder-isolated-20260927\\fixed-inputs.npz",
+      "input_npz_sha256": "57a542ebeebd769d761399e5eaa98c9129a88c678d9952ae8f268f98dd9712fc",
+      "engineering_passed": true,
+      "profile": {
+        "path": ".cache\\directml-mixed-vocoder-isolated-20260927\\dml_2026-09-27_02-25-51.json",
+        "provider_events": {
+          "DmlExecutionProvider": 15204,
+          "CPUExecutionProvider": 9204
+        },
+        "typed_operator_events": {
+          "DmlExecutionProvider/DmlFusedNode_0_0/float16": 12,
+          "DmlExecutionProvider/DmlFusedNode_1_1/float": 12,
+          "DmlExecutionProvider/DmlFusedNode_2_2/float": 12,
+          "DmlExecutionProvider/DmlFusedNode_3_3/float": 12,
+          "DmlExecutionProvider/DmlFusedNode_4_4/float": 12,
+          "DmlExecutionProvider/Gather/int64": 12,
+          "DmlExecutionProvider/Gather/float": 312,
+          "DmlExecutionProvider/Transpose/float": 756,
+          "DmlExecutionProvider/Resize/float": 12,
+          "DmlExecutionProvider/Slice/float": 1164,
+          "DmlExecutionProvider/Shape/int64": 720,
+          "DmlExecutionProvider/ConstantOfShape/float": 120,
+          "DmlExecutionProvider/Mul/float": 1572,
+          "DmlExecutionProvider/Conv/float": 1308,
+          "DmlExecutionProvider/Unsqueeze/float": 624,
+          "DmlExecutionProvider/Equal/bool": 36,
+          "CPUExecutionProvider/Gather/int64": 1488,
+          "CPUExecutionProvider/Unsqueeze/int64": 2496,
+          "CPUExecutionProvider/Concat/int64": 1908,
+          "DmlExecutionProvider/Reshape/float": 1200,
+          "DmlExecutionProvider/FusedMatMul/float": 456,
+          "CPUExecutionProvider/Sub/int64": 576,
+          "DmlExecutionProvider/Range/int64": 144,
+          "DmlExecutionProvider/Abs/int64": 144,
+          "DmlExecutionProvider/LessOrEqual/bool": 144,
+          "DmlExecutionProvider/Cast/float": 168,
+          "DmlExecutionProvider/Add/int64": 144,
+          "DmlExecutionProvider/Clip/int64": 144,
+          "DmlExecutionProvider/Pad/float": 864,
+          "CPUExecutionProvider/Mul/int64": 576,
+          "CPUExecutionProvider/Add/int64": 288,
+          "CPUExecutionProvider/Reshape/int64": 864,
+          "CPUExecutionProvider/Slice/int64": 432,
+          "CPUExecutionProvider/Transpose/int64": 432,
+          "DmlExecutionProvider/Add/float": 1140,
+          "DmlExecutionProvider/Where/float": 156,
+          "DmlExecutionProvider/Softmax/float": 156,
+          "CPUExecutionProvider/Pow/int64": 144,
+          "DmlExecutionProvider/MatMul/float": 144,
+          "DmlExecutionProvider/LayerNormalization/float": 288,
+          "DmlExecutionProvider/DmlFusedConv/float": 144,
+          "DmlExecutionProvider/Unsqueeze/int64": 12,
+          "DmlExecutionProvider/Split/float": 60,
+          "DmlExecutionProvider/Exp/float": 60,
+          "DmlExecutionProvider/Sigmoid/float": 192,
+          "DmlExecutionProvider/Tanh/float": 204,
+          "DmlExecutionProvider/Neg/float": 48,
+          "DmlExecutionProvider/Sub/float": 48,
+          "DmlExecutionProvider/Concat/float": 48,
+          "DmlExecutionProvider/Cast/float16": 24,
+          "DmlExecutionProvider/Conv/float16": 564,
+          "DmlExecutionProvider/DmlFusedAdd/float16": 12,
+          "DmlExecutionProvider/ConvTranspose/float16": 60,
+          "DmlExecutionProvider/LeakyRelu/float16": 480,
+          "DmlExecutionProvider/DmlFusedConv/float16": 540,
+          "DmlExecutionProvider/Add/float16": 660,
+          "DmlExecutionProvider/Div/float16": 60
+        },
+        "cpu_neural_compute_events": {},
+        "directml_fp16_convolution_observed": true
+      },
+      "cases": [
+        {
+          "case": "validation-0",
+          "tokens": 1,
+          "fp32_hot_median_ms": 74.40549999591894,
+          "candidate_hot_median_ms": 70.43680000060704,
+          "candidate_hot_samples_ms": [
+            70.43680000060704,
+            71.12529998994432,
+            62.86249999538995
+          ],
+          "reduction_percent": 5.333879881903336,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 1280,
+            "max_abs_error": 2.676248550415039e-05,
+            "rmse": 7.050655702195709e-06,
+            "snr_db": 29.77100024902271,
+            "peak": 0.0008840560913085938,
+            "reference_peak": 0.0009031295776367188,
+            "rms": 0.0002161876660479144,
+            "reference_rms": 0.00021715984358225754,
+            "absolute_peak_delta": -1.9073486328125e-05,
+            "spectral_convergence": 0.025828319547641154,
+            "active_log_spectral_rms_db": 0.46793285769794535,
+            "active_spectral_bins": 1024,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": true
+          },
+          "original_fp32_check": {
+            "passed": true,
+            "max_abs_error": 2.6798719773069024e-05,
+            "rmse": 7.049366691396937e-06,
+            "outside_tolerance": 0,
+            "elements": 1280,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "repeat_passed": true
+        },
+        {
+          "case": "validation-1",
+          "tokens": 2,
+          "fp32_hot_median_ms": 204.20009999361355,
+          "candidate_hot_median_ms": 214.66399999917485,
+          "candidate_hot_samples_ms": [
+            214.66399999917485,
+            218.9519000094151,
+            201.71180000761524
+          ],
+          "reduction_percent": -5.124336376861982,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 2560,
+            "max_abs_error": 3.784894943237305e-05,
+            "rmse": 9.350177133232587e-06,
+            "snr_db": 34.67027761201684,
+            "peak": 0.00251007080078125,
+            "reference_peak": 0.002501070499420166,
+            "rms": 0.0005058327202909401,
+            "reference_rms": 0.0005062134953254156,
+            "absolute_peak_delta": 9.000301361083984e-06,
+            "spectral_convergence": 0.015066122539435045,
+            "active_log_spectral_rms_db": 0.3791457425824979,
+            "active_spectral_bins": 3576,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": true
+          },
+          "original_fp32_check": {
+            "passed": true,
+            "max_abs_error": 3.7869554944336414e-05,
+            "rmse": 9.347368329557467e-06,
+            "outside_tolerance": 0,
+            "elements": 2560,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "repeat_passed": true
+        },
+        {
+          "case": "validation-2",
+          "tokens": 7,
+          "fp32_hot_median_ms": 264.3536999967182,
+          "candidate_hot_median_ms": 237.67649999354035,
+          "candidate_hot_samples_ms": [
+            242.28380000567995,
+            237.67649999354035,
+            232.06009999557864
+          ],
+          "reduction_percent": 10.09147971203317,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 8960,
+            "max_abs_error": 0.0008500814437866211,
+            "rmse": 0.0001327722872457427,
+            "snr_db": 40.2445575039279,
+            "peak": 0.06988525390625,
+            "reference_peak": 0.07064330577850342,
+            "rms": 0.013556158970681229,
+            "reference_rms": 0.01365637116893976,
+            "absolute_peak_delta": -0.000758051872253418,
+            "spectral_convergence": 0.00864705758543037,
+            "active_log_spectral_rms_db": 0.13366034779065308,
+            "active_spectral_bins": 12633,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": true
+          },
+          "original_fp32_check": {
+            "passed": false,
+            "max_abs_error": 0.0008512921631336212,
+            "rmse": 0.000132823660923323,
+            "outside_tolerance": 3113,
+            "elements": 8960,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "repeat_passed": true
+        },
+        {
+          "case": "validation-3",
+          "tokens": 19,
+          "fp32_hot_median_ms": 274.36820000002626,
+          "candidate_hot_median_ms": 297.0142000121996,
+          "candidate_hot_samples_ms": [
+            300.92539999168366,
+            290.4963999899337,
+            297.0142000121996
+          ],
+          "reduction_percent": -8.253871991058425,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 24320,
+            "max_abs_error": 0.004776358604431152,
+            "rmse": 0.0004309243525104694,
+            "snr_db": 42.13767670969762,
+            "peak": 0.4052734375,
+            "reference_peak": 0.4086635112762451,
+            "rms": 0.05475371745673077,
+            "reference_rms": 0.055116911440202455,
+            "absolute_peak_delta": -0.003390073776245117,
+            "spectral_convergence": 0.007110713122810896,
+            "active_log_spectral_rms_db": 0.10511615071894513,
+            "active_spectral_bins": 23026,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": true
+          },
+          "original_fp32_check": {
+            "passed": false,
+            "max_abs_error": 0.0047872066497802734,
+            "rmse": 0.0004309475861509098,
+            "outside_tolerance": 13470,
+            "elements": 24320,
+            "atol": 0.0001,
+            "rtol": 1e-05
+          },
+          "repeat_passed": true
+        },
+        {
+          "case": "fixed-short-43",
+          "tokens": 43,
+          "fp32_hot_median_ms": 479.21109999879263,
+          "candidate_hot_median_ms": 413.2374000037089,
+          "candidate_hot_samples_ms": [
+            433.88329999288544,
+            413.2374000037089,
+            371.8031000025803
+          ],
+          "reduction_percent": 13.767147713241613,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 55040,
+            "max_abs_error": 0.0035796165466308594,
+            "rmse": 0.00036765235045649525,
+            "snr_db": 43.18309066263036,
+            "peak": 0.48388671875,
+            "reference_peak": 0.48628461360931396,
+            "rms": 0.052715764755079844,
+            "reference_rms": 0.053038578993193454,
+            "absolute_peak_delta": -0.002397894859313965,
+            "spectral_convergence": 0.006429077601018365,
+            "active_log_spectral_rms_db": 0.08720039101643154,
+            "active_spectral_bins": 49988,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": true
+          },
+          "original_fp32_check": null,
+          "repeat_passed": true
+        },
+        {
+          "case": "fixed-long-256",
+          "tokens": 256,
+          "fp32_hot_median_ms": 1513.6293999967165,
+          "candidate_hot_median_ms": 1267.832500001532,
+          "candidate_hot_samples_ms": [
+            1289.962699986063,
+            1267.832500001532,
+            1236.6354999976465
+          ],
+          "reduction_percent": 16.23890894268556,
+          "engineering_metrics": {
+            "shape_equal": true,
+            "finite": true,
+            "samples": 327680,
+            "max_abs_error": 0.005672931671142578,
+            "rmse": 0.00046999658139675363,
+            "snr_db": 41.19253653942145,
+            "peak": 0.4482421875,
+            "reference_peak": 0.449601411819458,
+            "rms": 0.05350339576667294,
+            "reference_rms": 0.05391647937520601,
+            "absolute_peak_delta": -0.0013592243194580078,
+            "spectral_convergence": 0.008026293284352662,
+            "active_log_spectral_rms_db": 0.09412836986523498,
+            "active_spectral_bins": 328582,
+            "samples_outside_unit_range": 0,
+            "reference_samples_outside_unit_range": 0,
+            "checks": {
+              "max_abs_error": true,
+              "rmse": true,
+              "snr": true,
+              "amplitude": true,
+              "spectral_convergence": true,
+              "active_log_spectral_rms": true
+            },
+            "passed": true
+          },
+          "original_fp32_check": null,
+          "repeat_passed": true
+        }
+      ],
+      "diagnostic_validation_3": {
+        "waveform": {
+          "passed": false,
+          "max_abs_error": 0.0047872066497802734,
+          "rmse": 0.0004309475861509098,
+          "outside_tolerance": 13470,
+          "elements": 24320,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "quantized": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 29184,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "ssl_encoded": {
+          "passed": true,
+          "max_abs_error": 4.649162292480469e-06,
+          "rmse": 1.0480787437424085e-06,
+          "outside_tolerance": 0,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "text_encoded": {
+          "passed": true,
+          "max_abs_error": 1.4901161193847656e-06,
+          "rmse": 2.030510179544736e-07,
+          "outside_tolerance": 0,
+          "elements": 5568,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "mrte": {
+          "passed": true,
+          "max_abs_error": 3.0517578125e-05,
+          "rmse": 5.878388552308395e-06,
+          "outside_tolerance": 0,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "encoder_hidden": {
+          "passed": true,
+          "max_abs_error": 2.0265579223632812e-06,
+          "rmse": 2.149016250756931e-07,
+          "outside_tolerance": 0,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "mean": {
+          "passed": true,
+          "max_abs_error": 5.476176738739014e-06,
+          "rmse": 5.020509639773587e-07,
+          "outside_tolerance": 0,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "log_scale": {
+          "passed": true,
+          "max_abs_error": 1.1920928955078125e-06,
+          "rmse": 1.942479341513781e-07,
+          "outside_tolerance": 0,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "mask": {
+          "passed": true,
+          "max_abs_error": 0.0,
+          "rmse": 0.0,
+          "outside_tolerance": 0,
+          "elements": 38,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "flow_input": {
+          "passed": true,
+          "max_abs_error": 5.4836273193359375e-06,
+          "rmse": 5.710413756870864e-07,
+          "outside_tolerance": 0,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "flow_output": {
+          "passed": true,
+          "max_abs_error": 1.0967254638671875e-05,
+          "rmse": 1.0863369424801388e-06,
+          "outside_tolerance": 0,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        },
+        "decoder_input": {
+          "passed": true,
+          "max_abs_error": 1.0967254638671875e-05,
+          "rmse": 1.0863369424801388e-06,
+          "outside_tolerance": 0,
+          "elements": 7296,
+          "atol": 0.0001,
+          "rtol": 1e-05
+        }
+      }
+    }
+  ],
+  "hardware": {
+    "api": "IDXGIFactory.EnumAdapters / IDXGIAdapter.GetDesc",
+    "device_id": 0,
+    "description": "AMD Radeon 780M Graphics",
+    "vendor_id": 4098,
+    "pci_device_id": 5567,
+    "subsystem_id": 571022706,
+    "revision": 199,
+    "display_drivers": [
+      {
+        "Name": "AMD Radeon 780M Graphics",
+        "PNPDeviceID": "PCI\\VEN_1002&DEV_15BF&SUBSYS_22091D72&REV_C7\\4&17857BC2&0&0041",
+        "DriverVersion": "31.0.14005.11001"
+      }
+    ],
+    "driver_inventory": [
+      {
+        "Name": "Virtual Desktop Monitor",
+        "PNPDeviceID": "ROOT\\DISPLAY\\0000",
+        "DriverVersion": "13.50.53.699"
+      },
+      {
+        "Name": "AMD Radeon 780M Graphics",
+        "PNPDeviceID": "PCI\\VEN_1002&DEV_15BF&SUBSYS_22091D72&REV_C7\\4&17857BC2&0&0041",
+        "DriverVersion": "31.0.14005.11001"
+      }
+    ],
+    "scope": "Hardware observed for this experiment; other adapters and driver versions are not validated",
+    "observation": "Captured immediately after the timed experiment on the same host; not a utilization measurement"
+  },
+  "onnxruntime": "1.24.4",
+  "numpy": "2.4.6",
+  "execution_options": {
+    "device_id": 0,
+    "intra_op_num_threads": 2,
+    "inter_op_num_threads": 1,
+    "enable_mem_pattern": false,
+    "enable_cpu_mem_arena": false,
+    "execution_mode": "ORT_SEQUENTIAL",
+    "allow_spinning": false
+  },
+  "fp32_weights_bytes": 248441344,
+  "fixed_input_construction": "Four source validation NPZ cases (1/2/7/19 tokens); 43/256-token cases tile codes and explicit noise from the 19-token case, retaining its phones, reference embeddings and noise_scale.",
+  "no_memory_usage_claim": "File and initializer sizes are measured storage bytes; process or GPU peak memory was not measured in this acoustic timing run."
+}

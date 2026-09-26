@@ -1,0 +1,8 @@
+{
+  "gpt_backend": "onnx",
+  "gpt_prefill_query_chunk_size": 0,
+  "gpt_threads": 4,
+  "threads": 2,
+  "enable_cpu_mem_arena": false,
+  "policy": "resident"
+}

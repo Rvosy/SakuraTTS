@@ -65,8 +65,8 @@ class BackendSelectionTests(unittest.TestCase):
             experimental={"future-option": 7}, load_references=True)
 
     def test_unimplemented_backends_do_not_fall_back_or_convert(self):
-        self.assertEqual(SUPPORTED_BACKENDS, ("cuda",))
-        for backend in ("cpu", "rocm", "mlx", "unknown"):
+        self.assertEqual(SUPPORTED_BACKENDS, ("cuda", "cpu", "directml", "mlx"))
+        for backend in ("rocm", "unknown"):
             with self.subTest(backend=backend), patch("sakuratts.backends.cuda.create_runtime") as cuda:
                 with self.assertRaisesRegex(NotImplementedError, "not implemented"):
                     create_runtime(self.model(backend))
@@ -97,7 +97,7 @@ class BackendSelectionTests(unittest.TestCase):
             "import sys",
             "from pathlib import Path",
             "from sakuratts import Engine, Model",
-            "model = Model(Path('unused.json'), {'backend': {'preferred': 'cpu'}})",
+            "model = Model(Path('unused.json'), {'backend': {'preferred': 'unknown'}})",
             "try:",
             "    Engine.load(model)",
             "except NotImplementedError:",
