@@ -107,6 +107,13 @@ def doctor(*, japanese=False, cuda=False, nvidia=False, config=None, backend=Non
         report["synthesis"]["platform_supported"] = selected == "cpu" or platform.system() == "Windows"
         if not report["synthesis"]["platform_supported"]:
             report["checks_passed"] = False
+    if check_backend and selected == "directml":
+        report["directml"] = {"device_id_scheme": "IDXGIFactory.EnumAdapters", "execution_tested": False}
+        try:
+            from .backends.directml.devices import list_adapters
+            report["directml"]["adapters"] = list_adapters()
+        except Exception as exc:
+            report["directml"]["error"] = str(exc)
     if check_backend and selected == "mlx":
         report["synthesis"]["platform_supported"] = (
             platform.system() == "Darwin" and platform.machine().lower() in ("arm64", "aarch64"))

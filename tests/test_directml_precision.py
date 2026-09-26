@@ -81,7 +81,7 @@ class DirectMLPrecisionTests(unittest.TestCase):
                               allow_experimental_fp16=True)
         self.assertEqual(model.encoder.manifest["precision"]["fp16_scope"], "vocoder")
         self.assertEqual(self.ort.InferenceSession.call_args.args[0], str(self.root / "decode.onnx"))
-        self.session.disable_fallback.assert_called_once()
+        self.assertFalse(self.ort.InferenceSession.call_args.kwargs["enable_fallback"])
 
     def test_unscreened_session_options_and_half_public_io_are_rejected(self):
         for options in ({"device_id": 1}, {"intra_op_num_threads": 3}, {"enable_cpu_mem_arena": True}):

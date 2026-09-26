@@ -19,11 +19,10 @@ class DirectMLGPT(ONNXCPUGPT):
             raise RuntimeError("DirectML GPT requires onnxruntime-directml")
         options.enable_mem_pattern = False
         options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
-        session = ort.InferenceSession(str(graph), sess_options=options,
+        session = ort.InferenceSession(str(graph), sess_options=options, enable_fallback=False,
             providers=[("DmlExecutionProvider", {"device_id": str(self.device_id)}),
                        "CPUExecutionProvider"])
         try:
-            session.disable_fallback()
             if session.get_providers()[0] != "DmlExecutionProvider":
                 raise RuntimeError("DirectML GPT did not activate DmlExecutionProvider")
             return session

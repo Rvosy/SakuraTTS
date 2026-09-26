@@ -74,7 +74,7 @@ PREPARATION_PYTHON -m sakuratts._internal.conversion.export_gpt_onnx --gpt model
 PREPARATION_PYTHON -m sakuratts._internal.conversion.export_gpt_directml --gpt models/cpu-amd/gpt --precision fp16 --capacity 1280
 ```
 
-这两步生成 `gpt/onnx-fp16/` 和 `gpt/directml-fp16-cap1280/`。GPT 的浮点图 I/O 与 KV 使用 FP16；embedding 和采样使用 FP32。Prefill 与 Decode 使用独立 Session，Decode 的两组 GPU KV 缓冲区交替读写。
+这两步生成 `gpt/onnx-fp16/` 和 `gpt/directml-fp16-cap1280/`。GPT 的浮点图 I/O 与 KV 使用 FP16；embedding 和采样使用 FP32。Prefill 与 Decode 使用独立 Session，前两次 Decode 由所选显卡的 Session 分配两组 GPU KV，之后交替读写。分配器选择与设备编号的原因见 [ADR 0006](adr/0006-device-precision-and-directml-kv.md#显卡选择与-kv-分配)。
 
 声学另需有独立 DirectML 执行记录的全图 FP16 包，不能用仅转换声码器的包代替。转换、执行检查和已有候选的来源见[独立精度实验](../research/notes/cpu-amd-precision-listening-20260927.md)。模型描述中的 `acoustic` 指向模型目录内的该候选子目录；保留指向原 FP32 声学包的 CPU 模型描述。模型路径规则见[模型格式](model-format.md)。
 
@@ -132,13 +132,37 @@ CPU 服务可将 [CPU 示例](../examples/tts-cpu.example.yaml)复制为 `config
 
 CPU / AMD 在主解释器中执行 GPT 与声学，不启动 `acoustic_python` 声学 worker。经典日文前端仍使用 `frontend_python`；旧配置省略时继续沿用 `acoustic_python`。安装路径需要保持有效，见[日文运行资源](japanese-runtime.md)。
 
+## 选择 AMD 显卡
+
+先查看当前机器的 DXGI 适配器列表：
+
+```powershell
+sakuratts doctor --backend directml
+```
+
+输出中的 `directml.adapters` 按 DXGI 顺序列出 `device_id`、`description`、专用显存与共享系统内存字节数，以及可用于对照 WDDM 计量的 `luid`。实现见 [list_adapters](../src/sakuratts/backends/directml/devices.py)。列表可能包含软件适配器；枚举结果只说明设备身份，不代表它已通过模型执行测试。硬件查询失败时，诊断保留原因，推理仍由实际 Session 初始化决定能否执行。
+
+`device_id` 默认是 `0`，不会自动选择显存最多或速度最快的显卡，也不能用 `Win32_VideoController` 的返回顺序代替。核显与独显共存时，将查到的目标编号写入配置。例如目标编号为 `1`：
+
+```yaml
+sakuratts:
+  model: models/cpu-amd/model-amd.json
+  backend: directml
+  runtime_options:
+    device_id: 1
+```
+
+CLI 可在 `--experimental FILE` 指定的 JSON 中写入 `{"device_id": 1}`；Python 使用 `Engine.load(..., backend="directml", experimental={"device_id": 1})`。同一个编号传给 GPT Prefill、静态 Decode 与声学 Session，重新加载及 managed 唤醒继续使用该选择。应用层不会因初始化失败而改用另一张显卡或整体重试 CPU。
+
+非零适配器的参数传递与 Session 缓存分配已接通，并有无 GPU 计算的回归测试；当前真实设备记录仍以 Radeon 780M 为限。独显及多张物理显卡上的执行、内存占用和音频结果尚未验收，详见[兼容矩阵](specs/compatibility-matrix.md)。
+
 ## 调整资源与休眠
 
 默认资源参数由 [profiles.py](../src/sakuratts/profiles.py) 与 [CPUEngine](../src/sakuratts/backends/cpu/engine.py) 定义。可以显式调整 `threads`、`gpt_threads`、`capacity` 和 `policy`，但应重新测量完整请求与占用。
 
 `capacity` 包含文本、参考语义和已生成语义。AMD 修改容量后必须重新导出匹配容量的静态 decode 资源；缺包或超过容量时明确报错，不截断输入、不自动换设备。更长文本也可以通过公共分句选项减少每片长度。
 
-当前两条路径都使用完整 Prefill 注意力矩阵，`gpt_prefill_query_chunk_size` 必须为 `0`。CPU arena 默认关闭，可以显式调整；它不限制 GPU 分配。`device_id` 是 DirectML 的 DXGI 适配器索引，默认 `0`；CPU 要求为 `0`。不能用 `Win32_VideoController` 返回顺序代替 DXGI 索引。AMD 可调整声学线程、CPU arena 和显卡选择，DirectML 所需的顺序执行与禁用 mem pattern 由执行器设置。
+当前两条路径都使用完整 Prefill 注意力矩阵，`gpt_prefill_query_chunk_size` 必须为 `0`。CPU arena 默认关闭，可以显式调整；它不限制 GPU 分配。CPU 的 `device_id` 要求为 `0`；AMD 的显卡选择见[上节](#选择-amd-显卡)。AMD 可调整声学线程与 CPU arena，DirectML 所需的顺序执行与禁用 mem pattern 由执行器设置。
 
 `policy=resident` 保留权重和请求缓冲区；`release-state` 在每片语义生成后释放 GPT KV；`staged` 交替加载 GPT 和声学，减少同时驻留的模型，也增加等待。后者用于 Python Engine、`tts` 或显式启用的 `managed` HTTP，默认 `direct` HTTP 拒绝错峰策略。
 

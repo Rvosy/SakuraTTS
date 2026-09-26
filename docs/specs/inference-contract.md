@@ -42,6 +42,8 @@ SakuraTTS 是面向本地应用的 GPT-SoVITS 轻量推理后端，接收支持�
 
 执行预设可由 Python `profile`、CLI `--profile` 或 YAML `sakuratts.profile` 显式选择。CPU 只提供 `int8`，DirectML 只提供 `fp16`，省略时也选择各自默认档位；CUDA 与 MLX 的现有组合及默认行为不变。优先级为显式后端选项、YAML `runtime_options`、预设默认值；显式 `profile` 覆盖 YAML 的预设名。线程、容量和驻留策略可以调整，设备与精度必须符合对应路径。预设不会转换权重或自动切换设备，不支持的组合和精度包错配必须报错。Managed 睡醒后保留本次服务会话的选择；总体错峰策略的准备状态与加载时机仍遵循既有生命周期契约。具体组合由 [profiles.py](../../src/sakuratts/profiles.py) 定义。
 
+DirectML 的公共 `device_id` 使用 DXGI 适配器索引，GPT Prefill、Decode、GPU KV 与声学必须归属同一选择。初始化失败保留原因，不整体重试 CPU 或自动改选显卡；图内 CPU 分区仍由 ORT 处理。`doctor --backend directml` 的设备枚举只提供诊断，查询失败不阻塞真实加载，查询成功也不代表推理通过。配置用法见[设备指南](../cpu-amd.md#选择-amd-显卡)，Session 内部设备序号与缓存分配原因见 [ADR 0006](../adr/0006-device-precision-and-directml-kv.md#显卡选择与-kv-分配)。
+
 `frontend_python` 绑定前端工作进程；CUDA 的 `acoustic_python` 绑定声学工作进程，两者允许共享解释器。CPU / DirectML 声学使用主解释器的 ORT，不启动声学 worker；旧配置未指定 `frontend_python` 时，经典日文前端仍沿用 `acoustic_python`。整合包按当前发行清单绑定这些安装位置。发行 recipe 只允许已实现组合，服务和 CPU 准备组件可独立选择，不要求日文 NVIDIA 包携带其他语言或设备依赖。缺省 direct 模式不随设备精度选择改变。
 
 HTTP 以原版 api_v2 的 GET/POST 字段和默认值为准，保留一个活动模型、一个计算请求。忙碌返回 409；业务输入错误和不支持的功能返回 400，类型校验错误返回 422。客户端断开不能提前释放忙碌状态，模型创建、切换、计算和关闭发生在同一工作线程。完整响应以 `X-SakuraTTS-Status` 区分正常完成和达到长度限制。模式 1 在各片完成后发送音频，有界队列施加背压，不先聚合完整请求；模式 2/3 尚未实现。具体差异见 [HTTP API](../http-api.md)。

@@ -37,4 +37,5 @@ CPU / AMD 的当前入口只保留 CPU `int8` 和 DirectML `fp16`，默认参数
 - [CPU 与 AMD 独立精度：完整请求和试听](notes/cpu-amd-precision-listening-20260927.md)
 - [Genie 与当前 CPU / AMD 配置：同机重测和试听](notes/genie-comparison-20260927.md)
 - [DirectML GPT：静态图与 GPU KV](notes/directml-gpt-static-20260927.md)
+- [DirectML：显卡选择、解码调度与卸载占用](notes/directml-host-overhead-20260927.md)
 - [CPU / DirectML：全图 FP16 声学实验](notes/acoustic-fp16-finite-20260927.md)

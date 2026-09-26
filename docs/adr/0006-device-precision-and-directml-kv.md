@@ -12,9 +12,9 @@ CPU 模式应独立完成推理，AMD 模式也应把 GPT Transformer 和声学�
 
 CPU 公开路径收敛为 ORT 动态 INT8 GPT 与 FP32 声学，默认 GPT 4 线程、声学 8 线程、KV 容量 2048。GPT 使用绑定原模型身份的独立 sidecar，量化常量矩阵乘法的权重与激活，其他部分保留 FP32。采样继续接收 FP32 logits，停止、取消和容量规则不变。CPU 执行器不加载 GPU provider。其他精度的转换与测量仅用于历史研究，不作为公开运行选项。
 
-DirectML GPT 分为动态 Prefill 与固定形状 Decode 两个 Session。Decode 使用固定容量与显式 mask，两个 GPU KV 缓冲区交替作为输入和输出；不假设输入输出可以别名。Prefill KV 只经过一次主机转存。逐 token 只传输 embedding、mask、写入索引和 logits，历史 KV 留在 GPU。容量写入 sidecar，并与运行时配置核对，超出时明确报错。
+DirectML GPT 分为动态 Prefill 与固定形状 Decode 两个 Session。Decode 使用固定容量与显式 mask，两个 GPU KV 缓冲区交替作为输入和输出；不假设输入输出可以别名。Prefill KV 经过一次主机转存，随后由 Decode Session 分配并持有 GPU KV。每步更新小型输入并读取 logits；图内 CPU 分区所需的 KV 传输仍由 ORT 处理，不能据此宣称每个算子都在 GPU 或完全没有历史缓存传输。容量写入 sidecar，并与运行时配置核对，超出时明确报错。
 
-ORT 的 IOBinding 可能在绑定 CPU 输入时复制数据。因此每个 token 更新小型 CPU 输入后重新绑定；只修改已绑定的 NumPy 数组不足以保证 GPU 看到新值。请求重置、失败与卸载必须清除绑定及两组 GPU KV 引用，不通过额外预热掩盖初始化错误。
+ORT 的 IOBinding 可能在绑定输入时复制数据。因此每个 token 更新小型 CPU 输入后重新绑定，也刷新 KV 输入绑定以保留 CPU 分区所需的传输；只修改已绑定的 NumPy 数组不足以保证执行器看到新值。请求重置、失败与卸载必须清除绑定及两组 GPU KV 引用，不通过额外预热掩盖初始化错误。
 
 DirectML 公开路径收敛为 GPU FP16 GPT 与全图 FP16 声学，默认 GPT 的 CPU 部分 4 线程、声学的 CPU 部分 2 线程、KV 容量 1280。声学使用 `finite` 准入，发布记录前检查有限输出、重复性与真实设备执行，并保留原误差筛查结果。运行时核对记录、对应后端和实际文件身份，不重跑实验判定；记录中的线程、CPU arena 与适配器序号保留为测量条件，允许用户调整。仅转换声码器的包不能代替全图候选，CPU、DirectML、CUDA 的记录不能互相代用。
 
@@ -23,6 +23,18 @@ DirectML 公开路径收敛为 GPU FP16 GPT 与全图 FP16 声学，默认 GPT �
 基础转换负责原始权重与参考资源，运行所需的 INT8、FP16 和静态 GPT 图仍需单独准备。诊断按当前默认档位检查这些实际资源，缺失时明确失败；转换中间产物使用独立的基础资源检查，不借用已移除的公开精度档位。
 
 配置入口一次解析预设与覆盖参数，Engine 核对包内实际声学精度和范围。文件完整性由消费资源的 loader 检查，同次装配复用结果，重新加载时重验。ONNX GPT 保留来源 manifest 与哈希声明的绑定，只扫描实际使用的图和 embedding；原始权重归档在准备工具或 NumPy 执行器读取时校验，不因运行 ONNX 再扫描一遍。
+
+### 显卡选择与 KV 分配
+
+公共 `device_id` 指 DXGI 适配器索引，同一选择用于 GPT Prefill、Decode 和声学 Session。`doctor --backend directml` 提供设备列表，配置方式集中在[设备指南](../cpu-amd.md#选择-amd-显卡)。不按已测核显型号或历史适配器编号限制加载，也不自动改选设备。
+
+ORT v1.24.4 的独立 Python `GetDmlAllocator(id)` 虽以 `id` 索引缓存，创建 D3D12 设备时却固定使用 DXGI 适配器 `0`。因此 `OrtValue.ortvalue_from_numpy(..., "dml", device_id)` 或独立空缓冲区工厂不能保证分配到所选的非零适配器。具体实现见[上游 GetDmlAllocator](https://github.com/microsoft/onnxruntime/blob/v1.24.4/onnxruntime/python/onnxruntime_pybind_mlvalue.cc#L251-L296)。
+
+[StaticDirectMLGPT](../../src/sakuratts/backends/directml/static_gpt.py) 改用当前 Decode Session 的输出分配器。Prefill 缓存先由 CPU OrtValue 持有；前两次实际 Decode 分别分配一组 GPU KV，随后绑定并复用这两组输出。首步结束先清除种子输入绑定，再释放它们依赖的 NumPy 存储，不增加专门的预热请求或分配 Session。
+
+IOBinding 中的 `bind_output(..., "dml", 0)` 使用 Session 内部的 OrtDevice 序号。这个 `0` 与公开的 DXGI `device_id` 不同：该版本的 [DML ExecutionProvider](https://github.com/microsoft/onnxruntime/blob/v1.24.4/onnxruntime/core/providers/dml/DmlExecutionProvider/src/ExecutionProvider.cpp#L63-L84) 和[分配器内存描述](https://github.com/microsoft/onnxruntime/blob/v1.24.4/onnxruntime/core/providers/dml/DmlExecutionProvider/src/BucketizedBufferAllocator.cpp#L33-L52)都使用内部序号 `0`，实际 D3D12 设备由 Session 的 provider 选项确定。缓存因而跟随所选 Session，不调用固定默认适配器的独立工厂。
+
+非零编号的配置转发、Session 分配与异常回收通过计算替身回归；这些测试不等同于独显或多张物理显卡的执行验收。真机范围由[兼容矩阵](../specs/compatibility-matrix.md)维护。
 
 ## 代价
 

@@ -303,6 +303,30 @@ class CPURuntimeTests(unittest.TestCase):
         self.assertEqual(self.gpt_loader.call_args.kwargs["threads"], 4)
         self.assertEqual(self.acoustic_loader.call_args.kwargs["device"], "cpu")
 
+    def test_cli_directml_adapter_overrides_yaml_for_both_loaders_and_reload(self):
+        from sakuratts.cli import main
+        self.prepare_acoustic("directml")
+        config = self.yaml_config()
+        overrides = self.root / "adapter.json"
+        overrides.write_text(json.dumps({"device_id": 3}), encoding="utf-8")
+
+        def start(model, **options):
+            with contextlib.closing(Inference(model, **{name: options[name]
+                    for name in ("tts_config", "backend", "profile", "experimental")})) as inference:
+                runtime = inference.engine._runtime
+                self.assertEqual(runtime.device_id, 3)
+                runtime.unload()
+                runtime.load()
+
+        with patch("sakuratts.server.start_server", side_effect=start), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(main(["serve", "--tts-config", str(config), "--backend", "directml",
+                                   "--experimental", str(overrides)]), 0)
+        self.assertEqual(self.gpu_gpt_loader.call_count, 2)
+        self.assertEqual(self.acoustic_loader.call_count, 2)
+        for loader in (self.gpu_gpt_loader, self.acoustic_loader):
+            self.assertTrue(all(call.kwargs["device_id"] == 3 for call in loader.call_args_list))
+        self.gpt_loader.assert_not_called()
+
     def test_malformed_yaml_runtime_options_are_rejected(self):
         path = self.root / "bad.yaml"
         for value in ("null", "[]", "3"):

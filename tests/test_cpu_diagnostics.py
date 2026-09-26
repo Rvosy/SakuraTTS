@@ -37,6 +37,13 @@ class CPUDoctorTests(unittest.TestCase):
                 "status": "passed", "profile": profile or {"cpu": "int8", "directml": "fp16"}[backend]}))
         self.cuda = self.enterContext(patch("sakuratts.backends.cuda.runtime.configure_cuda",
                                             side_effect=AssertionError("CPU/DirectML must not initialize CUDA")))
+        self.adapters = self.enterContext(patch("sakuratts.backends.directml.devices.list_adapters",
+            return_value=[{"device_id": 0, "description": "Integrated GPU", "dedicated_video_memory_bytes": 512,
+                           "luid": "0x00000000_0x00000042",
+                           "dedicated_system_memory_bytes": 0, "shared_system_memory_bytes": 8192},
+                          {"device_id": 1, "description": "Discrete GPU", "dedicated_video_memory_bytes": 8192,
+                           "luid": "0x00000000_0x00000064",
+                           "dedicated_system_memory_bytes": 0, "shared_system_memory_bytes": 8192}]))
 
     def import_module(self, name):
         if name == "onnxruntime":
@@ -124,6 +131,23 @@ class CPUDoctorTests(unittest.TestCase):
         self.assertFalse(report["synthesis"]["dependencies_ready"])
         self.assertIn("DmlExecutionProvider", report["packages"]["onnxruntime-directml"]["error"])
         self.cuda.assert_not_called()
+
+    def test_directml_lists_dxgi_adapter_ids_and_memory_without_model_execution(self):
+        report = cli.doctor(backend="directml")
+        self.assertTrue(report["checks_passed"])
+        self.assertEqual(report["directml"]["device_id_scheme"], "IDXGIFactory.EnumAdapters")
+        self.assertEqual(report["directml"]["adapters"], self.adapters.return_value)
+        self.assertFalse(report["directml"]["execution_tested"])
+        self.ort.InferenceSession.assert_not_called()
+
+    def test_dxgi_query_failure_is_diagnostic_and_does_not_block_provider_checks(self):
+        self.adapters.side_effect = RuntimeError("DXGI query unavailable")
+        report = cli.doctor(backend="directml")
+        self.assertTrue(report["checks_passed"])
+        self.assertTrue(report["synthesis"]["dependencies_ready"])
+        self.assertEqual(report["directml"]["error"], "DXGI query unavailable")
+        self.assertFalse(report["directml"]["execution_tested"])
+        self.ort.InferenceSession.assert_not_called()
 
     def test_cpu_distribution_and_conflicting_ort_installations_are_distinguished(self):
         self.distributions.pop("onnxruntime-directml")

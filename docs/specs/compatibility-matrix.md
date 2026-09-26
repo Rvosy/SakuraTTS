@@ -23,6 +23,7 @@
 | --- | --- | --- |
 | Windows 日文整链 | [RTX 5060 / Sakura V2ProPlus 实测](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/2026-09-20-windows-nvidia-backend.md)：原文到 WAV、长文、五参考及异常恢复 | 其他 GPU、其他权重、人工音色与自然度 |
 | 当前 CPU / DirectML | [Genie 前后复测与试听](../../research/notes/genie-comparison-20260927.md)：CPU INT8、8 线程声学；AMD FP16、容量 1280；N.A.V.I 短句、长句与进程树资源 | 更多硬件与权重、人工听音、ASR、长期睡醒及共存负载；CPU 性能取自 DirectML 1.24.4 的 CPU provider，不代表独立 CPU ORT 1.30.0 的速度 |
+| DirectML 显卡选择 | [设备转发与初始化失败测试](../../tests/test_directml_devices.py)、[配置覆盖与重新加载](../../tests/test_cpu_runtime.py)、[Session KV 分配与回收](../../tests/test_directml_static_gpt.py)：用替身覆盖非零适配器编号；[780M 回放与卸载占用](../../research/notes/directml-host-overhead-20260927.md)保留本轮实机证据 | AMD 独显及多张物理显卡上的真实执行、KV 归属、内存占用与音频结果尚未验收；非零编号测试不代表独显实测 |
 | CPU / AMD 候选历史 | [独立精度与容量实验](../../research/notes/cpu-amd-precision-listening-20260927.md)、[首轮设备实测](../../research/notes/cpu-directml-780m-20260927.md)：保留未选候选、实际 GPU 算子、误差与 HTTP 睡醒 | 历史候选不再作为公开配置；降精度可能改变采样、语速与完整性 |
 | CPU GPT / AMD 混合设备历史 | [完整请求对照](../../research/notes/cpu-amd-performance-20260927.md)、[GPT 线程与数值](../../research/notes/cpu-gpt-ort-20260927.md)、[声学精度筛查](../../research/notes/directml-mixed-vocoder-780m-20260927.md) | 严格 FP32 波形等价与音质是不同验收项；历史设备组合不能代替当前独立 GPU 路径 |
 | Apple MLX 适配器 | [公共入口测试](../../tests/test_mlx_runtime.py)：使用计算替身检查装配、取消、错峰、精度拒绝与回收；组件的历史真机结果见本页末尾证据汇总 | 当前公共入口尚未在 Apple 真机复验；FP16、V2ProPlus、统一转换与 HTTP 新参考未实现 |

@@ -9,25 +9,27 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from contextlib import ExitStack
 import gc
+import inspect
 import json
 from pathlib import Path
 import sys
 import time
+from unittest.mock import patch
 
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
-from sakuratts._internal.conversion.export_gpt_directml import export_static
 from sakuratts.backends.directml.static_gpt import StaticDirectMLGPT
 
 
-def session_options(*, profile_prefix=None):
+def session_options(*, threads=4, profile_prefix=None):
     import onnxruntime as ort
 
     options = ort.SessionOptions()
-    options.intra_op_num_threads = 2
+    options.intra_op_num_threads = threads
     options.inter_op_num_threads = 1
     options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
     options.enable_mem_pattern = False
@@ -41,11 +43,20 @@ def session_options(*, profile_prefix=None):
     return options
 
 
-def make_session(graph, device_id=0, *, profile_prefix=None):
+def make_session(graph, device_id=0, *, threads=4, profile_prefix=None):
     import onnxruntime as ort
 
-    return ort.InferenceSession(str(graph), sess_options=session_options(profile_prefix=profile_prefix),
-        providers=[("DmlExecutionProvider", {"device_id": device_id}), "CPUExecutionProvider"])
+    session = ort.InferenceSession(str(graph),
+        sess_options=session_options(threads=threads, profile_prefix=profile_prefix),
+        providers=[("DmlExecutionProvider", {"device_id": str(device_id)}), "CPUExecutionProvider"],
+        enable_fallback=False)
+    try:
+        if session.get_providers()[:1] != ["DmlExecutionProvider"]:
+            raise RuntimeError("The probe did not activate DmlExecutionProvider")
+        return session
+    except BaseException:
+        session = None
+        raise
 
 
 def profile_summary(path):
@@ -80,11 +91,6 @@ def tiny_probe(output, device_id):
     cache = np.zeros((8, 2, 4), np.float32)
     gpu = None
     try:
-        try:
-            gpu = ort.OrtValue.ortvalue_from_numpy(cache, "dml", device_id)
-            report["direct_allocation"] = gpu.device_name()
-        except Exception as error:
-            report["direct_allocation_error"] = str(error)
         for index in range(3):
             binding = session.io_binding()
             if gpu is None:
@@ -93,14 +99,15 @@ def tiny_probe(output, device_id):
                 binding.bind_ortvalue_input("cache", gpu)
             binding.bind_cpu_input("index", np.asarray([[index]], np.int64))
             binding.bind_cpu_input("update", np.full((1, 2, 4), index + 1, np.float32))
-            binding.bind_output("next_cache", "dml", device_id)
+            # Session selects the DXGI adapter; DML's allocator ordinal is always 0.
+            binding.bind_output("next_cache", "dml", 0)
             start = time.perf_counter()
             session.run_with_iobinding(binding)
             binding.synchronize_outputs()
             gpu = binding.get_outputs()[0]
             report["runs"].append({"ms": (time.perf_counter() - start) * 1000,
                                    "device": gpu.device_name(), "shape": gpu.shape()})
-        actual = gpu.numpy()
+        actual = binding.copy_outputs_to_cpu()[0]
         expected = np.zeros_like(cache)
         for index in range(3):
             expected[index] = index + 1
@@ -114,45 +121,146 @@ def tiny_probe(output, device_id):
     print(json.dumps(report), flush=True)
 
 
+def timing_breakdown(model, inputs, tokens):
+    """Measure existing decode calls; remove all wrappers before returning."""
+    started = time.perf_counter()
+    prefill = model.prefill(*inputs)
+    prefill_ms = (time.perf_counter() - started) * 1000
+    logits = [prefill[0].copy()]
+    steps = []
+    current = None
+    binding_type = type(model.binding)
+    sections = {
+        "bind_cpu_input": (binding_type, "bind_cpu_input"),
+        "bind_kv_input": (binding_type, "bind_ortvalue_input"),
+        "bind_kv_output": (binding_type, "bind_ortvalue_output"),
+        "bind_allocate_output": (binding_type, "bind_output"),
+        "run": (model.session, "run_with_iobinding"),
+        "synchronize": (binding_type, "synchronize_outputs"),
+        "get_outputs": (binding_type, "get_outputs"),
+    }
+
+    def timed(name, operation):
+        def wrapped(*args, **kwargs):
+            start = time.perf_counter()
+            try:
+                return operation(*args, **kwargs)
+            finally:
+                current[name]["wall_ms"] += (time.perf_counter() - start) * 1000
+                current[name]["calls"] += 1
+        return wrapped
+
+    with ExitStack() as stack:
+        for name, (target, method) in sections.items():
+            stack.enter_context(patch.object(target, method, timed(name, getattr(target, method))))
+        cpu_started = time.process_time()
+        started = time.perf_counter()
+        for index, token in enumerate(tokens):
+            current = {name: {"calls": 0, "wall_ms": 0.} for name in sections}
+            step_started = time.perf_counter()
+            output = model.decode(int(token))
+            elapsed = (time.perf_counter() - step_started) * 1000
+            measured = sum(part["wall_ms"] for part in current.values())
+            steps.append({"step": index, "decode_ms": elapsed, "sections": current,
+                          "host_and_logits_residual_ms": elapsed - measured})
+            logits.append(output[0])
+        decode_ms = (time.perf_counter() - started) * 1000
+        decode_cpu_ms = (time.process_time() - cpu_started) * 1000
+    totals = {name: {"calls": sum(row["sections"][name]["calls"] for row in steps),
+                     "wall_ms": sum(row["sections"][name]["wall_ms"] for row in steps)}
+              for name in sections}
+    result = {"prefill_ms": prefill_ms, "decode_ms": decode_ms,
+        "decode_cpu_ms": decode_cpu_ms,
+        "decode_tokens": len(tokens), "steps": steps, "sections": totals,
+        "host_and_logits_residual_ms": sum(row["host_and_logits_residual_ms"] for row in steps),
+        "loop_and_recording_ms": decode_ms - sum(row["decode_ms"] for row in steps),
+        "scope": "Separate instrumented replay of the production decode method. Bind/run/synchronize/get_outputs are host wall times; run and synchronize are not pure GPU times. Residual includes CPU embedding, mask updates, logits numpy conversion/copy, state updates and timer-wrapper overhead. No file I/O or hashing inside step timers."}
+    return result, np.stack(logits)
+
+
 def model_probe(args):
     from cpu_gpt_ort import load_inputs
-    from cpu_gpt_profile import replay, array_digest
-    from sakuratts.backends.cpu.onnx_gpt import read_sidecar
+    from cpu_gpt_profile import replay, array_digest, summarize
     from sakuratts._internal.reference_condition import sha256_file
     import onnxruntime as ort
 
     args.output.mkdir(parents=True, exist_ok=False)
     package, inputs, tokens, identity = load_inputs(args.model.resolve(), args.result.resolve(), args.case)
-    source, _, source_graph, _ = read_sidecar(package, args.precision)
     if args.steps:
         tokens = tokens[:args.steps]
-    graph = args.output / f"static-{args.precision}.onnx"
-    graph_info = export_static(source_graph, graph, source["config"], args.capacity)
-    print(json.dumps({"stage": "static_graph_exported", **graph_info}), flush=True)
     model = None
-    result = {"identity": identity, "graph": graph_info, "precision": args.precision,
+    memory_sampler = None
+    result = {"identity": identity, "precision": args.precision,
         "onnxruntime": ort.__version__, "device_id": args.device_id, "scope": "GPT only; GPU prefill and static GPU decode; CPU embedding and sampling; two Transformer sessions",
         "cache": "GPU ping-pong full fixed-capacity outputs; one CPU-to-GPU prefill upload, no per-step cache transfers",
-        "script_sha256": sha256_file(Path(__file__)), "measurements": []}
-    try:
-        start = time.perf_counter()
+        "capacity": args.capacity, "threads": args.threads, "decode_tokens": len(tokens),
+        "script_sha256": sha256_file(Path(__file__)),
+        "runtime_sha256": sha256_file(Path(inspect.getsourcefile(StaticDirectMLGPT.decode))),
+        "normal_timing_scope": "First and hot replays have no ORT profiling or breakdown wrappers; no export, acoustic inference, text frontend or sampling inside replay timers",
+        "measurements": [], "warmups": []}
+
+    def load(profile_prefix=None):
         class ProfiledStaticGPT(StaticDirectMLGPT):
             def _create_session(self, graph):
-                return make_session(graph, args.device_id, profile_prefix=args.output / "decode-profile" if args.profile else None)
-        model = ProfiledStaticGPT(package, {}, graph, args.capacity, args.precision, 2, args.device_id)
+                if profile_prefix is None:
+                    return super()._create_session(graph)
+                return make_session(graph, args.device_id, threads=args.threads, profile_prefix=profile_prefix)
+        return ProfiledStaticGPT.load(package, capacity=args.capacity, precision=args.precision,
+            threads=args.threads, device_id=args.device_id)
+
+    def record(row, logits):
+        row.update(logits_finite=bool(np.isfinite(logits).all()), logits_sha256=array_digest(logits))
+        row["nonfinite_logit_rows"] = np.flatnonzero(~np.isfinite(logits).all(axis=1)).tolist()
+        return row
+
+    try:
+        if args.memory_boundaries:
+            import psutil
+            from windows_wddm_memory import WDDMMemorySampler
+
+            process = psutil.Process()
+            memory_sampler = WDDMMemorySampler([process.pid], include_adapters=False)
+            result["memory_boundaries"] = {"pid": process.pid, "settle_seconds": .15,
+                "scope": "Single-process boundary snapshots, not peaks or residency estimates. Includes normal replays and optional breakdown/sampling; excludes the separate ORT profiling session. RSS/private and WDDM counters may overlap and must not be added. Missing instances and PDH statuses are retained unchanged.",
+                "metadata": memory_sampler.metadata, "samples": []}
+
+            def capture_memory(boundary):
+                gc.collect()
+                time.sleep(.15)
+                memory = process.memory_info()
+                result["memory_boundaries"]["samples"].append({"boundary": boundary,
+                    "rss_bytes": memory.rss, "private_bytes": memory.private,
+                    "wddm": memory_sampler.sample()})
+
+            capture_memory("before_load")
+        start = time.perf_counter()
+        model = load()
         result["load_ms"] = (time.perf_counter() - start) * 1000
+        result["graph"] = model.static_manifest
         print(json.dumps({"stage": "sessions_loaded", "ms": result["load_ms"]}), flush=True)
+        row, logits = replay(model, inputs, tokens)
+        result["first_replay"] = record(row, logits)
+        np.save(args.output / "logits-first.npy", logits)
+        for _ in range(args.warmups):
+            row, logits = replay(model, inputs, tokens)
+            result["warmups"].append(record(row, logits))
         for index in range(args.repeats):
             row, logits = replay(model, inputs, tokens)
-            row["logits_finite"] = bool(np.isfinite(logits).all())
-            row["nonfinite_logit_rows"] = np.flatnonzero(~np.isfinite(logits).all(axis=1)).tolist()
-            result["measurements"].append(row)
-            result["logits_finite"] = all(item["logits_finite"] for item in result["measurements"])
+            result["measurements"].append(record(row, logits))
             result["logits_sha256"] = array_digest(logits)
             result["cache_devices"] = sorted({value.device_name() for value in model.cache.values()})
             np.save(args.output / f"logits-{index}.npy", logits)
             print(json.dumps({"stage": "replayed", "repeat": index, **row,
-                "logits_finite": result["logits_finite"], "cache_devices": result["cache_devices"]}), flush=True)
+                "cache_devices": result["cache_devices"]}), flush=True)
+        result["median"] = summarize(result["measurements"])
+        print(json.dumps({"stage": "hot_summary", "repeats": args.repeats,
+            "decode_tokens": len(tokens), "median": result["median"]}), flush=True)
+        if args.timing_breakdown:
+            breakdown, actual = timing_breakdown(model, inputs, tokens)
+            breakdown["matches_normal_logits"] = bool(np.array_equal(actual, logits))
+            result["timing_breakdown"] = record(breakdown, actual)
+            if not breakdown["matches_normal_logits"]:
+                raise ValueError("Instrumented replay changed the production logits")
         if args.sampling:
             from sakuratts._internal.generation import generate_semantic
             parameters = identity["parameters"]
@@ -164,14 +272,40 @@ def model_probe(args):
             result["sampling"] = {"ms": (time.perf_counter() - start) * 1000,
                 "sampled_tokens": generated.sampled_tokens.tolist(), "semantic_tokens": generated.semantic.reshape(-1).tolist(),
                 "stop_reasons": list(generated.stop.reasons)}
+        if memory_sampler is not None:
+            capture_memory("after_replays")
+            model.release_request_state()
+            capture_memory("after_release_request_state")
+            model.close()
+            model = None
+            capture_memory("after_close")
         if args.profile:
+            if model is not None:
+                model.close()
+            model = None
+            model = load(args.output / "decode-profile")
+            row, actual = replay(model, inputs, tokens)
+            result["profile_replay"] = record(row, actual)
             result["profile"] = profile_summary(model.session.end_profiling())
+            result["profile_scope"] = "Separate session and replay; decode provider events only. Not included in normal timings."
+            if not any(name.startswith("DmlExecutionProvider:") for name in result["profile"]):
+                raise RuntimeError("ORT profile contains no DirectML node events")
+        result["logits_finite"] = all(row["logits_finite"] for row in [result["first_replay"],
+            *result["warmups"], *result["measurements"],
+            *([result["timing_breakdown"]] if args.timing_breakdown else []),
+            *([result["profile_replay"]] if args.profile else [])])
+        if not result["logits_finite"]:
+            raise RuntimeError("GPT replay produced non-finite logits")
+        result["status"] = "completed"
     except BaseException as error:
+        result["status"] = "failed"
         result["error"] = f"{type(error).__name__}: {error}"
         raise
     finally:
         if model is not None:
             model.close()
+        if memory_sampler is not None:
+            memory_sampler.close()
         gc.collect()
         (args.output / "result.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
 
@@ -184,19 +318,24 @@ def main():
     parser.add_argument("--model", type=Path)
     parser.add_argument("--result", type=Path)
     parser.add_argument("--case", choices=("short", "long"), default="short")
-    parser.add_argument("--precision", choices=("fp32", "fp16"), default="fp32")
-    parser.add_argument("--capacity", type=int, default=512)
-    parser.add_argument("--steps", type=int, default=16)
+    parser.add_argument("--precision", choices=("fp32", "fp16"), default="fp16")
+    parser.add_argument("--capacity", type=int, default=1280)
+    parser.add_argument("--threads", type=int, default=4, help="GPT host CPU threads")
+    parser.add_argument("--steps", type=int, default=0, help="Fixed saved decode tokens; 0 replays the full history")
     parser.add_argument("--repeats", type=int, default=2)
+    parser.add_argument("--warmups", type=int, default=1)
     parser.add_argument("--sampling", action="store_true")
-    parser.add_argument("--profile", action="store_true")
+    parser.add_argument("--profile", action="store_true", help="Additional replay in a separate ORT profiling session")
+    parser.add_argument("--timing-breakdown", action="store_true", help="Additional instrumented production decode replay")
+    parser.add_argument("--memory-boundaries", action="store_true", help="Single-PID RSS/private and WDDM snapshots outside normal timers")
     args = parser.parse_args()
     if args.tiny:
         tiny_probe(args.output.resolve(), args.device_id)
     else:
         if args.model is None or args.result is None:
             parser.error("Provide --model and --result, or choose --tiny")
-        if args.capacity < 1 or args.steps < 0 or args.repeats < 1 or args.device_id < 0:
+        if (args.capacity < 1 or args.steps < 0 or args.repeats < 1 or args.device_id < 0
+                or args.threads < 1 or args.warmups < 0):
             parser.error("Invalid capacity, step, repeat or device value")
         model_probe(args)
 

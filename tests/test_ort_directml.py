@@ -59,7 +59,7 @@ class ORTDirectMLTests(unittest.TestCase):
         self.assertTrue(options.enable_cpu_mem_arena)
         self.assertEqual(options.entries, {"session.intra_op.allow_spinning": "0",
                                            "session.inter_op.allow_spinning": "0"})
-        self.session.disable_fallback.assert_called_once_with()
+        self.assertFalse(self.ort.InferenceSession.call_args.kwargs["enable_fallback"])
         self.assertEqual(model.providers, ["DmlExecutionProvider", "CPUExecutionProvider"])
         self.assertIs(model.decode(*self.inputs), self.waveform)
         names, feeds = self.session.run.call_args.args

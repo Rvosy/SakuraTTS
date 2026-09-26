@@ -242,15 +242,14 @@ class ORTSoVITS:
             providers = [("DmlExecutionProvider", {"device_id": str(device_id)}), "CPUExecutionProvider"]
         else:
             providers = ["CPUExecutionProvider"]
-        session = ort.InferenceSession(str(graph), sess_options=options, providers=providers)
+        session = ort.InferenceSession(str(graph), sess_options=options, providers=providers,
+            **({"enable_fallback": False} if device == "directml" else {}))
         try:
             expected_provider = {"cuda": "CUDAExecutionProvider", "directml": "DmlExecutionProvider"}.get(device)
             if expected_provider is not None and session.get_providers()[:1] != [expected_provider]:
                 raise RuntimeError(f"ONNX Runtime could not initialize {expected_provider}; refusing silent CPU inference")
             if device == "cpu" and manifest["dtype"] == "float16" and session.get_providers() != ["CPUExecutionProvider"]:
                 raise RuntimeError("CPU FP16 execution requires the CPUExecutionProvider exclusively")
-            if device == "directml":
-                session.disable_fallback()
             expected_outputs = STAGES if diagnostic else ("waveform",)
             if tuple(item.name for item in session.get_inputs()) != INPUT_NAMES:
                 raise ValueError("Unexpected acoustic graph input schema")

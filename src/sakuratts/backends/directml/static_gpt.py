@@ -57,7 +57,8 @@ class StaticDirectMLGPT:
         return cls(prefill, metadata, graph, capacity, precision, threads, device_id)
 
     def __init__(self, prefill, metadata, graph, capacity, precision, threads, device_id):
-        self.prefill_model = self.session = self.binding = None
+        self.prefill_model = self.session = self.binding = self.next_binding = None
+        self.logits = self.logits_value = None
         self.cache = self.spare = None
         self.length = self.text_length = 0
         self.capacity, self.device_id, self.precision, self.threads = capacity, device_id, precision, threads
@@ -76,6 +77,7 @@ class StaticDirectMLGPT:
             self.session = self._create_session(graph)
             self._validate_contract()
             self.hidden = np.empty((1, self.width), self.tensor_dtype)
+            self.hidden_fp32 = np.empty(self.width, np.float32)
             self.mask = np.full((1, 1, capacity + 2), -np.inf, self.tensor_dtype)
             self.write_index = np.empty((1, 1), np.int64)
         except BaseException:
@@ -96,9 +98,8 @@ class StaticDirectMLGPT:
         options.add_session_config_entry("session.inter_op.allow_spinning", "0")
         session = None
         try:
-            session = ort.InferenceSession(str(graph), sess_options=options,
+            session = ort.InferenceSession(str(graph), sess_options=options, enable_fallback=False,
                 providers=[("DmlExecutionProvider", {"device_id": str(self.device_id)}), "CPUExecutionProvider"])
-            session.disable_fallback()
             if session.get_providers()[0] != "DmlExecutionProvider":
                 raise RuntimeError("Static GPT did not activate DmlExecutionProvider")
             return session
@@ -124,8 +125,6 @@ class StaticDirectMLGPT:
             for value in values:
                 if (value.type, value.shape) != expected[value.name]:
                     raise ValueError(f"Unexpected static DirectML GPT tensor contract: {value.name}")
-        if self.session.get_outputs()[0].name != "logits":
-            raise ValueError("Static DirectML GPT must return logits first")
 
     def prefill(self, *inputs):
         import onnxruntime as ort
@@ -136,21 +135,37 @@ class StaticDirectMLGPT:
         try:
             logits = self.prefill_model.prefill(*inputs)
             self.length, self.text_length = self.prefill_model.length, self.prefill_model.text_length
-            self.cache, self.spare = {}, {}
-            shape = (self.capacity + 1, self.heads, self.head_dim)
-            staging = np.zeros(shape, self.tensor_dtype)
+            self.cache = {}
             for kind, values in (("key", self.prefill_model.keys), ("value", self.prefill_model.values)):
+                values[:, self.length + 1:] = 0
                 for layer in range(self.layers):
                     name = f"{kind}.{layer}"
-                    staging[:self.length + 1] = values[layer, :self.length + 1]
-                    self.cache[name] = ort.OrtValue.ortvalue_from_numpy(staging, "dml", self.device_id)
-                    self.spare[name] = ort.OrtValue.ortvalue_from_shape_and_type(shape, self.tensor_dtype, "dml", self.device_id)
+                    self.cache[name] = ort.OrtValue.ortvalue_from_numpy(values[layer], "cpu")
+            values = None
             self.prefill_model.release_request_state()
-            self.binding = self.session.io_binding()
-            self.binding.bind_output("logits", "cpu")
+            self.logits = np.empty((1, self.config["vocab_size"]), self.tensor_dtype)
+            self.logits_value = ort.OrtValue.ortvalue_from_numpy(self.logits, "cpu")
+            self.binding = self._new_binding()
+            self.mask.fill(-np.inf)
+            self.mask[:, :, 1:self.length + 1] = 0
+            self.mask[:, :, -1] = 0
             return logits
         except BaseException:
+            values = None
             self.release_request_state()
+            raise
+
+    def _new_binding(self):
+        binding = self.session.io_binding()
+        try:
+            binding.bind_ortvalue_output("logits", self.logits_value)
+            for name in self.cache:
+                # DML's session-local OrtDevice ordinal is always zero. The
+                # session provider selects the DXGI adapter via self.device_id.
+                binding.bind_output(f"present_{name}", "dml", 0)
+            return binding
+        except BaseException:
+            binding = None
             raise
 
     def decode(self, token):
@@ -164,23 +179,38 @@ class StaticDirectMLGPT:
         if not 0 <= token < self.config["vocab_size"]:
             raise ValueError("Semantic token outside vocabulary")
         weights = self.embedding
-        self.hidden[0] = weights["audio_embedding"][token] + weights["audio_alpha"] * weights["position_encoding"][position]
-        self.mask.fill(-np.inf)
-        self.mask[:, :, 1:self.length + 1] = 0
-        self.mask[:, :, -1] = 0
+        np.multiply(weights["audio_alpha"], weights["position_encoding"][position], out=self.hidden_fp32)
+        np.add(weights["audio_embedding"][token], self.hidden_fp32, out=self.hidden_fp32)
+        self.hidden[0] = self.hidden_fp32
+        self.mask[:, :, self.length] = 0
         self.write_index[0, 0] = self.length + 1
         try:
             # ORT may upload at BindInput time. Rebinding after mutation refreshes
-            # these small inputs; previously bound device KV requires no upload.
+            # these small inputs and any KV transfers needed by CPU partitions.
             for name in ("hidden", "mask", "write_index"):
                 self.binding.bind_cpu_input(name, getattr(self, name))
             for name in self.cache:
+                # BindInput refreshes any transfer ORT needs for graph partitions.
                 self.binding.bind_ortvalue_input(f"past_{name}", self.cache[name])
-                self.binding.bind_ortvalue_output(f"present_{name}", self.spare[name])
             self.session.run_with_iobinding(self.binding)
             self.binding.synchronize_outputs()
-            logits = self.binding.get_outputs()[0].numpy().astype(np.float32, copy=True)
-            self.cache, self.spare = self.spare, self.cache
+            logits = self.logits.astype(np.float32, copy=True)
+            if self.spare is None:
+                # The first two real decode steps allocate KV through this
+                # session, avoiding ORT's independent default-adapter allocator.
+                self.spare = dict(zip(self.cache, self.binding.get_outputs()[1:]))
+                for name in self.spare:
+                    self.binding.bind_ortvalue_output(f"present_{name}", self.spare[name])
+            if self.next_binding is None:
+                # Native CPU OrtValues borrow the numpy storage owned by cache.
+                # Drop their native bindings before releasing those owners.
+                self.binding.clear_binding_inputs()
+                self.cache, self.spare = self.spare, None
+                self.next_binding = self.binding
+                self.binding = self._new_binding()
+            else:
+                self.cache, self.spare = self.spare, self.cache
+                self.binding, self.next_binding = self.next_binding, self.binding
             self.length += 1
             return logits
         except BaseException:
@@ -188,7 +218,12 @@ class StaticDirectMLGPT:
             raise
 
     def release_request_state(self):
-        self.binding = self.cache = self.spare = None
+        for binding in (self.binding, self.next_binding):
+            if binding is not None:
+                binding.clear_binding_inputs()
+                binding.clear_binding_outputs()
+        self.binding = self.next_binding = None
+        self.cache = self.spare = self.logits = self.logits_value = None
         self.length = self.text_length = 0
         if self.prefill_model is not None:
             self.prefill_model.release_request_state()
