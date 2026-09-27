@@ -13,7 +13,9 @@ import sys
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+if not __package__:
+    from runpy import run_path
+    run_path(str(Path(__file__).resolve().parents[1] / "worker.py"))["load_package"](Path(__file__).resolve().parents[2])
 from sakuratts.backends.cpu.gpt import CPUGPT
 from sakuratts.backends.cpu.onnx_gpt import read_sidecar, sidecar_directory
 from sakuratts._internal.reference_condition import sha256_file

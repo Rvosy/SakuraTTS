@@ -64,13 +64,22 @@ class ReferenceApiTests(unittest.TestCase):
             cache = ReferenceCache(engine, {})
             cache.audio_cache[audio_hash] = base
             first = cache.resolve(root / "audio.wav", "こんにちは", "ja")
+            repeated = cache.resolve(root / "audio.wav", "こんにちは", "ja")
+            punctuated = cache.resolve(root / "audio.wav", "こんにちは。", "ja")
+            segment.assert_called_once_with("こんにちは。", "ja")
+            np.testing.assert_array_equal(repeated.reference_phones, first.reference_phones)
+            self.assertIs(repeated.reference_bert, first.reference_bert)
+            self.assertEqual(first.manifest["identity"]["reference_text"], "こんにちは")
+            self.assertEqual(punctuated.manifest["identity"]["reference_text"], "こんにちは。")
             switched = cache.resolve(root / "audio.wav", "こんにちは", "all_ja")
+            self.assertEqual(segment.call_count, 2)
             self.assertEqual(segment.call_args.args, ("こんにちは。", "all_ja"))
             self.assertEqual(switched.manifest["identity"]["reference_language"], "all_ja")
             self.assertEqual(first.manifest["identity"]["reference_language"], "ja")
             self.assertIs(first.prompt_semantic, switched.prompt_semantic)
             self.assertIsNot(first.reference_bert, switched.reference_bert)
             second = cache.resolve(root / "audio.wav", "おはよう", "all_ja")
+            self.assertEqual(segment.call_count, 3)
             self.assertIs(first.ge, second.ge)
             self.assertIs(first.prompt_semantic, second.prompt_semantic)
             self.assertNotEqual(first.reference_phones.size, second.reference_phones.size)
@@ -86,11 +95,19 @@ class ReferenceApiTests(unittest.TestCase):
             automatic = cache.resolve(root / "audio.wav", "Hello、こんにちは", "auto")
             self.assertEqual(segment.call_args.args, ("Hello、こんにちは。", "auto"))
             self.assertEqual(automatic.manifest["identity"]["reference_language"], "auto")
+            with patch.object(engine._runtime.frontend, "segment", return_value=dict(
+                    phones=[99], bert_features=np.zeros((1024, 1), dtype=np.float32),
+                    norm_text="new frontend")) as new_segment:
+                fresh = ReferenceCache(engine, {})
+                fresh.audio_cache[audio_hash] = base
+                refreshed = fresh.resolve(root / "audio.wav", "Hello、こんにちは", "auto")
+                new_segment.assert_called_once_with("Hello、こんにちは。", "auto")
+                self.assertEqual(refreshed.reference_phones.tolist(), [99])
+                self.assertEqual(refreshed.manifest["reference"]["normalized_text"], "new frontend")
+                self.assertNotEqual(automatic.reference_phones.tolist(), [99])
             (root / "audio.wav").write_bytes(b"changed-audio")
             with self.assertRaisesRegex(ValueError, "preparation is not configured"):
-                cache.resolve(root / "audio.wav", "こんにちは", "ja")
-            fresh = ReferenceCache(engine, {})
-            self.assertFalse(fresh.audio_cache)
+                cache.resolve(root / "audio.wav", "Hello、こんにちは", "auto")
 
     def test_startup_failure_after_loading_releases_engine(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -117,7 +134,7 @@ class ReferenceApiTests(unittest.TestCase):
         self.assertIs(current.engine, old)
         old.close.assert_not_called()
 
-    def test_gpu_load_failure_closes_candidate_and_clears_loaded_state(self):
+    def test_gpu_load_failure_closes_candidate_and_restores_loaded_state(self):
         current = Inference()
         current.engine = old = Mock()
         candidate = Mock()
@@ -126,6 +143,8 @@ class ReferenceApiTests(unittest.TestCase):
                 patch("sakuratts.reference.ReferenceCache"):
             with self.assertRaisesRegex(RuntimeError, "out of memory"):
                 current._activate(Model(Path("candidate"), {}))
-        old.close.assert_called_once()
+        old._runtime.unload.assert_called_once()
+        old._runtime.load.assert_called_once()
+        old.close.assert_not_called()
         candidate.close.assert_called_once()
-        self.assertIsNone(current.info())
+        self.assertIs(current.engine, old)

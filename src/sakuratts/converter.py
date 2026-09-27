@@ -14,6 +14,52 @@ from ._internal.logging import run_conversion
 logger = logging.getLogger("sakuratts.converter")
 
 
+def _preparation_identity(backend, experimental=None):
+    """Cache the selected artifacts, independently of execution tuning."""
+    from .profiles import resolve_profile
+    from ._internal.reference_condition import sha256_file
+    _, options = resolve_profile(backend, None, experimental)
+    identity = {"backend": backend}
+    scripts = []
+    if backend in ("cpu", "directml"):
+        scripts += ["prepare_backend.py", "export_gpt_onnx.py"]
+    if backend == "directml":
+        identity["capacity"] = options["capacity"]
+        scripts += ["export_gpt_directml.py", "export_sovits_fp16.py",
+                    "validate_sovits_directml.py", "acoustic_precision.py", "conv_transpose_polyphase.py"]
+    root = Path(__file__).parent / "_internal/conversion"
+    identity["scripts"] = {name: sha256_file(root / name) for name in scripts}
+    return identity
+
+
+def _prepare_backend(kind, package, *, backend, python, experimental=None):
+    """Finish target resources inside the caller's unpublished staging directory."""
+    if backend not in ("cpu", "directml"):
+        return package
+    from .profiles import resolve_profile
+    _, options = resolve_profile(backend, None, experimental)
+    tools = Path(__file__).parent / "_internal/conversion"
+    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1")
+    if kind == "gpt":
+        logger.info("准备 %s GPT 执行资源", backend)
+        command = [str(python), "-B", str(tools / "prepare_backend.py"),
+                   "--gpt", str(package), "--backend", backend]
+        if backend == "directml":
+            command += ["--capacity", str(options["capacity"])]
+        run_conversion(command, env=env)
+    elif backend == "directml":
+        logger.info("转换 AMD FP16 声学资源并检查设备执行")
+        candidate = package.with_name(package.name + "-fp16")
+        run_conversion([str(python), "-B", str(tools / "export_sovits_fp16.py"),
+                        "--source", str(package), "--output", str(candidate)], env=env)
+        run_conversion([sys.executable, "-B", str(tools / "validate_sovits_directml.py"),
+                        "--baseline", str(package), "--candidate", str(candidate),
+                        "--output", str(package.with_name(package.name + "-validation")),
+                        "--device-id", str(options.get("device_id", 0))], env=env)
+        return candidate
+    return package
+
+
 def _write_manifest(output, config, *, name):
     manifest = {"format": FORMAT, "name": name, "languages": config.get("languages", ["ja"]),
         "backend": config.get("backend", {"preferred": "cuda"}), "gpt": "gpt", "acoustic": "acoustic",
@@ -70,7 +116,8 @@ def package_model(config, output, *, name=None):
 
 
 def convert(*, gpt, sovits, official_source, output, reference=None, reference_text=None,
-            name=None, python=None, acoustic_python=None, frontend_python=None, language_model=None, backend="cuda"):
+            name=None, python=None, acoustic_python=None, frontend_python=None, language_model=None,
+            backend="cuda", experimental=None):
     """Convert supported checkpoints; reference audio is optional."""
     from .backends import require_backend
     backend = require_backend(backend)
@@ -103,13 +150,16 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
             command.append("--frontend-only")
         if language_model:
             command += ["--language-model", str(Path(language_model).resolve(strict=True))]
-        logger.info("准备日文前端资源（1/3）")
+        logger.info("准备日文前端与参考资源")
         run_conversion(command, env=env)
-        for step, (script, checkpoint, target) in enumerate((("convert_gpt.py", paths["gpt"], "gpt"),
-                                            ("export_sovits_onnx.py", paths["sovits"], "sovits")), 2):
-            logger.info("转换 %s 权重（%d/3），首次准备需要一些时间", "GPT" if target == "gpt" else "SoVITS", step)
+        for script, checkpoint, target in (("convert_gpt.py", paths["gpt"], "gpt"),
+                                           ("export_sovits_onnx.py", paths["sovits"], "sovits")):
+            logger.info("转换 %s 权重，首次准备需要一些时间", "GPT" if target == "gpt" else "SoVITS")
             run_conversion([interpreter, "-B", str(tools / script), "--checkpoint", str(checkpoint),
                 "--official-source", str(paths["source"]), "--output", str(prepared / target)], env=env)
+        _prepare_backend("gpt", prepared / "gpt", backend=backend, python=interpreter, experimental=experimental)
+        acoustic = _prepare_backend("sovits", prepared / "sovits", backend=backend,
+                                    python=interpreter, experimental=experimental)
         config = {"format": "sakuratts-windows-config-v1", "gpt": "gpt", "sovits": "sovits",
                   "frontend": "frontend", "references": {"reference": "references/000"} if refs else {},
                   "backend": {"preferred": backend}}
@@ -122,14 +172,17 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
             config["frontend_python"] = str(Path(frontend_python).resolve(strict=True))
         staged = temporary / "model"
         staged.mkdir()
-        for source, target in (("gpt", "gpt"), ("sovits", "acoustic"), ("frontend", "frontend")):
-            (prepared / source).rename(staged / target)
+        for source, target in ((prepared / "gpt", "gpt"), (acoustic, "acoustic"), (prepared / "frontend", "frontend")):
+            source.rename(staged / target)
         if refs:
             (staged / "references").mkdir()
             (prepared / "references/reference").rename(staged / "references/000")
         _write_manifest(staged, config, name=name or output.name)
-        from ._internal.diagnostics import check_prepared_packages
-        check_prepared_packages(staged)
+        from ._internal.diagnostics import check_prepared_packages, check_windows_packages
+        if backend in ("cpu", "directml"):
+            check_windows_packages(staged, experimental=experimental)
+        else:
+            check_prepared_packages(staged)
         staged.rename(output)
         model = Model.load(output)
         logger.info("模型准备完成，后续启动将复用缓存")
@@ -161,7 +214,7 @@ def prepare_reference(*, gpt, sovits, audio, text, frontend, official_source, py
     return output
 
 
-def convert_checkpoint(kind, checkpoint, output, *, official_source, python):
+def convert_checkpoint(kind, checkpoint, output, *, official_source, python, backend="cuda", experimental=None):
     """Publish one converted checkpoint only after its converter succeeds."""
     scripts = {"gpt": "convert_gpt.py", "sovits": "export_sovits_onnx.py"}
     script = Path(__file__).parent / "_internal/conversion" / scripts[kind]
@@ -174,5 +227,6 @@ def convert_checkpoint(kind, checkpoint, output, *, official_source, python):
         run_conversion([str(python), "-B", str(script), "--checkpoint", str(Path(checkpoint).resolve(strict=True)),
             "--official-source", str(source), "--output", str(staged)],
             env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1"))
-        staged.rename(output)
+        prepared = _prepare_backend(kind, staged, backend=backend, python=python, experimental=experimental)
+        prepared.rename(output)
     return output

@@ -304,7 +304,9 @@ def main(argv=None):
     for name in ("gpt", "sovits", "reference", "official-source", "python", "acoustic-python", "frontend-python", "language-model"):
         conversion.add_argument("--" + name, type=Path)
     conversion.add_argument("--backend", choices=("cpu", "directml", "cuda"),
-                            help="Preferred backend for newly converted models; defaults to cuda")
+                            help="Prepare execution resources for this backend; defaults to cuda")
+    conversion.add_argument("--experimental", type=Path,
+                            help="JSON runtime options; DirectML preparation uses capacity and device_id")
     conversion.add_argument("--reference-text")
     conversion.add_argument("--name")
     conversion.add_argument("--output", type=Path, required=True)
@@ -346,11 +348,17 @@ def main(argv=None):
 
 
 def run_product_command(args):
+    experimental = None
+    if args.experimental:
+        experimental = json.loads(args.experimental.read_text(encoding="utf-8"))
+        if not isinstance(experimental, dict):
+            raise ValueError("Experimental options must be a JSON object")
     if args.command == "convert":
         from .converter import convert, package_model
         raw = (args.gpt, args.sovits, args.reference, args.reference_text, args.official_source)
         if args.config:
-            if any(raw) or any((args.python, args.acoustic_python, args.frontend_python, args.language_model, args.backend)):
+            if any(raw) or any((args.python, args.acoustic_python, args.frontend_python, args.language_model,
+                               args.backend, args.experimental)):
                 raise ValueError("--config cannot be combined with raw conversion options")
             model = package_model(args.config, args.output, name=args.name)
         else:
@@ -360,14 +368,9 @@ def run_product_command(args):
                 reference_text=args.reference_text, official_source=args.official_source,
                 output=args.output, name=args.name, python=args.python,
                 acoustic_python=args.acoustic_python, frontend_python=args.frontend_python,
-                language_model=args.language_model, backend=args.backend or "cuda")
+                language_model=args.language_model, backend=args.backend or "cuda", experimental=experimental)
         print(json.dumps({"model": str(model.path), **model.info()}, ensure_ascii=False))
         return 0
-    experimental = None
-    if args.experimental:
-        experimental = json.loads(args.experimental.read_text(encoding="utf-8"))
-        if not isinstance(experimental, dict):
-            raise ValueError("Experimental options must be a JSON object")
     if args.command == "serve":
         if not 1 <= args.port <= 65535:
             raise ValueError("Port must be between 1 and 65535")

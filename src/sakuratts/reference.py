@@ -18,6 +18,7 @@ class ReferenceCache:
         self.engine = engine
         self.settings = settings
         self.audio_cache = OrderedDict()
+        self.text_cache = None
         runtime = engine._runtime
         self.identity = {kind + "_checkpoint_sha256": runtime.manifests[kind]["source"]["checkpoint_sha256"]
                          for kind in ("gpt", "sovits")}
@@ -107,13 +108,17 @@ class ReferenceCache:
         prompt = text.strip("\n")
         if prompt[-1] not in splits:
             prompt += profile.terminal
-        target = self.engine._runtime.frontend.segment(prompt, language)
+        # This cache belongs to one engine and its loaded frontend.
+        text_key = (prompt, language)
+        if self.text_cache is None or self.text_cache[0] != text_key:
+            self.text_cache = (text_key, self.engine._runtime.frontend.segment(prompt, language))
+        target = self.text_cache[1]
         phones = np.asarray(target["phones"], dtype=np.int64)
         bert = np.asarray(target["bert_features"], dtype=np.float32)
         phones.setflags(write=False)
         bert.setflags(write=False)
         # Acoustic/semantic audio features are independent of the transcript.
-        # Rebuild text features with the active frontend on every request.
+        # Keep each request's transcript identity separate from cached features.
         manifest = dict(base.manifest, identity=dict(base.manifest["identity"],
             reference_text=text, reference_language=language),
             reference={"prompt_text": prompt, "normalized_text": target["norm_text"]})

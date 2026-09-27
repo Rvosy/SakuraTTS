@@ -38,6 +38,7 @@ class InitialConversionCacheTests(unittest.TestCase):
         inference = Inference.__new__(Inference)
         inference.logger = Mock()
         inference._activate = Mock()
+        inference.experimental = None
         inference.settings = {
             "gpt_checkpoint": str(root / "gpt.ckpt"), "sovits_checkpoint": str(root / "sovits.pth"),
             "official_source": str(root / "runtime/preparation/official"),
@@ -94,6 +95,56 @@ class InitialConversionCacheTests(unittest.TestCase):
         data["files"]["python.exe"]["sha256"] = "updated-interpreter"
         manifest.write_text(json.dumps(data))
 
+    def test_initial_cache_separates_backends_and_directml_capacity_only(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.fixture(root)
+            inference = self.inference(root)
+            with patch("sakuratts.converter.convert", side_effect=lambda **kwargs: kwargs["output"].mkdir(parents=True)) as convert, \
+                    patch("sakuratts.engine.Model.load", side_effect=lambda path: path):
+                for backend, options, count in (
+                    ("cuda", None, 1), ("cpu", None, 2), ("cpu", {"threads": 3}, 2),
+                    ("directml", None, 3), ("directml", {"threads": 3, "device_id": 1}, 3),
+                    ("directml", {"capacity": 1024}, 4), ("directml", {"capacity": 1280}, 4)):
+                    with self.subTest(backend=backend, options=options):
+                        inference.settings["backend"] = backend
+                        inference.experimental = options
+                        inference._convert_initial()
+                        self.assertEqual(convert.call_count, count)
+                self.assertEqual([call.kwargs["backend"] for call in convert.call_args_list],
+                                 ["cuda", "cpu", "directml", "directml"])
+                self.assertEqual(convert.call_args.kwargs["experimental"], {"capacity": 1024})
+
+    def test_weight_cache_prepares_for_model_backend_and_explicit_override(self):
+        from sakuratts.model import Model
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.fixture(root)
+            inference = self.inference(root)
+            inference.engine = None
+            inference._log_weights = Mock()
+            inference.model = Model(root / "model.json", {"gpt": "gpt", "sovits": "sovits",
+                "frontend": "frontend", "backend": {"preferred": "directml"}})
+
+            def prepare(kind, _checkpoint, output, **_kwargs):
+                output.mkdir(parents=True)
+                (output / "manifest.json").write_text('{"format":"sakuratts-gpt-fp32-v1"}')
+
+            with patch("sakuratts.converter.convert_checkpoint", side_effect=prepare) as convert:
+                inference.set_weights("gpt", root / "gpt.ckpt")
+                self.assertEqual(convert.call_args.kwargs["backend"], "directml")
+                inference.experimental = {"capacity": 1280, "device_id": 1, "threads": 3}
+                inference.set_weights("gpt", root / "gpt.ckpt")
+                self.assertEqual(convert.call_count, 1)
+                inference.experimental = {"capacity": 1024}
+                inference.set_weights("gpt", root / "gpt.ckpt")
+                self.assertEqual(convert.call_count, 2)
+                self.assertEqual(convert.call_args.kwargs["experimental"], {"capacity": 1024})
+                inference.settings["backend"] = "cpu"
+                inference.set_weights("gpt", root / "gpt.ckpt")
+                self.assertEqual(convert.call_count, 3)
+                self.assertEqual(convert.call_args.kwargs["backend"], "cpu")
+
     def test_single_weight_cache_tracks_component_only_in_portable_mode(self):
         for portable in (False, True):
             for kind, name in (("gpt", "gpt.ckpt"), ("sovits", "sovits.pth")):
@@ -111,6 +162,7 @@ class InitialConversionCacheTests(unittest.TestCase):
                         inference.engine = None
                         inference._log_weights = Mock()
                         inference.model = SimpleNamespace(path=root / "model.json",
+                            backend="cuda",
                             runtime_config={"gpt": "gpt", "sovits": "sovits", "frontend": "frontend"})
                         with patch.dict(os.environ, {"SAKURATTS_BUNDLE_ROOT": str(root)} if portable else {}, clear=True):
                             inference.set_weights(kind, root / name)

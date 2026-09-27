@@ -33,9 +33,11 @@ def checked_file(root, name, spec):
     return path
 
 
-def check_windows_packages(config_path, *, backend=None, acoustic_fp16_acceptance="screened", profile=None):
+def check_windows_packages(config_path, *, backend=None, acoustic_fp16_acceptance="screened", profile=None,
+                           experimental=None):
     return _check_windows_packages(config_path, backend=backend,
-        acoustic_fp16_acceptance=acoustic_fp16_acceptance, profile=profile, runtime_selection=True)
+        acoustic_fp16_acceptance=acoustic_fp16_acceptance, profile=profile, runtime_selection=True,
+        experimental=experimental)
 
 
 def check_prepared_packages(config_path):
@@ -44,7 +46,7 @@ def check_prepared_packages(config_path):
 
 
 def _check_windows_packages(config_path, *, backend=None, acoustic_fp16_acceptance="screened", profile=None,
-                            runtime_selection):
+                            runtime_selection, experimental=None):
     """Check stored resources and identities without allocating model weights."""
     from sakuratts.backends.onnx.sovits import DIRECTML_FP16_KIND, read_manifest
 
@@ -55,7 +57,7 @@ def _check_windows_packages(config_path, *, backend=None, acoustic_fp16_acceptan
     backend = require_backend(model.backend if backend is None else backend)
     from sakuratts.profiles import resolve_profile, validate_runtime_precision
     if runtime_selection:
-        profile, options = resolve_profile(backend, profile)
+        profile, options = resolve_profile(backend, profile, experimental)
     else:
         options = None
     options = options or {}

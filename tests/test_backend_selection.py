@@ -27,6 +27,9 @@ class FakeRuntime:
     def load(self):
         self.loaded = True
 
+    def unload(self):
+        self.loaded = False
+
     def synthesize(self, text, **options):
         return array("h", [1, 2]), {"sample_rate": 32000, "text": text}
 

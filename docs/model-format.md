@@ -16,4 +16,4 @@ Python 可用 `Engine.load(model, backend="cuda")` 覆盖建议后端，CLI 使�
 
 内部包继续保留原 manifest、文件哈希、官方源码身份与检查点身份。顶层描述只组织加载位置，不替代内部校验。CPU 默认选择 INT8 GPT 与 FP32 声学，DirectML 默认选择 FP16 GPT 与全图 FP16 声学；CUDA 与 MLX 的默认精度不变。选择设备不会自动转换资源。
 
-`sakuratts convert --config OLD --output NEW` 把旧包复制到临时目录，保留后端建议值，校验待发布结果后再发布，目标目录必须不存在。旧 `sakuratts-windows-config-v1` 继续可读；其中外部包路径保留原语义。原始检查点转换使用 `--backend cpu` 或 `--backend directml` 设置新包的建议后端，先输出基础 FP32 资源；CPU INT8 与 AMD FP16 所需的附加资源仍须另行准备，具体步骤见 [CPU / DirectML 指南](cpu-amd.md)。
+`sakuratts convert --config OLD --output NEW` 把旧包复制到临时目录，保留后端建议值，校验待发布结果后再发布，目标目录必须不存在。旧 `sakuratts-windows-config-v1` 继续可读；其中外部包路径保留原语义。原始检查点转换使用 `--backend cpu` 或 `--backend directml` 准备对应公开档位的完整资源，并写入建议后端；CPU 与 AMD 分别发布模型目录。准备环境、AMD 设备执行检查和缓存用法见 [CPU / DirectML 指南](cpu-amd.md)。

@@ -13,6 +13,8 @@ Radeon 780M 的 Genie 前后复测、完整请求、内存和试听见 [Genie �
 
 上述 CPU 与 AMD 性能测量均来自 `onnxruntime-directml 1.24.4`，CPU 使用其中的 `CPUExecutionProvider`。单独安装 `cpu` extra 使用 `onnxruntime 1.30.0`；这些已保存的延迟数据不能直接视为 1.30.0 的实测结果。
 
+CPU ORT 1.30.0 与 DirectML ORT 1.24.4 的原始权重转换、短长句生成和切换失败恢复已另行实测，见[准备与恢复验证](../research/notes/backend-preparation-recovery-20260927.md)。该轮验证不作为新的性能对照。
+
 ## 安装运行环境
 
 以下命令在仓库根目录执行，以 Windows x64、Python 3.12 为例。使用独立环境，保留已有 Genie 或 CUDA 安装。
@@ -41,44 +43,24 @@ DirectML 版 ORT 同时提供 `CPUExecutionProvider`。同一解释器中只安�
 
 ## 准备模型
 
-当前公共路径使用 V2ProPlus 模型与准备好的参考条件。基础转换输出原始 FP32 GPT 包和 `sakuratts-sovits-onnx-v1` 整图声学包；它是后续精度导出的输入，不是完成所有运行资源准备的标志。
+当前公共路径使用 V2ProPlus。`convert --backend` 会准备所选后端的完整资源，检查成功后才发布模型目录。普通推理加载不会转换或覆写权重。
 
-已有完整官方源码、辅助模型和准备解释器时：
-
-```powershell
-sakuratts convert --backend cpu --gpt voices/model.ckpt --sovits voices/model.pth --reference voices/reference.wav --reference-text "参考音声です。" --official-source tools/GPT-SoVITS --python runtime/preparation/python.exe --output models/cpu-amd
-```
-
-示例路径替换为实际输入。CPU / AMD 基础转换不需要 CUDA 声学解释器；辅助模型必须事先存在，转换器不会自动下载。`--backend` 写入模型建议的执行设备，精度资源仍须按下述步骤准备。普通加载不会转换或覆写权重。
-
-先用包含 ONNX 与转换依赖的准备解释器导出共享的 FP32 ONNX 中间资源：
+已有官方源码、辅助模型和准备解释器时，按目标后端转换：
 
 ```powershell
-PREPARATION_PYTHON -m sakuratts._internal.conversion.export_gpt_onnx --gpt models/cpu-amd/gpt
+sakuratts convert --backend cpu --gpt voices/model.ckpt --sovits voices/model.pth --reference voices/reference.wav --reference-text "参考音声です。" --official-source tools/GPT-SoVITS --python runtime/preparation/python.exe --output models/voice-cpu
+sakuratts convert --backend directml --gpt voices/model.ckpt --sovits voices/model.pth --reference voices/reference.wav --reference-text "参考音声です。" --official-source tools/GPT-SoVITS --python runtime/preparation/python.exe --output models/voice-amd
 ```
 
-将 `PREPARATION_PYTHON` 换成准备环境的 Python 路径。导出新增 `gpt/onnx/`，保留原始权重。各精度资源通过 manifest 绑定原模型与转换来源；ONNX 运行时校验实际使用的图和 embedding 文件，不再扫描未使用的原始 GPT 权重归档。原始归档由准备工具或读取它的 NumPy 执行器校验。
+将示例路径替换为实际输入。准备环境需要转换依赖、ONNX Runtime 和辅助模型；辅助模型不会自动下载。可省略参考音频与转写，之后通过参考 API 准备。
 
-### CPU 资源
+CPU 转换生成 INT8 GPT sidecar 和 FP32 声学包。AMD 转换生成 FP16 Prefill、匹配容量的静态 Decode 图和全图 FP16 声学包，并在运行 `sakuratts` 的 DirectML 环境中执行声学准入检查。图导出仍在 `--python` 指定的准备解释器中完成，因此准备环境无需安装 DirectML。AMD 转换需要可用的目标显卡，初始化或执行检查失败时不发布模型目录。
 
-```powershell
-PREPARATION_PYTHON -m sakuratts._internal.conversion.export_gpt_onnx --gpt models/cpu-amd/gpt --precision int8
-```
+AMD 声学沿用 `finite` 准入，检查有限输出、重复性、公共 I/O 和 GPU 执行，并保存 FP32 误差筛查结果。输出位于声学包的 `experimental-directml-finite.json`；它是执行证据，不代表人工音质验收。加载时只检查已发布记录和实际消费文件的身份，不重跑准备实验，也不扫描 ONNX 推理未使用的原始 GPT 权重。
 
-此步骤生成 `gpt/onnx-int8/`。CPU 的 GPT 常量线性权重按通道 INT8 动态量化，图 I/O、KV、embedding 和采样 logits 保持 FP32；声学继续使用基础 FP32 包。量化可能改变生成序列和音频长度，需要结合试听检查发音与长句完整性。
+需要指定其他静态容量或非零适配器时，转换命令接受与推理相同的 `--experimental FILE`。例如文件内容为 `{"capacity": 2048, "device_id": 1}`，转换和推理均传入该文件。线程、驻留策略等参数只影响执行，不改变转换产物身份。默认仍使用本页开头的两套配置。
 
-### AMD 资源
-
-```powershell
-PREPARATION_PYTHON -m sakuratts._internal.conversion.export_gpt_onnx --gpt models/cpu-amd/gpt --precision fp16
-PREPARATION_PYTHON -m sakuratts._internal.conversion.export_gpt_directml --gpt models/cpu-amd/gpt --precision fp16 --capacity 1280
-```
-
-这两步生成 `gpt/onnx-fp16/` 和 `gpt/directml-fp16-cap1280/`。GPT 的浮点图 I/O 与 KV 使用 FP16；embedding 和采样使用 FP32。Prefill 与 Decode 使用独立 Session，前两次 Decode 由所选显卡的 Session 分配两组 GPU KV，之后交替读写。分配器选择与设备编号的原因见 [ADR 0006](adr/0006-device-precision-and-directml-kv.md#显卡选择与-kv-分配)。
-
-声学另需有独立 DirectML 执行记录的全图 FP16 包，不能用仅转换声码器的包代替。转换、执行检查和已有候选的来源见[独立精度实验](../research/notes/cpu-amd-precision-listening-20260927.md)。模型描述中的 `acoustic` 指向模型目录内的该候选子目录；保留指向原 FP32 声学包的 CPU 模型描述。模型路径规则见[模型格式](model-format.md)。
-
-AMD 使用 `finite` 准入：发布实验记录时检查有限输出、I/O、重复性和 GPU 执行，原 FP32 误差筛查结果继续保留。加载时校验已发布记录、对应后端及实际图和权重的文件身份；CPU 或 CUDA 的执行记录不能代替 DirectML 记录。历史测试的线程数、CPU arena 和适配器序号是测量条件，不限制后续资源选择。FP16 的模型范围不要求整数索引、公共声学 I/O、文本处理和采样全部改成半精度；执行成功也不等于音质验收。
+CPU 与 AMD 的声学精度不同，当前分别发布模型目录。使用同一对原始权重启动 HTTP 服务时，转换缓存按后端和 AMD 静态容量区分，后续启动复用对应产物；不需要手工修改模型 JSON 或调用内部导出工具。切换原始 GPT / SoVITS 权重也会先补齐当前后端的资源。
 
 ## 生成音频
 
@@ -101,7 +83,7 @@ Python 使用同一套选择：
 ```python
 from sakuratts import Engine
 
-with Engine.load("models/cpu-amd/model-amd.json", backend="directml") as engine:
+with Engine.load("models/voice-amd", backend="directml") as engine:
     audio = engine.synthesize("こんにちは。")
     audio.save("outputs/amd-python.wav")
     print(audio.report["gpt_device"], audio.report["acoustic_device"])
@@ -115,7 +97,7 @@ with Engine.load("models/cpu-amd/model-amd.json", backend="directml") as engine:
 
 ```yaml
 sakuratts:
-  model: models/cpu-amd/model-amd.json
+  model: models/voice-amd
   backend: directml
   profile: fp16
 ```
@@ -146,7 +128,7 @@ sakuratts doctor --backend directml
 
 ```yaml
 sakuratts:
-  model: models/cpu-amd/model-amd.json
+  model: models/voice-amd
   backend: directml
   runtime_options:
     device_id: 1

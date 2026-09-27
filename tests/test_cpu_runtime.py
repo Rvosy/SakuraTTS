@@ -95,6 +95,117 @@ class CPURuntimeTests(unittest.TestCase):
             "    enable_cpu_mem_arena: true\n    policy: " + policy + "\n", encoding="utf-8")
         return path
 
+    def replacement_acoustic(self):
+        package = self.root / "replacement-sovits"
+        package.mkdir()
+        manifest = json.loads((self.root / "sovits/manifest.json").read_text(encoding="utf-8"))
+        manifest["format"] = "sakuratts-sovits-onnx-v1"
+        manifest["source"]["checkpoint_sha256"] = "replacement"
+        (package / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        return package
+
+    def speech_request(self, inference):
+        with patch.object(inference.references, "resolve", return_value=self.reference):
+            return inference.tts(dict(text="test", text_lang="ja", ref_audio_path="reference.wav",
+                prompt_lang="ja", prompt_text="reference", seed=1234, top_k=15, temperature=1.,
+                repetition_penalty=1.35, text_split_method="cut0", fragment_interval=0., split_bucket=False))
+
+    def test_failed_switch_releases_candidate_before_restoring_previous_audio(self):
+        with contextlib.closing(Inference(self.config, backend="cpu")) as inference:
+            before = self.speech_request(inference)
+            previous, references = inference.engine, inference.references
+            inference.reference_audio = "reference.wav"
+            inference.settings["sovits_checkpoint"] = "previous.pth"
+            package = self.replacement_acoustic()
+            candidate_frontend = Mock(text=Frontend(), profile={"implementation": "fixture"})
+            self.load_frontend.return_value = candidate_frontend
+            failure = RuntimeError("candidate out of memory")
+
+            def load_acoustic(path, **options):
+                if path == package:
+                    raise failure
+                # The old pair and the half-loaded candidate must be gone first.
+                for gpt in self.gpts[:-1]:
+                    gpt.close.assert_called_once()
+                self.acoustics[0].close.assert_called_once()
+                return self.make_acoustic(path, **options)
+
+            self.acoustic_loader.side_effect = load_acoustic
+            with self.assertRaises(RuntimeError) as caught:
+                inference.set_weights("sovits", package)
+            self.assertIs(caught.exception, failure)
+            self.assertIs(inference.engine, previous)
+            self.assertIs(inference.references, references)
+            self.assertEqual(inference.reference_audio, "reference.wav")
+            self.assertEqual(inference.settings["sovits_checkpoint"], "previous.pth")
+            self.frontend.close.assert_not_called()
+            candidate_frontend.close.assert_called_once()
+            after = self.speech_request(inference)
+            np.testing.assert_array_equal(after.pcm, before.pcm)
+            self.assertEqual(after.report["reference_identity"], before.report["reference_identity"])
+
+    def test_failed_restore_reports_no_loaded_model_and_allows_later_switch(self):
+        with contextlib.closing(Inference(self.config, backend="cpu")) as inference:
+            package = self.replacement_acoustic()
+            candidate_frontend = Mock(text=Frontend(), profile={"implementation": "fixture"})
+            self.load_frontend.return_value = candidate_frontend
+            failure = RuntimeError("candidate out of memory")
+            self.acoustic_loader.side_effect = [failure, FileNotFoundError("old acoustic graph removed")]
+            with self.assertRaises(RuntimeError) as caught:
+                inference.set_weights("sovits", package)
+            self.assertIs(caught.exception, failure)
+            self.assertTrue(any("old acoustic graph removed" in note for note in failure.__notes__))
+            self.assertIsNone(inference.info())
+            self.assertIsNone(inference.references)
+            for model in self.gpts + self.acoustics:
+                model.close.assert_called_once()
+            self.frontend.close.assert_called_once()
+            candidate_frontend.close.assert_called_once()
+            with self.assertRaisesRegex(ValueError, "Model weights are not loaded"):
+                inference.set_reference_audio("reference.wav")
+            self.acoustic_loader.side_effect = self.make_acoustic
+            self.load_frontend.return_value = Mock(text=Frontend(), profile={"implementation": "fixture"})
+            inference.set_weights("sovits", package)
+            self.assertEqual(inference.info()["backend"], "cpu")
+
+    def test_incompatible_switch_keeps_loaded_weights_and_success_releases_old_frontend(self):
+        with contextlib.closing(Inference(self.config, backend="cpu")) as inference:
+            package = self.replacement_acoustic()
+            path = package / "manifest.json"
+            manifest = json.loads(path.read_text(encoding="utf-8"))
+            manifest["source"]["official_commit"] = "another source"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            previous = inference.engine
+            with self.assertRaisesRegex(ValueError, "source identities do not match"):
+                inference.set_weights("sovits", package)
+            self.assertIs(inference.engine, previous)
+            for model in self.gpts + self.acoustics:
+                model.close.assert_not_called()
+            self.assertEqual(self.speech_request(inference).report["status"], "completed")
+            manifest["source"]["official_commit"] = "source"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            self.load_frontend.return_value = Mock(text=Frontend(), profile={"implementation": "fixture"})
+            inference.set_weights("sovits", package)
+            self.assertIsNot(inference.engine, previous)
+            self.frontend.close.assert_called_once()
+            self.assertEqual(inference.references.identity["sovits_checkpoint_sha256"], "replacement")
+
+    def test_previous_frontend_close_failure_releases_loaded_candidate(self):
+        with contextlib.closing(Inference(self.config, backend="cpu")) as inference:
+            package = self.replacement_acoustic()
+            candidate_frontend = Mock(text=Frontend(), profile={"implementation": "fixture"})
+            self.load_frontend.return_value = candidate_frontend
+            failure = RuntimeError("old frontend worker did not exit")
+            self.frontend.close.side_effect = failure
+            with self.assertRaises(RuntimeError) as caught:
+                inference.set_weights("sovits", package)
+            self.assertIs(caught.exception, failure)
+            self.assertIsNone(inference.info())
+            self.assertIsNone(inference.references)
+            for model in self.gpts + self.acoustics:
+                model.close.assert_called_once()
+            candidate_frontend.close.assert_called_once()
+
     def test_public_backends_select_their_gpt_and_requested_acoustic_device(self):
         for backend, adapter in (("cpu", 0), ("directml", 2)):
             self.prepare_acoustic(backend)

@@ -210,10 +210,48 @@ class Inference:
         candidate = Engine.load(model, experimental=self.experimental, load_references=False, **options)
         try:
             references = ReferenceCache(candidate, self.settings)
-            self.close()
+        except BaseException as error:
+            try:
+                candidate.close()
+            except BaseException as cleanup_error:
+                error.add_note(f"Candidate cleanup failed: {cleanup_error!r}")
+            raise
+        previous = self.engine
+        try:
+            # Keep the current frontend and reference cache until the new pair loads.
+            if previous is not None:
+                previous._runtime.unload()
             candidate._runtime.load()
-        except BaseException:
-            candidate.close()
+        except BaseException as error:
+            try:
+                candidate.close()
+            except BaseException as cleanup_error:
+                error.add_note(f"Candidate cleanup failed: {cleanup_error!r}")
+                try:
+                    self.close()
+                except BaseException as close_error:
+                    error.add_note(f"Previous runtime cleanup failed: {close_error!r}")
+                raise error
+            if previous is not None:
+                try:
+                    previous._runtime.load()
+                except BaseException as restore_error:
+                    error.add_note(f"Previous model restore failed: {restore_error!r}")
+                    self.logger.error("模型切换失败，旧模型也未能恢复: %s", restore_error)
+                    try:
+                        self.close()
+                    except BaseException as cleanup_error:
+                        error.add_note(f"Previous runtime cleanup failed: {cleanup_error!r}")
+                else:
+                    self.logger.warning("模型切换失败，已恢复原模型")
+            raise
+        try:
+            self.close()
+        except BaseException as error:
+            try:
+                candidate.close()
+            except BaseException as cleanup_error:
+                error.add_note(f"Candidate cleanup failed: {cleanup_error!r}")
             raise
         self.engine = candidate
         self.model = model
@@ -247,11 +285,13 @@ class Inference:
     def _convert_initial(self):
         import hashlib
         import json
-        from .converter import convert
+        from .converter import convert, _preparation_identity
         from ._internal.portable import bundle_root
         from ._internal.reference_condition import sha256_file
         options = self._conversion_settings()
+        backend = self.settings.get("backend", "cuda")
         identity = {kind: sha256_file(self.settings[kind + "_checkpoint"]) for kind in ("gpt", "sovits")}
+        identity["target"] = _preparation_identity(backend, self.experimental)
         identity["source"] = sha256_file(Path(options["official_source"]) / "GPT_SoVITS/TTS_infer_pack/TTS.py")
         portable_root = bundle_root()
         if portable_root is None:
@@ -270,7 +310,7 @@ class Inference:
                   acoustic_python=self.settings.get("acoustic_python"),
                   frontend_python=self.settings.get("frontend_python"),
                   language_model=self.settings.get("language_model"),
-                  backend=self.settings.get("backend", "cuda"), **options)
+                  backend=backend, experimental=self.experimental, **options)
         else:
             self.logger.info("复用 GPT / SoVITS 转换缓存")
         self._activate(Model.load(output))
@@ -278,7 +318,7 @@ class Inference:
     def set_weights(self, kind, weights_path):
         import hashlib
         import json
-        from .converter import convert_checkpoint
+        from .converter import convert_checkpoint, _preparation_identity
         from ._internal.portable import bundle_root
         from ._internal.reference_condition import sha256_file
         path = Path(weights_path).resolve(strict=True)
@@ -294,6 +334,8 @@ class Inference:
             script = "convert_gpt.py" if kind == "gpt" else "export_sovits_onnx.py"
             converter_hash = sha256_file(Path(__file__).parent / "_internal/conversion" / script)
             identity = digest + source_hash + kind + converter_hash
+            backend = self.settings.get("backend", self.model.backend if self.model is not None else "cuda")
+            identity += json.dumps(_preparation_identity(backend, self.experimental), sort_keys=True)
             portable_root = bundle_root()
             if portable_root is not None:
                 identity += sha256_file(portable_root / "runtime/preparation/preparation-manifest.json")
@@ -301,7 +343,7 @@ class Inference:
             converted = Path(self.settings.get("cache_dir", ".cache/sakuratts")) / "weights" / key
             if not converted.exists():
                 self.logger.info("首次转换 %s 权重  %s", kind.upper(), path.name)
-                convert_checkpoint(kind, path, converted, **options)
+                convert_checkpoint(kind, path, converted, backend=backend, experimental=self.experimental, **options)
             checkpoint = str(path)
             path = converted
         else:

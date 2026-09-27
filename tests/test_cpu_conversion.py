@@ -1,4 +1,4 @@
-"""CPU/DirectML conversion publishes shared FP32 resources under the chosen backend."""
+"""CPU/DirectML conversion publishes the selected backend's execution resources."""
 
 import contextlib
 import io
@@ -13,8 +13,9 @@ from unittest.mock import patch
 sys.path[:0] = [str(Path(__file__).resolve().parents[1] / "src"), str(Path(__file__).resolve().parent)]
 from sakuratts import Model
 from sakuratts.cli import main
-from sakuratts.converter import convert, package_model
+from sakuratts.converter import convert, convert_checkpoint, package_model, _preparation_identity
 from sakuratts.engine import Inference
+from sakuratts.backends.directml import static_gpt
 from sakuratts._internal.reference_condition import sha256_file
 from test_backend_selection import FakeRuntime
 
@@ -37,8 +38,20 @@ class CPUConversionTests(unittest.TestCase):
                     python=root / "python.exe", output=root / "model")
 
     def run_conversion(self, command, **_kwargs):
-        output = Path(command[command.index("--output") + 1])
         script = Path(command[2]).name
+        if script == "prepare_backend.py":
+            package = Path(command[command.index("--gpt") + 1])
+            backend = command[command.index("--backend") + 1]
+            (package / (backend + "-ready")).write_text("prepared", encoding="utf-8")
+            return
+        output = Path(command[command.index("--output") + 1])
+        if script == "validate_sovits_directml.py":
+            candidate = Path(command[command.index("--candidate") + 1])
+            manifest = json.loads((candidate / "manifest.json").read_text(encoding="utf-8"))
+            manifest["experimental_validations"] = {"directml": {"file": "finite.json"}}
+            (candidate / "finite.json").write_text('{"engineering_screen":{"passed":false}}', encoding="utf-8")
+            (candidate / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            return
         source = {"official_commit": "test-source", "checkpoint_sha256": "test-checkpoint"}
         if script == "prepare_windows_resources.py":
             output = output / "frontend"
@@ -55,11 +68,22 @@ class CPUConversionTests(unittest.TestCase):
             weights = output / "weights.bin"
             weights.write_bytes(script.encode())
             manifest = {"source": source, "dtype": "float32", "config": {"model": {"version": "v2ProPlus"}}}
+            if script == "export_sovits_fp16.py":
+                manifest.update(dtype="float16", precision={"fp16_scope": "all"})
             if script == "convert_gpt.py":
                 manifest.update(format="sakuratts-gpt-fp32-v1", architecture="gpt-sovits-ar-postnorm-relu",
                                 weights={"file": weights.name, "bytes": weights.stat().st_size,
                                          "sha256": sha256_file(weights)})
         (output / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    @staticmethod
+    def read_gpt(package, precision, capacity=None):
+        backend = "cpu" if precision == "int8" else "directml"
+        (package / (backend + "-ready")).read_text(encoding="utf-8")
+        metadata = {"precision": precision, "cache": "test-cache"}
+        if backend == "cpu":
+            return {}, metadata, package / "graph.onnx", None
+        return metadata, package / "graph.onnx", None
 
     def test_conversion_and_repackaging_check_selected_backend_before_publication(self):
         for backend in ("cpu", "directml"):
@@ -75,17 +99,21 @@ class CPUConversionTests(unittest.TestCase):
 
                 selected = backend
                 with patch("sakuratts.converter.run_conversion", side_effect=self.run_conversion) as exported, \
-                        patch("sakuratts.backends.onnx.sovits.read_manifest", side_effect=lambda path:
+                        patch("sakuratts.backends.onnx.sovits.read_manifest", side_effect=lambda path, **kwargs:
                               (json.loads((path / "manifest.json").read_text(encoding="utf-8")), None)), \
                         patch("sakuratts._internal.diagnostics.check_worker_imports", side_effect=probe) as checked, \
+                        patch("sakuratts.backends.cpu.onnx_gpt.read_sidecar", side_effect=self.read_gpt), \
+                        patch("sakuratts.backends.directml.static_gpt.read_static_sidecar", side_effect=self.read_gpt), \
                         patch("sakuratts.backends.cuda.runtime.configure_cuda",
                               side_effect=AssertionError("CPU/DirectML publication must not initialize CUDA")):
                     model = convert(**options, backend=backend)
                     packed = package_model(model.path, root / "packed")
-                self.assertEqual(exported.call_count, 3)
                 self.assertEqual(checked.call_count, 2)
                 self.assertEqual(model.backend, backend)
                 self.assertEqual(packed.backend, backend)
+                self.assertTrue((root / "packed/gpt" / (backend + "-ready")).is_file())
+                if backend == "directml":
+                    self.assertTrue((root / "packed/acoustic/finite.json").is_file())
                 self.assertEqual((root / "model/acoustic/weights.bin").read_bytes(),
                                  (root / "packed/acoustic/weights.bin").read_bytes())
                 self.assertFalse(list(root.glob(".sakuratts-*")))
@@ -119,7 +147,7 @@ class CPUConversionTests(unittest.TestCase):
         self.assertEqual(error.exception.code, 1)
         package.assert_not_called()
 
-    def test_service_forwards_initial_backend_and_reuses_cache_when_backend_changes(self):
+    def test_service_prepares_and_caches_each_selected_backend(self):
         for initial, switched in (("cpu", "directml"), ("directml", "cpu")):
             with self.subTest(initial=initial), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
@@ -151,19 +179,56 @@ class CPUConversionTests(unittest.TestCase):
                 with patch("sakuratts._internal.portable.bundle_root", return_value=None), \
                         patch("sakuratts.converter.convert", side_effect=publish) as conversion, \
                         patch("sakuratts.backends.create_runtime", side_effect=create) as runtime:
-                    for backend in (initial, switched):
+                    for backend in (initial, switched, initial):
                         settings["backend"] = backend
                         config.write_text(json.dumps({"sakuratts": settings, "custom": custom}), encoding="utf-8")
                         inference = Inference(tts_config=config)
                         try:
                             self.assertEqual(inference.info()["backend"], backend)
-                            self.assertEqual(inference.model.backend, initial)
+                            self.assertEqual(inference.model.backend, backend)
                         finally:
                             inference.close()
-                    conversion.assert_called_once()
-                    self.assertEqual(conversion.call_args.kwargs["backend"], initial)
-                    self.assertEqual([call.kwargs["backend"] for call in runtime.call_args_list], [initial, switched])
-                    self.assertEqual(len(list((root / "cache/models").iterdir())), 1)
+                    self.assertEqual([call.kwargs["backend"] for call in conversion.call_args_list], [initial, switched])
+                    self.assertEqual([call.kwargs["backend"] for call in runtime.call_args_list], [initial, switched, initial])
+                    self.assertEqual(len(list((root / "cache/models").iterdir())), 2)
+
+    def test_target_preparation_failure_does_not_publish(self):
+        for failed in ("prepare_backend.py", "export_sovits_fp16.py", "validate_sovits_directml.py"):
+            with self.subTest(failed=failed), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                options = self.inputs(root)
+
+                def run(command, **kwargs):
+                    self.run_conversion(command, **kwargs)
+                    if Path(command[2]).name == failed:
+                        raise RuntimeError("target preparation failed")
+
+                with patch("sakuratts.converter.run_conversion", side_effect=run):
+                    with self.assertRaisesRegex(RuntimeError, "target preparation failed"):
+                        convert(**options, backend="directml")
+                self.assertFalse(options["output"].exists())
+                self.assertFalse(list(root.glob(".sakuratts-*")))
+
+    def test_single_checkpoint_prepares_selected_resources_before_publication(self):
+        for backend in ("cpu", "directml"):
+            for kind in ("gpt", "sovits"):
+                with self.subTest(backend=backend, kind=kind), tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    options = self.inputs(root)
+                    with patch("sakuratts.converter.run_conversion", side_effect=self.run_conversion):
+                        path = convert_checkpoint(kind, options[kind], options["output"],
+                            official_source=options["official_source"], python=options["python"], backend=backend)
+                    if kind == "gpt":
+                        self.assertTrue((path / (backend + "-ready")).is_file())
+                    elif backend == "directml":
+                        self.assertTrue((path / "finite.json").is_file())
+                    self.assertFalse(list(root.glob(".sakuratts-*")))
+
+    def test_preparation_cache_varies_with_capacity_but_not_execution_tuning(self):
+        base = _preparation_identity("directml")
+        self.assertEqual(base, _preparation_identity("directml", {"threads": 4, "device_id": 1}))
+        self.assertNotEqual(base, _preparation_identity("directml", {"capacity": 2048}))
+        self.assertNotEqual(base, _preparation_identity("cpu"))
 
 
 if __name__ == "__main__":

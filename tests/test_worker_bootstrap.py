@@ -77,7 +77,9 @@ print(json.dumps({'same_package':True,'search_path_unchanged':True}))
         self.assertTrue(self.isolated(code, self.package)["same_package"])
 
     def test_worker_script_help_uses_its_interpreter_numpy(self):
-        for name in ("ort_worker.py", "classic_japanese_worker.py"):
+        for name in ("ort_worker.py", "classic_japanese_worker.py", "conversion/prepare_backend.py",
+                     "conversion/export_gpt_onnx.py", "conversion/export_sovits_fp16.py",
+                     "conversion/validate_sovits_directml.py"):
             with self.subTest(entry=name):
                 result = subprocess.run([sys.executable, "-I", "-B", str(self.package / "_internal" / name), "--help"],
                     cwd=self.root, capture_output=True, text=True, encoding="utf-8", timeout=30)
