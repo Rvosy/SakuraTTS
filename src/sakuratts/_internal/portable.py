@@ -21,6 +21,8 @@ def model_config(config):
     if root is None:
         return config
     config = dict(config)
+    for name in ("acoustic_python", "frontend_python"):
+        config.pop(name, None)
     for role, path in worker_paths(root).items():
         config[role + "_python"] = str(path)
     config.pop("main_dictionary", None)

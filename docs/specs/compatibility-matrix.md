@@ -34,7 +34,7 @@
 | 完整整合包 | [2026-09-22 构建与验收](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/portable-compact-20260922.md)：原始权重、新参考、缓存、搬迁和解压校验 | 第二台干净机器、最低驱动、峰值显存、音质及分发材料 |
 | 内容检查 | [24 条 Windows 音频的 ASR 记录](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/2026-09-20-windows-asr.md) | 报告中的内容疑点与人工复听 |
 
-CUDA 实测设备为 RTX 5060 8 GB；CPU / DirectML 已在 Ryzen 7 7840HS / Radeon 780M 上执行 N.A.V.I V2ProPlus 日文模型，配置与限制见 [CPU / AMD 指南](../cpu-amd.md)。Apple 公共入口仍待真机验收；其他模型家族、语义 Token 流式、并行批量与宿主集成尚未完成。CPU / DirectML / MLX 目前通过源码安装，尚未提供对应整合包。
+CUDA 实测设备为 RTX 5060 8 GB；CPU / DirectML 已在 Ryzen 7 7840HS / Radeon 780M 上执行 N.A.V.I V2ProPlus 日文模型，配置与限制见 [CPU / AMD 指南](../cpu-amd.md)。Apple 公共入口仍待真机验收；其他模型家族、语义 Token 流式、并行批量与宿主集成尚未完成。CPU / DirectML 的 Windows 共包构建入口见[整合包指南](../portable-bundle.md)，代码支持与最终包验收分别记录；MLX 目前通过源码安装。
 
 ## 历史证据与更新方式
 

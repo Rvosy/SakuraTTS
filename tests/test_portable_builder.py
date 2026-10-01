@@ -44,7 +44,7 @@ class PortableBuilderTests(unittest.TestCase):
             recipe = Path(temporary) / "recipe.toml"
             for original, replacement, error in (
                 ('"windows-x64"', '"macos-arm64"', "windows-x64"),
-                ('"cuda"', '"cpu"', "backend cuda"),
+                ('"cuda"', '"unknown"', "backend cuda"),
                 ('["ja"]', '["ja", "zh"]', "language components"),
                 ('["http"]', '["webui"]', "service component"),
             ):
@@ -52,6 +52,55 @@ class PortableBuilderTests(unittest.TestCase):
                     recipe.write_text(source.replace(original, replacement), encoding="utf-8")
                     with self.assertRaisesRegex(ValueError, error):
                         builder.read_recipe(recipe)
+
+    def test_cpu_amd_recipe_selects_one_ort_and_no_cuda_workers(self):
+        root = Path(__file__).resolve().parents[1]
+        recipe = builder.read_recipe(root / "packaging/recipes/windows-cpu-amd-ja.toml")
+        project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+        names = {builder.Requirement(value).name for value in builder.main_requirements(project, recipe)}
+        self.assertIn("onnxruntime-directml", names)
+        self.assertIn("pyopenjtalk-plus", names)
+        self.assertFalse({"onnxruntime", "onnxruntime-gpu", "cupy-cuda12x", "torch"} & names)
+        self.assertEqual(recipe["workers"], {})
+
+    def test_python312_and_redistributable_crt_are_copied_without_base_packages(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            base, crt = root / "base", root / "crt"
+            for parent, names in ((base, ("python.exe", "python3.dll", "python312.dll", "LICENSE.txt",
+                                         "Lib/os.py", "Lib/site-packages/private.py", "DLLs/_ssl.pyd")),
+                                  (crt, ("msvcp140.dll", "msvcp140_1.dll", "vcruntime140.dll", "vcruntime140_1.dll"))):
+                for name in names:
+                    path = parent / name
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_bytes(b"fixture")
+            plan = builder.Plan()
+            stem, version, paths = builder.add_interpreter(plan, base, "runtime/main", crt)
+            self.assertEqual((stem, version), ("python312", "3.12"))
+            self.assertIn("runtime/main/msvcp140_1.dll", plan.files)
+            self.assertIn("runtime/main/DLLs/_ssl.pyd", plan.files)
+            self.assertNotIn("runtime/main/Lib/site-packages/private.py", plan.files)
+
+    def test_cpu_amd_assembly_generates_relocatable_backend_templates(self):
+        root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary = Path(temporary)
+            wheel = temporary / "product.whl"
+            with zipfile.ZipFile(wheel, "w") as archive:
+                archive.writestr("sakuratts/__init__.py", "")
+            plan = builder.Plan()
+            plan.python_stem = "python312"
+            plan.release = dict(target="windows-x64", backend="directml", backends=["cpu", "directml"],
+                                languages=["ja"], services=["http"], preparation=False)
+            args = SimpleNamespace(root=root, output=temporary / "bundle", wheel=wheel, ffmpeg="ffmpeg")
+            with patch.object(builder.subprocess, "run", return_value=SimpleNamespace(stderr="", stdout="license")):
+                builder.assemble(args, plan)
+            self.assertTrue((args.output / "runtime/main/python312._pth").exists())
+            self.assertEqual(json.loads((args.output / "runtime/portable.json").read_text())["workers"], {})
+            for backend in ("cpu", "directml"):
+                config = (args.output / ("configs/tts_infer." + backend + ".example.yaml")).read_text()
+                self.assertIn("backend: " + backend, config)
+                self.assertNotIn("cuda", config)
 
     def test_library_assembly_records_workers_and_omits_http_launcher(self):
         root = Path(__file__).resolve().parents[1]

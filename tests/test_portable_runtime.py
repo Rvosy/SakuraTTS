@@ -1,6 +1,7 @@
 """Portable installation bindings must not retain exporter environment paths."""
 
 import json
+import importlib.util
 import os
 from pathlib import Path
 import sys
@@ -14,6 +15,44 @@ from sakuratts._internal.diagnostics import read_windows_config
 
 
 class PortableRuntimeTests(unittest.TestCase):
+    def test_launcher_keeps_cuda_libraries_and_accepts_unicode_cpu_amd_root(self):
+        path = Path(__file__).resolve().parents[1] / "scripts/portable/launcher.py"
+        spec = importlib.util.spec_from_file_location("portable_launcher", path)
+        launcher = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(launcher)
+        with tempfile.TemporaryDirectory() as temporary:
+            for backend, folder in (("cuda", "cuda"), ("directml", "cpu-amd"), ("directml", "樱花 空格")):
+                root = Path(temporary) / folder
+                (root / "runtime").mkdir(parents=True)
+                (root / "runtime/portable.json").write_text(json.dumps({"release": {"backend": backend}}))
+                external_temp = str(Path(temporary) / "中文用户/Temp")
+                external_tmp = str(Path(temporary) / "另一目录/Tmp")
+                with patch.object(launcher, "ROOT", root), \
+                     patch.object(sys, "executable", str(root / "runtime/main/python.exe")), \
+                     patch.dict(os.environ, {"TEMP": external_temp, "TMP": external_tmp}, clear=True), \
+                     patch.object(launcher.os, "chdir"):
+                    launcher.configure()
+                    self.assertEqual(os.environ["SAKURATTS_BUNDLE_ROOT"], str(root))
+                    self.assertEqual(str(root / "runtime/acoustic/cuda") in os.environ["PATH"], backend == "cuda")
+                    self.assertEqual("CUDA_PATH" in os.environ, backend == "cuda")
+                    if str(root).isascii():
+                        self.assertTrue((root / "cache/tmp").is_dir())
+                        self.assertEqual(os.environ["TEMP"], str(root / "cache/tmp"))
+                        self.assertEqual(os.environ["TMP"], str(root / "cache/tmp"))
+                    else:
+                        self.assertEqual(os.environ["TEMP"], external_temp)
+                        self.assertEqual(os.environ["TMP"], external_tmp)
+
+    def test_in_process_bundle_drops_exporter_workers(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "runtime").mkdir()
+            (root / "runtime/portable.json").write_text(json.dumps({"format": "sakuratts-portable-v1", "workers": {}}))
+            with patch.dict(os.environ, SAKURATTS_BUNDLE_ROOT=str(root)):
+                result = model_config({"gpt": "gpt", "frontend_python": "Z:/old/python.exe",
+                                       "acoustic_python": "Z:/old/python.exe"})
+            self.assertEqual(result, {"gpt": "gpt"})
+
     def preparation_bundle(self, root):
         preparation = root / "runtime/preparation"
         (preparation / "official/GPT_SoVITS/pretrained_models/fast_langdetect").mkdir(parents=True)

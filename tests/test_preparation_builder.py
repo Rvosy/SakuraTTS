@@ -114,6 +114,19 @@ class PreparationBuilderTests(unittest.TestCase):
             self.assertNotIn("python39._pth", plan.files)
             self.assertNotIn("Lib/site-packages/unrelated.py", plan.files)
 
+    def test_language_model_can_come_from_an_explicit_local_cache(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for directory in builder.SOURCE_DIRECTORIES:
+                put(root, directory + "/example.py")
+            for name in (*builder.SOURCE_FILES, *builder.AUXILIARY_FILES[:-1]):
+                put(root, name)
+            language = put(root, "local-cache/lid.176.bin", "cached-language-model")
+            plan = builder.Plan()
+            builder.add_official_sources(plan, root, language)
+            row = plan.files["official/" + builder.AUXILIARY_FILES[-1]]
+            self.assertEqual(row["sha256"], builder.digest(language))
+
     def test_local_patch_override_pins_both_original_and_modified_file(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

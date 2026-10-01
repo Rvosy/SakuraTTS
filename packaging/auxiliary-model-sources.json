@@ -1,0 +1,65 @@
+{
+  "format": "sakuratts-auxiliary-sources-v1",
+  "resources": [
+    {
+      "name": "hubert-config",
+      "url": "https://huggingface.co/lj1995/GPT-SoVITS/resolve/336b2ec4e8d4ac74740798dd40af44e74659ecaf/chinese-hubert-base/config.json",
+      "bytes": 1449,
+      "sha256": "c3e5060a1277e0f078cc6be9da4528a605dba6ece93018981fe2c820e5c7b103",
+      "license_declaration": "MIT in GPT-SoVITS model repository card",
+      "redistribution_status": "upstream declaration recorded; weight-specific attribution review pending"
+    },
+    {
+      "name": "hubert-preprocessor",
+      "url": "https://huggingface.co/lj1995/GPT-SoVITS/resolve/336b2ec4e8d4ac74740798dd40af44e74659ecaf/chinese-hubert-base/preprocessor_config.json",
+      "bytes": 212,
+      "sha256": "dcd684124d06722947939d41ea6ae58dbf10968c60a11a29f23ddc602c64a29b",
+      "license_declaration": "MIT in GPT-SoVITS model repository card",
+      "redistribution_status": "upstream declaration recorded; weight-specific attribution review pending"
+    },
+    {
+      "name": "hubert",
+      "url": "https://huggingface.co/lj1995/GPT-SoVITS/resolve/336b2ec4e8d4ac74740798dd40af44e74659ecaf/chinese-hubert-base/pytorch_model.bin?download=true",
+      "bytes": 188811417,
+      "sha256": "24164f129c66499d1346e2aa55f183250c223161ec2770c0da3d3b08cf432d3c",
+      "license_declaration": "MIT in GPT-SoVITS model repository card",
+      "redistribution_status": "upstream declaration recorded; weight-specific attribution review pending"
+    },
+    {
+      "name": "sv",
+      "url": "https://huggingface.co/lj1995/GPT-SoVITS/resolve/336b2ec4e8d4ac74740798dd40af44e74659ecaf/sv/pretrained_eres2netv2w24s4ep4.ckpt?download=true",
+      "bytes": 107528697,
+      "sha256": "4f5a0bf73c61eb41b174e1bb54e7ee3c83233892be8e0af1f187024e8e581a35",
+      "license_declaration": "MIT in GPT-SoVITS model repository card",
+      "redistribution_status": "upstream declaration recorded; weight-specific attribution review pending"
+    },
+    {
+      "name": "fasttext",
+      "url": "https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin",
+      "bytes": 131266198,
+      "sha256": "7e69ec5451bc261cc7844e49e4792a85d7f09c06789ec800fc4a44aec362764e",
+      "license": "CC-BY-SA-3.0",
+      "attribution": "fastText language identification model, Facebook AI Research; trained on Wikipedia, Tatoeba and SETimes",
+      "modified": false,
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0/"
+    },
+    {
+      "name": "model-card",
+      "url": "https://huggingface.co/lj1995/GPT-SoVITS/resolve/336b2ec4e8d4ac74740798dd40af44e74659ecaf/README.md",
+      "bytes": 114,
+      "sha256": "343d9f4c4a52dcbb3f47b16ec9086bca7d18c2281480eeccfc1285061663482d"
+    },
+    {
+      "name": "fasttext-model-card",
+      "url": "https://fasttext.cc/docs/en/language-identification.html",
+      "bytes": 15548,
+      "sha256": "e5e269a166d7e5baded34198138b437983a704844add508ace7cf0b40f3f6bd0"
+    },
+    {
+      "name": "fasttext-license",
+      "url": "https://creativecommons.org/licenses/by-sa/3.0/legalcode.txt",
+      "bytes": 22240,
+      "sha256": "3f941b3b89cf7b8370ceb83cc76d2120d471b58735d8ca60238a751a48d7f72f"
+    }
+  ]
+}

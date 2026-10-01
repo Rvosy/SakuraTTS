@@ -77,7 +77,7 @@ ROOT_REQUIREMENTS = (
     "torch", "torchaudio", "transformers", "onnx", "soundfile", "librosa",
     "x-transformers", "fast-langdetect", "split-lang", "pytorch-lightning",
     "peft", "ffmpeg-python", "cn2an", "pypinyin", "jieba-fast", "jieba",
-    "rotary-embedding-torch", "PyYAML", "tqdm", "matplotlib",
+    "PyYAML", "tqdm", "matplotlib",
 )
 SOURCE_DIRECTORIES = (
     "GPT_SoVITS/AR", "GPT_SoVITS/BigVGAN", "GPT_SoVITS/eres2net",
@@ -129,29 +129,11 @@ def installed_distributions(site):
     return result
 
 
-def add_interpreter(plan, base):
-    candidates = sorted(path for path in base.glob("python3*.dll") if path.name != "python3.dll")
-    if len(candidates) != 1 or candidates[0].stem not in ("python39", "python311"):
-        raise ValueError("Preparation requires one explicit CPython 3.9 or 3.11 Windows interpreter")
-    stem = candidates[0].stem
-    for name in ("python.exe", "python3.dll", stem + ".dll", "vcruntime140.dll", "vcruntime140_1.dll", "LICENSE.txt"):
-        plan.add(base / name, name, "cpython")
-    if (base / (stem + ".zip")).is_file():
-        plan.add(base / (stem + ".zip"), stem + ".zip", "cpython")
-        # Windows embeddable CPython keeps its extension modules beside python.
-        for source in sorted(base.iterdir()):
-            if source.suffix.lower() in (".pyd", ".dll"):
-                plan.add(source, source.name, "cpython")
-        paths = [stem + ".zip", ".", "Lib/site-packages"]
-    else:
-        for directory in ("Lib", "DLLs"):
-            for source in tree(base / directory):
-                plan.add(source, source.relative_to(base).as_posix(), "cpython")
-        paths = [".", "DLLs", "Lib", "Lib/site-packages"]
-    return stem, "3.9" if stem == "python39" else "3.11", paths
+def add_interpreter(plan, base, vc_runtime=None):
+    return _helpers.add_interpreter(plan, base, vc_runtime=vc_runtime)
 
 
-def add_official_sources(plan, source):
+def add_official_sources(plan, source, language_model=None):
     for name in SOURCE_DIRECTORIES:
         for path in tree(source / name):
             if path.suffix == ".py" or path.name.upper().startswith(("LICENSE", "COPYING", "NOTICE")):
@@ -161,7 +143,8 @@ def add_official_sources(plan, source):
     for path in sorted((source / "tools/i18n/locale").glob("*.json")):
         plan.add(path, "official/" + path.relative_to(source).as_posix(), "gpt-sovits-source")
     for name in AUXILIARY_FILES:
-        plan.add(source / name, "official/" + name, "public-analysis-resource")
+        local = language_model if name.endswith("fast_langdetect/lid.176.bin") and language_model is not None else source / name
+        plan.add(local, "official/" + name, "public-analysis-resource")
 
 
 def frontend_requirement(installed, python_version):
@@ -194,7 +177,7 @@ def preparation_distributions(site, runtime_site=None):
 def make_plan(args):
     overrides = json.loads(args.record_overrides.read_text(encoding="utf-8")) if args.record_overrides else {}
     plan = PreparationPlan(overrides)
-    stem, version, paths = add_interpreter(plan, args.python_base)
+    stem, version, paths = add_interpreter(plan, args.python_base, args.vc_runtime)
     installed, origins = preparation_distributions(args.site, args.runtime_site)
     frontend = frontend_requirement(installed, version)
     # A local GPU wheel also contains the CPU backend. Omit its optional GPU
@@ -220,12 +203,14 @@ def make_plan(args):
     # pyopenjtalk classic downloads its dictionary after wheel installation, so
     # the original wheel RECORD does not describe this required public resource.
     frontend_site = origins[canonicalize_name(frontend.split("==")[0])]
-    dictionary = frontend_site / "pyopenjtalk/open_jtalk_dic_utf_8-1.11"
+    dictionary = frontend_site / "pyopenjtalk" / ("open_jtalk_dic_utf_8-1.11" if frontend.startswith("pyopenjtalk==") else "dictionary")
     if not (dictionary / "sys.dic").is_file() or not (dictionary / "COPYING").is_file():
         raise FileNotFoundError("Local OpenJTalk dictionary and COPYING are required: " + str(dictionary))
     for path in tree(dictionary):
         plan.add(path, "Lib/site-packages/" + path.relative_to(frontend_site).as_posix(), "openjtalk-dictionary")
-    add_official_sources(plan, args.official_source)
+    add_official_sources(plan, args.official_source, args.language_model)
+    for name in ("GPT-SoVITS-model-card.md", "fasttext-language-identification.html", "fasttext-CC-BY-SA-3.0.txt"):
+        plan.add(Path(__file__).resolve().parents[1] / "docs/third-party" / name, "licenses/" + name, "auxiliary-model-notices")
     return plan, stem, paths
 
 
@@ -237,12 +222,12 @@ def license_inventory(plan):
         result[name] = {**component, "notices": sorted(files)}
     result["cpython"] = {"notices": ["LICENSE.txt"]}
     result["gpt-sovits-source"] = {"notices": sorted(path for path in plan.files if path.startswith("official/") and Path(path).name.upper().startswith(("LICENSE", "NOTICE", "COPYING")))}
-    result["openjtalk-dictionary"] = {"notices": ["Lib/site-packages/pyopenjtalk/open_jtalk_dic_utf_8-1.11/COPYING"]}
+    result["openjtalk-dictionary"] = {"notices": sorted(path for path in plan.files if path.startswith("Lib/site-packages/pyopenjtalk/") and Path(path).name == "COPYING")}
     # The local upstream bundle does not supply weight license texts. Record the
     # gap rather than attributing the upstream source's MIT license to weights.
     result["public-analysis-resource"] = {
-        "files": list(AUXILIARY_FILES), "notices": [],
-        "license_status": "Model-specific redistribution notices are not supplied by these local inputs; review before public distribution.",
+        "files": list(AUXILIARY_FILES), "notices": ["auxiliary-model-sources.json", "licenses/GPT-SoVITS-model-card.md", "licenses/fasttext-language-identification.html", "licenses/fasttext-CC-BY-SA-3.0.txt"],
+        "license_status": "Source declarations and fastText attribution are recorded; HuBERT/ERes2Net weight-specific attribution review remains pending.",
     }
     return {"format": "sakuratts-preparation-licenses-v1", "components": result}
 
@@ -267,7 +252,8 @@ def assemble(args, plan, stem, paths):
     generated = {stem + "._pth": "\n".join(paths) + "\n",
                  "official/GPT_SoVITS/configs/tts_infer.yaml": "{}\n",
                  "preparation.json": json.dumps(MARKER, indent=2) + "\n",
-                 "licenses.json": json.dumps(license_inventory(plan), indent=2) + "\n"}
+                 "licenses.json": json.dumps(license_inventory(plan), indent=2) + "\n",
+                 "auxiliary-model-sources.json": (Path(__file__).resolve().parents[1] / "packaging/auxiliary-model-sources.json").read_text(encoding="utf-8")}
     for name, content in generated.items():
         path = output / name
         write(path, content)
@@ -285,9 +271,10 @@ def assemble(args, plan, stem, paths):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ("python-base", "site", "official-source", "output", "audit"):
+    for name in ("python-base", "site", "vc-runtime", "official-source", "output", "audit"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--plan-only", action="store_true")
+    parser.add_argument("--language-model", type=Path, help="Local lid.176.bin; defaults to the upstream pretrained_models directory")
     parser.add_argument("--runtime-site", type=Path,
                         help="CPU torch, torchaudio and onnxruntime site-packages overriding --site")
     parser.add_argument("--record-overrides", type=Path,

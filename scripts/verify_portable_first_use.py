@@ -287,7 +287,7 @@ class Service:
         self.http("/runtime/wake", {"keep_alive_seconds": 600})
         result = self.state("awake")
         if not result.get("model_loaded") or result.get("worker_pid") is None:
-            raise AssertionError("Default FP32 model was not loaded after wake")
+            raise AssertionError("Configured model was not loaded after wake")
         self.record["wake_seconds"] = time.monotonic() - started
         self.record["awake"] = result
 
@@ -378,10 +378,13 @@ class Service:
         self.record["checks"]["observed_executables_bundled_or_windows"] = True
         self.record["checks"]["owned_process_tree_reaped"] = True
 
-    def assert_fp32(self):
-        if "GPT FP32 / SoVITS FP32" not in self.log():
-            raise AssertionError("Service log did not confirm default FP32 execution")
-        self.record["checks"]["default_fp32"] = True
+    def assert_execution(self, backend, profile):
+        gpt = "INT8" if backend == "cpu" else ("FP32" if profile == "fp32" else "FP16")
+        acoustic = "FP32" if backend == "cpu" or profile == "fp32" else "FP16"
+        expected = f"GPT {gpt} / SoVITS {acoustic}"
+        if not any(backend.upper() in line and expected in line for line in self.log().splitlines()):
+            raise AssertionError("Service log did not confirm " + backend + " " + expected)
+        self.record["checks"]["configured_execution"] = True
 
 
 def check_inputs(args):
@@ -396,11 +399,20 @@ def check_inputs(args):
         raise FileExistsError("Choose a new output directory: " + str(args.output))
     if args.output.is_relative_to(args.bundle):
         raise ValueError("Verification output must be outside the release bundle")
-    for name in ("runtime/main/python.exe", "runtime/acoustic/python.exe", "launcher.py",
+    for name in ("runtime/main/python.exe", "launcher.py",
                  "runtime/portable.json", "bundle-manifest.json", "runtime/preparation/preparation.json",
                  "runtime/preparation/preparation-manifest.json", "runtime/preparation/python.exe"):
         if not (args.bundle / name).is_file():
             raise FileNotFoundError(args.bundle / name)
+    marker = json.loads((args.bundle / "runtime/portable.json").read_text(encoding="utf-8"))
+    for name in marker.get("workers", {"acoustic": "runtime/acoustic/python.exe"}).values():
+        if not (args.bundle / name).is_file():
+            raise FileNotFoundError(args.bundle / name)
+    release = marker["release"]
+    args.backend = args.backend or ("cpu" if release["backend"] == "directml" else release["backend"])
+    args.profile = args.profile or {"cpu": "int8", "directml": "fp16", "cuda": "fp32"}[args.backend]
+    if args.backend not in release.get("backends", [release["backend"]]):
+        raise ValueError("Backend is not included in this bundle: " + args.backend)
     if not args.prompt_text.strip():
         raise ValueError("Reference transcript must not be empty")
     if args.port is not None and not 1 <= args.port <= 65535:
@@ -439,7 +451,7 @@ def verify_first_use(args, report, config, request, port):
                for row in first.record["processes"]):
         raise AssertionError("No bundled preparation interpreter was observed during first use")
     first.record["checks"]["preparation_interpreter_observed"] = True
-    first.assert_fp32()
+    first.assert_execution(args.backend, args.profile)
     report["checks"].update(raw_checkpoint_conversion=True, new_reference_preparation=True)
     return cached
 
@@ -461,7 +473,7 @@ def verify_reuse(args, report, config, request, port, cached):
         service.assert_process_paths()
         assert_reused(cached, cache_snapshot(args.bundle), service.log())
         service.record["checks"]["disk_cache_reused"] = True
-        service.assert_fp32()
+        service.assert_execution(args.backend, args.profile)
 
 
 def speech_request(reference, prompt_text):
@@ -474,8 +486,9 @@ def speech_request(reference, prompt_text):
 
 def verify(args, report):
     config = args.output / "tts-config.json"
-    config.write_text(json.dumps({"custom": {"version": "v2ProPlus", "device": "cuda", "is_half": False,
-        "t2s_weights_path": str(args.gpt), "vits_weights_path": str(args.sovits)}},
+    config.write_text(json.dumps({"custom": {"version": "v2ProPlus", "device": args.backend, "is_half": False,
+        "t2s_weights_path": str(args.gpt), "vits_weights_path": str(args.sovits)},
+        "sakuratts": {"backend": args.backend, "profile": args.profile}},
         ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (args.output / "external-cwd").mkdir()
     request = speech_request(args.reference, args.prompt_text)
@@ -489,7 +502,7 @@ def verify(args, report):
     comparison = report["pcm_comparison"] = compare_audio([audio["wav"] for audio in report["audio"]])
     if not comparison["within_one_lsb"]:
         raise AssertionError("Repeated/restarted/direct PCM differs in length or by more than 1 int16 LSB")
-    report["checks"].update(default_fp32=True, repeated_pcm_within_one_lsb=True,
+    report["checks"].update(configured_execution=True, repeated_pcm_within_one_lsb=True,
         managed_disk_cache=True, default_direct_disk_cache=True,
         sleeping_inference_tree_exited=True, observed_executables_bundled_or_windows=True)
 
@@ -500,11 +513,13 @@ def main(argv=None):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--prompt-text", required=True)
     parser.add_argument("--port", type=int)
+    parser.add_argument("--backend", choices=("cpu", "directml", "cuda"))
+    parser.add_argument("--profile", help="Execution profile; defaults to the selected backend preset")
     parser.add_argument("--reuse-cache", action="store_true",
                         help="Verify existing caches, for example after copying the bundle to a new directory")
     args = parser.parse_args(argv)
     if os.name != "nt":
-        parser.error("This acceptance harness requires Windows and an NVIDIA GPU")
+        parser.error("This acceptance harness requires Windows")
     import psutil  # Fail before creating any output or launching a service.
     initial = check_inputs(args)
     inputs = {name: {"path": str(getattr(args, name)), "sha256": sha256(getattr(args, name))}
@@ -512,6 +527,7 @@ def main(argv=None):
     args.output.mkdir(parents=True, exist_ok=False)
     started = time.monotonic()
     report = {"format": "sakuratts-portable-first-use-v1", "status": "running",
+        "backend": args.backend, "profile": args.profile,
         "verification_mode": "cache-reuse" if args.reuse_cache else "first-use",
         "started_utc": datetime.now(timezone.utc).isoformat(), "bundle": str(args.bundle),
         "bundle_manifest_sha256": sha256(args.bundle / "bundle-manifest.json"), "inputs": inputs,

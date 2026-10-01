@@ -1,0 +1,8 @@
+# DirectML ORT supplies both CPUExecutionProvider and DmlExecutionProvider.
+# Select cpu/int8 or directml/fp16 in the normal config or CLI.
+target = "windows-x64"
+backend = "directml"
+languages = ["ja"]
+services = ["http"]
+
+[workers]

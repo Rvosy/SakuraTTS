@@ -17,6 +17,19 @@ SPEC.loader.exec_module(harness)
 
 
 class PortableFirstUseHarnessTests(unittest.TestCase):
+    def test_execution_check_uses_selected_backend_and_precision(self):
+        for backend, profile, description in (("cpu", "int8", "GPT INT8 / SoVITS FP32"),
+                                               ("directml", "fp16", "GPT FP16 / SoVITS FP16"),
+                                               ("cuda", "fp32", "GPT FP32 / SoVITS FP32")):
+            service = object.__new__(harness.Service)
+            service.record = {"checks": {}}
+            service.log = Mock(return_value=backend.upper() + " | " + description)
+            service.assert_execution(backend, profile)
+            service.log = Mock(return_value="CUDA | GPT FP32 / SoVITS FP32")
+            if backend != "cuda":
+                with self.assertRaisesRegex(AssertionError, "confirm"):
+                    service.assert_execution(backend, profile)
+
     def test_nonempty_cache_is_rejected_without_deleting_user_files(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

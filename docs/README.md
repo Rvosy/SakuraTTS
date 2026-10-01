@@ -18,7 +18,7 @@
 | 行为约束 | [推理契约](specs/inference-contract.md)、[基准协议](specs/benchmark-protocol.md) |
 | 修改代码与运行测试 | [开发指南](development.md)、[架构](architecture.md) |
 | 打包与安装发布产物 | [预览版说明](preview-release.md) |
-| 整合包使用、离线构建与验收 | [Windows / NVIDIA 整合包](portable-bundle.md) |
+| 整合包使用、离线构建与验收 | [Windows 整合包](portable-bundle.md) |
 | 后续开发顺序 | [路线图](roadmap.md) |
 
 历史实验、失败记录和原始测量保存在 Git 仓库的 [research](https://github.com/Rvosy/SakuraTTS/tree/main/research) 中，不随 wheel 或源码包发布。Mac 历史实验见[日文运行记录](japanese-runtime.md)，当前公共适配器的范围由 [Apple 指南](apple.md)说明。

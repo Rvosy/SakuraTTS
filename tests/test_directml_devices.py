@@ -22,6 +22,41 @@ class DirectMLDeviceTests(unittest.TestCase):
         self.enterContext(patch("sakuratts.backends.onnx.sovits.read_manifest",
                                 return_value=(manifest(), Path("unused-acoustic.onnx"))))
 
+    def portable_probe(self):
+        spec = importlib.util.spec_from_file_location("portable_probe",
+            Path(__file__).resolve().parents[1] / "scripts/portable/check_runtime.py")
+        probe = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(probe)
+        return probe
+
+    def test_portable_probe_rejects_software_or_unknown_adapter_before_session_creation(self):
+        adapters = [{"device_id": 1, "description": "Software renderer", "software": True}]
+        with patch("sakuratts.backends.directml.devices.list_adapters", return_value=adapters), \
+             patch.object(self.ort, "InferenceSession") as create:
+            for device_id, message in ((1, "software renderer"), (4, "Unknown DXGI device_id")):
+                with self.subTest(device_id=device_id), self.assertRaisesRegex(ValueError, message):
+                    self.portable_probe().check_ort("directml", device_id)
+            create.assert_not_called()
+
+    def test_portable_probe_preserves_adapter_failure_without_vendor_filter_or_cpu_retry(self):
+        for vendor_id in (0x8086, 0x1002):
+            adapters = [{"device_id": 3, "description": "Selected hardware", "software": False,
+                         "vendor_id": vendor_id}]
+            attempts = []
+            failure = RuntimeError("DML device 3 driver initialization failed")
+
+            def fail(session, providers, provider_options, disabled_optimizers=None):
+                attempts.append(providers)
+                session._fallback_providers = ["CPUExecutionProvider"]
+                raise failure
+
+            with patch("sakuratts.backends.directml.devices.list_adapters", return_value=adapters), \
+                 patch.object(self.ort.InferenceSession, "_create_inference_session", fail):
+                with self.assertRaises(RuntimeError) as raised:
+                    self.portable_probe().check_ort("directml", 3)
+            self.assertIs(raised.exception, failure)
+            self.assertEqual(attempts, [[("DmlExecutionProvider", {"device_id": "3"})]])
+
     def construct(self, kind, adapter):
         model = SimpleNamespace(device_id=adapter, threads=4)
         if kind == "prefill":

@@ -15,6 +15,8 @@ Radeon 780M 的 Genie 前后复测、完整请求、内存和试听见 [Genie �
 
 CPU ORT 1.30.0 与 DirectML ORT 1.24.4 的原始权重转换、短长句生成和切换失败恢复已另行实测，见[准备与恢复验证](../research/notes/backend-preparation-recovery-20260927.md)。该轮验证不作为新的性能对照。
 
+Windows 整合包由同一个 [CPU/AMD recipe](../packaging/recipes/windows-cpu-amd-ja.toml) 构建，通过配置或启动参数切换；无需分发独立 CPU 包和 AMD 包。使用、离线构建及验收见[整合包指南](portable-bundle.md)。HTTP 后端在服务启动时确定，修改配置后重启，不在单个 `/tts` 请求中切换。
+
 ## 安装运行环境
 
 以下命令在仓库根目录执行，以 Windows x64、Python 3.12 为例。使用独立环境，保留已有 Genie 或 CUDA 安装。
@@ -113,6 +115,8 @@ CPU 服务可将 [CPU 示例](../examples/tts-cpu.example.yaml)复制为 `config
 命令行 `--backend` 覆盖配置中的后端；`--profile` 覆盖配置中的预设名。`sakuratts.runtime_options` 覆盖预设中的资源参数，显式 `--experimental FILE` 再覆盖同名值。设备、GPT 精度与声学范围仍须满足对应路径要求。配置合并由 [read_inference_configuration 与 Inference](../src/sakuratts/engine.py) 定义。
 
 CPU / AMD 在主解释器中执行 GPT 与声学，不启动 `acoustic_python` 声学 worker。经典日文前端仍使用 `frontend_python`；旧配置省略时继续沿用 `acoustic_python`。安装路径需要保持有效，见[日文运行资源](japanese-runtime.md)。
+
+DirectML 不按 GPU 厂商过滤设备；AMD、Intel 等硬件仍需分别通过实际执行验收，当前实测范围不能外推。便携包的 Windows 与 CPU 指令集要求见[整合包指南](portable-bundle.md)。
 
 ## 选择 AMD 显卡
 

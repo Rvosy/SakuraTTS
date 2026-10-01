@@ -5,6 +5,7 @@ import importlib.util
 import json
 from pathlib import Path
 import tempfile
+import sys
 import unittest
 from unittest.mock import patch
 from types import SimpleNamespace
@@ -163,6 +164,67 @@ class ONNXCPUGPTTests(unittest.TestCase):
             np.testing.assert_array_equal(decoded, model.decode(2))
         finally:
             model.close()
+
+    def test_int8_export_and_inference_in_unicode_directory(self):
+        from sakuratts._internal.conversion.export_gpt_onnx import export_sidecar
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "樱花 模型"
+            root.mkdir()
+            save_package(root, self.manifest, self.weights)
+            export_sidecar(root, root / "onnx")
+            export_sidecar(root, root / "onnx-int8", precision="int8")
+            model = ONNXCPUGPT.load(root, capacity=12, threads=1, precision="int8")
+            try:
+                self.assertTrue(np.isfinite(model.prefill(self.phones, self.prompt, self.bert)).all())
+                self.assertTrue(np.isfinite(model.decode(2)).all())
+            finally:
+                model.close()
+
+    @unittest.skipUnless(sys.platform == "win32", "Windows Unicode conversion")
+    def test_int8_unicode_model_and_temp_match_ascii_conversion_and_restore_shape_inference(self):
+        import onnx
+        from sakuratts._internal.conversion.export_gpt_onnx import export_sidecar
+        original_infer = onnx.shape_inference.infer_shapes_path
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary = Path(temporary)
+            user_temp = temporary / "中文用户 Temp"
+            user_temp.mkdir()
+            root = temporary / "樱花 模型"
+            root.mkdir()
+            save_package(root, self.manifest, self.weights)
+            with patch.object(tempfile, "tempdir", str(user_temp)):
+                export_sidecar(root, root / "onnx")
+                metadata = export_sidecar(root, root / "onnx-int8", precision="int8")
+                self.assertIs(onnx.shape_inference.infer_shapes_path, original_infer)
+                self.assertEqual(metadata["quantization"], self.precision_metadata["int8"]["quantization"])
+                baseline_graph = onnx.load(self.root / "onnx-int8/transformer-int8.onnx")
+                actual_graph = onnx.load(root / "onnx-int8/transformer-int8.onnx")
+                self.assertEqual(actual_graph.SerializeToString(), baseline_graph.SerializeToString())
+                baseline = ONNXCPUGPT.load(self.root, capacity=12, threads=1, precision="int8")
+                actual = ONNXCPUGPT.load(root, capacity=12, threads=1, precision="int8")
+                try:
+                    np.testing.assert_array_equal(actual.prefill(self.phones, self.prompt, self.bert),
+                                                  baseline.prefill(self.phones, self.prompt, self.bert))
+                    np.testing.assert_array_equal(actual.decode(2), baseline.decode(2))
+                finally:
+                    actual.close()
+                    baseline.close()
+
+    @unittest.skipUnless(sys.platform == "win32", "Windows Unicode conversion")
+    def test_unicode_quantization_failure_restores_shape_inference_and_original_error(self):
+        import onnx
+        from sakuratts._internal.conversion.export_gpt_onnx import export_sidecar
+        original_infer = onnx.shape_inference.infer_shapes_path
+        failure = RuntimeError("quantization failed")
+        with tempfile.TemporaryDirectory() as temporary:
+            user_temp = Path(temporary) / "中文用户 Temp"
+            user_temp.mkdir()
+            with patch.object(tempfile, "tempdir", str(user_temp)), \
+                 patch("onnxruntime.quantization.quantize_dynamic", side_effect=failure):
+                with self.assertRaises(RuntimeError) as raised:
+                    export_sidecar(self.root, Path(temporary) / "int8-output", precision="int8")
+            self.assertIs(raised.exception, failure)
+            self.assertIs(onnx.shape_inference.infer_shapes_path, original_infer)
 
     def test_low_precision_cannot_relabel_fp32_or_change_conversion_source(self):
         path = self.root / "onnx-int8" / "manifest.json"

@@ -6,6 +6,7 @@ import csv
 from email.parser import Parser
 import hashlib
 import json
+import re
 from pathlib import Path, PurePosixPath
 import shutil
 import stat
@@ -17,7 +18,9 @@ from packaging.markers import default_environment
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 
-BACKEND_EXTRAS = {("windows-x64", "cuda"): "nvidia"}
+BACKEND_EXTRAS = {("windows-x64", "cuda"): "nvidia",
+                  ("windows-x64", "directml"): "directml",
+                  ("windows-x64", "cpu"): "cpu"}
 LANGUAGE_EXTRAS = {"ja": "japanese", "en": "english"}
 SERVICE_EXTRAS = {"http": "server"}
 
@@ -26,18 +29,19 @@ def read_recipe(path):
     """Select implemented payloads before inspecting any large local inputs."""
     recipe = tomllib.loads(Path(path).read_text(encoding="utf-8"))
     if (recipe["target"], recipe["backend"]) not in BACKEND_EXTRAS:
-        raise ValueError("Portable assembly currently implements only windows-x64 with backend cuda")
+        raise ValueError("Portable assembly supports windows-x64 with backend cuda, directml or cpu")
     if "ja" not in recipe["languages"] or set(recipe["languages"]) - LANGUAGE_EXTRAS.keys():
         raise ValueError("Portable language components require ja, with optional en")
     if set(recipe["services"]) - SERVICE_EXTRAS.keys():
         raise ValueError("Unknown service component; supported services: http")
-    return {key: recipe[key] for key in ("target", "backend", "languages", "services", "workers")}
+    return {key: recipe[key] for key in ("target", "backend", "languages", "services")} | {"workers": recipe.get("workers", {})}
 
 
 def main_requirements(project, recipe):
     """Platform, language and service extras are independent package choices."""
     extras = [BACKEND_EXTRAS[recipe["target"], recipe["backend"]],
-              *(LANGUAGE_EXTRAS[name] for name in recipe["languages"]),
+              *("japanese-text" if name == "ja" and recipe["backend"] != "cuda" else LANGUAGE_EXTRAS[name]
+                for name in recipe["languages"]),
               *(SERVICE_EXTRAS[name] for name in recipe["services"])]
     requirements = list(project["dependencies"])
     visited = set()
@@ -130,6 +134,8 @@ class Plan:
         self.shared_files = {}
         self.release = {}
         self.workers = {}
+        self.python_stem = "python311"
+        self.python_paths = [".", "DLLs", "Lib", "Lib/site-packages"]
 
     def add(self, source, destination, component, expected=None):
         source = Path(source)
@@ -185,28 +191,67 @@ def trim_main_runtime(plan):
             del plan.files[name]
 
 
+def add_interpreter(plan, base, target="", vc_runtime=None):
+    """Copy a base or embeddable interpreter without its installed packages."""
+    candidates = [path for path in base.glob("python3*.dll") if re.fullmatch(r"python3\d+", path.stem)]
+    if len(candidates) != 1:
+        raise ValueError("Provide one explicit Windows CPython interpreter (python3X.dll)")
+    stem = candidates[0].stem
+    prefix = target.rstrip("/") + "/" if target else ""
+    for name in ("python.exe", "python3.dll", stem + ".dll", "LICENSE.txt"):
+        plan.add(base / name, prefix + name, "cpython")
+    if vc_runtime is None:
+        for name in ("vcruntime140.dll", "vcruntime140_1.dll"):
+            plan.add(base / name, prefix + name, "cpython")
+    else:
+        # Use the redistributable CRT input, not DLLs copied from System32.
+        for name in ("msvcp140.dll", "msvcp140_1.dll", "vcruntime140.dll", "vcruntime140_1.dll"):
+            if not (vc_runtime / name).is_file():
+                raise FileNotFoundError(vc_runtime / name)
+        for source in sorted(vc_runtime.glob("*.dll")):
+            plan.add(source, prefix + source.name, "msvc-runtime")
+    if (base / (stem + ".zip")).is_file():
+        plan.add(base / (stem + ".zip"), prefix + stem + ".zip", "cpython")
+        for source in sorted(base.iterdir()):
+            if source.suffix.lower() in (".pyd", ".dll") and prefix + source.name not in plan.files:
+                plan.add(source, prefix + source.name, "cpython")
+        paths = [stem + ".zip", ".", "Lib/site-packages"]
+    else:
+        for directory in ("Lib", "DLLs"):
+            for source in tree(base / directory):
+                plan.add(source, prefix + source.relative_to(base).as_posix(), "cpython")
+        paths = [".", "DLLs", "Lib", "Lib/site-packages"]
+    return stem, "3." + stem.removeprefix("python3"), paths
+
+
 def make_plan(args):
     plan = Plan()
     recipe = read_recipe(args.recipe or args.root / "packaging/recipes/windows-nvidia-ja.toml")
     plan.release = {key: recipe[key] for key in ("target", "backend", "languages", "services")}
     plan.release["preparation"] = args.preparation is not None
+    plan.release["backends"] = ["cpu", "directml"] if recipe["backend"] == "directml" else [recipe["backend"]]
     plan.workers = recipe["workers"]
-    # Copy the base interpreter, never a venv trampoline or pyvenv.cfg.
-    for name in ("python.exe", "python3.dll", "python311.dll", "vcruntime140.dll", "vcruntime140_1.dll", "LICENSE.txt"):
-        plan.add(args.python_base / name, "runtime/main/" + name, "cpython-3.11")
-    for directory in ("Lib", "DLLs"):
-        for source in tree(args.python_base / directory):
-            plan.add(source, "runtime/main/" + source.relative_to(args.python_base).as_posix(), "cpython-3.11")
+    plan.python_stem, version, plan.python_paths = add_interpreter(plan, args.python_base, "runtime/main", args.vc_runtime)
     main = distributions(args.main_site)
+    ort_packages = set(main) & {"onnxruntime", "onnxruntime-directml", "onnxruntime-gpu"}
+    if len(ort_packages) > 1:
+        raise ValueError("ORT distributions share module files; use a clean input environment with only one: " + ", ".join(sorted(ort_packages)))
     project = tomllib.loads((args.root / "pyproject.toml").read_text(encoding="utf-8"))["project"]
-    for name in dependency_names(main, main_requirements(project, recipe), "3.11"):
+    plan.release["version"] = project["version"]
+    commit = subprocess.run(["git", "-C", str(args.root), "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
+    dirty = subprocess.run(["git", "-C", str(args.root), "status", "--porcelain"], capture_output=True, text=True, check=True).stdout.strip()
+    plan.release.update(source_commit=commit, source_dirty=bool(dirty), python=version)
+    for name in dependency_names(main, main_requirements(project, recipe), version):
         plan.package(args.main_site, *main[name], "runtime/main/Lib/site-packages")
     trim_main_runtime(plan)
 
     # The private acoustic ABI is copied only through its existing hash manifest.
-    worker = json.loads((args.worker / "runtime-manifest.json").read_text(encoding="utf-8"))
-    for name, row in worker["files"].items():
-        plan.add(args.worker / name, "runtime/acoustic/" + name, "acoustic-worker", row["sha256"])
+    if plan.workers:
+        if args.worker is None:
+            raise ValueError("The selected recipe requires --worker")
+        worker = json.loads((args.worker / "runtime-manifest.json").read_text(encoding="utf-8"))
+        for name, row in worker["files"].items():
+            plan.add(args.worker / name, "runtime/acoustic/" + name, "acoustic-worker", row["sha256"])
 
     # The worker searches the main NVIDIA wheel directories as well as its own cuda/.
     main_dlls = {Path(name).name: (name, row) for name, row in plan.files.items()
@@ -221,12 +266,13 @@ def make_plan(args):
                  "pyopenjtalk-LICENSE.md", "SudachiDict-LEGAL.txt", "VITS-LICENSE.txt", "LGPL-3.0.txt", "GPL-3.0.txt"):
         plan.add(args.root / "docs/third-party" / name, "licenses/sakuratts/" + name, "third-party-notices")
     plan.add(args.root / "LICENSE", "licenses/SakuraTTS-LICENSE.txt", "sakuratts")
-    for name in ("fp32.json", "fp16.json", "low-vram.json", "minimum-vram.json"):
+    profiles = ("fp32.json", "fp16.json", "low-vram.json", "minimum-vram.json") if recipe["backend"] == "cuda" else ("cpu.json", "directml.json")
+    for name in profiles:
         plan.add(args.root / "examples" / name, "configs/" + name, "inference-profiles")
     if args.preparation is not None:
         add_preparation(plan, args.preparation)
-    for name in ("acoustic", "frontend"):
-        if plan.workers[name] not in plan.files:
+    for name, path in plan.workers.items():
+        if path not in plan.files:
             raise ValueError("Worker is missing from the selected release payload: " + name)
     return plan
 
@@ -292,7 +338,7 @@ def assemble(args, plan):
             target = output / "runtime/main/Lib/site-packages" / name
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(archive.read(name))
-    write(output / "runtime/main/python311._pth", ".\nDLLs\nLib\nLib/site-packages\n")
+    write(output / ("runtime/main/" + plan.python_stem + "._pth"), "\n".join(plan.python_paths) + "\n")
     # Marker read only by the explicit portable launcher.
     write(output / "runtime/portable.json", json.dumps({"format": "sakuratts-portable-v1",
         "has_preparation": plan.release["preparation"],
@@ -303,7 +349,14 @@ def assemble(args, plan):
     for directory in ("models", "configs", "logs", "cache"):
         (output / directory).mkdir(exist_ok=True)
         write(output / directory / ".keep", "")
-    write(output / "configs/tts_infer.example.yaml", "custom:\n  version: v2ProPlus\n  device: cuda\n  is_half: false\n  t2s_weights_path: models/your-gpt.ckpt\n  vits_weights_path: models/your-sovits.pth\n")
+    backends = plan.release.get("backends", [plan.release["backend"]])
+    for backend in backends:
+        config = ("custom:\n  version: v2ProPlus\n  device: " + backend + "\n  is_half: false\n"
+                  "  t2s_weights_path: models/your-gpt.ckpt\n  vits_weights_path: models/your-sovits.pth\n"
+                  "sakuratts:\n  backend: " + backend + "\n")
+        write(output / ("configs/tts_infer." + backend + ".example.yaml"), config)
+        if backend == backends[0]:
+            write(output / "configs/tts_infer.example.yaml", config)
     notice = subprocess.run([str(args.ffmpeg), "-L"], capture_output=True, text=True, check=True)
     write(output / "licenses/FFmpeg-build-and-license.txt", notice.stderr + notice.stdout)
     inventory = {}
@@ -327,8 +380,9 @@ def assemble(args, plan):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ("python-base", "main-site", "ffmpeg", "worker", "wheel", "output", "audit"):
+    for name in ("python-base", "main-site", "vc-runtime", "ffmpeg", "wheel", "output", "audit"):
         parser.add_argument("--" + name, type=Path, required=True)
+    parser.add_argument("--worker", type=Path, help="Verified acoustic/frontend worker component (CUDA recipe)")
     parser.add_argument("--preparation", type=Path,
                         help="Optional verified offline component built by build_preparation.py")
     parser.add_argument("--recipe", type=Path,

@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 import shutil
 import sys
+import tempfile
 
 import numpy as np
 
@@ -144,6 +145,14 @@ def _describe(path):
     return {"file": path.name, "sha256": sha256_file(path), "bytes": path.stat().st_size}
 
 
+def _infer_shapes_unicode(model_path, output_path="", check_type=False, strict_mode=False, data_prop=False):
+    """Keep Windows Unicode file access in Python for this in-memory GPT graph."""
+    import onnx
+    model = onnx.load(model_path)
+    inferred = onnx.shape_inference.infer_shapes(model, check_type, strict_mode, data_prop)
+    onnx.save_model(inferred, output_path or model_path)
+
+
 def _precision_sidecar(package, output, precision):
     import onnx
     import onnxruntime as ort
@@ -153,8 +162,16 @@ def _precision_sidecar(package, output, precision):
     destination = output / f"transformer-{precision}.onnx"
     if precision == "int8":
         from onnxruntime.quantization import QuantType, quantize_dynamic
-        quantize_dynamic(str(graph), str(destination), op_types_to_quantize=["MatMul"],
-            weight_type=QuantType.QInt8, per_channel=True, extra_options={"MatMulConstBOnly": True})
+        infer_shapes_path = onnx.shape_inference.infer_shapes_path
+        try:
+            # ORT repeats path-based shape inference inside its temporary directory.
+            # Conversion runs in a dedicated process; restore the public API even on failure.
+            if sys.platform == "win32" and not tempfile.gettempdir().isascii():
+                onnx.shape_inference.infer_shapes_path = _infer_shapes_unicode
+            quantize_dynamic(onnx.load(str(graph)), str(destination), op_types_to_quantize=["MatMul"],
+                weight_type=QuantType.QInt8, per_channel=True, extra_options={"MatMulConstBOnly": True})
+        finally:
+            onnx.shape_inference.infer_shapes_path = infer_shapes_path
         converted = onnx.load(str(destination))
     elif precision == "fp16":
         from onnxruntime.transformers.float16 import convert_float_to_float16
