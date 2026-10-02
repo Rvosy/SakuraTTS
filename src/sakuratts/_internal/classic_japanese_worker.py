@@ -31,8 +31,6 @@ def main():
         sys.path.insert(0, str(module_directory))
         import pyopenjtalk
 
-        if pyopenjtalk.__version__ != "0.3.4":
-            raise ValueError("Expected the classic pyopenjtalk 0.3.4 profile")
         if Path(pyopenjtalk.__file__).resolve().parent.parent != module_directory:
             raise ValueError("pyopenjtalk was not loaded from the configured module directory")
         # Explicit existing dictionaries avoid the package's download/build path.

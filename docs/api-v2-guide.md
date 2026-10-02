@@ -42,7 +42,7 @@ python api_v2.py -a 127.0.0.1 -p 9880 -c configs/tts_infer.yaml
 
 ## 发起一次合成
 
-当前每次请求都要明确设置 `parallel_infer=false`。该字段保留原版默认值 `true`，但原版并行推理尚未实现，传 `true` 或省略它会返回 400。
+`parallel_infer` 可省略，也接受 `true` / `false`。当前单项批次按顺序执行。
 
 下面的示例只使用 Python 标准库。替换参考路径和对应的真实日文转写后执行：
 
@@ -124,14 +124,14 @@ with urlopen("http://127.0.0.1:9880/tts?" + urlencode(params)) as response:
 | --- | --- | --- |
 | `text_split_method` | `"cut5"` | 支持 `cut0`～`cut5`；其他值返回 400 |
 | `top_k` | `15` | 已接入采样，必须 ≥ 1 |
-| `top_p` | `1` | 目前仅接受 `1`，其他值返回 400 |
+| `top_p` | `1` | 支持 `(0, 1]`，用于核采样 |
 | `temperature` | `1` | 已接入采样，必须为有限正数 |
 | `repetition_penalty` | `1.35` | 已接入重复惩罚，必须为有限正数 |
 | `seed` | `-1` | `-1` 随机；非负整数固定种子。同 seed 不保证与原版 Torch 输出相同 |
-| `batch_size` | `1` | 目前仅接受 `1`，其他值返回 400 |
+| `batch_size` | `1` | 支持 `(0, 1]`，用于核采样 |
 | `batch_threshold` | `0.75` | 保留字段；当前单项批次中不改变批次划分 |
 | `split_bucket` | `true` | 非流式按文本长度排序推理后恢复音频顺序；按句流式自动关闭 |
-| `parallel_infer` | `true` | 尚未实现；**必须显式传 `false`**，`true` 返回 400 |
+| `parallel_infer` | `true` | 接受；当前单项批次按顺序执行 |
 
 ### 音频与流式
 
@@ -146,7 +146,7 @@ with urlopen("http://127.0.0.1:9880/tts?" + urlencode(params)) as response:
 | `overlap_length` | `2` | 保留字段；当前模式 0 / 1 不使用它 |
 | `min_chunk_length` | `16` | 保留字段；当前模式 0 / 1 不使用它 |
 
-`batch_threshold`、`sample_steps`、`overlap_length` 和 `min_chunk_length` 可随原版请求一起传入，但修改它们不会启用新的能力。表外字段返回 400，客户端应检查字段拼写，不要依赖未知字段被忽略。
+`batch_threshold`、`sample_steps`、`overlap_length` 和 `min_chunk_length` 可随原版请求一起传入，但修改它们不会启用新的能力。表外字段会被忽略。
 
 按句流式需要客户端持续读取响应：每句话生成完成才发送这一片，尚不支持语义 Token 流式。WAV 模式先发送空数据长度的 WAV 头，再发送 PCM；直接保存后可能无法作为普通完整 WAV 播放。需要保存完整文件时使用 `streaming_mode=false`。RAW 为单声道 16 位小端 PCM，不包含采样率等文件头信息。
 
@@ -178,7 +178,7 @@ call("/set_refer_audio", refer_audio_path="D:/Voices/character.wav")
 
 | 结果 | 含义与处理 |
 | --- | --- |
-| `400`，含 `error: "unsupported_feature"` | 请求使用未实现的能力或未知字段；按支持表修改请求 |
+| `400`，含 `error: "unsupported_feature"` | 请求使用未实现的计算能力；按支持表修改请求 |
 | 其他 `400` | 缺少必填项、参数值非法、文件或资源准备失败、合成或编码失败；读取 `message`，有 `Exception` 时一并保留 |
 | `409` | 正在推理、准备参考或切换权重；等待当前操作结束后再发请求 |
 | `422` | 字段类型不正确，例如 `seed="abc"`；检查 JSON / 查询参数及响应中的 `detail` |

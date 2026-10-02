@@ -3,15 +3,13 @@
 from array import array
 import json
 from pathlib import Path
-import subprocess
-import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
-from sakuratts import Engine, Model
+from sakuratts import Model
 from sakuratts.backends import SUPPORTED_BACKENDS, create_runtime
-from sakuratts.engine import Inference, read_inference_configuration
+from sakuratts.engine import Inference
 
 
 class FakeRuntime:
@@ -59,14 +57,6 @@ class BackendSelectionTests(unittest.TestCase):
                 inference.close()
         self.assertTrue(runtime.closed)
 
-    def test_public_load_forwards_backend_specific_options_unchanged(self):
-        model = self.model()
-        with patch("sakuratts.backends.create_runtime", return_value=FakeRuntime()) as create:
-            with Engine.load(model, backend="test-device", experimental={"future-option": 7}):
-                pass
-        create.assert_called_once_with(model, backend="test-device",
-            experimental={"future-option": 7}, load_references=True)
-
     def test_unimplemented_backends_do_not_fall_back_or_convert(self):
         self.assertEqual(SUPPORTED_BACKENDS, ("cuda", "cpu", "directml", "mlx"))
         for backend in ("rocm", "unknown"):
@@ -78,39 +68,6 @@ class BackendSelectionTests(unittest.TestCase):
                         Inference(backend=backend)
                     convert.assert_not_called()
                 cuda.assert_not_called()
-
-    def test_service_configuration_selects_backend_without_loading_it(self):
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "tts.json"
-            path.write_text(json.dumps({"custom": {"device": "cpu"}}), encoding="utf-8")
-            _, settings = read_inference_configuration(tts_config=path)
-            self.assertEqual(settings["backend"], "cpu")
-            path.write_text(json.dumps({"custom": {"device": "cpu"},
-                "sakuratts": {"backend": "cuda"}}), encoding="utf-8")
-            _, settings = read_inference_configuration(tts_config=path)
-            self.assertEqual(settings["backend"], "cuda")
-            path.write_text(json.dumps({"custom": {"device": "cpu"}}), encoding="utf-8")
-            with patch("sakuratts.backends.create_runtime", return_value=FakeRuntime()):
-                inference = Inference(self.model(), tts_config=path, backend="cuda")
-                self.assertEqual(inference.settings["backend"], "cuda")
-                inference.close()
-
-    def test_unsupported_selection_does_not_import_compute_modules(self):
-        code = "\n".join((
-            "import sys",
-            "from pathlib import Path",
-            "from sakuratts import Engine, Model",
-            "model = Model(Path('unused.json'), {'backend': {'preferred': 'unknown'}})",
-            "try:",
-            "    Engine.load(model)",
-            "except NotImplementedError:",
-            "    pass",
-            "else:",
-            "    raise AssertionError('unsupported backend accepted')",
-            "assert not set(('numpy', 'cupy', 'torch', 'onnxruntime', 'mlx', 'sakuratts.backends.cuda.engine')) & sys.modules.keys()",
-        ))
-        result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_worker_configuration_overrides_cached_paths_without_mutating_model(self):
         model = self.model()

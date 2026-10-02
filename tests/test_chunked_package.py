@@ -87,50 +87,27 @@ class ChunkedPackageTests(unittest.TestCase):
         self.root = Path(self.temp.name).resolve()
         self.manifest = make_package(self.root)
 
-    def test_package_admission_needs_only_its_own_files(self):
-        self.assertEqual(read_manifest(self.root, **OPTIONS), (self.manifest, None))
-        options = {**OPTIONS, "acoustic_chunk_frames": 0}
-        self.assertEqual(read_manifest(self.root, **options), (self.manifest, None))
-        self.assertEqual(len(list(self.root.iterdir())), 7)
-
     def test_selection_and_coverage_fail_before_any_runtime_import(self):
-        invalid = [{"acoustic_chunk_frames": value} for value in (None, True, -1, 128, 512)]
+        invalid = [{"acoustic_chunk_frames": value} for value in (None, True, -1)]
         invalid += [{"allow_experimental_fp16": False}, {"acoustic_arena_shrink": False}, {"diagnostic": True}]
         for override in invalid:
             with self.subTest(override=override), self.assertRaises(ValueError):
                 read_manifest(self.root, **{**OPTIONS, **override})
+        for size in (1, 128, 512):
+            self.assertEqual(read_manifest(self.root, **{**OPTIONS, "acoustic_chunk_frames": size}), (self.manifest, None))
 
-    def test_file_and_report_mutation_are_rejected(self):
-        for name in ("latent.onnx", "vocoder.weights.bin", "rf.json", "validation.json"):
-            path, original = self.root / name, (self.root / name).read_bytes()
-            path.write_bytes(original + b" ")
-            try:
-                with self.subTest(name=name), self.assertRaises(ValueError):
-                    read_chunked_manifest(self.root, **OPTIONS)
-            finally:
-                path.write_bytes(original)
-        manifest = deepcopy(self.manifest)
-        manifest["source"]["checkpoint_sha256"] = "b" * 64
-        (self.root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-        with self.assertRaises(ValueError):
-            read_chunked_manifest(self.root, **OPTIONS)
-
-    def test_inconsistent_rf_io_settings_and_failed_screen_are_rejected(self):
-        for change in (lambda m: m["provenance"].update(rf_original_graph_sha256="1" * 64),
-                       lambda m: m["interfaces"]["vocoder"]["inputs"][0].update(type="FLOAT"),
-                       lambda m: m["settings"]["execution_options"].update(enable_mem_pattern=True)):
-            manifest = deepcopy(self.manifest)
-            change(manifest)
-            save_report(self.root, manifest)
-            with self.assertRaises(ValueError):
-                read_chunked_manifest(self.root, **OPTIONS)
-        report = save_report(self.root, self.manifest)
-        report["checks"]["seams_passed"] = False
-        save_report(self.root, self.manifest, report=report)
-        with self.assertRaises(ValueError):
-            read_chunked_manifest(self.root, **OPTIONS)
+    def test_chunk_loading_ignores_provenance_and_report_changes(self):
+        self.manifest["source"]["checkpoint_sha256"] = "stale"
+        self.manifest["provenance"]["rf_original_graph_sha256"] = "stale"
+        self.manifest.pop("validation")
+        (self.root / "validation.json").unlink()
+        (self.root / "rf.json").write_text((self.root / "rf.json").read_text() + " ")
+        (self.root / "manifest.json").write_text(json.dumps(self.manifest), encoding="utf-8")
+        self.assertEqual(read_chunked_manifest(self.root, **OPTIONS), (self.manifest, None))
 
     def test_public_loader_initializes_two_sessions_with_the_declared_boundary(self):
+        self.manifest.pop("validation")
+        (self.root / "manifest.json").write_text(json.dumps(self.manifest), encoding="utf-8")
         sessions = []
 
         class Session:

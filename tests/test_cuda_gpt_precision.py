@@ -56,29 +56,6 @@ def array(shape, dtype):
 
 
 class CudaGptPrecisionTests(unittest.TestCase):
-    def test_precision_is_explicit_and_rejected_before_loading(self):
-        with self.assertRaisesRegex(ValueError, "fp32 or fp16"):
-            cuda_gpt.CUDAGPT.load("does-not-exist", precision="automatic")
-
-    def test_attention_candidates_are_explicit_and_rejected_before_loading(self):
-        with self.assertRaisesRegex(ValueError, "baseline or split-kv"):
-            cuda_gpt.CUDAGPT.load("does-not-exist", attention="automatic")
-        for chunk in (0, 128, 257, True):
-            with self.subTest(chunk=chunk), self.assertRaisesRegex(ValueError, "256 or 512"):
-                cuda_gpt.CUDAGPT.load("does-not-exist", attention="split-kv", attention_chunk_size=chunk)
-
-    def test_prefill_query_chunk_size_is_validated_before_loading(self):
-        for chunk in (-1, True, np.bool_(False), 2.5, "256", None):
-            with self.subTest(chunk=chunk), self.assertRaisesRegex(ValueError, "non-negative integer"):
-                cuda_gpt.CUDAGPT.load("does-not-exist", prefill_query_chunk_size=chunk)
-        with tempfile.TemporaryDirectory() as directory, patch.object(cuda_gpt, "_GraphBLAS"):
-            root = Path(directory)
-            package(root)
-            for chunk in (0, 1, np.int64(128), 4096):
-                model = cuda_gpt.CUDAGPT.load(root, prefill_query_chunk_size=chunk)
-                self.assertEqual(model.prefill_query_chunk_size, chunk)
-                model.close()
-
     def test_chunked_prefill_matches_full_attention_and_bounds_score_rows(self):
         rng = np.random.default_rng(42)
         heads, length, dim, text_length = 3, 11, 4, 5

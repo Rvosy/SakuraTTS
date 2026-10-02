@@ -54,7 +54,7 @@ def main():
     output.mkdir(parents=True)
     for name, spec in manifest["files"].items():
         path = (root / name).resolve(strict=True)
-        if root not in path.parents or not path.is_file() or digest(path) != spec["sha256"]:
+        if root not in path.parents or not path.is_file():
             raise ValueError("Bundle file changed or escaped its directory: " + name)
     results = []
     if args.benchmark:

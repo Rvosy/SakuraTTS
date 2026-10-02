@@ -5,22 +5,14 @@ Tokenization, removal of CLS/SEP and word2ph expansion remain outside this model
 No PyTorch or Transformers import is needed to load the converted package.
 """
 
-import hashlib
 import json
 from pathlib import Path
 
 import mlx.core as mx
 import numpy as np
 
-from sakuratts._internal.weight_storage import read_fp32, validate_storage
+from sakuratts._internal.weight_storage import read_fp32
 
-
-def sha256(path):
-    digest = hashlib.sha256()
-    with Path(path).open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
 
 
 class MLXBertFeatures:
@@ -45,14 +37,11 @@ class MLXBertFeatures:
         if manifest["format"] != "sakuratts-bert-features-fp32-v1":
             raise ValueError("Unsupported BERT feature package format")
         weights_file = package / manifest["weights"]["file"]
-        if sha256(weights_file) != manifest["weights"]["sha256"]:
-            raise ValueError("BERT feature weights do not match the manifest")
         with np.load(weights_file, allow_pickle=False) as archive:
-            validate_storage(manifest, archive.files)
             if manifest["weights"].get("storage") is None:
                 weights = mx.load(weights_file)
             else:
-                weights = {name: mx.array(read_fp32(archive, manifest, name)) for name in archive.files}
+                weights = {name: mx.array(read_fp32(archive, name)) for name in archive.files}
         mx.eval(*weights.values())
         return cls(manifest["config"], weights)
 

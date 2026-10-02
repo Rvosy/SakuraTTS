@@ -1,6 +1,6 @@
 # ADR 0006：独立设备精度与 DirectML KV 驻留
 
-状态：已采用。日期：2026-09-27。扩展 [ADR 0005](0005-cpu-directml-runtime.md) 的 CPU / DirectML 首轮实现。
+状态：已采用。日期：2026-09-27；2026-10-03 更新资源加载与预设覆盖规则。扩展 [ADR 0005](0005-cpu-directml-runtime.md) 的 CPU / DirectML 首轮实现。
 
 ## 原因
 
@@ -10,19 +10,19 @@ CPU 模式应独立完成推理，AMD 模式也应把 GPT Transformer 和声学�
 
 ## 决定
 
-CPU 公开路径收敛为 ORT 动态 INT8 GPT 与 FP32 声学，默认 GPT 4 线程、声学 8 线程、KV 容量 2048。GPT 使用绑定原模型身份的独立 sidecar，量化常量矩阵乘法的权重与激活，其他部分保留 FP32。采样继续接收 FP32 logits，停止、取消和容量规则不变。CPU 执行器不加载 GPU provider。其他精度的转换与测量仅用于历史研究，不作为公开运行选项。
+CPU 默认使用 ORT 动态 INT8 GPT 与 FP32 声学，GPT 4 线程、声学 8 线程、KV 容量 2048。独立 sidecar 量化常量矩阵乘法的权重与激活，其他部分保留 FP32。采样继续接收 FP32 logits，停止、取消和容量规则不变。CPU 执行器不加载 GPU provider。
 
 DirectML GPT 分为动态 Prefill 与固定形状 Decode 两个 Session。Decode 使用固定容量与显式 mask，两个 GPU KV 缓冲区交替作为输入和输出；不假设输入输出可以别名。Prefill KV 经过一次主机转存，随后由 Decode Session 分配并持有 GPU KV。每步更新小型输入并读取 logits；图内 CPU 分区所需的 KV 传输仍由 ORT 处理，不能据此宣称每个算子都在 GPU 或完全没有历史缓存传输。容量写入 sidecar，并与运行时配置核对，超出时明确报错。
 
 ORT 的 IOBinding 可能在绑定输入时复制数据。因此每个 token 更新小型 CPU 输入后重新绑定，也刷新 KV 输入绑定以保留 CPU 分区所需的传输；只修改已绑定的 NumPy 数组不足以保证执行器看到新值。请求重置、失败与卸载必须清除绑定及两组 GPU KV 引用，不通过额外预热掩盖初始化错误。
 
-DirectML 公开路径收敛为 GPU FP16 GPT 与全图 FP16 声学，默认 GPT 的 CPU 部分 4 线程、声学的 CPU 部分 2 线程、KV 容量 1280。声学使用 `finite` 准入，发布记录前检查有限输出、重复性与真实设备执行，并保留原误差筛查结果。运行时核对记录、对应后端和实际文件身份，不重跑实验判定；记录中的线程、CPU arena 与适配器序号保留为测量条件，允许用户调整。仅转换声码器的包不能代替全图候选，CPU、DirectML、CUDA 的记录不能互相代用。
+DirectML 默认使用 GPU FP16 GPT 与全图 FP16 声学，GPT 的 CPU 部分 4 线程、声学的 CPU 部分 2 线程、KV 容量 1280。原有有限输出、重复性和真实设备执行报告保留为实验记录。历史误差或缺少报告不会阻止本地资源加载，执行兼容性由实际图、张量和 provider 判断。
 
-公开预设由 [profiles.py](../../src/sakuratts/profiles.py) 定义。CPU 仅提供 `int8`，DirectML 仅提供 `fp16`；省略 `profile` 时也使用各自默认值。线程数、容量和驻留策略仍可显式调整，但精度、GPT 设备与声学范围必须保持对应路径，错配时拒绝加载。CUDA 与 MLX 的现有档位不变。历史 CPU / AMD 候选和失败证据保留在 [research](../../research/notes/cpu-amd-precision-listening-20260927.md)，不以公开选项继续暴露。
+公开预设由 [profiles.py](../../src/sakuratts/profiles.py) 定义。CPU 提供 `int8`，DirectML 提供 `fp16`，省略时使用各自默认值。显式选项可以覆盖预设，加载器检查所选实现能否执行该配置。CUDA 与 MLX 的现有档位不变。历史候选和失败证据保留在 [research](../../research/notes/cpu-amd-precision-listening-20260927.md)。
 
-统一转换在临时目录内完成基础资源、目标 GPT 精度与静态图、AMD FP16 声学及设备执行检查，再按目标档位核对产物并发布。原始权重切换复用同一准备流程，缓存区分后端与静态容量，不因线程或适配器编号变化重新导出。重打包保留已有产物；普通推理不执行转换。准备工具随 Python 包交付，研究入口复用这些实现。具体用法见 [CPU / AMD 指南](../cpu-amd.md)。
+统一转换在临时目录内完成基础资源、目标 GPT 图和 AMD FP16 声学，再发布产物。目标 GPU 的筛查实验独立执行，不作为转换前提。原始权重切换复用相同准备流程，缓存区分后端和静态容量。具体用法见 [CPU / AMD 指南](../cpu-amd.md)。
 
-配置入口一次解析预设与覆盖参数，Engine 核对包内实际声学精度和范围。文件完整性由消费资源的 loader 检查，同次装配复用结果，重新加载时重验。ONNX GPT 保留来源 manifest 与哈希声明的绑定，只扫描实际使用的图和 embedding；原始权重归档在准备工具或 NumPy 执行器读取时校验，不因运行 ONNX 再扫描一遍。
+配置入口一次解析预设与覆盖参数。加载器读取实际使用的文件，检查计算需要的格式、张量和容量。哈希与来源记录用于缓存和追溯，不作为运行时准入条件；参考转写、来源提交和实验硬件也不参与声学投影缓存匹配。这样允许使用修改过的本地资源，避免重复扫描大文件和因历史标签不一致拒绝正常请求。
 
 ### 显卡选择与 KV 分配
 

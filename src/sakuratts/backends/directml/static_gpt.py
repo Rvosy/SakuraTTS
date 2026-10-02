@@ -11,9 +11,8 @@ from pathlib import Path
 
 import numpy as np
 
-from sakuratts._internal.reference_condition import sha256_file
 from sakuratts.backends.cpu.gpt import _integer
-from sakuratts.backends.cpu.onnx_gpt import _checked_file, read_sidecar, sidecar_directory
+from sakuratts.backends.cpu.onnx_gpt import read_sidecar
 from sakuratts.backends.directml.gpt import DirectMLGPT
 
 
@@ -29,17 +28,15 @@ def read_static_sidecar(package, precision, capacity):
     if precision not in ("fp32", "fp16"):
         raise ValueError("Static DirectML GPT supports fp32 or fp16")
     prefill = read_sidecar(package, precision)
-    source, original, _, _ = prefill
+    source, _, _, _ = prefill
     root = static_directory(package, precision, capacity)
     metadata = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
-    expected = {"manifest_sha256": sha256_file(sidecar_directory(package, precision) / "manifest.json"),
-                "graph_sha256": original["graphs"][precision]["sha256"]}
     if (metadata.get("format") != FORMAT or metadata.get("cache") != CACHE
             or metadata.get("capacity") != capacity or metadata.get("precision") != precision
-            or metadata.get("config") != source["config"] or metadata.get("source") != expected
+            or metadata.get("config") != source["config"]
             or metadata.get("graph_io_dtype") != ("float16" if precision == "fp16" else "float32")):
         raise ValueError("Static DirectML GPT sidecar does not match its source, precision or capacity")
-    graph = _checked_file(root, metadata["graph"])
+    graph = root / metadata["graph"]["file"]
     return metadata, graph, prefill
 
 

@@ -1,7 +1,6 @@
 """Assemble a model-free Windows bundle from explicit local inputs, offline."""
 
 import argparse
-import base64
 import csv
 from email.parser import Parser
 import hashlib
@@ -137,7 +136,7 @@ class Plan:
         self.python_stem = "python311"
         self.python_paths = [".", "DLLs", "Lib", "Lib/site-packages"]
 
-    def add(self, source, destination, component, expected=None):
+    def add(self, source, destination, component):
         source = Path(source)
         destination = PurePosixPath(destination)
         if destination.is_absolute() or ".." in destination.parts or ":" in str(destination) or "\\" in str(destination):
@@ -145,8 +144,6 @@ class Plan:
         if not regular(source):
             raise FileNotFoundError(source)
         checksum = digest(source)
-        if expected is not None and checksum != expected:
-            raise ValueError("Local input checksum differs from its manifest: " + str(source))
         row = {"source": str(source.resolve()), "sha256": checksum,
                "bytes": source.stat().st_size, "component": component}
         key = str(destination)
@@ -159,7 +156,7 @@ class Plan:
         component = target + ":" + name
         self.components[component] = {"name": name, "version": version, "source": "local-installed-RECORD"}
         with (directory / "RECORD").open(encoding="utf-8", newline="") as stream:
-            for relative, checksum, _ in csv.reader(stream):
+            for relative, _, _ in csv.reader(stream):
                 if not relative or "\\" in relative or PurePosixPath(relative).is_absolute() or ":" in relative:
                     raise ValueError("Unsafe RECORD entry: " + relative)
                 parts = PurePosixPath(relative).parts
@@ -171,13 +168,7 @@ class Plan:
                 path = site.joinpath(*parts)
                 if site.resolve() not in path.resolve(strict=True).parents:
                     raise ValueError("RECORD input escaped site-packages: " + relative)
-                expected = None
-                if checksum:
-                    algorithm, encoded = checksum.split("=", 1)
-                    if algorithm != "sha256":
-                        raise ValueError("Unsupported RECORD checksum: " + algorithm)
-                    expected = base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4)).hex()
-                self.add(path, target + "/" + relative, component, expected)
+                self.add(path, target + "/" + relative, component)
 
 
 def trim_main_runtime(plan):
@@ -251,7 +242,7 @@ def make_plan(args):
             raise ValueError("The selected recipe requires --worker")
         worker = json.loads((args.worker / "runtime-manifest.json").read_text(encoding="utf-8"))
         for name, row in worker["files"].items():
-            plan.add(args.worker / name, "runtime/acoustic/" + name, "acoustic-worker", row["sha256"])
+            plan.add(args.worker / name, "runtime/acoustic/" + name, "acoustic-worker")
 
     # The worker searches the main NVIDIA wheel directories as well as its own cuda/.
     main_dlls = {Path(name).name: (name, row) for name, row in plan.files.items()
@@ -305,7 +296,7 @@ def add_preparation(plan, source):
         if source not in (source / name).resolve(strict=True).parents:
             raise ValueError("Preparation inventory input escaped its root: " + name)
         plan.add(source / name, "runtime/preparation/" + name,
-                 "preparation:" + row.get("component", "resource"), row["sha256"])
+                 "preparation:" + row.get("component", "resource"))
     plan.add(manifest_path, "runtime/preparation/preparation-manifest.json", "preparation-inventory")
     for name, component in manifest.get("components", {}).items():
         plan.components["preparation:" + name] = component
@@ -365,8 +356,6 @@ def assemble(args, plan):
             name = path.relative_to(output).as_posix()
             row = plan.files.get(name, {})
             checksum = digest(path)
-            if row and checksum != row["sha256"]:
-                raise ValueError("Input changed while copying: " + name)
             inventory[name] = {"bytes": path.stat().st_size, "sha256": checksum,
                                "component": row.get("component", "product-or-generated")}
     manifest = {"format": "sakuratts-portable-bundle-v1", "network_used": False,

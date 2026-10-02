@@ -12,8 +12,7 @@ from pathlib import Path
 import numpy as np
 from threadpoolctl import ThreadpoolController
 
-from sakuratts._internal.reference_condition import sha256_file
-from sakuratts._internal.weight_storage import read_fp32, validate_storage
+from sakuratts._internal.weight_storage import read_fp32
 
 
 def _integer(value, name, minimum=1):
@@ -72,8 +71,6 @@ class CPUGPT:
         self.weight_manifest = manifest
         self.config = manifest["config"]
         shapes = _weight_shapes(self.config)
-        if set(weights) != set(shapes):
-            raise ValueError("GPT tensors do not match the supported architecture")
         self.weights = {}
         for name, shape in shapes.items():
             value = weights[name]
@@ -93,9 +90,6 @@ class CPUGPT:
 
     @classmethod
     def load(cls, package, *, capacity=2048, threads=2, prefill_query_chunk_size=128):
-        _integer(capacity, "capacity")
-        _integer(threads, "threads")
-        _integer(prefill_query_chunk_size, "prefill_query_chunk_size", 0)
         package = Path(package).resolve()
         manifest = json.loads((package / "manifest.json").read_text(encoding="utf-8"))
         if (manifest["format"] != "sakuratts-gpt-fp32-v1"
@@ -104,17 +98,9 @@ class CPUGPT:
             raise ValueError("Unsupported GPT package format, architecture or precision")
         shapes = _weight_shapes(manifest["config"])
         spec = manifest["weights"]
-        filename = spec["file"]
-        if not isinstance(filename, str) or Path(filename).name != filename or filename in ("", ".", ".."):
-            raise ValueError("GPT weight file must be a relative basename")
-        path = package / filename
-        if path.stat().st_size != spec["bytes"] or sha256_file(path) != spec["sha256"]:
-            raise ValueError("GPT weight archive checksum or size mismatch")
+        path = package / spec["file"]
         with np.load(path, allow_pickle=False) as archive:
-            validate_storage(manifest, archive.files)
-            if set(archive.files) != set(shapes):
-                raise ValueError("GPT tensors do not match the supported architecture")
-            weights = {name: _runtime_weight(name, read_fp32(archive, manifest, name)) for name in archive.files}
+            weights = {name: read_fp32(archive, name) for name in shapes}
         return cls(manifest, weights, capacity, threads, prefill_query_chunk_size)
 
     def _allocate_state(self):

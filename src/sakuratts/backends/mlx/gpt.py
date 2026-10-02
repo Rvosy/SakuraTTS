@@ -12,7 +12,6 @@ physical in-place updates and allocation reuse have not been demonstrated.
 
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
 import time
@@ -20,15 +19,9 @@ import time
 import mlx.core as mx
 import numpy as np
 
-from sakuratts._internal.weight_storage import read_fp32, validate_storage
+from sakuratts._internal.reference_condition import sha256_file as sha256
+from sakuratts._internal.weight_storage import read_fp32
 
-
-def sha256(path):
-    digest = hashlib.sha256()
-    with Path(path).open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 class MLXGPT:
@@ -60,14 +53,11 @@ class MLXGPT:
         if manifest["format"] != "sakuratts-gpt-fp32-v1" or manifest["architecture"] != "gpt-sovits-ar-postnorm-relu":
             raise ValueError("Unsupported model package format or architecture")
         path = package / manifest["weights"]["file"]
-        if sha256(path) != manifest["weights"]["sha256"]:
-            raise ValueError("Converted weight archive hash mismatch")
         with np.load(path, allow_pickle=False) as archive:
-            validate_storage(manifest, archive.files)
             if manifest["weights"].get("storage") is None:
                 weights = mx.load(path)
             else:
-                weights = {name: mx.array(read_fp32(archive, manifest, name)) for name in archive.files}
+                weights = {name: mx.array(read_fp32(archive, name)) for name in archive.files}
         mx.eval(*weights.values())
         model = cls(manifest["config"], weights, capacity)
         model.weights_file = path
@@ -176,7 +166,7 @@ class MLXGPT:
         self.text_length = phones.shape[1]
         first, keys, values, stages = prefill_fp64(
             self.weights_file, self.config, phones, prompt, bert, measure=profile,
-            manifest=self.weight_manifest, weights=self.weights)
+            weights=self.weights)
         started = time.perf_counter() if profile else None
         self.length = phones.shape[1] + prompt.shape[1]
         padding = ((0, 0), (0, 0), (0, self.capacity - self.length), (0, 0))

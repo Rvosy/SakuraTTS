@@ -3,6 +3,8 @@
 from dataclasses import replace
 from pathlib import Path
 import sys
+import json
+import tempfile
 import unittest
 
 import numpy as np
@@ -24,7 +26,24 @@ class BoundReferenceTests(unittest.TestCase):
             np.ones((1, 1024, 1), dtype=np.float32), np.ones((1, 512, 1), dtype=np.float32),
         )
 
-    def test_mutating_original_manifest_or_arrays_cannot_rebind_loaded_instance(self):
+    def test_local_archive_loads_with_stale_metadata_but_requires_aligned_arrays(self):
+        from sakuratts._internal.reference_condition import ARRAY_DTYPES, FORMAT
+        arrays = {name: getattr(self.reference, name) for name in ARRAY_DTYPES}
+        with tempfile.TemporaryDirectory() as folder:
+            package = Path(folder)
+            manifest = dict(self.reference.manifest, format=FORMAT,
+                            archive={"file": "custom.npz", "sha256": "stale", "bytes": 0})
+            (package / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            np.savez(package / "custom.npz", **arrays, unused=np.zeros(1))
+            restored = PreparedReference.load(package)
+            np.testing.assert_array_equal(restored.ge, self.reference.ge)
+            self.assertFalse(restored.ge.flags.writeable)
+            arrays["reference_bert"] = arrays["reference_bert"][:, :1]
+            np.savez(package / "custom.npz", **arrays)
+            with self.assertRaisesRegex(ValueError, "alignment"):
+                PreparedReference.load(package)
+
+    def test_bound_conditions_are_independent_of_the_callers_arrays(self):
         bound = BoundAcousticReference.from_reference(self.reference, self.model)
         bound.validate_reference(self.reference)
         bound.validate_conditions(self.reference.ge.copy(), self.reference.ge512.copy())
@@ -34,8 +53,7 @@ class BoundReferenceTests(unittest.TestCase):
         self.assertEqual(bound.ge[0, 0, 0], 1)
         self.reference.ge[0, 0, 0] = 1
         self.reference.manifest["identity"]["audio_sha256"] = "changed"
-        with self.assertRaises(ValueError):
-            bound.validate_reference(self.reference)
+        bound.validate_reference(self.reference)
         with self.assertRaises(ValueError):
             bound.ge.setflags(write=True)
         with self.assertRaises(ValueError):
@@ -52,33 +70,6 @@ class BoundReferenceTests(unittest.TestCase):
                     other = replace(self.reference, **{name: invalid})
                     with self.assertRaises(ValueError):
                         bound.validate_conditions(other.ge, other.ge512)
-
-    def test_another_transcript_with_same_acoustic_arrays_is_not_same_reference(self):
-        bound = BoundAcousticReference.from_reference(self.reference, self.model)
-        other = replace(self.reference, manifest=dict(self.reference.manifest,
-                        identity=dict(self.reference.manifest["identity"], reference_text="今日は晴れ。")))
-        with self.assertRaises(ValueError):
-            bound.validate_reference(other)
-
-    def test_signed_zero_change_is_not_the_same_bound_condition(self):
-        self.reference.ge[0, 0, 0] = 0.0
-        bound = BoundAcousticReference.from_reference(self.reference, self.model)
-        bound.validate_reference(self.reference)
-        self.reference.ge[0, 0, 0] = -0.0
-        with self.assertRaises(ValueError):
-            bound.validate_reference(self.reference)
-
-    def test_invalid_model_language_and_nonfinite_conditions_fail_at_binding(self):
-        for field in ("sovits_checkpoint_sha256", "official_commit", "reference_language"):
-            other = replace(self.reference, manifest=dict(self.reference.manifest,
-                            identity=dict(self.reference.manifest["identity"], **{field: "other"})))
-            with self.subTest(field=field), self.assertRaises(ValueError):
-                BoundAcousticReference.from_reference(other, self.model)
-        invalid = self.reference.ge.copy()
-        invalid[0, 0, 0] = np.nan
-        with self.assertRaises(ValueError):
-            BoundAcousticReference.from_reference(replace(self.reference, ge=invalid), self.model)
-
 
 if __name__ == "__main__":
     unittest.main()

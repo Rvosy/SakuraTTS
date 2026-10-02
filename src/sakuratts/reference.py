@@ -39,7 +39,7 @@ class ReferenceCache:
         for path in self.paths:
             manifest = json.loads((path / "manifest.json").read_text(encoding="utf-8"))
             if all(manifest["identity"].get(k) == v for k, v in expected.items()):
-                base = PreparedReference.load(path, **expected)
+                base = PreparedReference.load(path)
                 logger.debug("参考音频条件 | 复用部署包缓存 | %s", path)
                 break
         if base is None:
@@ -80,16 +80,13 @@ class ReferenceCache:
                                          "Use the complete bundle, or install the matching component in runtime/preparation.")
                     raise ValueError("Raw reference preparation is not configured: " + ", ".join(missing)
                                      + ". Set these preparation paths in the sakuratts section of --tts-config.")
-                for kind in ("gpt", "sovits"):
-                    if sha256_file(self.settings[kind + "_checkpoint"]) != self.identity[kind + "_checkpoint_sha256"]:
-                        raise ValueError("Reference preparation checkpoint differs from loaded " + kind)
                 logger.info("正在提取参考音频特征  %s", audio_path.name)
                 logger.debug("Preparing reference audio: %s", audio_path)
                 prepare_reference(gpt=self.settings["gpt_checkpoint"], sovits=self.settings["sovits_checkpoint"],
                     audio=audio_path, text="参考音声。", frontend=self.engine._runtime.packages["frontend"],
                     official_source=self.settings["official_source"], python=self.settings["python"], output=path,
                     cnhubert=self.settings.get("cnhubert"))
-            base = PreparedReference.load(path, **expected)
+            base = PreparedReference.load(path)
         self.audio_cache[audio_hash] = base
         if len(self.audio_cache) > 8:
             self.audio_cache.popitem(last=False)

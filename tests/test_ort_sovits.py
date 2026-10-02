@@ -1,16 +1,13 @@
 """Portable package, request validation and resource ownership checks."""
 
-import json
 from pathlib import Path
 import sys
-import tempfile
 import unittest
 
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts.backends.onnx.sovits import ORTSoVITS, read_manifest
-from sakuratts._internal.reference_condition import sha256_file
+from sakuratts.backends.onnx.sovits import ORTSoVITS
 
 
 class FakeSession:
@@ -91,39 +88,6 @@ class ORTSoVITSTests(unittest.TestCase):
         reference.manifest["model_family"] = "v2Pro"
         with self.assertRaisesRegex(ValueError, "differs"):
             self.model.validate_reference(reference)
-
-    def test_package_integrity_checked_before_runtime_import(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            for name in ("weights.bin", "acoustic.onnx"):
-                (root / name).write_bytes(b"model fixture")
-            def spec(name):
-                return {"file": name, "bytes": (root / name).stat().st_size,
-                        "sha256": sha256_file(root / name)}
-            metadata = manifest()
-            metadata.update(weights=spec("weights.bin"), graphs={"decode": spec("acoustic.onnx")})
-            (root / "manifest.json").write_text(json.dumps(metadata), encoding="utf-8")
-            loaded, graph = read_manifest(root)
-            self.assertEqual(loaded["config"]["model"]["version"], "v2ProPlus")
-            self.assertEqual(graph, root / "acoustic.onnx")
-            (root / "weights.bin").write_bytes(b"changed")
-            with self.assertRaisesRegex(ValueError, "SHA-256"):
-                read_manifest(root)
-
-    def test_failed_or_missing_export_validation_is_rejected_before_graph_loading(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            for validation in (None, {}, {"passed": False}, {"passed": 1}, {"passed": "true"}):
-                with self.subTest(validation=validation):
-                    metadata = manifest()
-                    if validation is None:
-                        metadata.pop("validation")
-                    else:
-                        metadata["validation"] = validation
-                    (root / "manifest.json").write_text(json.dumps(metadata), encoding="utf-8")
-                    with self.assertRaisesRegex(ValueError, "did not pass export validation"):
-                        read_manifest(root)
-
 
 if __name__ == "__main__":
     unittest.main()

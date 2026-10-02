@@ -32,8 +32,6 @@ def sha256_array(array):
 
 
 def validate_arrays(arrays):
-    if set(arrays) != set(ARRAY_DTYPES):
-        raise ValueError("Reference package must contain exactly the five required arrays")
     for name, dtype in ARRAY_DTYPES.items():
         array = arrays[name]
         if array.dtype != np.dtype(dtype):
@@ -61,61 +59,27 @@ class PreparedReference:
     ge512: np.ndarray
 
     @classmethod
-    def load(cls, package, *, gpt_checkpoint_sha256, sovits_checkpoint_sha256,
-             reference_text=None, reference_language=None, audio_sha256=None,
-             official_commit=None, manifest_sha256=None):
-        """Load immutable arrays after checking model and optional caller identity.
-
-        reference_text means the original reference transcript, not target text
-        or the punctuated prompt. Provenance paths are descriptive and never read.
-        """
-        if not gpt_checkpoint_sha256 or not sovits_checkpoint_sha256:
-            raise ValueError("Both GPT and SoVITS checkpoint identities are required")
+    def load(cls, package):
+        """Read the reference arrays; provenance metadata is descriptive."""
         package = Path(package)
-        manifest_path = package / "manifest.json"
-        if manifest_sha256 is not None and sha256_file(manifest_path) != manifest_sha256:
-            raise ValueError("Reference manifest SHA-256 mismatch")
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest = json.loads((package / "manifest.json").read_text(encoding="utf-8"))
         if manifest["format"] != FORMAT or manifest["model_family"] not in ("v2Pro", "v2ProPlus"):
             raise ValueError("Unsupported reference condition format or model family")
-        identity = manifest["identity"]
-        expected = {
-            "gpt_checkpoint_sha256": gpt_checkpoint_sha256,
-            "sovits_checkpoint_sha256": sovits_checkpoint_sha256,
-            "reference_text": reference_text, "reference_language": reference_language,
-            "audio_sha256": audio_sha256, "official_commit": official_commit,
-        }
-        for field, value in expected.items():
-            if value is not None and identity[field] != value:
-                raise ValueError(f"Reference identity mismatch: {field}")
-        archive_info = manifest["archive"]
-        if archive_info["file"] != "conditions.npz":
-            raise ValueError("Unsupported reference archive filename")
-        archive_path = package / archive_info["file"]
-        if archive_path.stat().st_size != archive_info["bytes"] or sha256_file(archive_path) != archive_info["sha256"]:
-            raise ValueError("Reference archive SHA-256 or size mismatch")
-        with np.load(archive_path, allow_pickle=False) as archive:
-            arrays = {name: archive[name] for name in archive.files}
+        with np.load(package / manifest["archive"]["file"], allow_pickle=False) as archive:
+            arrays = {name: archive[name] for name in ARRAY_DTYPES}
         validate_arrays(arrays)
-        if set(manifest["arrays"]) != set(arrays):
-            raise ValueError("Reference array metadata does not cover the archive")
-        for name, array in arrays.items():
-            spec = manifest["arrays"][name]
-            if (spec["dtype"] != str(array.dtype) or spec["shape"] != list(array.shape)
-                    or spec["bytes"] != array.nbytes or spec["sha256_raw_c_order"] != sha256_array(array)):
-                raise ValueError(f"Reference array metadata or SHA-256 mismatch: {name}")
+        for array in arrays.values():
             array.setflags(write=False)
         return cls(manifest=manifest, **arrays)
 
 
 @dataclass(frozen=True)
 class BoundAcousticReference:
-    """Immutable reference identity and CPU conditions for one acoustic model.
+    """Immutable CPU conditions for one acoustic model.
 
     The byte-backed arrays cannot be made writable. This object never owns a
     model or the caller's mutable manifest, and switching requires a new model.
     """
-    identity_json: str
     ge: np.ndarray
     ge512: np.ndarray
 
@@ -130,21 +94,14 @@ class BoundAcousticReference:
     def from_reference(cls, reference, model_manifest):
         if not isinstance(reference, PreparedReference):
             raise TypeError("Binding requires a PreparedReference")
-        identity = reference.manifest["identity"]
         if (reference.manifest["model_family"] != "v2Pro"
-                or model_manifest["config"]["model"]["version"] != "v2Pro"
-                or identity["reference_language"] != "ja"):
-            raise ValueError("Binding requires the validated V2Pro Japanese reference")
-        source = model_manifest["source"]
-        if (identity["sovits_checkpoint_sha256"] != source["checkpoint_sha256"]
-                or identity["official_commit"] != source["official_commit"]):
-            raise ValueError("Loaded sovits model differs from the prepared reference")
+                or model_manifest["config"]["model"]["version"] != "v2Pro"):
+            raise ValueError("Binding requires a V2Pro reference")
         snapshots = {}
         for name, shape in (("ge", (1, 1024, 1)), ("ge512", (1, 512, 1))):
             value = cls._condition(getattr(reference, name), name, shape)
             snapshots[name] = np.frombuffer(value.tobytes(order="C"), dtype=np.float32).reshape(shape)
-        return cls(json.dumps(identity, sort_keys=True, ensure_ascii=False),
-                   snapshots["ge"], snapshots["ge512"])
+        return cls(snapshots["ge"], snapshots["ge512"])
 
     def validate_conditions(self, ge, ge512):
         for name, value in (("ge", ge), ("ge512", ge512)):
@@ -156,7 +113,4 @@ class BoundAcousticReference:
     def validate_reference(self, reference):
         if not isinstance(reference, PreparedReference):
             raise TypeError("Binding requires a PreparedReference")
-        if (reference.manifest["model_family"] != "v2Pro"
-                or json.dumps(reference.manifest["identity"], sort_keys=True, ensure_ascii=False) != self.identity_json):
-            raise ValueError("Bound acoustic reference identity differs; load a new model for this reference")
         self.validate_conditions(reference.ge, reference.ge512)

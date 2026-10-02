@@ -58,8 +58,6 @@ def main():
                       model_file=target.name, model_sha256=sha256(target), model_bytes=target.stat().st_size,
                       reload_graph_optimization="ORT_DISABLE_ALL (serialized optimizations already applied)")
         del session
-        if sha256(source) != source_hash:
-            raise ValueError("Source model changed during preparation")
         report["status"] = "converted_unvalidated"
     except Exception:
         report.update(status="error", error=traceback.format_exc())

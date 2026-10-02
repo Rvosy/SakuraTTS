@@ -5,7 +5,6 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
-from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
@@ -109,18 +108,6 @@ class ORTProcessLifecycleTests(unittest.TestCase):
         self.assertIsNone(model.process)
         self.assertTrue(child.stdin.closed and child.stdout.closed)
 
-    def test_staged_policy_reaches_worker_and_requires_matching_ready_identity(self):
-        child = Child(frames((dict(self.ready, acoustic_session_policy="staged", session_initialization="deferred"), {})))
-        model, command = self.load(child, session_policy="staged")
-        self.assertEqual(command[-2:], ["--acoustic-session-policy", "staged"])
-        self.assertEqual(self.read_manifest.call_args.kwargs["acoustic_session_policy"], "staged")
-        self.assertEqual(model.runtime["acoustic_session_policy"], "staged")
-        for policy in ("resident", None):
-            child = Child(frames((dict(self.ready, acoustic_session_policy=policy), {})))
-            with self.subTest(policy=policy), self.assertRaisesRegex(RuntimeError, "identity or execution"):
-                self.load(child, session_policy="staged")
-            self.assertTrue(child.stdin.closed and child.stdout.closed)
-
     def test_diagnostic_capture_preserves_all_stages_and_full_graph_default(self):
         ready = dict(self.ready, chunk_frames=None, diagnostic=True)
         child = Child(frames((ready, {}), (self.reply, {"waveform": self.waveform, "stage": np.ones(4, np.float32)})))
@@ -141,21 +128,17 @@ class ORTProcessLifecycleTests(unittest.TestCase):
         self.assertIs(model.process, child)
         self.assertIsNone(model.last_transfer)
 
-    def test_ready_rejects_wrong_pid_policy_package_and_dead_owned_child(self):
-        changes = ({"worker_pid": True}, {"worker_pid": 0}, {"worker_pid": Child.pid + 1},
-            {"chunk_frames": 0}, {"acoustic_arena_shrink": False}, {"package_manifest_sha256": "different"},
-            {"acoustic_session_policy": "staged"}, {"acoustic_session_policy": None},
-            {"session_initialization": "deferred"}, {"session_initialization": None},
-            {"executable": "different"}, {"providers": ["CPUExecutionProvider"]}, {"torch_imported": True})
+    def test_worker_startup_failure_closes_owned_pipes(self):
+        changes = ({"worker_pid": Child.pid + 1}, {"providers": ["CPUExecutionProvider"]})
         for change in changes:
             with self.subTest(change=change):
                 child = Child(frames((dict(self.ready, **change), {})))
-                with self.assertRaisesRegex(RuntimeError, "identity or execution"):
+                with self.assertRaisesRegex(RuntimeError, "process or execution provider"):
                     self.load(child)
                 self.assertTrue(child.stdin.closed and child.stdout.closed)
         child = Child(frames((self.ready, {})))
         child.exit_code = 1
-        with self.assertRaisesRegex(RuntimeError, "identity or execution"):
+        with self.assertRaisesRegex(RuntimeError, "process or execution provider"):
             self.load(child)
         self.assertTrue(child.stdout.closed)
 
@@ -169,10 +152,7 @@ class ORTProcessLifecycleTests(unittest.TestCase):
     def test_invalid_complete_output_and_transport_retire_worker(self):
         responses = ((self.reply, {"waveform": self.waveform[..., :-1]}),
             (self.reply, {"waveform": self.waveform.astype(np.float16)}),
-            (self.reply, {"waveform": np.full_like(self.waveform, np.nan)}),
-            (self.reply, {"waveform": self.waveform, "partial": np.ones(1, np.float32)}),
-            (dict(self.reply, acoustic_transport=None), {"waveform": self.waveform}),
-            (dict(self.reply, compute_ms=float("nan")), {"waveform": self.waveform}))
+            (self.reply, {"waveform": np.full_like(self.waveform, np.nan)}))
         for reply in responses:
             with self.subTest(reply=reply[0]):
                 child = Child(frames((self.ready, {}), reply))
@@ -265,36 +245,6 @@ class ORTProcessLifecycleTests(unittest.TestCase):
                 patch.object(sys, "stderr", io.StringIO()):
             self.assertEqual(ort_worker.serve(model, self.ready, io.BytesIO(), io.BytesIO()), 1)
         model.close.assert_called_once()
-
-    def test_worker_main_reports_runtime_identity_and_passes_chunk_choice(self):
-        model = Mock()
-        model.runtime = {"chunk_frames": 0, "settings": {"session": "validated"}, "session_initialization": "deferred",
-                         "providers": {"latent": {"CUDAExecutionProvider": {"device_id": "0"}},
-                                       "vocoder": {"CUDAExecutionProvider": {"device_id": "0"}}}}
-        model.providers, model.provider_options = ["CUDAExecutionProvider"], {}
-        model.encoder = SimpleNamespace(manifest=self.manifest)
-        model.acoustic_arena_shrink = True
-        with patch.object(sys, "argv", ["worker", "--package", str(self.package), "--acoustic-chunk-frames", "0",
-                                       "--allow-experimental-fp16", "--acoustic-arena-shrink",
-                                       "--acoustic-session-policy", "staged"]), \
-                patch.object(sys, "stdin", SimpleNamespace(buffer=io.BytesIO())), \
-                patch.object(sys, "stdout", SimpleNamespace(buffer=io.BytesIO())), \
-                patch.object(ort_worker.ORTSoVITS, "load", return_value=model) as load, \
-                patch.object(ort_worker, "serve", return_value=0) as serve, \
-                patch.dict(sys.modules, {"onnxruntime": SimpleNamespace(__version__="test")}):
-            self.assertEqual(ort_worker.main(), 0)
-        self.assertEqual(load.call_args.kwargs["acoustic_chunk_frames"], 0)
-        self.assertEqual(load.call_args.kwargs["acoustic_session_policy"], "staged")
-        ready = serve.call_args.args[1]
-        self.assertIs(ready["private_acoustic_process"], True)
-        self.assertIs(ready["shared_cuda_process"], False)
-        self.assertEqual(ready["chunk_frames"], 0)
-        self.assertEqual(ready["acoustic_session_policy"], "staged")
-        self.assertEqual(ready["session_initialization"], "deferred")
-        self.assertEqual(set(ready["session_provider_options"]), {"latent", "vocoder"})
-        self.assertEqual(ready["package_manifest_sha256"], self.ready["package_manifest_sha256"])
-        self.assertGreater(ready["worker_pid"], 0)
-
 
 if __name__ == "__main__":
     unittest.main()

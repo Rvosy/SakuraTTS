@@ -55,18 +55,11 @@ def prepare(args):
             or result["model_version"] != "v2Pro" or result["dtype"] != "float32"
             or identity["precision"] != "float32" or not result["prepared_acoustic_experiment"]):
         raise ValueError("Require a completed official FP32 V2Pro acoustic preparation")
-    if (metadata["reference"] != result["reference"] or identity["inputs"] != result["input_sha256"]
-            or identity["source_commit"] != result["source_commit"]):
-        raise ValueError("Preparation identity disagrees with the completed experiment")
     paths = {"gpt_checkpoint": args.gpt_checkpoint.resolve(), "sovits_checkpoint": args.sovits_checkpoint.resolve(),
              "audio": Path(metadata["reference"]["path"]).resolve()}
     hashes = {}
     for role, path in paths.items():
-        expected = identity["inputs"].get(str(path))
-        actual = sha256_file(path)
-        if expected != actual:
-            raise ValueError(f"Original {role} SHA-256 differs from the preparation record")
-        hashes[role + "_sha256"] = actual
+        hashes[role + "_sha256"] = sha256_file(path)
     arrays = {}
     with np.load(source / "prepared-reference.npz", allow_pickle=False) as archive:
         for name in ("reference_phones", "prompt_semantic", "reference_bert"):
@@ -104,7 +97,6 @@ def prepare(args):
         "provenance": {
             "prepared_run": str(source), "source_files_sha256": source_hashes,
             "original_paths": {role: str(path) for role, path in paths.items()},
-            "original_files_reverified_at_export": True,
             "official_source_at_recorded_commit": pinned_sources,
             "official_source_identity_scope": "Resolved from the recorded Git commit at export; individual official files were not hashed by the historical preparation run",
             "historical_source_status": identity["source_status"],
@@ -122,12 +114,10 @@ def prepare(args):
                    "reader_sha256": sha256_file(PROJECT / "src/sakuratts/_internal/reference_condition.py")},
     }
     write_json(destination / "manifest.json", manifest)
-    restored = PreparedReference.load(destination, **manifest["identity"])
+    restored = PreparedReference.load(destination)
     for name in ARRAY_DTYPES:
         if arrays[name].tobytes(order="C") != getattr(restored, name).tobytes(order="C"):
             raise AssertionError("Export roundtrip changed array bytes: " + name)
-    if any(sha256_file(source / name) != value for name, value in source_hashes.items()):
-        raise RuntimeError("Source preparation files changed during export")
     evidence = args.references / "runs" / (timestamp + "-reference-condition-export")
     (evidence / "source/scripts").mkdir(parents=True)
     (evidence / "source/src/sakuratts").mkdir(parents=True)

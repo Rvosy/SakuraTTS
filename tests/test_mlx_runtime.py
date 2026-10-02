@@ -1,7 +1,6 @@
 """Public MLX lifecycle contracts; arithmetic and Metal are not mocked as validation."""
 
 from contextlib import nullcontext
-import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -193,75 +192,6 @@ class MLXAvailabilityAndCleanupTests(unittest.TestCase):
                         output="unused-output", backend="mlx")
             runtime.assert_not_called()
             conversion.assert_not_called()
-
-    def test_doctor_reports_platform_failure_without_using_onnx_diagnostics(self):
-        from sakuratts.cli import doctor
-        with patch("sakuratts.cli.platform.system", return_value="Windows"), \
-                patch("sakuratts._internal.diagnostics.check_windows_packages") as windows:
-            report = doctor(backend="mlx")
-        self.assertFalse(report["checks_passed"])
-        self.assertFalse(report["synthesis"]["platform_supported"])
-        self.assertFalse(report["synthesis"]["windows_backend_implemented"])
-        self.assertIn("Apple silicon", report["metal"]["error"])
-        self.assertNotIn("onnxruntime", report)
-        windows.assert_not_called()
-
-    def test_doctor_uses_native_resource_check_and_never_claims_inference_passed(self):
-        from sakuratts.cli import doctor
-        with patch("sakuratts.cli.platform.system", return_value="Darwin"), \
-                patch("sakuratts.cli.platform.machine", return_value="arm64"), \
-                patch("sakuratts.backends.mlx.engine._load_mlx"), \
-                patch("sakuratts.cli.metadata.version", return_value="test"), \
-                patch("sakuratts.backends.mlx.diagnostics.check_packages", return_value={"status": "passed"}) as native, \
-                patch("sakuratts._internal.diagnostics.check_windows_packages") as windows:
-            report = doctor(backend="mlx", config="native-model")
-        self.assertTrue(report["checks_passed"])
-        self.assertTrue(report["synthesis"]["packages_ready"])
-        self.assertFalse(report["synthesis"]["inference_tested"])
-        self.assertFalse(report["synthesis"]["quality_validated"])
-        self.assertFalse(report["metal"]["execution_tested"])
-        native.assert_called_once_with("native-model")
-        windows.assert_not_called()
-
-    def test_native_diagnostics_check_hashes_and_reference_identity_without_mlx(self):
-        from sakuratts.backends.mlx.diagnostics import check_packages
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            config, frontend_path, frontend = fixture(root)
-            configuration = json.loads(config.read_text(encoding="utf-8"))
-            configuration["backend"] = {"preferred": "mlx"}
-            configuration.pop("acoustic_python")
-            config.write_text(json.dumps(configuration), encoding="utf-8")
-            frontend.pop("japanese_g2p")
-            frontend_path.write_text(json.dumps(frontend), encoding="utf-8")
-            source = {"official_commit": "source", "checkpoint_sha256": "checkpoint"}
-            for name in ("gpt", "sovits"):
-                weights = root / name / "weights.npz"
-                np.savez(weights, test=np.zeros(2, np.float32))
-                manifest = {"format": "sakuratts-gpt-fp32-v1" if name == "gpt" else "sakuratts-sovits-decode-fp32-v1",
-                    "dtype": "float32", "source": source, "architecture": "gpt-sovits-ar-postnorm-relu",
-                    "config": {"model": {"version": "v2Pro"}}, "tensor_sources": {"test": "test"},
-                    "weights": {"file": weights.name, "sha256": hashlib.sha256(weights.read_bytes()).hexdigest(),
-                                "bytes": weights.stat().st_size}}
-                (root / name / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-            with patch("sakuratts.backends.mlx.diagnostics.PreparedReference.load",
-                       return_value=SimpleNamespace(manifest={"model_family": "v2Pro"})) as reference:
-                report = check_packages(config)
-                self.assertEqual(report["status"], "passed")
-                self.assertEqual(reference.call_args.kwargs["gpt_checkpoint_sha256"], "checkpoint")
-                self.assertEqual(reference.call_args.kwargs["sovits_checkpoint_sha256"], "checkpoint")
-                from sakuratts.converter import package_model
-                with patch("sakuratts._internal.diagnostics.check_prepared_packages") as windows:
-                    packaged = package_model(config, root / "packaged", name="native V2Pro")
-                windows.assert_not_called()
-                self.assertEqual(packaged.backend, "mlx")
-                self.assertEqual(packaged.references, ("neutral",))
-                for source_name, target_name in (("gpt", "gpt"), ("sovits", "acoustic")):
-                    self.assertEqual((root / source_name / "weights.npz").read_bytes(),
-                                     (root / "packaged" / target_name / "weights.npz").read_bytes())
-                (root / "sovits/weights.npz").write_bytes(b"changed")
-                with self.assertRaisesRegex(ValueError, "checksum"):
-                    check_packages(config)
 
     def test_platform_dependency_and_metal_failures_are_explicit(self):
         with patch("sakuratts.backends.mlx.engine.platform.system", return_value="Windows"), \

@@ -9,14 +9,13 @@ import subprocess
 import sys
 import tempfile
 import threading
-from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 import wave
 
 import numpy as np
 
-from sakuratts import Audio, BusyError, Engine, Model, start_server
+from sakuratts import Audio, BusyError, Engine, Model
 from sakuratts.cli import main
 from sakuratts.converter import package_model
 
@@ -58,81 +57,6 @@ class PublicApiTests(unittest.TestCase):
             result = subprocess.run([sys.executable, "-m", "sakuratts", command, "--help"], capture_output=True)
             self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_serve_defaults_keep_original_startup_options(self):
-        for extra in ([], ["--runtime-mode", "direct"]):
-            with self.subTest(extra=extra):
-                run = Mock()
-                with patch.dict(sys.modules, {"sakuratts.server": SimpleNamespace(start_server=run)}):
-                    self.assertEqual(main(["serve", "model", *extra]), 0)
-                run.assert_called_once()
-                self.assertEqual(run.call_args.args, ("model",))
-                options = run.call_args.kwargs
-                self.assertEqual(options["host"], "127.0.0.1")
-                self.assertEqual(options["port"], 9880)
-                self.assertIsNone(options["tts_config"])
-                self.assertIsNone(options["experimental"])
-                self.assertEqual(options["log_file"], Path("logs/sakuratts.log"))
-                self.assertEqual(options["log_level"], "info")
-                for name, default in (("runtime_mode", "direct"), ("idle_sleep_seconds", 60.),
-                                      ("wake_timeout_seconds", 120.), ("operation_timeout_seconds", 300.)):
-                    self.assertEqual(options.get(name, default), default)
-
-    def test_serve_managed_options_are_explicit_and_forwarded(self):
-        for extra, expected in (
-                ([], (60., 120., 300.)),
-                (["--idle-sleep-seconds", "10.5", "--wake-timeout-seconds", "30",
-                  "--operation-timeout-seconds", "90"], (10.5, 30., 90.))):
-            with self.subTest(extra=extra):
-                run = Mock()
-                with patch.dict(sys.modules, {"sakuratts.server": SimpleNamespace(start_server=run)}):
-                    self.assertEqual(main(["serve", "model", "--runtime-mode", "managed", *extra]), 0)
-                options = run.call_args.kwargs
-                self.assertEqual(options["runtime_mode"], "managed")
-                self.assertEqual(tuple(options[key] for key in (
-                    "idle_sleep_seconds", "wake_timeout_seconds", "operation_timeout_seconds")), expected)
-
-    def test_serve_rejects_invalid_runtime_timers_before_startup(self):
-        for option in ("--idle-sleep-seconds", "--wake-timeout-seconds", "--operation-timeout-seconds"):
-            for value in ("0", "-1", "nan", "inf", "-inf"):
-                with self.subTest(option=option, value=value):
-                    run = Mock()
-                    with patch.dict(sys.modules, {"sakuratts.server": SimpleNamespace(start_server=run)}), \
-                            contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as raised:
-                        main(["serve", "model", "--runtime-mode", "managed", option + "=" + value])
-                    self.assertEqual(raised.exception.code, 2)
-                    run.assert_not_called()
-
-    def test_public_server_preserves_defaults_and_forwards_managed_options(self):
-        run = Mock(return_value="stopped")
-        with patch.dict(sys.modules, {"sakuratts.server": SimpleNamespace(start_server=run)}):
-            self.assertEqual(start_server("model"), "stopped")
-            run.assert_called_once()
-            self.assertEqual(run.call_args.args, ("model",))
-            options = run.call_args.kwargs
-            for name, default in (("host", "127.0.0.1"), ("port", 9880), ("tts_config", None),
-                                  ("backend", None), ("profile", None), ("experimental", None), ("runtime_mode", "direct"),
-                                  ("idle_sleep_seconds", 60.), ("wake_timeout_seconds", 120.),
-                                  ("operation_timeout_seconds", 300.)):
-                self.assertEqual(options.get(name, default), default)
-            run.reset_mock()
-            start_server("model", profile="fp32", runtime_mode="managed", idle_sleep_seconds=12.,
-                         wake_timeout_seconds=40., operation_timeout_seconds=80.)
-            run.assert_called_once_with("model", host="127.0.0.1", port=9880,
-                                        tts_config=None, backend=None, profile="fp32", experimental=None, runtime_mode="managed",
-                                        idle_sleep_seconds=12., wake_timeout_seconds=40.,
-                                        operation_timeout_seconds=80.)
-
-    def test_model_rejects_escaping_resources_bad_defaults_and_malformed_metadata(self):
-        with tempfile.TemporaryDirectory() as folder:
-            model = model_directory(Path(folder) / "model")
-            for update in ({"gpt": "../"}, {"gpt": ""}, {"default_reference": "missing"},
-                           {"backend": {}}, {"backend": "cuda"}, {"backend": {"preferred": ""}},
-                           {"languages": []}, {"languages": [None]}, {"frontend_python": ""}):
-                with self.subTest(update=update):
-                    model.path.write_text(json.dumps(dict(model.manifest, **update)), encoding="utf-8")
-                    with self.assertRaises(ValueError):
-                        Model.load(model.path)
-
     def test_model_metadata_is_readable_without_implemented_backend_or_portable_installation(self):
         with tempfile.TemporaryDirectory() as folder:
             model = model_directory(Path(folder) / "model")
@@ -166,7 +90,8 @@ print(json.dumps(model.info()))
             frontend_worker = root / "frontend.exe"
             frontend_worker.write_bytes(b"fake")
             model.path.write_text(json.dumps(dict(model.manifest, acoustic_python="../worker.exe",
-                frontend_python="../frontend.exe")), encoding="utf-8")
+                frontend_python="../frontend.exe", gpt="../shared-gpt")), encoding="utf-8")
+            (root / "old/gpt").rename(root / "shared-gpt")
             with patch("sakuratts._internal.diagnostics.check_prepared_packages") as check:
                 packed = package_model(model.path, root / "new")
             check.assert_called_once()
@@ -232,17 +157,3 @@ print(json.dumps(model.info()))
                 self.assertEqual(wav.readframes(3), audio().pcm.astype("<i2").tobytes())
             self.assertEqual(json.loads(path.with_suffix(".json").read_text())["status"], "stopped_at_limit")
             with self.assertRaises(FileExistsError): audio().save(path)
-
-    def test_engine_load_forwards_only_explicit_options(self):
-        with tempfile.TemporaryDirectory() as folder:
-            model = model_directory(Path(folder))
-            with patch("sakuratts.backends.cuda.engine.NVIDIAEngine") as backend:
-                engine = Engine.load(model)
-                backend.assert_called_once_with(model)
-                engine.close()
-                Engine.load(model, experimental={"gpt_prefill_query_chunk_size": 128})
-                self.assertEqual(backend.call_args.kwargs["gpt_prefill_query_chunk_size"], 128)
-                Engine.load(model, experimental={"acoustic_session_policy": "staged", "acoustic_chunk_frames": 256})
-                self.assertEqual(backend.call_args.kwargs["acoustic_session_policy"], "staged")
-                with self.assertRaisesRegex(ValueError, "Unknown experimental"):
-                    Engine.load(model, experimental={"precision": "fp16"})

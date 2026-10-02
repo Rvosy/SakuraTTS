@@ -2,7 +2,7 @@
 
 状态：首轮架构已采用，公开执行配置已由 [ADR 0006](0006-device-precision-and-directml-kv.md) 替代。日期：2026-09-27。扩展 [ADR 0004](0004-composable-components.md) 中的执行后端边界。
 
-本文保留首轮 CPU GPT 加可选 GPU 声学的设计原因。当前 CPU 默认且仅提供 INT8 GPT 与 FP32 声学，DirectML 默认且仅提供 GPU FP16 GPT 与全图 FP16 声学；默认线程、容量和使用方式见 [ADR 0006](0006-device-precision-and-directml-kv.md) 与[设备指南](../cpu-amd.md)。下述首轮精度与设备组合不再作为公开配置。
+本文保留首轮 CPU GPT 加可选 GPU 声学的设计原因。当前 CPU 默认使用 INT8 GPT 与 FP32 声学，DirectML 默认使用 GPU FP16 GPT 与全图 FP16 声学；默认线程、容量和使用方式见 [ADR 0006](0006-device-precision-and-directml-kv.md) 与[设备指南](../cpu-amd.md)。预设与显式覆盖规则见 ADR 0006。
 
 ## 原因
 

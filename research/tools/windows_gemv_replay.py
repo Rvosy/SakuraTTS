@@ -47,7 +47,7 @@ def admit(args):
         for name, contract in all_contracts.items():
             if contract["shape"] not in args.shapes:
                 continue
-            fp32 = probe.read_fp32(archive, manifest, name)
+            fp32 = probe.read_fp32(archive, name)
             require(list(fp32.shape) == contract["weight_shape"] and np.isfinite(fp32).all()
                     and not np.any(np.abs(fp32) > np.finfo(np.float16).max), "Invalid selected model weight: " + name)
             half = np.ascontiguousarray(fp32, dtype=np.float16)

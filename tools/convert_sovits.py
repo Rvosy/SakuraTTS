@@ -195,8 +195,6 @@ def convert(checkpoint: Path, references: Path):
         "licenses": {"official_source": "MIT; see GPT-SoVITS-LICENSE",
                      "model_weights": "User-provided; redistribution rights not established by source code license"},
     }
-    if sha256(checkpoint) != checkpoint_hash:
-        raise RuntimeError("Original checkpoint changed during conversion")
     (destination / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return {"status": "converted", "package": str(destination), "weights": manifest["weights"],
             "excluded_tensor_count": len(excluded), "weight_norm_module_count": len(norms)}

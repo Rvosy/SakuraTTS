@@ -187,8 +187,7 @@ def load_inputs(model_root, result_file, case):
     gpt = json.loads((gpt_root / "manifest.json").read_text(encoding="utf-8"))
     acoustic = json.loads((model_root / manifest["acoustic"] / "manifest.json").read_text(encoding="utf-8"))
     ref_root = model_root / manifest["references"][manifest["default_reference"]]
-    ref = PreparedReference.load(ref_root, gpt_checkpoint_sha256=gpt["source"]["checkpoint_sha256"],
-        sovits_checkpoint_sha256=acoustic["source"]["checkpoint_sha256"], reference_language="ja", official_commit=gpt["source"]["official_commit"])
+    ref = PreparedReference.load(ref_root)
     result = json.loads(result_file.read_text(encoding="utf-8"))
     details = next(x["details"] for x in result["requests"] if x["case"] == case and x["kind"] == "hot")
     if details["reference_identity"] != ref.manifest["identity"] or details["parameters"]["language"] != "ja":

@@ -53,9 +53,9 @@ def observe_reads():
     report = dict(calls=[], reads=[])
     active = [None]
 
-    def read(archive, manifest, name):
+    def read(archive, name):
         report["reads"].append(dict(name=name, tensor_call=active[0]))
-        return original_read(archive, manifest, name)
+        return original_read(archive, name)
 
     def tensors(self, *prefixes, names=(), exclude=()):
         index = len(report["calls"])
@@ -185,7 +185,7 @@ def request_from_fixture(case, data, reference):
     if not exact(generation.semantic, data["semantic"]):
         raise AssertionError("Cancellation request reconstructed a different semantic suffix")
     text = PreparedText(case["text"], "ja", dict(phones=data["acoustic_phones"][0].tolist(), norm_text=case["normalized_text"]), 0.0)
-    return PreparedSemantic(text, reference, deepcopy(reference.manifest["identity"]), data["acoustic_phones"][0].copy(),
+    return PreparedSemantic(text, reference, data["acoustic_phones"][0].copy(),
         generation, np.random.default_rng(1234), dict(condition_seconds=0.0, semantic_seconds=0.0))
 
 
@@ -196,21 +196,13 @@ def rejection_and_cancellation(model, data, case, reference, other, expected):
     report = dict(rejections=[], cancellations=[])
     parameters = case["parameters"]
     request = request_from_fixture(case, data, reference)
-    wrong_identity = deepcopy(reference.manifest)
-    wrong_identity["identity"]["audio_sha256"] = "0" * 64
-    wrong_reference = replace(reference, manifest=wrong_identity)
     with observe_encoder() as calls:
-        for mode in ("reference", "ge", "ge512"):
+        for mode in ("ge", "ge512"):
             before = calls[0]
             failure = None
             try:
-                if mode == "reference":
-                    wrong_request = replace(request, reference=wrong_reference,
-                                            reference_identity=deepcopy(wrong_identity["identity"]))
-                    unexpected = synthesize_acoustic(wrong_request, sovits=model, acoustic_noise=data["noise"])
-                else:
-                    ge, ge512 = (other.ge, reference.ge512) if mode == "ge" else (reference.ge, other.ge512)
-                    unexpected = model.decode(data["semantic"], data["acoustic_phones"], ge, ge512, data["noise"])
+                ge, ge512 = (other.ge, reference.ge512) if mode == "ge" else (reference.ge, other.ge512)
+                unexpected = model.decode(data["semantic"], data["acoustic_phones"], ge, ge512, data["noise"])
                 del unexpected
             except ValueError as error:
                 failure = error_record(error)
@@ -301,11 +293,7 @@ def worker(args):
         bundle, conditions, _ = load_inputs(prepared)
         from sakuratts._internal.reference_condition import PreparedReference
         identities = bundle["manifest"]["external_models"]
-        references = {name: PreparedReference.load(Path(prepared["reference_" + name.lower()]),
-            gpt_checkpoint_sha256=identities["gpt"]["checkpoint_sha256"],
-            sovits_checkpoint_sha256=identities["sovits"]["checkpoint_sha256"], reference_language="ja",
-            official_commit=bundle["manifest"]["official_commit"],
-            manifest_sha256=prepared["reference_" + name.lower() + "_manifest_sha256"])
+        references = {name: PreparedReference.load(Path(prepared["reference_" + name.lower()]))
             for name in ("A", "B")}
         if any(not exact(references[name].ge, conditions[name][0]) or not exact(references[name].ge512, conditions[name][1]) for name in references):
             raise AssertionError("Prepared reference packages differ from the acoustic fixtures")
@@ -345,11 +333,11 @@ def worker(args):
             report["loads"].append(dict(policy="bound", reference=reference_name, sequence_index=index,
                 **load_model(holder, package, variant, mutable, mx)))
             binding = holder[0].bound_reference
-            bound_hashes = dict(ge=spec(binding.ge), ge512=spec(binding.ge512), identity=binding.identity_json)
+            bound_hashes = dict(ge=spec(binding.ge), ge512=spec(binding.ge512))
             mutable.ge.flat[0] += np.float32(1)
             mutable.ge512.flat[0] += np.float32(1)
             mutable.manifest["identity"]["audio_sha256"] = "f" * 64
-            if dict(ge=spec(binding.ge), ge512=spec(binding.ge512), identity=binding.identity_json) != bound_hashes:
+            if dict(ge=spec(binding.ge), ge512=spec(binding.ge512)) != bound_hashes:
                 raise AssertionError("Caller mutation changed the loaded binding snapshot")
             for value in (binding.ge, binding.ge512):
                 try:

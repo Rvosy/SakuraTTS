@@ -119,15 +119,15 @@ python scripts/build_portable.py `
   --audit tmp/portable-inputs.json
 ```
 
-构建脚本需要 `packaging`，使用已有开发 Python 即可；不执行安装或下载。`--plan-only` 只校验并列出构建输入。输出目录必须不存在。源文件按安装包 RECORD 和声学组件哈希清单选取并复核，不整体复制 venv，不复制可编辑安装、`.pth`、字节码或开发配置。绝对来源路径只写在包外的本地 audit；发行清单不包含这些路径。
+构建脚本需要 `packaging`，使用已有开发 Python 即可；不执行安装或下载。`--plan-only` 只校验并列出构建输入。输出目录必须不存在。源文件按安装包 RECORD 和声学组件清单选取，不整体复制 venv，不复制可编辑安装、`.pth`、字节码或开发配置。绝对来源路径只写在包外的本地 audit；发行清单不包含这些路径。
 
-省略 `--preparation` 可构建精简包。解释器版本从输入中的 `python3X.dll` 读取，主环境与准备环境分别选择，并与各自依赖的 ABI 匹配；支持标准和嵌入式布局。经典前端仍要求其现有 CPython 3.9 ABI，plus 前端没有这项限制。准备组件只使用 CPU PyTorch / torchaudio；`--runtime-site` 可覆盖来源目录中的对应包，不修改原环境。源环境本身就是 CPU 版时可省略该参数。构建器不会联网补装依赖。
+省略 `--preparation` 可构建精简包。解释器版本从输入中的 `python3X.dll` 读取，主环境与准备环境分别选择，并与各自依赖的 ABI 匹配；支持标准和嵌入式布局。前端扩展模块使用所选环境对应的 Python ABI，不单独限制版本号。准备组件只使用 CPU PyTorch / torchaudio；`--runtime-site` 可覆盖来源目录中的对应包，不修改原环境。源环境本身就是 CPU 版时可省略该参数。构建器不会联网补装依赖。
 
 准备组件不带头文件、静态链接库和依赖的测试目录。若本地只有 GPU 版 ORT，保留其 CPU 核心，排除准备阶段不会使用的 CUDA / TensorRT provider。原版 TTS 导入时仍会加载部分训练相关库，目前保留这些实际依赖。主推理环境保留 NVRTC 所需的 NVIDIA、CuPy 和 NumPy 头文件，不能套用准备环境的裁剪规则。
 
 准备组件分别生成 `preparation.json`、`preparation-manifest.json` 和 `licenses.json`。源码及辅助资源采用白名单，开发者配置不复制；官方发声底模、用户角色和参考均排除。`licenses.json` 会标明本地输入缺少的辅助权重许可信息，不能用上游代码的 MIT 许可代替权重许可。公开分发前仍需补齐这些来源声明。
 
-本地安装文件若与 wheel 的 RECORD 不同，构建默认失败。只有核对过的修改才能通过 `--record-overrides` 显式提供相对文件名、原始 `record_sha256`、当前 `sha256` 和 `reason`；这些信息写入准备组件清单。不能用该选项批量忽略校验。
+构建使用当前本地文件，允许打包修改过的依赖；RECORD 用于确定文件范围，不比对原始校验和。发行清单记录实际产物的哈希。
 
 两个解释器共享内容完全一致的 NVIDIA DLL，声学 worker 显式从包内主环境加载，不同版本分别保留。构建产物的实际文件和体积由 `bundle-manifest.json` 记录。
 
@@ -152,7 +152,7 @@ python scripts/archive_portable.py --bundle dist/SakuraTTS-Windows-CPU-AMD `
   --sevenzip "C:/Program Files/7-Zip/7z.exe" --output dist/portable-release --profile maximum
 ```
 
-采样比较 LZMA2 solid 的 `mx=5/7/9`、32/64/128 MiB 字典，固定 2 个压缩线程，记录压缩大小、耗时、校验和解压耗时。样本取自体积最大的 12 个文件的多个位置，结果只用于选参，不代表完整包的压缩率。正式压缩只读取发行清单中的文件，并重新校验哈希；验收产生的缓存、日志、音频及用户后来放入的模型都不会收录。输出 `.7z`、SHA256 和压缩报告。
+采样比较 LZMA2 solid 的 `mx=5/7/9`、32/64/128 MiB 字典，固定 2 个压缩线程，记录压缩大小、耗时、校验和解压耗时。样本取自体积最大的 12 个文件的多个位置，结果只用于选参，不代表完整包的压缩率。正式压缩只读取发行清单中的文件；验收产生的缓存、日志、音频及用户后来放入的模型都不会收录。输出 `.7z`、SHA256 和压缩报告。
 
 压缩选项由 [archive_portable.py](../scripts/archive_portable.py) 的 `PROFILES` 定义。`balanced` 适合开发打包，`maximum` 用于体积优先的发行物；本机样本比较与完整压缩结果分别保存，具体结果见下方记录。
 

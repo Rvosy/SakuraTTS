@@ -56,9 +56,9 @@ sakuratts convert --backend directml --gpt voices/model.ckpt --sovits voices/mod
 
 将示例路径替换为实际输入。准备环境需要转换依赖、ONNX Runtime 和辅助模型；辅助模型不会自动下载。可省略参考音频与转写，之后通过参考 API 准备。
 
-CPU 转换生成 INT8 GPT sidecar 和 FP32 声学包。AMD 转换生成 FP16 Prefill、匹配容量的静态 Decode 图和全图 FP16 声学包，并在运行 `sakuratts` 的 DirectML 环境中执行声学准入检查。图导出仍在 `--python` 指定的准备解释器中完成，因此准备环境无需安装 DirectML。AMD 转换需要可用的目标显卡，初始化或执行检查失败时不发布模型目录。
+CPU 转换生成 INT8 GPT sidecar 和 FP32 声学包。AMD 转换生成 FP16 Prefill、匹配容量的静态 Decode 图和全图 FP16 声学包。图导出在 `--python` 指定的准备解释器中完成，无需执行目标显卡上的筛查实验。
 
-AMD 声学沿用 `finite` 准入，检查有限输出、重复性、公共 I/O 和 GPU 执行，并保存 FP32 误差筛查结果。输出位于声学包的 `experimental-directml-finite.json`；它是执行证据，不代表人工音质验收。加载时只检查已发布记录和实际消费文件的身份，不重跑准备实验，也不扫描 ONNX 推理未使用的原始 GPT 权重。
+AMD 声学加载不要求 `experimental-directml-finite.json` 或其他筛查报告。需要比较精度、重复性或设备执行时，可单独运行实验工具；报告保留测量条件和失败结果，供评估与试听参考。
 
 需要指定其他静态容量或非零适配器时，转换命令接受与推理相同的 `--experimental FILE`。例如文件内容为 `{"capacity": 2048, "device_id": 1}`，转换和推理均传入该文件。线程、驻留策略等参数只影响执行，不改变转换产物身份。默认仍使用本页开头的两套配置。
 
@@ -91,7 +91,7 @@ with Engine.load("models/voice-amd", backend="directml") as engine:
     print(audio.report["gpt_device"], audio.report["acoustic_device"])
 ```
 
-省略 `backend` 时使用模型的 `backend.preferred`；模型未声明时仍默认 CUDA。CPU / AMD 的其他旧预设会明确拒绝，不能通过精度或 GPT 设备覆盖重新选择历史候选。
+省略 `backend` 时使用模型的 `backend.preferred`，模型未声明时默认 CUDA。CPU / AMD 分别保留 `int8` / `fp16` 预设；显式执行选项可以覆盖预设默认值。
 
 ## 服务配置
 
@@ -112,7 +112,7 @@ sakuratts serve -c configs/tts_infer.amd.yaml
 
 CPU 服务可将 [CPU 示例](../examples/tts-cpu.example.yaml)复制为 `configs/tts_infer.cpu.yaml`，填写对应 CPU 模型路径。省略 `profile` 也会选择各自默认档位。YAML 中的相对模型路径按服务启动目录解析，搬迁后须保持目录关系或填写新的路径。
 
-命令行 `--backend` 覆盖配置中的后端；`--profile` 覆盖配置中的预设名。`sakuratts.runtime_options` 覆盖预设中的资源参数，显式 `--experimental FILE` 再覆盖同名值。设备、GPT 精度与声学范围仍须满足对应路径要求。配置合并由 [read_inference_configuration 与 Inference](../src/sakuratts/engine.py) 定义。
+命令行 `--backend` 覆盖配置中的后端，`--profile` 覆盖预设名。`sakuratts.runtime_options` 覆盖预设，显式 `--experimental FILE` 再覆盖同名值。所选设备、实现与实际图精度需要相容。配置合并见 [read_inference_configuration 与 Inference](../src/sakuratts/engine.py)。
 
 CPU / AMD 在主解释器中执行 GPT 与声学，不启动 `acoustic_python` 声学 worker。经典日文前端仍使用 `frontend_python`；旧配置省略时继续沿用 `acoustic_python`。安装路径需要保持有效，见[日文运行资源](japanese-runtime.md)。
 
@@ -167,9 +167,9 @@ sakuratts doctor MODEL_CPU --backend cpu
 sakuratts doctor MODEL_AMD --backend directml
 ```
 
-诊断检查所选默认档位实际使用的 GPT 精度资源、静态图、声学准入、文件哈希、参考身份、解释器依赖与所需 provider。`gpt_resources` 记录图路径、精度和 KV 存储方式。普通诊断不加载模型 Session、不执行 GPU 计算，不能代替真实生成或音质验收。
+诊断检查所选 GPT 图、声学资源路径、参考数组、解释器依赖与 provider，不比对文件哈希或实验报告。普通诊断不加载模型 Session、不执行 GPU 计算，不能代替真实生成或音质验收。
 
-运行时由各模型 loader 在消费资源时校验文件；同次装配复用检查结果，重新加载时重新检查。Engine 只核对所选档位与包内实际声学精度、范围，不重复扫描文件或复查配置副本。
+模型加载器直接读取所选文件，检查计算需要的格式、张量形状与容量。Engine 核对显式精度预设与实际声学精度，不按来源哈希、字典 MD5、固定前端版本或历史筛查结论拒绝使用。
 
 DirectML 初始化失败时明确报错，不会把 GPT 或声学整体静默切到 CPU。ORT 可将图内部分算子分配给 CPU；实际 GPU 工作量须结合 profile 或设备计量确认。合成报告分别记录 `gpt_device`、`acoustic_device`、`gpt_precision` 和 `acoustic_precision`。
 

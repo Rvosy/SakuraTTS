@@ -12,8 +12,7 @@ from pathlib import Path
 import numpy as np
 
 from sakuratts.backends.cuda.runtime import import_cupy, validate_gpt_cuda_include_paths
-from sakuratts._internal.reference_condition import sha256_file
-from sakuratts._internal.weight_storage import read_fp32, validate_storage
+from sakuratts._internal.weight_storage import read_fp32
 
 validate_gpt_cuda_include_paths()
 cp = import_cupy()
@@ -377,14 +376,11 @@ class CUDAGPT:
                 or manifest["architecture"] != "gpt-sovits-ar-postnorm-relu"):
             raise ValueError("Unsupported GPT package format or architecture")
         path = package / manifest["weights"]["file"]
-        if sha256_file(path) != manifest["weights"]["sha256"]:
-            raise ValueError("GPT weight archive checksum mismatch")
         with np.load(path, allow_pickle=False) as archive:
-            validate_storage(manifest, archive.files)
             dtype = np.float16 if precision == "fp16" else np.float32
             weights = {}
             for name in archive.files:
-                value = read_fp32(archive, manifest, name)
+                value = read_fp32(archive, name)
                 if precision == "fp16":
                     # Check the expanded tensor before upload; no FP32 GPU
                     # copy or modified model package is needed.

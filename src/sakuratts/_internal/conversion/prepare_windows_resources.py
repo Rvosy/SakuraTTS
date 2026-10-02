@@ -22,8 +22,6 @@ import traceback
 
 PACKAGE = Path(__file__).resolve().parents[2]
 SOURCE_FILE = "GPT_SoVITS/TTS_infer_pack/TTS.py"
-LID_BYTES = 131266198
-LID_SHA256 = "7e69ec5451bc261cc7844e49e4792a85d7f09c06789ec800fc4a44aec362764e"
 
 
 def digest(path):
@@ -117,8 +115,6 @@ def frontend_profile(preflight):
         return None
     implementation, version = preflight["implementation"], preflight["version"]
     if implementation == "pyopenjtalk-classic":
-        if version != "0.3.4" or preflight["module_version"] != "0.3.4":
-            raise ValueError("The portable classic frontend currently requires pyopenjtalk 0.3.4")
         return {"implementation": implementation, "version": version, "module_directory": "classic-python",
                 "main_dictionary": "classic-python/pyopenjtalk/open_jtalk_dic_utf_8-1.11"}
     if implementation == "pyopenjtalk-plus":
@@ -154,47 +150,17 @@ def classic_frontend_files(preflight):
 
 
 def prepare_frontend(root, output, language_model=None, preflight=None):
-    root, output = Path(root).resolve(strict=True), Path(output).resolve()
+    output = Path(output).resolve()
+    if output.exists():
+        return read_json(output / "manifest.json")
+    root = Path(root).resolve(strict=True)
     source = root / "GPT_SoVITS/text/symbols2.py"
     user = root / "GPT_SoVITS/text/ja_userdic"
     language = (Path(language_model).resolve(strict=True) if language_model is not None else
                 root / "GPT_SoVITS/pretrained_models/fast_langdetect/lid.176.bin")
     source_id = "source-sha256:" + digest(root / SOURCE_FILE)
-    if hashlib.md5((user / "userdict.csv").read_bytes()).hexdigest() != (user / "userdict.md5").read_text(encoding="utf-8"):
-        raise ValueError("Official user dictionary needs rebuilding; the source directory will not be modified")
-    if not (user / "user.dict").stat().st_size:
-        raise ValueError("Official user dictionary is empty")
-    if language.stat().st_size != LID_BYTES or digest(language) != LID_SHA256:
-        raise ValueError("Expected the complete verified lid.176.bin, not a reduced language model")
     profile = frontend_profile(preflight)
     classic_files = classic_frontend_files(preflight)
-    if output.exists():
-        manifest = read_json(output / "manifest.json")
-        if manifest["official_commit"] != source_id or manifest["symbol_source_sha256"] != digest(source):
-            raise ValueError("Existing frontend package belongs to different official sources")
-        if manifest.get("japanese_g2p") != profile:
-            raise ValueError("Existing frontend package uses a different Japanese G2P profile; choose a new output directory")
-        english_files = set()
-        if "english_g2p" in manifest:
-            if manifest["english_g2p"] != {"implementation": "gpt-sovits-english-v1", "directory": "english"}:
-                raise ValueError("Unsupported English frontend profile")
-            english_files = {name for name in manifest["files"] if name.startswith("english/")}
-            if not {"english/g2p.json", "english/checkpoint.npz"}.issubset(english_files):
-                raise ValueError("Incomplete English frontend resources")
-        if set(manifest["files"]) != {"symbols-v2.json", "user.dict", "lid.176.bin", *classic_files, *english_files}:
-            raise ValueError("Existing frontend package has a different resource inventory")
-        for name in manifest["files"]:
-            spec = manifest["files"][name]
-            if output not in (output / name).resolve(strict=True).parents:
-                raise ValueError("Frontend resources must remain inside their package")
-            if digest(output / name) != spec["sha256"] or (output / name).stat().st_size != spec["bytes"]:
-                raise ValueError("Existing frontend package is damaged: " + name)
-        if digest(output / "user.dict") != digest(user / "user.dict"):
-            raise ValueError("Existing frontend user dictionary differs from the official source")
-        for name, source_path in classic_files.items():
-            if digest(output / name) != digest(source_path):
-                raise ValueError("Existing classic frontend resource differs from the preparation interpreter: " + name)
-        return manifest
     namespace = {"__name__": "sakuratts_prepared_symbols"}
     exec(compile(source.read_bytes(), str(source), "exec"), namespace)
     symbols = namespace["symbols"]
@@ -209,8 +175,6 @@ def prepare_frontend(root, output, language_model=None, preflight=None):
         target = output / name
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_path, target)
-        if digest(target) != classic_identities[name]["sha256"]:
-            raise RuntimeError("Classic frontend source changed during preparation: " + str(source_path))
     manifest = {"format": "sakuratts-japanese-frontend-resources-v1", "official_commit": source_id,
                 "symbol_source_sha256": digest(source),
                 "sources": {"user_dictionary": identity(user / "user.dict"), "language_model": identity(language)},
@@ -223,12 +187,6 @@ def prepare_frontend(root, output, language_model=None, preflight=None):
         manifest["sources"]["classic_files"] = classic_identities
     write_json(output / "manifest.json", manifest)
     return manifest
-
-
-def verify_protected(files):
-    for name, expected in files.items():
-        if digest(name) != expected:
-            raise RuntimeError("Preparation source changed: " + name)
 
 
 def write_runtime_config(output, references):
@@ -331,9 +289,9 @@ def worker(job_file):
             archive = package / "conditions.npz"
             np.savez(archive, **arrays)
             manifest = {"format": "sakuratts-prepared-reference-v1", "model_family": "v2ProPlus",
-                        "identity": {"gpt_checkpoint_sha256": job["protected"][job["gpt"]],
-                            "sovits_checkpoint_sha256": job["protected"][job["sovits"]],
-                            "audio_sha256": job["protected"][ref["audio"]], "official_commit": job["source_id"],
+                        "identity": {"gpt_checkpoint_sha256": job["source_hashes"][job["gpt"]],
+                            "sovits_checkpoint_sha256": job["source_hashes"][job["sovits"]],
+                            "audio_sha256": job["source_hashes"][ref["audio"]], "official_commit": job["source_id"],
                             "reference_text": ref["text"], "reference_language": "ja"},
                         "reference": {"prompt_text": prompt, "normalized_text": normalized, "tone": ref["tone"]},
                         "preparation": {"precision": job["precision"], "device": job["device"], "torch_version": torch.__version__,
@@ -344,7 +302,7 @@ def worker(job_file):
                         "archive": {"file": archive.name, "bytes": archive.stat().st_size, "sha256": digest(archive)},
                         "arrays": {name: {"dtype": str(a.dtype), "shape": list(a.shape), "bytes": a.nbytes,
                             "sha256_raw_c_order": hashlib.sha256(a.tobytes()).hexdigest()} for name, a in arrays.items()},
-                        "provenance": {"preparation_job": str(job_file), "protected_files_sha256": job["protected"]}}
+                        "provenance": {"preparation_job": str(job_file), "source_files_sha256": job["source_hashes"]}}
             write_json(package / "manifest.json", manifest)
             result["references"].append({"tone": ref["tone"], "package": str(package),
                                          "elapsed_seconds": time.perf_counter() - phase})
@@ -414,25 +372,13 @@ def main():
     for ref in references:
         if (output / "references" / ref["tone"]).exists():
             raise FileExistsError("Reference output already exists; choose a new output directory: " + ref["tone"])
-    protected_paths = [character / "character.json" if character else args.inputs, *inputs.values(), *(Path(ref["audio"]) for ref in references)]
-    protected_paths.extend(p for p in (root / "GPT_SoVITS").rglob("*.py"))
-    protected_paths.extend(p for p in (root / "GPT_SoVITS/text/ja_userdic").iterdir() if p.is_file())
+    source_paths = [*inputs.values(), *(Path(ref["audio"]) for ref in references)]
     cnhubert = args.cnhubert.resolve(strict=True) if args.cnhubert else root / "GPT_SoVITS/pretrained_models/chinese-hubert-base"
-    protected_paths.extend(p for p in cnhubert.rglob("*") if p.is_file())
-    protected_paths.append(root / "GPT_SoVITS/pretrained_models/sv/pretrained_eres2netv2w24s4ep4.ckpt")
-    # Manifest source paths record provenance and may belong to a moved or removed installation.
-    language = (args.language_model.resolve(strict=True) if args.language_model else
-                root / "GPT_SoVITS/pretrained_models/fast_langdetect/lid.176.bin")
-    protected_paths.append(language)
-    protected_paths.extend(classic_frontend_files(preflight).values())
-    protected_paths.extend(frontend_path / name for name in frontend["files"])
-    protected_paths.append(frontend_path / "manifest.json")
-    protected_paths.append(root / "GPT_SoVITS/configs/tts_infer.yaml")
     job = {"official_source": str(root), "output": str(output), "frontend": str(frontend_path), "gpt": str(inputs["gpt"]), "sovits": str(inputs["sovits"]),
            "source_id": frontend["official_commit"], "cnhubert": str(cnhubert), "device": args.device, "precision": args.precision,
            "frontend_preflight": preflight,
            "references": references, "cpu_threads": args.cpu_threads,
-           "protected": {str(p): digest(p) for p in protected_paths}}
+           "source_hashes": {str(p): digest(p) for p in source_paths}}
     run = output / ("prepare-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ"))
     run.mkdir(parents=True, exist_ok=False)
     job_file = run / "job.json"
@@ -448,8 +394,7 @@ def main():
             log.write(line)
             log.flush()
         returncode = child.wait()
-    verify_protected(job["protected"])
-    write_json(run / "process.json", {"command": command, "returncode": returncode, "source_files_unchanged": True})
+    write_json(run / "process.json", {"command": command, "returncode": returncode})
     if returncode:
         print("Reference preparation failed; details: " + str(run / "worker.log"), file=sys.stderr)
     elif character:

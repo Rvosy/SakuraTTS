@@ -71,18 +71,9 @@ class VocoderReceptiveField:
     @classmethod
     def from_dict(cls, value):
         """Load a validated dependency DAG without importing ONNX or NumPy."""
-        fields = {"format", "version", "source", "input_name", "output_name", "condition_name",
-                  "samples_per_frame", "scales", "operations"}
-        if not isinstance(value, dict) or set(value) != fields:
-            raise ValueError("Unexpected receptive-field specification fields")
         if value["format"] != cls.FORMAT or type(value["version"]) is not int or value["version"] != cls.VERSION:
             raise ValueError("Unsupported receptive-field specification version")
-        source = value["source"]
-        if not isinstance(source, dict):
-            raise ValueError("Missing source graph identity")
-        digest = source.get("graph_sha256")
-        if not isinstance(digest, str) or len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
-            raise ValueError("Expected the source graph SHA-256")
+        source = value.get("source", {})
         names = [value[key] for key in ("input_name", "output_name", "condition_name")]
         if any(not isinstance(name, str) or not name for name in names) or len(set(names)) != 3:
             raise ValueError("Expected distinct input, output and condition names")

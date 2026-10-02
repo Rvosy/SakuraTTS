@@ -165,7 +165,7 @@ def cpu_self_test():
         from sakuratts.backends.mlx.gpt_prefill import prefill_fp64
 
         file_logits, file_keys, file_values, _ = prefill_fp64(
-            package / "weights.npz", config, phones, prompt, bert, manifest=manifest)
+            package / "weights.npz", config, phones, prompt, bert)
         # Only this owned temporary test file changes. A validated loaded
         # model must use its existing weights without rereading this path.
         (package / "weights.npz").write_bytes(b"changed after validated model load")

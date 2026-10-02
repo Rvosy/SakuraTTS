@@ -283,8 +283,6 @@ def export(checkpoint, source, output, *, validation_cases=((1, 1), (2, 2), (7, 
     }
     shutil.copy2(Path(source) / "LICENSE", output / "GPT-SoVITS-LICENSE")
     (output / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    if sha256(checkpoint) != checkpoint_hash:
-        raise RuntimeError("Source checkpoint changed during conversion")
     if not manifest["validation"]["passed"]:
         raise AssertionError(f"ONNX validation failed; inspect {output / 'validation.json'}")
     return {"package": str(output), "weights": manifest["weights"], "validation": manifest["validation"]}

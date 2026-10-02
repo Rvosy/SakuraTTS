@@ -4,7 +4,6 @@ The simulated binder copies host inputs at bind time, as DirectML may do. This
 checks the first-request stale-input failure without requiring a GPU in CI.
 """
 import importlib.util
-from collections import Counter
 import gc
 import json
 from pathlib import Path
@@ -321,29 +320,6 @@ class StaticDirectMLGPTTests(unittest.TestCase):
                 finally:
                     model.close()
 
-    def test_static_source_capacity_and_graph_hash_are_bound(self):
-        root = static_directory(self.root, "fp16", 8)
-        path = root / "manifest.json"
-        original = path.read_text(encoding="utf-8")
-        try:
-            value = json.loads(original)
-            value["source"]["graph_sha256"] = "different model"
-            path.write_text(json.dumps(value), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "source, precision or capacity"):
-                read_static_sidecar(self.root, "fp16", 8)
-            value = json.loads(original)
-            value["capacity"] = 9
-            path.write_text(json.dumps(value), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "capacity"):
-                read_static_sidecar(self.root, "fp16", 8)
-            value = json.loads(original)
-            value["graph"]["sha256"] = "corrupt"
-            path.write_text(json.dumps(value), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "checksum"):
-                read_static_sidecar(self.root, "fp16", 8)
-        finally:
-            path.write_text(original, encoding="utf-8")
-
     def test_constructor_failure_releases_prefill_and_sessions(self):
         metadata, graph, prefill = read_static_sidecar(self.root, "fp32", 8)
         model = StaticDirectMLGPT.__new__(StaticDirectMLGPT)
@@ -353,31 +329,6 @@ class StaticDirectMLGPTTests(unittest.TestCase):
         self.assertIsNone(model.session)
         self.assertIsNone(model.prefill_model)
         self.assertEqual(model.embedding, {})
-
-    def test_each_load_checks_executed_resources_once_and_detects_later_changes(self):
-        checked = Counter()
-
-        def checksum(path):
-            checked[Path(path)] += 1
-            return sha256_file(path)
-
-        metadata, graph, prefill = read_static_sidecar(self.root, "fp32", 8)
-        resources = (graph, prefill[2], prefill[3])
-        with patch("sakuratts.backends.cpu.onnx_gpt.sha256_file", side_effect=checksum), \
-                patch("sakuratts.backends.directml.static_gpt.sha256_file", side_effect=checksum):
-            for _ in range(2):
-                checked.clear()
-                model = StaticDirectMLGPT.load(self.root, capacity=8, threads=1)
-                model.close()
-                for path in resources:
-                    self.assertEqual(checked[path], 1, str(path))
-            original = graph.read_bytes()
-            try:
-                graph.write_bytes(original + b"changed")
-                with self.assertRaisesRegex(ValueError, "checksum or size"):
-                    StaticDirectMLGPT.load(self.root, capacity=8, threads=1)
-            finally:
-                graph.write_bytes(original)
 
     def test_provider_rejection_does_not_retain_unassigned_session(self):
         references = []

@@ -24,9 +24,9 @@ with Engine.load("MODEL_AMD", backend="directml") as engine:
     audio = engine.synthesize("こんにちは。")
 ```
 
-YAML 使用 `sakuratts.backend`、`sakuratts.profile` 和 `sakuratts.runtime_options`。命令行或 Python 显式参数覆盖 YAML 对应字段；`runtime_options` 覆盖预设中的资源参数，显式 `experimental` 再覆盖 `runtime_options`。省略 `profile` 时，CPU 选择 `int8`，DirectML 选择 `fp16`；CUDA 与 MLX 保持原有默认行为。精度和设备必须满足档位要求，误用模型或覆盖为不匹配的 GPT 设备会报错。`minimum-memory` 用于低级 Engine、`tts` 或 `managed` HTTP，默认 `direct` HTTP 不接受错峰加载。
+YAML 使用 `sakuratts.backend`、`sakuratts.profile` 和 `sakuratts.runtime_options`。命令行或 Python 显式参数覆盖 YAML 对应字段，`runtime_options` 覆盖预设，显式 `experimental` 再覆盖同名选项。省略 `profile` 时 CPU 选择 `int8`、DirectML 选择 `fp16`；CUDA 与 MLX 保持原有默认行为。加载按所选实现与资源执行，声学精度需符合显式预设。`minimum-memory` 用于低级 Engine、`tts` 或 `managed` HTTP，默认 `direct` HTTP 不接受错峰加载。
 
-选择档位不会转换模型。CPU 需要 GPT INT8 附加资源与 FP32 整图声学包；DirectML 需要 FP16 GPT、容量 1280 的静态 Decode 资源和有独立设备执行记录的全图 FP16 声学包。后者要求有限输出、I/O、重复性和资源哈希检查通过，允许保留未通过的 FP32 误差筛查，不代表音质验收。降精度可能改变采样序列和音频长度，准备和试听方法见[CPU / AMD 指南](cpu-amd.md)。
+选择档位不会转换模型。CPU 默认需要 GPT INT8 附加资源与 FP32 整图声学包；DirectML 默认需要 FP16 GPT、对应容量的静态 Decode 图与 FP16 声学包。运行时不要求设备执行报告或哈希匹配。降精度可能改变采样序列和音频长度，准备和试听方法见[CPU / AMD 指南](cpu-amd.md)。
 
 CPU 模式不加载 GPU 执行器。DirectML 把 GPT Transformer 与声学模型放在 GPU，文本处理、embedding 和采样仍使用 CPU。默认 GPT 线程数为 4，DirectML 声学的 CPU 部分为 2 线程。两条路径都允许显式调整线程、容量和驻留策略；其他 CPU / AMD 候选仅保留在[历史实验](../research/notes/cpu-amd-precision-listening-20260927.md)，不再作为公开档位。
 
@@ -74,7 +74,7 @@ CUDA 当前提供四档：FP32、FP16 标准、FP16 低显存、FP16 极限。�
 
 ## 选择与使用
 
-A 需要 FP32 声学包。C、E、H 都需要已转换且通过筛查的 FP16 chunk256 声学包；选择档位不会自动转换权重。这些文件是 `--experimental` 的执行选项，模型路径另行传入。
+A 需要 FP32 声学包。C、E、H 都需要已转换的 FP16 分块声学包，默认块长 256；选择档位不会自动转换权重。这些文件是 `--experimental` 的执行选项，模型路径另行传入。
 
 ```powershell
 sakuratts tts MODEL --experimental examples/fp16.json --text "こんにちは。" --output outputs/hello.wav

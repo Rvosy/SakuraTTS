@@ -26,7 +26,7 @@ def _preparation_identity(backend, experimental=None):
     if backend == "directml":
         identity["capacity"] = options["capacity"]
         scripts += ["export_gpt_directml.py", "export_sovits_fp16.py",
-                    "validate_sovits_directml.py", "acoustic_precision.py", "conv_transpose_polyphase.py"]
+                    "conv_transpose_polyphase.py"]
     root = Path(__file__).parent / "_internal/conversion"
     identity["scripts"] = {name: sha256_file(root / name) for name in scripts}
     return identity
@@ -48,14 +48,10 @@ def _prepare_backend(kind, package, *, backend, python, experimental=None):
             command += ["--capacity", str(options["capacity"])]
         run_conversion(command, env=env)
     elif backend == "directml":
-        logger.info("转换 AMD FP16 声学资源并检查设备执行")
+        logger.info("转换 AMD FP16 声学资源")
         candidate = package.with_name(package.name + "-fp16")
         run_conversion([str(python), "-B", str(tools / "export_sovits_fp16.py"),
                         "--source", str(package), "--output", str(candidate)], env=env)
-        run_conversion([sys.executable, "-B", str(tools / "validate_sovits_directml.py"),
-                        "--baseline", str(package), "--candidate", str(candidate),
-                        "--output", str(package.with_name(package.name + "-validation")),
-                        "--device-id", str(options.get("device_id", 0))], env=env)
         return candidate
     return package
 

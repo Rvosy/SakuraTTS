@@ -247,7 +247,7 @@ def worker(run):
         if config.get("text_split_method", split_method) != split_method:
             raise ValueError("Prepared split method differs from the actual official request")
         packages = {name: Path(config[name + "_package"]) for name in PACKAGES}
-        reference = PreparedReference.load(packages["reference"], **prepared["reference_identity"])
+        reference = PreparedReference.load(packages["reference"])
         ref_checks = {name: bool(np.array_equal(getattr(reference, name), value.reshape(-1)
             if name == "prompt_semantic" else value)) for name, value in observed_reference.items()}
         report["reference_checks"] = ref_checks
@@ -436,11 +436,7 @@ def main():
         if (manifests[name]["source"]["official_commit"] != COMMIT
                 or manifests[name]["source"]["checkpoint_sha256"] not in source["input_sha256"].values()):
             raise ValueError("Model differs from actual official capture: " + name)
-    reference = PreparedReference.load(Path(config["reference_package"]),
-        gpt_checkpoint_sha256=manifests["gpt"]["source"]["checkpoint_sha256"],
-        sovits_checkpoint_sha256=manifests["sovits"]["source"]["checkpoint_sha256"],
-        reference_text=source["reference"]["text"], reference_language="ja", official_commit=COMMIT,
-        audio_sha256=source["input_sha256"][source["reference"]["path"]])
+    reference = PreparedReference.load(Path(config["reference_package"]))
     paths = [Path(config[name + "_package"]) / "manifest.json" for name in PACKAGES]
     paths += [Path(config[name + "_package"]) / manifests[name]["weights"]["file"] for name in ("gpt", "sovits")]
     paths += [Path(config["reference_package"]) / "conditions.npz"]

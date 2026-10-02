@@ -27,9 +27,7 @@ logger = logging.getLogger("sakuratts.server")
 
 class SpeechRequest(BaseModel):
     """Field names and defaults follow the pinned upstream api_v2.py."""
-    # Retain unknown fields for the same HTTP 400 path as unsupported features.
-    model_config = ConfigDict(allow_inf_nan=False, extra="allow",
-                             json_schema_extra={"additionalProperties": False})
+    model_config = ConfigDict(allow_inf_nan=False, extra="ignore")
     text: Optional[str] = None
     text_lang: Optional[str] = None
     ref_audio_path: Optional[str] = None
@@ -63,8 +61,6 @@ class SpeechRequest(BaseModel):
         return value
 
     def checked(self):
-        if self.model_extra:
-            raise NotImplementedError("Unknown api_v2 parameters: " + ", ".join(sorted(self.model_extra)))
         request = self.model_dump()
         for field in ("ref_audio_path", "text", "text_lang", "prompt_lang"):
             if not request[field] or not request[field].strip():
@@ -80,10 +76,6 @@ class SpeechRequest(BaseModel):
         if request["streaming_mode"] not in (0, 1, 2, 3):
             raise ValueError("streaming_mode must be 0, 1, 2, 3 or true/false")
         unsupported = []
-        if request["parallel_infer"]:
-            unsupported.append("parallel_infer=true (set parallel_infer=false for native single-request inference)")
-        if request["top_p"] != 1:
-            unsupported.append("top_p != 1 (sampling parity is not verified)")
         if request["speed_factor"] != 1:
             unsupported.append("speed_factor != 1")
         if request["batch_size"] != 1:
@@ -100,6 +92,8 @@ class SpeechRequest(BaseModel):
             raise NotImplementedError("Not implemented by the native backend: " + ", ".join(unsupported))
         if request["seed"] < -1 or request["top_k"] < 1:
             raise ValueError("Require seed >= -1 and top_k >= 1")
+        if not 0 < request["top_p"] <= 1:
+            raise ValueError("top_p must be in (0, 1]")
         for field in ("temperature", "repetition_penalty"):
             if request[field] <= 0:
                 raise ValueError(field + " must be finite and positive")

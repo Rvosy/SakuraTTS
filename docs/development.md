@@ -33,7 +33,7 @@ powershell -ExecutionPolicy Bypass -File scripts/setup_windows.ps1
 .venv\Scripts\python.exe -m unittest discover -s tests
 ```
 
-也可以运行 `.venv\Scripts\Activate.ps1` 后使用 `sakuratts doctor --japanese --cuda`。这项开发检查包含依赖导入、日文 Nani ONNX 会话可用性和实际 CUDA 矩阵运算，不加载 TTS 模型。普通运行环境使用 `doctor --nvidia --config <runtime.json>`，检查依赖、资源哈希、参考身份和独立工作进程导入；它不执行 GPU 推理，也不评估音质。输出分别报告依赖与资源是否通过，未执行的推理和质量检查不会标记为通过。
+也可以运行 `.venv\Scripts\Activate.ps1` 后使用 `sakuratts doctor --japanese --cuda`。这项开发检查包含依赖导入、日文 Nani ONNX 会话可用性和实际 CUDA 矩阵运算，不加载 TTS 模型。普通运行环境使用 `doctor --nvidia --config <runtime.json>`，检查依赖、资源路径、参考数组和独立工作进程导入；它不执行 GPU 推理，也不评估音质。输出分别报告依赖与资源是否通过，未执行的推理和质量检查不会标记为通过。
 
 无符号链接创建权限的 Windows 会跳过一项符号链接逃逸测试；普通相对路径、盘符和目录穿越检查继续执行。无需为安装环境更改系统权限。
 

@@ -13,7 +13,6 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 import shutil
-import sys
 
 import numpy as np
 import onnx
@@ -322,8 +321,6 @@ def convert(source, output, *, extra_block_ops=(), block_nodes=(), optimization_
     (output / "validation.json").write_text(json.dumps({"status": "not_screened", "passed": False,
         "quality_accepted": False}, indent=2) + "\n", encoding="utf-8")
     (output / "manifest.json").write_text(json.dumps(new_manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    if sha256_file(source / "manifest.json") != source_manifest_hash:
-        raise RuntimeError("Source manifest changed during conversion")
     return {"package": str(output), **report}
 
 

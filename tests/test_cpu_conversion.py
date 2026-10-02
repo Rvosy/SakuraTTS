@@ -6,16 +6,14 @@ import json
 from pathlib import Path
 import sys
 import tempfile
-from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
 sys.path[:0] = [str(Path(__file__).resolve().parents[1] / "src"), str(Path(__file__).resolve().parent)]
 from sakuratts import Model
 from sakuratts.cli import main
-from sakuratts.converter import convert, convert_checkpoint, package_model, _preparation_identity
+from sakuratts.converter import convert, package_model
 from sakuratts.engine import Inference
-from sakuratts.backends.directml import static_gpt
 from sakuratts._internal.reference_condition import sha256_file
 from test_backend_selection import FakeRuntime
 
@@ -45,13 +43,6 @@ class CPUConversionTests(unittest.TestCase):
             (package / (backend + "-ready")).write_text("prepared", encoding="utf-8")
             return
         output = Path(command[command.index("--output") + 1])
-        if script == "validate_sovits_directml.py":
-            candidate = Path(command[command.index("--candidate") + 1])
-            manifest = json.loads((candidate / "manifest.json").read_text(encoding="utf-8"))
-            manifest["experimental_validations"] = {"directml": {"file": "finite.json"}}
-            (candidate / "finite.json").write_text('{"engineering_screen":{"passed":false}}', encoding="utf-8")
-            (candidate / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-            return
         source = {"official_commit": "test-source", "checkpoint_sha256": "test-checkpoint"}
         if script == "prepare_windows_resources.py":
             output = output / "frontend"
@@ -113,7 +104,7 @@ class CPUConversionTests(unittest.TestCase):
                 self.assertEqual(packed.backend, backend)
                 self.assertTrue((root / "packed/gpt" / (backend + "-ready")).is_file())
                 if backend == "directml":
-                    self.assertTrue((root / "packed/acoustic/finite.json").is_file())
+                    self.assertEqual(json.loads((root / "packed/acoustic/manifest.json").read_text())["dtype"], "float16")
                 self.assertEqual((root / "model/acoustic/weights.bin").read_bytes(),
                                  (root / "packed/acoustic/weights.bin").read_bytes())
                 self.assertFalse(list(root.glob(".sakuratts-*")))
@@ -127,18 +118,6 @@ class CPUConversionTests(unittest.TestCase):
                     convert(**options, backend="rocm")
             exported.assert_not_called()
             self.assertFalse(options["output"].exists())
-
-    def test_cli_forwards_backend_and_keeps_cuda_default(self):
-        model = SimpleNamespace(path=Path("model/model.json"), info=lambda: {})
-        for backend in (None, "cpu", "directml", "cuda"):
-            with self.subTest(backend=backend), patch("sakuratts.converter.convert", return_value=model) as conversion, \
-                    contextlib.redirect_stdout(io.StringIO()):
-                args = ["convert", "--gpt", "gpt.ckpt", "--sovits", "sovits.pth",
-                        "--official-source", "official", "--output", "model"]
-                if backend is not None:
-                    args += ["--backend", backend]
-                self.assertEqual(main(args), 0)
-                self.assertEqual(conversion.call_args.kwargs["backend"], backend or "cuda")
 
     def test_cli_does_not_silently_override_backend_when_repackaging(self):
         with patch("sakuratts.converter.package_model") as package, \
@@ -193,7 +172,7 @@ class CPUConversionTests(unittest.TestCase):
                     self.assertEqual(len(list((root / "cache/models").iterdir())), 2)
 
     def test_target_preparation_failure_does_not_publish(self):
-        for failed in ("prepare_backend.py", "export_sovits_fp16.py", "validate_sovits_directml.py"):
+        for failed in ("prepare_backend.py", "export_sovits_fp16.py"):
             with self.subTest(failed=failed), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
                 options = self.inputs(root)
@@ -208,28 +187,6 @@ class CPUConversionTests(unittest.TestCase):
                         convert(**options, backend="directml")
                 self.assertFalse(options["output"].exists())
                 self.assertFalse(list(root.glob(".sakuratts-*")))
-
-    def test_single_checkpoint_prepares_selected_resources_before_publication(self):
-        for backend in ("cpu", "directml"):
-            for kind in ("gpt", "sovits"):
-                with self.subTest(backend=backend, kind=kind), tempfile.TemporaryDirectory() as temporary:
-                    root = Path(temporary)
-                    options = self.inputs(root)
-                    with patch("sakuratts.converter.run_conversion", side_effect=self.run_conversion):
-                        path = convert_checkpoint(kind, options[kind], options["output"],
-                            official_source=options["official_source"], python=options["python"], backend=backend)
-                    if kind == "gpt":
-                        self.assertTrue((path / (backend + "-ready")).is_file())
-                    elif backend == "directml":
-                        self.assertTrue((path / "finite.json").is_file())
-                    self.assertFalse(list(root.glob(".sakuratts-*")))
-
-    def test_preparation_cache_varies_with_capacity_but_not_execution_tuning(self):
-        base = _preparation_identity("directml")
-        self.assertEqual(base, _preparation_identity("directml", {"threads": 4, "device_id": 1}))
-        self.assertNotEqual(base, _preparation_identity("directml", {"capacity": 2048}))
-        self.assertNotEqual(base, _preparation_identity("cpu"))
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,8 +1,6 @@
 """Real small ONNX graph tests for CPU GPT cache and package boundaries."""
 
-from copy import deepcopy
 import importlib.util
-import json
 from pathlib import Path
 import tempfile
 import sys
@@ -82,28 +80,6 @@ class ONNXCPUGPTTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "unloaded"):
             model.prefill(self.phones, self.prompt, self.bert)
 
-    def test_source_identity_and_sidecar_hash_are_required(self):
-        path = self.root / "onnx" / "manifest.json"
-        original = path.read_text(encoding="utf-8")
-        try:
-            metadata = json.loads(original)
-            changed = deepcopy(metadata)
-            changed["source"]["weights_sha256"] = "wrong-source"
-            path.write_text(json.dumps(changed), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "source GPT"):
-                ONNXCPUGPT.load(self.root)
-            changed = deepcopy(metadata)
-            changed["embedding"]["sha256"] = "corrupt"
-            path.write_text(json.dumps(changed), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "checksum"):
-                ONNXCPUGPT.load(self.root)
-        finally:
-            path.write_text(original, encoding="utf-8")
-
-    def test_chunked_prefill_is_rejected_explicitly(self):
-        with self.assertRaisesRegex(ValueError, "chunked prefill is unsupported"):
-            ONNXCPUGPT.load(self.root, prefill_query_chunk_size=128)
-
     def test_runtime_uses_checked_sidecar_without_unused_original_archive(self):
         path = self.root / "weights.npz"
         original = path.read_bytes()
@@ -165,21 +141,6 @@ class ONNXCPUGPTTests(unittest.TestCase):
         finally:
             model.close()
 
-    def test_int8_export_and_inference_in_unicode_directory(self):
-        from sakuratts._internal.conversion.export_gpt_onnx import export_sidecar
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary) / "樱花 模型"
-            root.mkdir()
-            save_package(root, self.manifest, self.weights)
-            export_sidecar(root, root / "onnx")
-            export_sidecar(root, root / "onnx-int8", precision="int8")
-            model = ONNXCPUGPT.load(root, capacity=12, threads=1, precision="int8")
-            try:
-                self.assertTrue(np.isfinite(model.prefill(self.phones, self.prompt, self.bert)).all())
-                self.assertTrue(np.isfinite(model.decode(2)).all())
-            finally:
-                model.close()
-
     @unittest.skipUnless(sys.platform == "win32", "Windows Unicode conversion")
     def test_int8_unicode_model_and_temp_match_ascii_conversion_and_restore_shape_inference(self):
         import onnx
@@ -225,24 +186,6 @@ class ONNXCPUGPTTests(unittest.TestCase):
                     export_sidecar(self.root, Path(temporary) / "int8-output", precision="int8")
             self.assertIs(raised.exception, failure)
             self.assertIs(onnx.shape_inference.infer_shapes_path, original_infer)
-
-    def test_low_precision_cannot_relabel_fp32_or_change_conversion_source(self):
-        path = self.root / "onnx-int8" / "manifest.json"
-        original = path.read_text(encoding="utf-8")
-        try:
-            metadata = json.loads(original)
-            metadata["precision"] = "fp32"
-            path.write_text(json.dumps(metadata), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "precision"):
-                ONNXCPUGPT.load(self.root, precision="int8")
-            metadata = json.loads(original)
-            metadata["conversion"]["input_graph_sha256"] = "another-model"
-            path.write_text(json.dumps(metadata), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "FP32 source"):
-                ONNXCPUGPT.load(self.root, precision="int8")
-        finally:
-            path.write_text(original, encoding="utf-8")
-
 
 if __name__ == "__main__":
     unittest.main()

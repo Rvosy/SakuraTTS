@@ -74,21 +74,6 @@ class InitialConversionCacheTests(unittest.TestCase):
                     self.assertEqual(convert.call_count, 2)
                     self.assertNotEqual(changed._activate.call_args.args[0].name, key)
 
-    def test_source_installation_preserves_interpreter_path_identity(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            self.fixture(root)
-            with patch.dict(os.environ, {}, clear=True), \
-                 patch("sakuratts.converter.convert", side_effect=lambda **kwargs: kwargs["output"].mkdir(parents=True)) as convert, \
-                 patch("sakuratts.engine.Model.load", side_effect=lambda path: path):
-                inference = self.inference(root)
-                inference._convert_initial()
-                inference._convert_initial()
-                self.assertEqual(convert.call_count, 1)
-                inference.settings["python"] = str(root / "another/python.exe")
-                inference._convert_initial()
-                self.assertEqual(convert.call_count, 2)
-
     def update_component(self, root):
         manifest = root / "runtime/preparation/preparation-manifest.json"
         data = json.loads(manifest.read_text())
@@ -144,75 +129,6 @@ class InitialConversionCacheTests(unittest.TestCase):
                 inference.set_weights("gpt", root / "gpt.ckpt")
                 self.assertEqual(convert.call_count, 3)
                 self.assertEqual(convert.call_args.kwargs["backend"], "cpu")
-
-    def test_single_weight_cache_tracks_component_only_in_portable_mode(self):
-        for portable in (False, True):
-            for kind, name in (("gpt", "gpt.ckpt"), ("sovits", "sovits.pth")):
-                with self.subTest(portable=portable, kind=kind), tempfile.TemporaryDirectory() as temporary:
-                    original = Path(temporary) / "original"
-                    self.fixture(original)
-
-                    def convert_checkpoint(kind, _checkpoint, output, **_kwargs):
-                        output.mkdir(parents=True)
-                        format = "sakuratts-gpt-fp32-v1" if kind == "gpt" else "sakuratts-sovits-onnx-v1"
-                        (output / "manifest.json").write_text(json.dumps({"format": format}))
-
-                    def set_weights(root):
-                        inference = self.inference(root)
-                        inference.engine = None
-                        inference._log_weights = Mock()
-                        inference.model = SimpleNamespace(path=root / "model.json",
-                            backend="cuda",
-                            runtime_config={"gpt": "gpt", "sovits": "sovits", "frontend": "frontend"})
-                        with patch.dict(os.environ, {"SAKURATTS_BUNDLE_ROOT": str(root)} if portable else {}, clear=True):
-                            inference.set_weights(kind, root / name)
-                        return Path(inference._activate.call_args.args[0].manifest[kind]).name
-
-                    with patch("sakuratts.converter.convert_checkpoint", side_effect=convert_checkpoint) as convert:
-                        key = set_weights(original)
-                        self.assertEqual(convert.call_count, 1)
-                        relocated = Path(temporary) / "relocated"
-                        original.rename(relocated)
-                        self.assertEqual(set_weights(relocated), key)
-                        self.assertEqual(convert.call_count, 1)
-                        self.update_component(relocated)
-                        changed_key = set_weights(relocated)
-                        self.assertEqual(convert.call_count, 2 if portable else 1)
-                        self.assertEqual(changed_key == key, not portable)
-
-    def test_reference_cache_tracks_component_only_in_portable_mode(self):
-        for portable in (False, True):
-            with self.subTest(portable=portable), tempfile.TemporaryDirectory() as temporary:
-                original = Path(temporary) / "original"
-                self.fixture(original)
-                (original / "frontend").mkdir()
-                (original / "frontend/manifest.json").write_text('{"format":"frontend-fixture"}')
-                (original / "audio.wav").write_bytes(b"audio fixture")
-
-                def prepare_audio(root):
-                    settings = self.inference(root).settings
-                    engine = SimpleNamespace(model=SimpleNamespace(path=root / "model.json", runtime_config={}),
-                        _runtime=SimpleNamespace(manifests={kind: {"source": {
-                            "checkpoint_sha256": sha256_file(settings[kind + "_checkpoint"]),
-                            "official_commit": "same-source"}} for kind in ("gpt", "sovits")},
-                            packages={"frontend": root / "frontend"}))
-                    with patch.dict(os.environ, {"SAKURATTS_BUNDLE_ROOT": str(root)} if portable else {}, clear=True):
-                        ReferenceCache(engine, settings).prepare_audio(root / "audio.wav")
-
-                with patch("sakuratts.converter.prepare_reference", side_effect=lambda **kwargs: kwargs["output"].mkdir(parents=True)) as prepare, \
-                     patch("sakuratts.reference.PreparedReference.load") as load:
-                    prepare_audio(original)
-                    self.assertEqual(prepare.call_count, 1)
-                    key = load.call_args.args[0].name
-                    relocated = Path(temporary) / "relocated"
-                    original.rename(relocated)
-                    prepare_audio(relocated)
-                    self.assertEqual(prepare.call_count, 1)
-                    self.assertEqual(load.call_args.args[0], relocated / "cache/references" / key)
-                    self.update_component(relocated)
-                    prepare_audio(relocated)
-                    self.assertEqual(prepare.call_count, 2 if portable else 1)
-                    self.assertEqual(load.call_args.args[0].name == key, not portable)
 
     def test_portable_reference_uses_component_identity_and_tracks_custom_hubert(self):
         with tempfile.TemporaryDirectory() as temporary:

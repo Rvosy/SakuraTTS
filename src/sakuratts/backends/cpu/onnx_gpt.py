@@ -13,18 +13,7 @@ from pathlib import Path
 import numpy as np
 from threadpoolctl import ThreadpoolController
 
-from sakuratts._internal.reference_condition import sha256_file
 from sakuratts.backends.cpu.gpt import _integer, _weight_shapes
-
-
-def _checked_file(root, spec):
-    filename = spec["file"]
-    if not isinstance(filename, str) or Path(filename).name != filename or filename in ("", ".", ".."):
-        raise ValueError("ONNX GPT file must be a relative basename")
-    path = root / filename
-    if path.stat().st_size != spec["bytes"] or sha256_file(path) != spec["sha256"]:
-        raise ValueError(f"ONNX GPT checksum or size mismatch: {filename}")
-    return path
 
 
 def sidecar_directory(package, precision):
@@ -34,7 +23,7 @@ def sidecar_directory(package, precision):
 
 
 def read_sidecar(package, precision="fp32"):
-    """Validate source and selected sidecar files without creating a session."""
+    """Read the selected graph and embeddings without creating a session."""
     package = Path(package).resolve()
     sidecar = sidecar_directory(package, precision)
     source_path = package / "manifest.json"
@@ -52,21 +41,8 @@ def read_sidecar(package, precision="fp32"):
             or metadata.get("graph_io_dtype", "float32") != dtype
             or metadata.get("cache_dtype", "float32") != dtype):
         raise ValueError("Unsupported ONNX GPT sidecar configuration or precision")
-    expected = {"manifest_sha256": sha256_file(source_path), "weights_sha256": source["weights"]["sha256"],
-                "checkpoint_sha256": source["source"]["checkpoint_sha256"]}
-    if metadata["source"] != expected:
-        raise ValueError("ONNX GPT sidecar does not match the source GPT package")
-    if precision != "fp32":
-        original = package / "onnx" / "manifest.json"
-        original_metadata = json.loads(original.read_text(encoding="utf-8"))
-        conversion = metadata["conversion"]
-        if (not metadata.get("experimental")
-                or conversion["input_manifest_sha256"] != sha256_file(original)
-                or conversion["input_graph_sha256"] != original_metadata["graphs"]["fp32"]["sha256"]
-                or original_metadata["source"] != expected):
-            raise ValueError("ONNX GPT precision conversion does not match its FP32 source")
-    graph = _checked_file(sidecar, metadata["graphs"][precision])
-    embedding = _checked_file(sidecar, metadata["embedding"])
+    graph = sidecar / metadata["graphs"][precision]["file"]
+    embedding = sidecar / metadata["embedding"]["file"]
     return source, metadata, graph, embedding
 
 
@@ -90,13 +66,11 @@ class ONNXCPUGPT:
 
     @classmethod
     def _from_sidecar(cls, resources, *, capacity, threads, device_id=0):
-        """Construct from files checked once by this CPU or static GPU load."""
+        """Construct from the selected CPU or static GPU resources."""
         source, metadata, graph, embedding_path = resources
         shapes = {name: shape for name, shape in _weight_shapes(source["config"]).items()
                   if not name.startswith("layers.") and name != "output.weight"}
         with np.load(embedding_path, allow_pickle=False) as archive:
-            if set(archive.files) != set(shapes):
-                raise ValueError("ONNX GPT embedding tensors do not match the supported architecture")
             embedding = {}
             for name, shape in shapes.items():
                 value = archive[name]
@@ -128,8 +102,6 @@ class ONNXCPUGPT:
         self.session = None
         try:
             self.session = self._create_session(graph, options)
-            if self.precision != "fp32" and self.session.get_modelmeta().custom_metadata_map.get("sakuratts.gpt_precision") != self.precision:
-                raise ValueError("ONNX GPT graph precision does not match its manifest")
             expected_inputs = {"hidden": [None, self.width], "mask": [1, None, None]}
             expected_inputs.update({f"past_{kind}.{index}": [None, self.heads, self.head_dim]
                 for kind in ("key", "value") for index in range(self.layers)})

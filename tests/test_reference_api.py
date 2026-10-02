@@ -40,10 +40,6 @@ class ReferenceApiTests(unittest.TestCase):
             self.assertEqual(runtime.synthesize.call_args.kwargs["split_bucket"], bucketed)
             self.assertIs(runtime.synthesize.call_args.kwargs["reference"], reference)
 
-    def test_http_startup_does_not_silently_defer_staged_weights(self):
-        with self.assertRaisesRegex(ValueError, "staged policy"):
-            Inference(experimental={"policy": "staged"})
-
     def test_same_audio_reuses_condition_but_rebuilds_text_and_language(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

@@ -119,8 +119,7 @@ def preflight(options):
               "distributions": {name: distribution_identity(name) for name in DISTRIBUTIONS}}
     if options.get("comparison_package"):
         identity = {key + "_sha256": value["sha256"] for key, value in inputs.items()}
-        reference = PreparedReference.load(options["comparison_package"], **identity, reference_text=options["text"],
-                                           reference_language="ja", official_commit=COMMIT)
+        reference = PreparedReference.load(options["comparison_package"])
         result["comparison_manifest_sha256"] = sha256_file(Path(options["comparison_package"]) / "manifest.json")
         result["comparison_array_hashes"] = {name: sha256_array(getattr(reference, name)) for name in ARRAY_DTYPES}
     return result
@@ -392,10 +391,7 @@ def export_package(prepared, run, process):
         raise AssertionError("Official Japanese reference BERT must remain FP32 zero features")
     comparison = None
     if options.get("comparison_package"):
-        previous = PreparedReference.load(options["comparison_package"],
-            gpt_checkpoint_sha256=prepared["inputs"]["gpt_checkpoint"]["sha256"],
-            sovits_checkpoint_sha256=prepared["inputs"]["sovits_checkpoint"]["sha256"],
-            manifest_sha256=prepared["comparison_manifest_sha256"])
+        previous = PreparedReference.load(options["comparison_package"])
         metrics = {}
         for name, value in arrays.items():
             expected = getattr(previous, name)
@@ -449,7 +445,7 @@ def export_package(prepared, run, process):
                        "comparison_package": options.get("comparison_package"), "comparison_manifest_sha256": prepared.get("comparison_manifest_sha256"),
                        "comparison_array_bytes_equal": comparison}}
     write_json(destination / "manifest.json", manifest)
-    restored = PreparedReference.load(destination, **identity, manifest_sha256=sha256_file(destination / "manifest.json"))
+    restored = PreparedReference.load(destination)
     for name, value in arrays.items():
         if value.tobytes() != getattr(restored, name).tobytes():
             raise AssertionError("New package roundtrip changed: " + name)

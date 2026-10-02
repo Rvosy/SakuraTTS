@@ -1,7 +1,7 @@
 """Explicit classic OpenJTalk frontend profile in an independent CPU process.
 
 The existing pyopenjtalk-plus frontend keeps its own behavior. This profile
-matches voices prepared with the classic pyopenjtalk 0.3.4 implementation.
+uses the selected classic pyopenjtalk implementation.
 """
 
 import os
@@ -42,8 +42,6 @@ class ClassicJapaneseG2P:
             self.runtime, arrays = read_message(self.process.stdout)
             if self.runtime.get("status") != "ready" or arrays:
                 raise RuntimeError(self.runtime.get("error", "Classic frontend did not become ready"))
-            if self.runtime.get("implementation") != "pyopenjtalk-classic" or self.runtime.get("version") != "0.3.4":
-                raise RuntimeError("Classic frontend requires pyopenjtalk 0.3.4")
         except BaseException:
             self._stop()
             raise

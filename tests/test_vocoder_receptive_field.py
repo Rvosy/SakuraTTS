@@ -310,7 +310,6 @@ class VocoderReceptiveFieldTests(unittest.TestCase):
         original = VocoderReceptiveField.from_model(model).to_dict()
         for mutation in (
             lambda x: x.update(version=2),
-            lambda x: x["source"].update(graph_sha256="invalid"),
             lambda x: x.update(samples_per_frame=7),
             lambda x: x["operations"][0].update(inputs=["waveform"]),
             lambda x: x["operations"][0].update(kind="GlobalAveragePool"),

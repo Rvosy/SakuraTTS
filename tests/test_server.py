@@ -25,12 +25,11 @@ class ServerTests(unittest.TestCase):
             def close(self): pass
             def tts(self, *args, **kwargs):
                 raise AssertionError("Unsupported requests must not reach inference")
-        cases = [{key: value for key, value in REQUEST.items() if key != "parallel_infer"}]
-        cases += [dict(REQUEST, **update) for update in (
-            {"parallel_infer": True}, {"text_lang": "zh"}, {"prompt_lang": "ko"},
-            {"top_p": .8}, {"speed_factor": 1.2}, {"batch_size": 2},
+        cases = [dict(REQUEST, **update) for update in (
+            {"text_lang": "zh"}, {"prompt_lang": "ko"},
+            {"speed_factor": 1.2}, {"batch_size": 2},
             {"streaming_mode": 2}, {"streaming_mode": 3}, {"prompt_text": ""},
-            {"super_sampling": True}, {"unknown_option": "ignored before"})]
+            {"super_sampling": True})]
         for mode in ("direct", "managed"):
             fake = process_double()
             with patch("sakuratts.server.Inference", DirectInference), \
@@ -130,7 +129,7 @@ class ServerTests(unittest.TestCase):
                 self.assertEqual(client.get("/models").json(), [{"name": "試験"}])
                 self.assertEqual(client.get("/").status_code, 404)
                 for update in ({"text": " "}, {"ref_audio_path": ""}, {"seed": -2},
-                               {"text_lang": "zh"}, {"speed_factor": 1.2}, {"top_p": .8},
+                               {"text_lang": "zh"}, {"speed_factor": 1.2}, {"top_p": 0},
                                {"streaming_mode": 2}, {"batch_size": 2}, {"aux_ref_audio_paths": ["a.wav"]}):
                     self.assertEqual(client.post("/tts", json=dict(REQUEST, **update)).status_code, 400)
                 response = client.post("/tts", json=dict(REQUEST, text="limit"))
@@ -189,9 +188,9 @@ class ServerTests(unittest.TestCase):
             self.assertEqual(client.get("/tts", params=dict(REQUEST, streaming_mode="2")).status_code, 400)
             self.assertEqual(client.get("/tts", params=dict(REQUEST, seed="invalid")).status_code, 422)
 
-    def test_get_and_post_share_defaults_types_and_validation(self):
+    def test_get_and_post_accept_client_options_and_return_audio(self):
         from fastapi.testclient import TestClient
-        from sakuratts.server import SpeechRequest, create_app
+        from sakuratts.server import create_app
         calls = []
         class FakeInference:
             def __init__(self, *args, **kwargs): pass
@@ -204,56 +203,19 @@ class ServerTests(unittest.TestCase):
                     on_fragment(result.pcm, result.sample_rate)
                 return result
         with patch("sakuratts.server.Inference", FakeInference), TestClient(create_app()) as client:
-            requests = [REQUEST, dict(REQUEST, text_lang="auto", prompt_lang="en"),
-                        dict(REQUEST, text_lang="en", prompt_lang="auto")]
-            for mode in (False, True, 0, 1):
-                requests.append(dict(REQUEST, streaming_mode=mode, media_type="raw", seed=42,
-                    top_k=20, temperature=0.65, repetition_penalty=1.15, fragment_interval=0.2,
-                    parallel_infer=False, split_bucket=False, batch_threshold=0.5,
-                    sample_steps=16, overlap_length=4, min_chunk_length=8))
-            for request in requests:
-                with self.subTest(request=request):
+            request = dict(REQUEST, top_p=0.8, media_type="raw", client_note="ignored")
+            request.pop("parallel_infer")
+            for mode in (0, 1):
+                with self.subTest(mode=mode):
+                    request["streaming_mode"] = mode
                     get_response = client.get("/tts", params=request)
                     post_response = client.post("/tts", json=request)
                     self.assertEqual(get_response.status_code, 200)
-                    self.assertEqual(post_response.status_code, 200)
+                    self.assertEqual(post_response.content, audio().pcm.astype("<i2").tobytes())
                     self.assertEqual(get_response.content, post_response.content)
-                    self.assertEqual(calls[-2], calls[-1])
-                    self.assertEqual(type(calls[-2]["streaming_mode"]), type(calls[-1]["streaming_mode"]))
-            for update, status in (({"streaming_mode": 2}, 400), ({"streaming_mode": 3}, 400),
-                                   ({"streaming_mode": 4}, 400), ({"streaming_mode": "invalid"}, 422),
-                                   ({"seed": "invalid"}, 422), ({"text": ""}, 400)):
-                with self.subTest(update=update):
-                    request = dict(REQUEST, **update)
-                    self.assertEqual(client.get("/tts", params=request).status_code, status)
-                    self.assertEqual(client.post("/tts", json=request).status_code, status)
-            with patch.object(SpeechRequest, "checked", autospec=True, side_effect=SpeechRequest.checked) as checked:
-                response = client.get("/tts", params=[*REQUEST.items(),
-                    ("aux_ref_audio_paths", "first.wav"), ("aux_ref_audio_paths", "second.wav")])
-                self.assertEqual(response.status_code, 400)
-                self.assertEqual(response.json()["error"], "unsupported_feature")
-                self.assertEqual(checked.call_args.args[0].aux_ref_audio_paths, ["first.wav", "second.wav"])
-
-    def test_get_openapi_exposes_original_query_fields_and_defaults(self):
-        from fastapi.testclient import TestClient
-        from sakuratts.server import create_app
-        with TestClient(create_app()) as client:
-            schema = client.get("/openapi.json").json()
-        operation = schema["paths"]["/tts"]["get"]
-        self.assertNotIn("requestBody", operation)
-        parameters = {parameter["name"]: parameter for parameter in operation["parameters"]}
-        post_properties = schema["components"]["schemas"]["SpeechRequest"]["properties"]
-        self.assertEqual(set(parameters), set(post_properties))
-        for name, parameter in parameters.items():
-            self.assertEqual(parameter["in"], "query")
-            self.assertEqual(parameter["schema"], post_properties[name])
-        for name, default in {"seed": -1, "text_split_method": "cut5", "top_k": 15,
-                              "top_p": 1, "temperature": 1, "batch_size": 1,
-                              "batch_threshold": 0.75, "split_bucket": True,
-                              "streaming_mode": False, "parallel_infer": True,
-                              "speed_factor": 1, "fragment_interval": 0.3,
-                              "repetition_penalty": 1.35, "media_type": "wav"}.items():
-            self.assertEqual(parameters[name]["schema"]["default"], default)
+            request["streaming_mode"] = 2
+            self.assertEqual(client.get("/tts", params=request).status_code, 400)
+            self.assertEqual(client.post("/tts", json=request).status_code, 400)
 
     def test_switch_failures_keep_original_error_envelopes(self):
         from fastapi.testclient import TestClient

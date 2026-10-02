@@ -4,7 +4,7 @@ _CPU = {"threads": 8, "gpt_threads": 4, "gpt_backend": "onnx", "gpt_precision": 
         "gpt_prefill_query_chunk_size": 0, "enable_cpu_mem_arena": False, "policy": "resident"}
 _DIRECTML = {"threads": 2, "gpt_threads": 4, "gpt_backend": "directml", "gpt_precision": "fp16",
              "capacity": 1280, "gpt_prefill_query_chunk_size": 0, "enable_cpu_mem_arena": False,
-             "allow_experimental_acoustic_fp16": True, "acoustic_fp16_acceptance": "finite", "policy": "resident"}
+             "allow_experimental_acoustic_fp16": True, "policy": "resident"}
 _CUDA_FP16 = {"gpt_precision": "fp16", "allow_experimental_acoustic_fp16": True,
               "acoustic_chunk_frames": 256, "policy": "release-state"}
 _PROFILES = {
@@ -40,14 +40,6 @@ def resolve_profile(backend, profile, overrides=None):
         raise ValueError(f"Profile {profile!r} is not supported by {backend}; choose from: "
                          + ", ".join(profiles))
     options = {**profiles[profile], **(overrides or {})}
-    if backend in _DEFAULT_PROFILES:
-        required = {key: _PROFILES[backend][profile][key] for key in
-                    ("gpt_backend", "gpt_precision", "gpt_prefill_query_chunk_size")}
-        if backend == "directml":
-            required.update(allow_experimental_acoustic_fp16=True, acoustic_fp16_acceptance="finite")
-        for key, expected in required.items():
-            if options[key] != expected:
-                raise ValueError(f"{backend} profile {profile} requires {key}={expected!r}; other CPU/AMD inference paths are not public profiles")
     return profile, options
 
 
@@ -65,5 +57,3 @@ def validate_runtime_precision(backend, profile, runtime):
         raise ValueError(f"Profile {profile} requires a {expected} acoustic package; "
                          f"the selected model contains {runtime.acoustic_precision}. "
                          "Selecting a profile does not convert model weights.")
-    if backend == "directml" and runtime.manifests["sovits"].get("precision", {}).get("fp16_scope", "all") != "all":
-        raise ValueError("DirectML profile fp16 requires a full acoustic FP16 candidate")

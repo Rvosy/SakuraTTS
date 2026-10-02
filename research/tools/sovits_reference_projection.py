@@ -178,11 +178,7 @@ def load_inputs(prepared):
     manifest = bundle["manifest"]
     if tuple(manifest["cases"]) != CASES:
         raise ValueError("Expected the four unchanged Japanese cases")
-    other = PreparedReference.load(Path(prepared["reference_b"]),
-        gpt_checkpoint_sha256=manifest["external_models"]["gpt"]["checkpoint_sha256"],
-        sovits_checkpoint_sha256=manifest["external_models"]["sovits"]["checkpoint_sha256"],
-        reference_language="ja", official_commit=manifest["official_commit"],
-        manifest_sha256=prepared["reference_b_manifest_sha256"])
+    other = PreparedReference.load(Path(prepared["reference_b"]))
     first = bundle["arrays"][CASES[0]]
     if not all(exact(bundle["arrays"][name][key], first[key]) for name in CASES for key in ("ge", "ge512")):
         raise ValueError("A conditions differ across the four cases")

@@ -1,7 +1,6 @@
 """Offline preparation packaging keeps source, runtime and private inputs separate."""
 
 import csv
-import base64
 from email.parser import Parser
 import importlib.util
 import json
@@ -58,11 +57,6 @@ class PreparationBuilderTests(unittest.TestCase):
             plan.package(root, info, metadata, "site")
             self.assertEqual(set(plan.files), {"site/" + name for name in keep})
 
-    def test_classic_frontend_abi_must_match_the_portable_worker(self):
-        self.assertEqual(builder.frontend_requirement({"pyopenjtalk": object()}, "3.9"), "pyopenjtalk==0.3.4")
-        with self.assertRaisesRegex(ValueError, "worker ABI"):
-            builder.frontend_requirement({"pyopenjtalk": object()}, "3.11")
-        self.assertEqual(builder.frontend_requirement({"pyopenjtalk-plus": object()}, "3.11"), "pyopenjtalk-plus")
 
     def test_source_allowlist_excludes_voice_models_references_and_unlisted_weights(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -126,27 +120,6 @@ class PreparationBuilderTests(unittest.TestCase):
             builder.add_official_sources(plan, root, language)
             row = plan.files["official/" + builder.AUXILIARY_FILES[-1]]
             self.assertEqual(row["sha256"], builder.digest(language))
-
-    def test_local_patch_override_pins_both_original_and_modified_file(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            patched = put(root, "patched.py", "patched")
-            info = root / "example-1.dist-info"
-            info.mkdir()
-            metadata = Parser().parsestr("Name: example\nVersion: 1\n")
-            original = "00" * 32
-            checksum = base64.urlsafe_b64encode(bytes.fromhex(original)).decode().rstrip("=")
-            with (info / "RECORD").open("w", newline="") as stream:
-                csv.writer(stream).writerow(["patched.py", "sha256=" + checksum, "7"])
-            override = {"sha256": builder.digest(patched), "record_sha256": original, "reason": "Audited upstream local patch"}
-            plan = builder.PreparationPlan({"patched.py": override})
-            plan.package(root, info, metadata, "site")
-            self.assertEqual(plan.applied_overrides["patched.py"], override)
-            with self.assertRaisesRegex(ValueError, "upstream hash"):
-                builder.PreparationPlan({"patched.py": dict(override, record_sha256="11" * 32)}).package(root, info, metadata, "site")
-            patched.write_text("changed again")
-            with self.assertRaisesRegex(ValueError, "checksum"):
-                builder.PreparationPlan({"patched.py": override}).package(root, info, metadata, "site")
 
     def test_assembly_records_content_hashes_without_host_source_paths(self):
         with tempfile.TemporaryDirectory() as temporary:

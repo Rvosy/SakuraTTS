@@ -37,9 +37,7 @@ def replay_inputs(model_root, result_file):
     acoustic = json.loads((model_root / model_manifest["acoustic"] / "manifest.json").read_text(encoding="utf-8"))
     gpt = json.loads((gpt_root / "manifest.json").read_text(encoding="utf-8"))
     reference_root = model_root / model_manifest["references"][model_manifest["default_reference"]]
-    ref = PreparedReference.load(reference_root, gpt_checkpoint_sha256=gpt["source"]["checkpoint_sha256"],
-        sovits_checkpoint_sha256=acoustic["source"]["checkpoint_sha256"], reference_language="ja",
-        official_commit=gpt["source"]["official_commit"])
+    ref = PreparedReference.load(reference_root)
     result = json.loads(result_file.read_text(encoding="utf-8"))
     details = result["requests"][0]["details"]
     if details["parameters"]["language"] != "ja" or details["reference_identity"] != ref.manifest["identity"]:

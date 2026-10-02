@@ -3,7 +3,6 @@
 import json
 import logging
 import math
-from pathlib import Path
 import time
 
 import numpy as np
@@ -30,16 +29,9 @@ class InferenceRuntime:
         self.manifests = {key: json.loads((path / "manifest.json").read_text(encoding="utf-8"))
                           for key, path in self.packages.items()}
         self._validate_acoustic_package()
-        source = self.manifests["gpt"]["source"]["official_commit"]
-        if (self.manifests["sovits"]["source"]["official_commit"] != source
-                or self.manifests["frontend"]["official_commit"] != source):
-            raise ValueError("GPT, acoustic and frontend source identities do not match")
         self.references = {}
         for name, path in (self.config.get("references", {}) if load_references else {}).items():
-            self.references[name] = PreparedReference.load(root / path,
-                gpt_checkpoint_sha256=self.manifests["gpt"]["source"]["checkpoint_sha256"],
-                sovits_checkpoint_sha256=self.manifests["sovits"]["source"]["checkpoint_sha256"],
-                reference_language="ja", official_commit=source)
+            self.references[name] = PreparedReference.load(root / path)
         from sakuratts.frontend.runtime import load_frontend
         self.frontend_runtime = load_frontend(self.config_path, self.config,
             self.packages["frontend"], self.manifests["frontend"])
@@ -48,10 +40,10 @@ class InferenceRuntime:
         self.busy = False
 
     def _validate_acoustic_package(self):
-        """Check metadata selection; the acoustic loader verifies its files."""
+        """Check precision selection before starting the frontend."""
         acoustic_dtype = self.manifests["sovits"].get("dtype")
         if acoustic_dtype not in ("float32", "float16"):
-            raise ValueError("Expected FP32 or screened experimental FP16 acoustic weights")
+            raise ValueError("Expected FP32 or FP16 acoustic weights")
         self.acoustic_precision = "fp16" if acoustic_dtype == "float16" else "fp32"
         if self.acoustic_precision == "fp16" and not self.allow_experimental_acoustic_fp16:
             raise ValueError("FP16 acoustic packages require allow_experimental_acoustic_fp16=True")
@@ -76,7 +68,7 @@ class InferenceRuntime:
         self.frontend_runtime.close()
 
     def synthesize(self, text, *, reference=None, seed=1234, language="ja", split_method="cut0",
-                   top_k=15, temperature=1., repetition_penalty=1.35, early_stop_num=2700,
+                   top_k=15, top_p=1., temperature=1., repetition_penalty=1.35, early_stop_num=2700,
                    cancel_requested=None, random_inputs=None, fragment_interval=0.3,
                    on_fragment=None, collect_audio=True, split_bucket=False):
         if self.busy:
@@ -87,6 +79,8 @@ class InferenceRuntime:
             raise ValueError("Require text, seed>=-1, top_k>=1 and early_stop_num>=-1")
         if not math.isfinite(fragment_interval) or fragment_interval < 0:
             raise ValueError("fragment_interval must be finite and nonnegative")
+        if not 0 < top_p <= 1:
+            raise ValueError("top_p must be in (0, 1]")
         if seed == -1:
             import secrets
             seed = secrets.randbelow(2 ** 32)
@@ -134,7 +128,7 @@ class InferenceRuntime:
                 if self.policy != "staged":
                     self._load_sovits()
                 semantic = generate_prepared_semantic(prepared,ref,gpt=self.gpt,rng=rng,
-                    top_k=top_k,temperature=temperature,repetition_penalty=repetition_penalty,
+                    top_k=top_k,top_p=top_p,temperature=temperature,repetition_penalty=repetition_penalty,
                     early_stop_num=early_stop_num,release_gpt_state=self.policy=="release-state",
                     cancel_requested=cancel_requested,
                     semantic_random_draw=(None if random_inputs is None else
@@ -180,7 +174,7 @@ class InferenceRuntime:
                 "reference":reference,"reference_identity":ref.manifest["identity"],
                 "parameters":{"seed":seed,"rng":"numpy.default_rng (not Torch seed-equivalent)",
                     "language":language,"split_method":split_method,"split_bucket":bucketed,
-                    "top_k":top_k,"top_p":1.,
+                    "top_k":top_k,"top_p":top_p,
                     "temperature":temperature,"repetition_penalty":repetition_penalty,
                     "early_stop_num":early_stop_num,"noise_scale":0.5,"speed":1.,"fragment_interval":fragment_interval},
                 "policy":self.policy,"capacity":self.capacity, **self._execution_report(),

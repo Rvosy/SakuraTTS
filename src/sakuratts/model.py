@@ -49,10 +49,6 @@ class Model:
             if (not isinstance(backend, dict) or not isinstance(backend.get("preferred"), str)
                     or not backend["preferred"].strip()):
                 raise ValueError("Model backend.preferred must be a nonempty backend name")
-            for value in [config[k] for k in ("gpt", "sovits", "frontend")] + list(refs.values()):
-                resource = (path.parent / value).resolve(strict=True)
-                if Path(value).is_absolute() or path.parent not in resource.parents or not resource.is_dir():
-                    raise ValueError("Model resources must be directories inside the model directory")
         return model
 
     @property

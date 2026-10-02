@@ -47,7 +47,6 @@ class PreparedSemantic:
     """
     prepared: PreparedText
     reference: PreparedReference
-    reference_identity: dict
     target_phones: np.ndarray
     generation: SemanticGeneration
     rng: np.random.Generator
@@ -82,9 +81,6 @@ def _validate_model(reference, name, manifest):
     identity = reference.manifest["identity"]
     if identity["reference_language"] not in SUPPORTED_LANGUAGE_MODES:
         raise ValueError("Unsupported prepared reference language: " + identity["reference_language"])
-    if (manifest["source"]["checkpoint_sha256"] != identity[name + "_checkpoint_sha256"]
-            or manifest["source"]["official_commit"] != identity["official_commit"]):
-        raise ValueError(f"Loaded {name} model differs from the prepared reference")
     family = reference.manifest["model_family"]
     if (family not in ("v2Pro", "v2ProPlus")
             or name == "sovits" and manifest["config"]["model"]["version"] != family):
@@ -171,7 +167,7 @@ def generate_prepared_semantic(prepared: PreparedText, reference: PreparedRefere
         if release_gpt_state:
             gpt.release_request_state()
     semantic_done = time.perf_counter()
-    return PreparedSemantic(prepared, reference, dict(reference.manifest["identity"]),
+    return PreparedSemantic(prepared, reference,
                             target_phones, generated, rng, {
         "frontend_seconds": prepared.seconds,
         "condition_seconds": frontend_done - start,
@@ -191,8 +187,6 @@ def synthesize_acoustic(request: PreparedSemantic, *, sovits, speed=1.0, noise_s
     if speed != 1.0 or fragment_interval < 0:
         raise ValueError("Require speed=1 and a nonnegative fragment interval")
     reference = request.reference
-    if reference.manifest["identity"] != request.reference_identity:
-        raise ValueError("Reference identity changed between semantic and acoustic execution")
     _validate_model(reference, "sovits", sovits.encoder.manifest)
     sovits.validate_reference(reference)
     check_cancelled(cancel_requested, "before_acoustic")

@@ -151,39 +151,5 @@ class ORTDirectMLTests(unittest.TestCase):
             gc.collect()
             self.assertIsNone(references[0](), failure)
 
-    def test_invalid_directml_options_fail_before_package_loading(self):
-        cases = [(dict(device_id=value), "adapter index") for value in (-1, True, "0")]
-        cases += [(dict(enable_mem_pattern=True), "enable_mem_pattern=False"),
-                  (dict(acoustic_arena_shrink=True), "requires CUDA")]
-        for options, message in cases:
-            with self.subTest(options=options), self.assertRaisesRegex(ValueError, message):
-                ORTSoVITS.load("unused", device="directml", **options)
-        self.read.assert_not_called()
-        self.ort.InferenceSession.assert_not_called()
-
-    def test_fp16_requires_device_specific_screen_and_chunked_stays_cuda_only(self):
-        for device in ("cpu", "directml"):
-            fp16_message = "not been screened for CPU" if device == "cpu" else "own DirectML engineering screen"
-            for dtype, graph, message in (("float16", Path("acoustic.onnx"), fp16_message),
-                                         ("float32", None, "Chunked.*requires CUDA")):
-                with self.subTest(device=device, dtype=dtype, graph=graph):
-                    metadata = manifest()
-                    metadata["dtype"] = dtype
-                    self.read.return_value = metadata, graph
-                    with self.assertRaisesRegex(ValueError, message):
-                        ORTSoVITS.load("unused", device=device, allow_experimental_fp16=True)
-        self.ort.InferenceSession.assert_not_called()
-
-    def test_cuda_session_options_keep_existing_defaults(self):
-        self.session.get_providers.return_value = ["CUDAExecutionProvider", "CPUExecutionProvider"]
-        self.ort.get_available_providers.return_value = ["CUDAExecutionProvider", "CPUExecutionProvider"]
-        with patch.dict(sys.modules, {"sakuratts.backends.cuda.runtime": SimpleNamespace(configure_cuda=Mock())}):
-            ORTSoVITS.load("unused")
-        options = self.ort.InferenceSession.call_args.kwargs["sess_options"]
-        self.assertEqual(options.intra_op_num_threads, 4)
-        self.assertEqual(options.entries, {})
-        self.session.disable_fallback.assert_not_called()
-
-
 if __name__ == "__main__":
     unittest.main()

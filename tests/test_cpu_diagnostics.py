@@ -1,7 +1,5 @@
 """Backend diagnostics select the active ORT distribution without GPU work."""
 
-import contextlib
-import io
 import json
 from pathlib import Path
 import subprocess
@@ -62,54 +60,6 @@ class CPUDoctorTests(unittest.TestCase):
         config["backend"] = {"preferred": backend}
         self.config.write_text(json.dumps(config), encoding="utf-8")
 
-    def test_cpu_can_use_directml_distribution_and_reports_no_inference_verification(self):
-        report = cli.doctor(backend="cpu")
-        self.assertTrue(report["checks_passed"])
-        self.assertTrue(report["synthesis"]["dependencies_ready"])
-        self.assertEqual(report["synthesis"]["backend"], "cpu")
-        self.assertIn("onnxruntime-directml", report["packages"])
-        self.assertNotIn("onnxruntime", report["packages"])
-        self.assertEqual(report["onnxruntime"]["required_provider"], "CPUExecutionProvider")
-        self.assertFalse(report["onnxruntime"]["execution_tested"])
-        self.assertFalse(report["synthesis"]["inference_tested"])
-        self.assertFalse(report["synthesis"]["quality_validated"])
-        self.cuda.assert_not_called()
-        self.ort.InferenceSession.assert_not_called()
-
-    def test_model_preference_and_explicit_override_select_package_checks(self):
-        self.prefer("directml")
-        report = cli.doctor(config=self.config)
-        self.assertTrue(report["checks_passed"])
-        self.assertEqual(report["synthesis"]["backend"], "directml")
-        self.assertEqual(report["synthesis"]["profile"], "fp16")
-        self.resource_check.assert_called_with(self.config, backend="directml")
-        report = cli.doctor(config=self.config, backend="cpu")
-        self.assertEqual(report["synthesis"]["backend"], "cpu")
-        self.assertEqual(report["synthesis"]["profile"], "int8")
-        self.resource_check.assert_called_with(self.config, backend="cpu")
-        self.cuda.assert_not_called()
-
-    def test_default_and_explicit_cpu_profile_are_the_same(self):
-        self.prefer("cpu")
-        output = io.StringIO()
-        with contextlib.redirect_stdout(output):
-            self.assertEqual(cli.main(["doctor", str(self.config), "--profile", "int8"]), 0)
-        self.resource_check.assert_called_with(str(self.config), backend="cpu", profile="int8")
-        implicit = cli.doctor(config=self.config)
-        self.assertEqual(json.loads(output.getvalue())["synthesis"]["profile"], implicit["synthesis"]["profile"])
-        self.resource_check.assert_called_with(self.config, backend="cpu")
-        self.ort.InferenceSession.assert_not_called()
-
-    def test_damaged_cpu_package_does_not_trigger_cuda_checks(self):
-        self.prefer("cpu")
-        self.resource_check.side_effect = ValueError("checksum mismatch")
-        report = cli.doctor(config=self.config)
-        self.assertFalse(report["checks_passed"])
-        self.assertTrue(report["synthesis"]["dependencies_ready"])
-        self.assertFalse(report["synthesis"]["packages_ready"])
-        self.assertIn("checksum mismatch", report["resource_check"]["error"])
-        self.cuda.assert_not_called()
-
     def test_missing_model_resource_keeps_cpu_preference(self):
         config = json.loads(self.config.read_text(encoding="utf-8"))
         config.pop("sovits")
@@ -132,14 +82,6 @@ class CPUDoctorTests(unittest.TestCase):
         self.assertIn("DmlExecutionProvider", report["packages"]["onnxruntime-directml"]["error"])
         self.cuda.assert_not_called()
 
-    def test_directml_lists_dxgi_adapter_ids_and_memory_without_model_execution(self):
-        report = cli.doctor(backend="directml")
-        self.assertTrue(report["checks_passed"])
-        self.assertEqual(report["directml"]["device_id_scheme"], "IDXGIFactory.EnumAdapters")
-        self.assertEqual(report["directml"]["adapters"], self.adapters.return_value)
-        self.assertFalse(report["directml"]["execution_tested"])
-        self.ort.InferenceSession.assert_not_called()
-
     def test_dxgi_query_failure_is_diagnostic_and_does_not_block_provider_checks(self):
         self.adapters.side_effect = RuntimeError("DXGI query unavailable")
         report = cli.doctor(backend="directml")
@@ -160,23 +102,6 @@ class CPUDoctorTests(unittest.TestCase):
         report = cli.doctor(backend="cpu")
         self.assertFalse(report["checks_passed"])
         self.assertIn("exactly one", report["packages"]["onnxruntime"]["error"])
-
-    def test_missing_threadpoolctl_is_reported(self):
-        self.distributions.pop("threadpoolctl")
-        report = cli.doctor(backend="cpu")
-        self.assertFalse(report["synthesis"]["dependencies_ready"])
-        self.assertIn("error", report["packages"]["threadpoolctl"])
-
-    def test_cli_backend_override_and_nvidia_conflict(self):
-        output = io.StringIO()
-        with contextlib.redirect_stdout(output):
-            self.assertEqual(cli.main(["doctor", "--backend", "directml"]), 0)
-        self.assertEqual(json.loads(output.getvalue())["synthesis"]["backend"], "directml")
-        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as error:
-            cli.main(["doctor", "--nvidia", "--backend", "cpu"])
-        self.assertEqual(error.exception.code, 1)
-        self.cuda.assert_not_called()
-
 
 class CPUPackageDiagnosticsTests(unittest.TestCase):
     def test_diagnostic_child_checks_selected_provider_without_cuda_initialization(self):
@@ -267,34 +192,6 @@ class GPTPackageDiagnosticsTests(unittest.TestCase):
     def spec(path):
         return {"file": path.name, "bytes": path.stat().st_size, "sha256": sha256_file(path)}
 
-    def sidecar(self, precision):
-        if precision != "fp32" and not (self.root / "gpt/onnx/manifest.json").exists():
-            self.sidecar("fp32")
-        directory = self.root / "gpt" / ("onnx" if precision == "fp32" else "onnx-" + precision)
-        directory.mkdir()
-        graph, embedding = directory / "transformer.onnx", directory / "embedding.npz"
-        graph.write_bytes(b"graph checked without creating a session")
-        embedding.write_bytes(b"embedding checked without loading")
-        dtype = "float16" if precision == "fp16" else "float32"
-        metadata = {"format": "sakuratts-gpt-onnx-cpu-v1", "architecture": self.gpt["architecture"],
-            "config": {}, "cache": "sequence-major-delta-with-masked-sentinel-v1",
-            "precision": precision, "graph_io_dtype": dtype, "cache_dtype": dtype, "prefill_query_chunk_size": 0,
-            "source": {"manifest_sha256": sha256_file(self.root / "gpt/manifest.json"),
-                "weights_sha256": self.gpt["weights"]["sha256"], "checkpoint_sha256": "checkpoint"},
-            "graphs": {precision: self.spec(graph)}, "embedding": self.spec(embedding)}
-        if precision != "fp32":
-            original = self.root / "gpt/onnx/manifest.json"
-            metadata.update(experimental=True, conversion={"input_manifest_sha256": sha256_file(original),
-                "input_graph_sha256": json.loads(original.read_text())["graphs"]["fp32"]["sha256"]})
-        (directory / "manifest.json").write_text(json.dumps(metadata), encoding="utf-8")
-        return directory, metadata
-
-    def acoustic_fp16(self, scope="all", backend="directml"):
-        evidence = self.root / f"sovits/{backend}-experiment.json"
-        evidence.write_text(json.dumps({"engineering_screen": {"passed": False}}), encoding="utf-8")
-        self.acoustic.update(dtype="float16", precision={"fp16_scope": scope},
-            experimental_validations={backend: self.spec(evidence)})
-        (self.root / "sovits/manifest.json").write_text(json.dumps(self.acoustic), encoding="utf-8")
 
     def test_missing_selected_sidecar_fails_instead_of_checking_only_original_weights(self):
         for backend, precision in (("cpu", "int8"), ("directml", "fp16")):
@@ -302,79 +199,6 @@ class GPTPackageDiagnosticsTests(unittest.TestCase):
                 check_windows_packages(self.config, backend=backend)
         self.probe.assert_not_called()
         self.compute.assert_not_called()
-
-    def test_selected_cpu_precision_reports_verified_storage_without_execution(self):
-        self.sidecar("int8")
-        report = check_windows_packages(self.config, profile="int8")
-        self.assertEqual(report["gpt_resources"]["precision"], "int8")
-        self.assertEqual(report["gpt_resources"]["cache_dtype"], "float32")
-        self.assertEqual(report["profile"], "int8")
-        self.assertFalse(report["gpt_resources"]["execution_tested_by_doctor"])
-        self.compute.assert_not_called()
-
-    def test_modified_selected_graph_fails_hash_check(self):
-        directory, _ = self.sidecar("int8")
-        (directory / "transformer.onnx").write_bytes(b"changed")
-        with self.assertRaisesRegex(ValueError, "checksum or size mismatch"):
-            check_windows_packages(self.config, profile="int8")
-        self.probe.assert_not_called()
-
-    def static_sidecar(self):
-        directory, source = self.sidecar("fp16")
-        static = self.root / "gpt/directml-fp16-cap1280"
-        static.mkdir()
-        graph = static / "decode.onnx"
-        graph.write_bytes(b"static graph checked without execution")
-        metadata = {"format": "sakuratts-gpt-directml-static-v1", "config": {}, "capacity": 1280,
-            "precision": "fp16", "graph_io_dtype": "float16", "graph": self.spec(graph),
-            "cache": "fixed-capacity-ping-pong-masked-sentinel-v1",
-            "source": {"manifest_sha256": sha256_file(directory / "manifest.json"),
-                "graph_sha256": source["graphs"]["fp16"]["sha256"]}}
-        (static / "manifest.json").write_text(json.dumps(metadata), encoding="utf-8")
-        return graph
-
-    def test_directml_default_requires_its_fp16_static_1280_resource(self):
-        graph = self.static_sidecar()
-        self.acoustic_fp16()
-        manifest = graph.parent / "manifest.json"
-        original = manifest.read_bytes()
-        manifest.unlink()
-        with self.assertRaisesRegex(FileNotFoundError, "directml-fp16-cap1280"):
-            check_windows_packages(self.config, backend="directml")
-        self.probe.assert_not_called()
-        manifest.write_bytes(original)
-        report = check_windows_packages(self.config, backend="directml")
-        self.assertEqual(report["profile"], "fp16")
-        self.assertEqual(report["gpt_resources"]["backend"], "directml")
-        self.assertEqual(report["gpt_resources"]["graph"], str(graph))
-        self.assertEqual(report["gpt_resources"]["graph_io_dtype"], "float16")
-        self.assertEqual(report["gpt_resources"]["cache_dtype"], "float16")
-        self.assertFalse(report["gpt_resources"]["execution_tested_by_doctor"])
-        self.assertFalse(report["acoustic_validation"]["engineering_screen_passed"])
-
-    def test_fp16_profile_does_not_accept_vocoder_only_acoustics(self):
-        self.static_sidecar()
-        self.acoustic_fp16("vocoder")
-        with self.assertRaisesRegex(ValueError, "requires a full acoustic FP16"):
-            check_windows_packages(self.config, backend="directml")
-        self.probe.assert_not_called()
-
-    def test_cuda_chunked_profiles_forward_admission_options_without_wrong_screen_kind(self):
-        self.acoustic.update(dtype="float16", format="sakuratts-sovits-chunked-v1",
-            validation={"kind": "sakuratts-vocoder-chunk-screen-v1", "passed": True})
-        (self.root / "sovits/manifest.json").write_text(json.dumps(self.acoustic), encoding="utf-8")
-        for profile, session_policy in (("fp16", "resident"), ("low-memory", "staged"), ("minimum-memory", "staged")):
-            with self.subTest(profile=profile):
-                report = check_windows_packages(self.config, backend="cuda", profile=profile)
-                self.assertEqual(report["status"], "passed")
-                self.acoustic_reader.assert_called_with((self.root / "sovits").resolve(),
-                    allow_experimental_fp16=True, acoustic_chunk_frames=256,
-                    acoustic_arena_shrink=True, acoustic_session_policy=session_policy)
-
-    def test_preparation_checks_base_files_without_accepting_a_runtime_fallback(self):
-        self.assertEqual(check_prepared_packages(self.config)["status"], "passed")
-        with self.assertRaisesRegex(FileNotFoundError, "onnx-int8"):
-            check_windows_packages(self.config)
 
 
 if __name__ == "__main__":

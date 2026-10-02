@@ -71,12 +71,7 @@ def prepare(args):
             or official["source_commit"] != acoustic["upstream_source"]["commit"]):
         raise ValueError("Acoustic conditions and source model differ")
     reference = PreparedReference.load(
-        args.reference_package, gpt_checkpoint_sha256=manifests["gpt"]["source"]["checkpoint_sha256"],
-        sovits_checkpoint_sha256=manifests["sovits"]["source"]["checkpoint_sha256"],
-        reference_text=official["reference"]["text"], reference_language="ja",
-        audio_sha256=official["input_sha256"][official["reference"]["path"]],
-        official_commit=official["source_commit"],
-    )
+        args.reference_package)
     cases = []
     for name in args.cases:
         if name not in CASES:
@@ -136,7 +131,7 @@ def worker(args):
     mx.set_default_device(mx.gpu)
     paths = {name: Path(config[name]) for name in PATHS}
     symbols = read_json(paths["symbols_json"])
-    reference = PreparedReference.load(paths["reference_package"], **prepared["reference_identity"])
+    reference = PreparedReference.load(paths["reference_package"])
     acoustic = read_json(paths["official_conditions"] / "result.json")
     cases = read_json(run / "cases.json")
     gold = {case["id"]: load_case(case["id"], paths["official_run"], acoustic) for case in cases}

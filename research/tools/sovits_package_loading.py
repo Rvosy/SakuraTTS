@@ -9,7 +9,6 @@ import gc
 import importlib.util
 import json
 from pathlib import Path
-import resource
 import shutil
 import subprocess
 import sys
@@ -58,7 +57,6 @@ def worker(args):
         np.load = counted(np.load, 'archive_open')
         for module in modules or [package_module]:
             module.sha256 = counted(module.sha256, 'hash')
-            module.validate_storage = counted(module.validate_storage, 'storage_validation')
             module.read_fp32 = counted(module.read_fp32, 'tensor_reads')
     def memory():
         return dict(**rss_memory(), mlx_active_bytes=mx.get_active_memory(),

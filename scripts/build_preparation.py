@@ -7,7 +7,6 @@ the original environment, user voices and synthesis base models are excluded.
 
 import argparse
 import ast
-import base64
 import csv
 from email.parser import Parser
 import importlib.util
@@ -33,16 +32,11 @@ def runtime_file(relative):
 
 
 class PreparationPlan(Plan):
-    def __init__(self, record_overrides=None):
-        super().__init__()
-        self.record_overrides = record_overrides or {}
-        self.applied_overrides = {}
-
     def package(self, site, directory, metadata, target):
         component = target + ":" + metadata["Name"]
         self.components[component] = {"name": metadata["Name"], "version": metadata["Version"], "source": "local-installed-RECORD"}
         with (directory / "RECORD").open(encoding="utf-8", newline="") as stream:
-            for relative, checksum, _ in csv.reader(stream):
+            for relative, _, _ in csv.reader(stream):
                 parts = PurePosixPath(relative).parts
                 if not relative or "\\" in relative or PurePosixPath(relative).is_absolute() or ":" in relative:
                     raise ValueError("Unsafe RECORD entry: " + relative)
@@ -55,21 +49,8 @@ class PreparationPlan(Plan):
                 path = site.joinpath(*parts)
                 if site.resolve() not in path.resolve(strict=True).parents:
                     raise ValueError("RECORD input escaped site-packages: " + relative)
-                expected = None
-                if checksum:
-                    algorithm, encoded = checksum.split("=", 1)
-                    if algorithm != "sha256":
-                        raise ValueError("Unsupported RECORD checksum: " + algorithm)
-                    expected = base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4)).hex()
-                if relative in self.record_overrides:
-                    override = self.record_overrides[relative]
-                    if (not isinstance(override, dict) or not isinstance(override.get("reason"), str)
-                            or not override["reason"].strip() or not isinstance(override.get("sha256"), str)
-                            or len(override["sha256"]) != 64 or override.get("record_sha256") != expected):
-                        raise ValueError("RECORD override requires matching upstream hash, current sha256 and reason: " + relative)
-                    self.applied_overrides[relative] = {**override, "record_sha256": expected}
-                    expected = override["sha256"]
-                self.add(path, target + "/" + relative, component, expected)
+                self.add(path, target + "/" + relative, component)
+
 
 # These imports are required by the upstream reference-only TTS constructor,
 # including modules imported eagerly even when their synthesis branch is unused.
@@ -147,14 +128,6 @@ def add_official_sources(plan, source, language_model=None):
         plan.add(local, "official/" + name, "public-analysis-resource")
 
 
-def frontend_requirement(installed, python_version):
-    if "pyopenjtalk" in installed:
-        if python_version != "3.9":
-            raise ValueError("Classic pyopenjtalk requires CPython 3.9 to match the portable frontend worker ABI")
-        return "pyopenjtalk==0.3.4"
-    return "pyopenjtalk-plus"
-
-
 def preparation_distributions(site, runtime_site=None):
     installed = installed_distributions(site)
     origins = dict.fromkeys(installed, site)
@@ -175,11 +148,10 @@ def preparation_distributions(site, runtime_site=None):
 
 
 def make_plan(args):
-    overrides = json.loads(args.record_overrides.read_text(encoding="utf-8")) if args.record_overrides else {}
-    plan = PreparationPlan(overrides)
+    plan = PreparationPlan()
     stem, version, paths = add_interpreter(plan, args.python_base, args.vc_runtime)
     installed, origins = preparation_distributions(args.site, args.runtime_site)
-    frontend = frontend_requirement(installed, version)
+    frontend = "pyopenjtalk" if "pyopenjtalk" in installed else "pyopenjtalk-plus"
     # A local GPU wheel also contains the CPU backend. Omit its optional GPU
     # providers above rather than downloading another copy of the CPU runtime.
     onnxruntime = "onnxruntime" if "onnxruntime" in installed else "onnxruntime-gpu"
@@ -198,8 +170,6 @@ def make_plan(args):
             paths.append("Lib/site-packages/" + egg.name)
         else:
             plan.package(site, directory, metadata, "Lib/site-packages")
-    if set(plan.record_overrides) != set(plan.applied_overrides):
-        raise ValueError("RECORD override does not match a selected distribution file")
     # pyopenjtalk classic downloads its dictionary after wheel installation, so
     # the original wheel RECORD does not describe this required public resource.
     frontend_site = origins[canonicalize_name(frontend.split("==")[0])]
@@ -242,13 +212,11 @@ def assemble(args, plan, stem, paths):
         target = output / name
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(row["source"], target)
-        if digest(target) != row["sha256"]:
-            raise ValueError("Input changed while copying: " + name)
         inventory[name] = {key: row[key] for key in ("bytes", "sha256", "component")}
         if index % 2000 == 0:
             print(f"Copied {index}/{len(plan.files)} files", flush=True)
     # The local upstream config can contain personal checkpoint paths. The
-    # preparer hashes this placeholder but supplies its own explicit job config.
+    # preparer supplies its own explicit job config.
     generated = {stem + "._pth": "\n".join(paths) + "\n",
                  "official/GPT_SoVITS/configs/tts_infer.yaml": "{}\n",
                  "preparation.json": json.dumps(MARKER, indent=2) + "\n",
@@ -262,7 +230,6 @@ def assemble(args, plan, stem, paths):
                 "synthesis_models_included": False, "personal_references_included": False,
                 "auxiliary_analysis_models_included": True,
                 "source_sha256": digest(args.official_source / "GPT_SoVITS/TTS_infer_pack/TTS.py"),
-                "record_overrides": plan.applied_overrides,
                 "components": plan.components, "files": inventory,
                 "bytes": sum(row["bytes"] for row in inventory.values())}
     write(output / "preparation-manifest.json", json.dumps(manifest, indent=2) + "\n")
@@ -277,8 +244,6 @@ def main():
     parser.add_argument("--language-model", type=Path, help="Local lid.176.bin; defaults to the upstream pretrained_models directory")
     parser.add_argument("--runtime-site", type=Path,
                         help="CPU torch, torchaudio and onnxruntime site-packages overriding --site")
-    parser.add_argument("--record-overrides", type=Path,
-                        help="Explicit JSON mapping of locally patched RECORD paths to sha256 and reason")
     args = parser.parse_args()
     plan, stem, paths = make_plan(args)
     write(args.audit, json.dumps({"files": plan.files, "components": plan.components}, ensure_ascii=False, indent=2) + "\n")

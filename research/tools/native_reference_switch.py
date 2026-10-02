@@ -92,7 +92,7 @@ def worker(run, sequence_name):
                                  "acoustic_noise": np.asarray(noise).copy()}
                 return super().decode(codes, phones, ge, ge512, noise, **kwargs)
 
-        references = {name: PreparedReference.load(config["reference_" + name], **identity)
+        references = {name: PreparedReference.load(config["reference_" + name])
                       for name, identity in prepared["reference_identity"].items()}
         frontend_dir = Path(config["frontend_package"])
         japanese = JapaneseG2P(config["main_dictionary"], frontend_dir / "user.dict")
@@ -227,10 +227,7 @@ def main():
     manifests = {name: read_json(Path(config[name + "_package"]) / "manifest.json") for name in ("gpt", "sovits", "frontend")}
     identities, references, array_identities = {}, {}, {}
     for name in ("a", "b"):
-        reference = PreparedReference.load(config["reference_" + name],
-            gpt_checkpoint_sha256=manifests["gpt"]["source"]["checkpoint_sha256"],
-            sovits_checkpoint_sha256=manifests["sovits"]["source"]["checkpoint_sha256"], reference_language="ja",
-            official_commit=manifests["gpt"]["source"]["official_commit"])
+        reference = PreparedReference.load(config["reference_" + name])
         identities[name] = reference.manifest["identity"]
         references[name] = reference
         array_identities[name] = {key: {"shape": list(getattr(reference, key).shape),

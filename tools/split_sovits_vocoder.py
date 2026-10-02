@@ -253,8 +253,6 @@ def split_package(source, output, *, validate_cpu=False):
         "conversion": {"onnx": onnx.__version__, "script_sha256": sha256_file(Path(__file__))}}
     if validate_cpu:
         report["cpu_fp32_split_validation"] = validate_fp32(source, output, settings)
-    if sha256_file(source / "manifest.json") != source_hash:
-        raise RuntimeError("Source manifest changed during splitting")
     read_manifest(source, diagnostic=True, allow_experimental_fp16=True)
     (output / "manifest.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     if validate_cpu and not report["cpu_fp32_split_validation"]["passed"]:

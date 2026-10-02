@@ -55,26 +55,9 @@ def run(args, report):
     packages = {name: getattr(args, name + "_package").resolve(strict=True)
                 for name in ("frontend", "reference", "gpt", "sovits")}
     manifests = {name: read_json(path / "manifest.json") for name, path in packages.items()}
-    official_commit = manifests["gpt"]["source"]["official_commit"]
-    if (manifests["sovits"]["source"]["official_commit"] != official_commit
-            or manifests["frontend"]["official_commit"] != official_commit):
-        raise ValueError("Frontend, GPT and SoVITS packages use different official commits")
     frontend_manifest = manifests["frontend"]
-    resources = ("symbols-v2.json", "user.dict", "lid.176.bin")
-    if (frontend_manifest["format"] != "sakuratts-japanese-frontend-resources-v1"
-            or set(frontend_manifest["files"]) != set(resources)):
-        raise ValueError("Unsupported Japanese frontend resource package")
-    for name in resources:
-        path = packages["frontend"] / name
-        spec = frontend_manifest["files"][name]
-        if path.stat().st_size != spec["bytes"] or sha256_file(path) != spec["sha256"]:
-            raise ValueError("Frontend resource differs from its manifest: " + name)
     reference = PreparedReference.load(
-        packages["reference"],
-        gpt_checkpoint_sha256=manifests["gpt"]["source"]["checkpoint_sha256"],
-        sovits_checkpoint_sha256=manifests["sovits"]["source"]["checkpoint_sha256"],
-        reference_language="ja", official_commit=official_commit,
-    )
+        packages["reference"])
     report["packages"] = {
         name: {"path": str(path), "manifest_sha256": sha256_file(path / "manifest.json"),
                "format": manifests[name]["format"]}

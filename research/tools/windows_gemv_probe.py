@@ -22,7 +22,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 from sakuratts._internal.reference_condition import sha256_file
-from sakuratts._internal.weight_storage import array_sha256, read_fp32, validate_storage
+from sakuratts._internal.weight_storage import array_sha256, read_fp32
 
 SHAPES = ("qkv", "attention_output", "ffn_in", "ffn_out", "output")
 CANDIDATES = {"warp4": 4, "warp8": 8}
@@ -90,10 +90,9 @@ def load_weights(package, selected, layer):
     require(archive_path.stat().st_size == manifest["weights"]["bytes"], "GPT archive size mismatch")
     weights, identities = {}, {}
     with np.load(archive_path, allow_pickle=False) as archive:
-        validate_storage(manifest, archive.files)
         for name in selected:
             contract = contracts[name]
-            fp32 = read_fp32(archive, manifest, contract["weight_name"])
+            fp32 = read_fp32(archive, contract["weight_name"])
             require(list(fp32.shape) == contract["weight_shape"] and np.isfinite(fp32).all(), "Weight shape or finiteness mismatch")
             require(not np.any(np.abs(fp32) > np.finfo(np.float16).max), "Weight cannot be represented as finite HALF")
             half = np.ascontiguousarray(fp32, dtype=np.float16)

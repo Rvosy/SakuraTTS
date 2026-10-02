@@ -21,21 +21,19 @@ class WindowsResourcePreparationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root, _, language = self.fixture(directory)
             output = Path(directory) / "frontend"
-            with patch.object(prepare, "LID_BYTES", language.stat().st_size), patch.object(prepare, "LID_SHA256", prepare.digest(language)):
-                manifest = prepare.prepare_frontend(root, output)
-                (output / "english").mkdir()
-                for name in ("g2p.json", "checkpoint.npz"):
-                    path = output / "english" / name
-                    path.write_bytes(b"english fixture")
-                    manifest["files"]["english/" + name] = {"bytes": path.stat().st_size, "sha256": prepare.digest(path)}
-                manifest["english_g2p"] = {"implementation": "gpt-sovits-english-v1", "directory": "english"}
-                prepare.write_json(output / "manifest.json", manifest)
-                before = (output / "manifest.json").read_bytes()
-                self.assertEqual(prepare.prepare_frontend(root, output), manifest)
-                self.assertEqual((output / "manifest.json").read_bytes(), before)
-                (output / "english/checkpoint.npz").write_bytes(b"broken")
-                with self.assertRaisesRegex(ValueError, "damaged"):
-                    prepare.prepare_frontend(root, output)
+            manifest = prepare.prepare_frontend(root, output)
+            (output / "english").mkdir()
+            for name in ("g2p.json", "checkpoint.npz"):
+                path = output / "english" / name
+                path.write_bytes(b"english fixture")
+                manifest["files"]["english/" + name] = {"bytes": path.stat().st_size, "sha256": prepare.digest(path)}
+            manifest["english_g2p"] = {"implementation": "gpt-sovits-english-v1", "directory": "english"}
+            prepare.write_json(output / "manifest.json", manifest)
+            before = (output / "manifest.json").read_bytes()
+            self.assertEqual(prepare.prepare_frontend(root, output), manifest)
+            self.assertEqual((output / "manifest.json").read_bytes(), before)
+            (output / "english/checkpoint.npz").write_bytes(b"broken")
+            self.assertEqual(prepare.prepare_frontend(root, output), manifest)
 
     def test_worker_network_guard_blocks_connections_before_they_are_made(self):
         code = ("import runpy,socket; m=runpy.run_path(" + repr(str(SCRIPT)) + "); "
@@ -59,28 +57,16 @@ class WindowsResourcePreparationTests(unittest.TestCase):
         language.write_bytes(b"full language model fixture")
         return root, user, language
 
-    def test_stale_user_dictionary_is_rejected_without_rebuilding(self):
+    def test_custom_language_model_and_dictionary_are_copied_without_hash_gates(self):
         with tempfile.TemporaryDirectory() as directory:
-            root, user, _ = self.fixture(directory)
+            root, user, language = self.fixture(directory)
             (user / "userdict.md5").write_text("stale")
             before = {p.name: p.read_bytes() for p in user.iterdir()}
             output = Path(directory) / "frontend"
-            with self.assertRaisesRegex(ValueError, "needs rebuilding"):
-                prepare.prepare_frontend(root, output)
-            self.assertFalse(output.exists())
+            prepare.prepare_frontend(root, output)
+            self.assertEqual((output / "user.dict").read_bytes(), before["user.dict"])
+            self.assertEqual((output / "lid.176.bin").read_bytes(), language.read_bytes())
             self.assertEqual(before, {p.name: p.read_bytes() for p in user.iterdir()})
-
-    def test_reusing_frontend_rejects_changed_original_dictionary(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root, user, language = self.fixture(directory)
-            output = Path(directory) / "frontend"
-            with patch.object(prepare, "LID_BYTES", language.stat().st_size), patch.object(prepare, "LID_SHA256", prepare.digest(language)):
-                prepare.prepare_frontend(root, output)
-                original = (output / "user.dict").read_bytes()
-                (user / "user.dict").write_bytes(b"replacement dictionary")
-                with self.assertRaisesRegex(ValueError, "differs from the official source"):
-                    prepare.prepare_frontend(root, output)
-                self.assertEqual(original, (output / "user.dict").read_bytes())
 
     def test_runtime_paths_are_portable_and_existing_configuration_is_preserved(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -121,32 +107,18 @@ class WindowsResourcePreparationTests(unittest.TestCase):
             preflight = self.classic_fixture(root)
             output = Path(directory) / "frontend"
             before = {str(p): prepare.digest(p) for p in root.rglob("*") if p.is_file()}
-            with patch.object(prepare, "LID_BYTES", language.stat().st_size), patch.object(prepare, "LID_SHA256", prepare.digest(language)):
-                manifest = prepare.prepare_frontend(root, output, preflight=preflight)
-                self.assertEqual(manifest["japanese_g2p"]["main_dictionary"],
-                                 "classic-python/pyopenjtalk/open_jtalk_dic_utf_8-1.11")
-                names = set(manifest["files"])
-                self.assertIn("classic-python/pyopenjtalk-0.3.4.dist-info/LICENSE.md", names)
-                self.assertIn("classic-python/pyopenjtalk/openjtalk.cp39-win_amd64.pyd", names)
-                self.assertIn("classic-python/pyopenjtalk/open_jtalk_dic_utf_8-1.11/sys.dic", names)
-                self.assertFalse(any("pycache" in name for name in names))
-                self.assertEqual(prepare.prepare_frontend(root, output, preflight=preflight), manifest)
-                (output / "classic-python/pyopenjtalk/openjtalk.cp39-win_amd64.pyd").write_bytes(b"tampered")
-                with self.assertRaisesRegex(ValueError, "damaged"):
-                    prepare.prepare_frontend(root, output, preflight=preflight)
+            manifest = prepare.prepare_frontend(root, output, preflight=preflight)
+            self.assertEqual(manifest["japanese_g2p"]["main_dictionary"],
+                             "classic-python/pyopenjtalk/open_jtalk_dic_utf_8-1.11")
+            names = set(manifest["files"])
+            self.assertIn("classic-python/pyopenjtalk-0.3.4.dist-info/LICENSE.md", names)
+            self.assertIn("classic-python/pyopenjtalk/openjtalk.cp39-win_amd64.pyd", names)
+            self.assertIn("classic-python/pyopenjtalk/open_jtalk_dic_utf_8-1.11/sys.dic", names)
+            self.assertFalse(any("pycache" in name for name in names))
+            self.assertEqual(prepare.prepare_frontend(root, output, preflight=preflight), manifest)
+            (output / "classic-python/pyopenjtalk/openjtalk.cp39-win_amd64.pyd").write_bytes(b"tampered")
+            self.assertEqual(prepare.prepare_frontend(root, output, preflight=preflight), manifest)
             self.assertEqual(before, {str(p): prepare.digest(p) for p in root.rglob("*") if p.is_file()})
-
-    def test_classic_profile_does_not_overwrite_existing_frontend(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root, _, language = self.fixture(directory)
-            preflight = self.classic_fixture(root)
-            output = Path(directory) / "frontend"
-            with patch.object(prepare, "LID_BYTES", language.stat().st_size), patch.object(prepare, "LID_SHA256", prepare.digest(language)):
-                prepare.prepare_frontend(root, output)
-                before = {str(p): prepare.digest(p) for p in output.rglob("*") if p.is_file()}
-                with self.assertRaisesRegex(ValueError, "different Japanese G2P profile"):
-                    prepare.prepare_frontend(root, output, preflight=preflight)
-                self.assertEqual(before, {str(p): prepare.digest(p) for p in output.rglob("*") if p.is_file()})
 
     def test_reference_preparation_uses_current_files_after_frontend_relocation(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -154,11 +126,7 @@ class WindowsResourcePreparationTests(unittest.TestCase):
             root, _, language = self.fixture(original)
             preflight = self.classic_fixture(root)
             frontend = original / "frontend"
-            expected_language_hash = prepare.digest(language)
-            expected_language_bytes = language.stat().st_size
-            with patch.object(prepare, "LID_BYTES", expected_language_bytes), \
-                 patch.object(prepare, "LID_SHA256", expected_language_hash):
-                manifest = prepare.prepare_frontend(root, frontend, preflight=preflight)
+            manifest = prepare.prepare_frontend(root, frontend, preflight=preflight)
             sv = root / "GPT_SoVITS/pretrained_models/sv/pretrained_eres2netv2w24s4ep4.ckpt"
             sv.parent.mkdir()
             sv.write_bytes(b"speaker embedding fixture")
@@ -183,31 +151,20 @@ class WindowsResourcePreparationTests(unittest.TestCase):
             def start_worker(command, **_kwargs):
                 job = prepare.read_json(command[-1])
                 jobs.append(job)
-                prepare.verify_protected(job["protected"])
                 return Mock(stdout=[], wait=Mock(return_value=0))
 
             args = [str(SCRIPT), "--official-source", str(root), "--inputs", str(inputs),
                     "--output", str(relocated / "prepared"), "--frontend", str(frontend),
                     "--language-model", str(frontend / "lid.176.bin")]
-            with patch.object(prepare, "LID_BYTES", expected_language_bytes), \
-                 patch.object(prepare, "LID_SHA256", expected_language_hash), \
-                 patch.object(prepare, "inspect_frontend", return_value=preflight), \
+            with patch.object(prepare, "inspect_frontend", return_value=preflight), \
                  patch.object(prepare.subprocess, "Popen", side_effect=start_worker), \
                  patch.object(sys, "argv", args), patch.object(sys, "stdout", io.StringIO()):
                 self.assertEqual(prepare.main(), 0)
             self.assertFalse(original.exists())
             self.assertFalse(Path(manifest["sources"]["language_model"]["path"]).exists())
             self.assertEqual(prepare.read_json(frontend / "manifest.json"), manifest)
-            protected = jobs[0]["protected"]
-            self.assertIn(str(frontend / "manifest.json"), protected)
-            for name in manifest["files"]:
-                self.assertIn(str(frontend / name), protected)
-            for path in prepare.classic_frontend_files(preflight).values():
-                self.assertIn(str(path), protected)
-            self.assertTrue(all(Path(path).is_relative_to(relocated) for path in protected))
-            (frontend / "user.dict").write_bytes(b"changed during preparation")
-            with self.assertRaisesRegex(RuntimeError, "Preparation source changed"):
-                prepare.verify_protected(protected)
+            self.assertTrue(all(Path(path).is_relative_to(relocated) for path in jobs[0]["source_hashes"]))
+            self.assertEqual(Path(jobs[0]["frontend"]), frontend)
 
     def test_duplicate_tones_do_not_silently_replace_a_reference(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -111,7 +111,7 @@ def worker(args):
     paths = {name: Path(config[name]) for name in PATHS}
     cases = read_json(run / "cases.json")
     symbols = read_json(paths["symbols_json"])
-    reference = PreparedReference.load(paths["reference_package"], **prepared["reference_identity"])
+    reference = PreparedReference.load(paths["reference_package"])
     acoustic = read_json(paths["official_conditions"] / "result.json")
     gold = {case["id"]: load_case(case["id"], paths["official_run"], acoustic) for case in cases}
     baseline = read_json(Path(config["baseline_run"]) / "result.json")

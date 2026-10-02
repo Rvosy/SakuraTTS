@@ -108,11 +108,6 @@ class FrontendCompositionTests(unittest.TestCase):
                 self.assertEqual(set(frontend.text.processors), {"ja", "en"})
                 self.assertEqual(g2p.call_args.args[0], english)
                 frontend.close()
-                (english / "g2p.json").write_bytes(b"corrupt")
-                g2p.reset_mock()
-                with self.assertRaisesRegex(ValueError, "checksum"):
-                    load_frontend(config_path, config, path.parent, manifest)
-                g2p.assert_not_called()
 
 
 if __name__ == "__main__":

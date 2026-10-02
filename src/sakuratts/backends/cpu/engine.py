@@ -9,7 +9,7 @@ class CPUEngine(InferenceRuntime):
     def __init__(self, config, *, policy="resident", capacity=2048, threads=2,
                  device_id=0, gpt_backend="numpy", gpt_precision="fp32", gpt_threads=None, gpt_prefill_query_chunk_size=128,
                  enable_cpu_mem_arena=False, load_references=True,
-                 allow_experimental_acoustic_fp16=False, acoustic_fp16_acceptance="screened"):
+                 allow_experimental_acoustic_fp16=False):
         if policy not in ("resident", "release-state", "staged"):
             raise ValueError("Unknown model policy")
         for name, value, minimum in (("capacity", capacity, 1), ("threads", threads, 1),
@@ -19,10 +19,6 @@ class CPUEngine(InferenceRuntime):
                 raise ValueError(f"{name} must be an integer >= {minimum}")
         if type(enable_cpu_mem_arena) is not bool:
             raise ValueError("enable_cpu_mem_arena must be a bool")
-        if acoustic_fp16_acceptance not in ("screened", "finite"):
-            raise ValueError("acoustic_fp16_acceptance must be screened or finite")
-        if acoustic_fp16_acceptance == "finite" and not allow_experimental_acoustic_fp16:
-            raise ValueError("Finite acceptance also requires allow_experimental_acoustic_fp16=True")
         if type(allow_experimental_acoustic_fp16) is not bool:
             raise ValueError("allow_experimental_acoustic_fp16 must be a bool")
         if gpt_threads is not None and (type(gpt_threads) is not int or gpt_threads < 1):
@@ -49,7 +45,6 @@ class CPUEngine(InferenceRuntime):
         self.gpt_prefill_query_chunk_size = gpt_prefill_query_chunk_size
         self.gpt_precision = gpt_precision
         self.allow_experimental_acoustic_fp16 = allow_experimental_acoustic_fp16
-        self.acoustic_fp16_acceptance = acoustic_fp16_acceptance
         self.acoustic_arena_shrink = False
         self.acoustic_chunk_frames = None
         self.acoustic_session_policy = "resident"
@@ -76,14 +71,11 @@ class CPUEngine(InferenceRuntime):
             self.sovits = ORTSoVITS.load(self.packages["sovits"], device=self.name,
                 device_id=self.device_id, intra_op_num_threads=self.threads,
                 enable_cpu_mem_arena=self.enable_cpu_mem_arena,
-                allow_experimental_fp16=self.allow_experimental_acoustic_fp16,
-                **({"fp16_acceptance": self.acoustic_fp16_acceptance} if self.acoustic_fp16_acceptance != "screened" else {}))
+                allow_experimental_fp16=self.allow_experimental_acoustic_fp16)
 
     def _execution_report(self):
         return {"backend": self.name, "gpt_device": "directml" if self.gpt_backend == "directml" else "cpu", "gpt_backend": self.gpt_backend,
-                "acoustic_device": self.name, "acoustic_fp16_acceptance": self.acoustic_fp16_acceptance,
-                "acoustic_strict_validation_passed": self.manifests["sovits"].get("validation", {}).get("passed") is True,
-                "acoustic_finite_validation_passed": self.manifests["sovits"].get("experimental_validations", {}).get(self.name, {}).get("passed") is True,
+                "acoustic_device": self.name,
                 "acoustic_precision_scope": self.manifests["sovits"].get("precision", {}).get("fp16_scope", "all"),
                 "device_id": self.device_id if self.name == "directml" else None,
                 "threads": self.threads, "gpt_threads": self.gpt_threads,

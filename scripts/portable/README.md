@@ -47,7 +47,7 @@ start-server.bat models/voice-amd --backend directml
 
 ## HTTP 请求
 
-接口对齐 GPT-SoVITS API v2 的已支持字段，必须显式传 `parallel_infer=false`。以自己的参考录音和对应转写发起请求：
+接口对齐 GPT-SoVITS API v2 的已支持字段，单项批次接受原版默认参数。以自己的参考录音和对应转写发起请求：
 
 ```powershell
 curl.exe -X POST http://127.0.0.1:9880/tts -H "Content-Type: application/json" --data-raw '{"text":"こんにちは。","text_lang":"ja","ref_audio_path":"D:/Voices/reference.wav","prompt_text":"参考音声です。","prompt_lang":"ja","parallel_infer":false}' --output hello.wav

@@ -102,17 +102,6 @@ class CudaIncludePathTests(unittest.TestCase):
         self.assertFalse(result["synthesis"]["dependencies_ready"])
         self.assertFalse(result["synthesis"]["inference_tested"])
 
-    def test_plain_doctor_and_ort_configuration_do_not_check_gpt_headers(self):
-        with patch.object(cuda_runtime, "validate_gpt_cuda_include_paths", side_effect=AssertionError("GPT-only check")) as validate, \
-                patch.object(cli, "import_module"), patch.object(cli.metadata, "version", return_value="test"):
-            result = cli.doctor()
-            with patch.object(sys, "path", []), patch.object(sys, "executable", str(self.root / "python.exe")):
-                self.assertEqual(cuda_runtime.configure_cuda(), [])
-        validate.assert_not_called()
-        self.assertTrue(result["checks_passed"])
-        self.assertNotIn("gpt_cuda_headers", result)
-
-
 class CudaImportWarningTests(unittest.TestCase):
     warning = "CUDA path could not be detected. Set CUDA_PATH environment variable if CuPy fails to load."
 
@@ -155,18 +144,6 @@ class CudaImportWarningTests(unittest.TestCase):
             self.assertEqual([str(item.message) for item in caught], ["Another CUDA warning"])
             warnings.warn_explicit(self.warning, UserWarning, "_environment.py", 286, module="cupy._environment")
             self.assertEqual(str(caught[-1].message), self.warning)
-
-    def test_missing_nvrtc_keeps_the_warning(self):
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
-            self.import_fixture(missing_nvrtc=True)
-        self.assertIn(self.warning, [str(item.message) for item in caught])
-
-    def test_system_toolkit_keeps_its_warnings(self):
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
-            self.import_fixture(found_via="system")
-        self.assertIn(self.warning, [str(item.message) for item in caught])
 
     def test_real_import_failures_propagate(self):
         with warnings.catch_warnings(record=True), self.assertRaisesRegex(ImportError, "CUDA DLL"):

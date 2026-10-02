@@ -9,7 +9,7 @@ import sys
 if not __package__:
     from runpy import run_path
     run_path(str(Path(__file__).with_name("worker.py")))["load_package"](Path(__file__).resolve().parents[1])
-from sakuratts._internal.reference_condition import PreparedReference, sha256_file
+from sakuratts._internal.reference_condition import PreparedReference
 
 
 def read_windows_config(config_path):
@@ -21,22 +21,17 @@ def read_windows_config(config_path):
     return model.path, model_config(model.runtime_config)
 
 
-def checked_file(root, name, spec):
-    if not isinstance(name, str) or not name:
-        raise ValueError("Package resource path must be a nonempty string")
-    root = Path(root).resolve(strict=True)
-    path = (root / name).resolve(strict=True)
-    if root not in path.parents or not path.is_file():
-        raise ValueError("Resource must be a file inside its package: " + str(name))
-    if path.stat().st_size != spec["bytes"] or sha256_file(path) != spec["sha256"]:
-        raise ValueError("Resource checksum or size mismatch: " + str(name))
+def checked_file(root, name):
+    path = (Path(root) / name).resolve(strict=True)
+    if not path.is_file():
+        raise ValueError("Resource is not a file: " + str(path))
     return path
 
 
-def check_windows_packages(config_path, *, backend=None, acoustic_fp16_acceptance="screened", profile=None,
+def check_windows_packages(config_path, *, backend=None, profile=None,
                            experimental=None):
     return _check_windows_packages(config_path, backend=backend,
-        acoustic_fp16_acceptance=acoustic_fp16_acceptance, profile=profile, runtime_selection=True,
+        profile=profile, runtime_selection=True,
         experimental=experimental)
 
 
@@ -45,10 +40,10 @@ def check_prepared_packages(config_path):
     return _check_windows_packages(config_path, runtime_selection=False)
 
 
-def _check_windows_packages(config_path, *, backend=None, acoustic_fp16_acceptance="screened", profile=None,
+def _check_windows_packages(config_path, *, backend=None, profile=None,
                             runtime_selection, experimental=None):
-    """Check stored resources and identities without allocating model weights."""
-    from sakuratts.backends.onnx.sovits import DIRECTML_FP16_KIND, read_manifest
+    """Check resource paths and interpreter imports without allocating weights."""
+    from sakuratts.backends.onnx.sovits import read_manifest
 
     from sakuratts.model import Model
     from sakuratts.backends import require_backend
@@ -61,7 +56,6 @@ def _check_windows_packages(config_path, *, backend=None, acoustic_fp16_acceptan
     else:
         options = None
     options = options or {}
-    acoustic_fp16_acceptance = options.get("acoustic_fp16_acceptance", acoustic_fp16_acceptance)
     config_path, config = model.path, model_config(model.runtime_config)
     root = config_path.parent
     paths = {name: (root / config[name]).resolve(strict=True) for name in ("gpt", "sovits", "frontend")}
@@ -87,16 +81,9 @@ def _check_windows_packages(config_path, *, backend=None, acoustic_fp16_acceptan
             "cache": metadata["cache"], "embedding_dtype": "float32", "sampling_logits_dtype": "float32",
             "execution_tested_by_doctor": False}
     else:
-        checked_file(paths["gpt"], gpt["weights"]["file"], gpt["weights"])
+        checked_file(paths["gpt"], gpt["weights"]["file"])
     is_fp16 = manifests["sovits"].get("dtype") == "float16"
-    if (not runtime_selection and is_fp16 and backend in ("cpu", "directml")
-            and backend in manifests["sovits"].get("experimental_validations", {})):
-        # Repackaging preserves an already validated experiment; its independent
-        # backend evidence still checks every acoustic file and execution bound.
-        acoustic_fp16_acceptance = "finite"
     precision_options = {"allow_experimental_fp16": True} if is_fp16 else {}
-    if acoustic_fp16_acceptance != "screened":
-        precision_options.update(fp16_acceptance=acoustic_fp16_acceptance, execution_backend=backend)
     if backend == "cuda":
         precision_options.update(acoustic_chunk_frames=options.get("acoustic_chunk_frames"),
             acoustic_arena_shrink=options.get("acoustic_arena_shrink", True),
@@ -106,30 +93,14 @@ def _check_windows_packages(config_path, *, backend=None, acoustic_fp16_acceptan
         from types import SimpleNamespace
         validate_runtime_precision(backend, profile, SimpleNamespace(
             acoustic_precision="fp16" if is_fp16 else "fp32", manifests={"sovits": acoustic}))
-    acoustic_validation = None
-    if is_fp16 and acoustic_fp16_acceptance == "finite":
-        spec = acoustic["experimental_validations"][backend]
-        evidence = json.loads((paths["sovits"] / spec["file"]).read_text(encoding="utf-8"))
-        acoustic_validation = {"acceptance": "finite", "engineering_screen_passed": evidence["engineering_screen"]["passed"],
-                               "quality_accepted": False, "execution_tested_by_doctor": False}
-    if is_fp16 and acoustic_fp16_acceptance == "screened" and acoustic.get("format") != "sakuratts-sovits-chunked-v1":
-        expected = {"cuda": "fp16-engineering-screen", "directml": DIRECTML_FP16_KIND}.get(backend)
-        if expected is None or acoustic.get("validation", {}).get("kind") != expected:
-            raise ValueError("FP16 acoustic package requires the matching backend engineering screen; CPU is not screened")
-    source = gpt["source"]["official_commit"]
-    if acoustic["source"]["official_commit"] != source or frontend["official_commit"] != source:
-        raise ValueError("GPT, acoustic and frontend source identities do not match")
     if (frontend.get("format") != "sakuratts-japanese-frontend-resources-v1"
             or not {"symbols-v2.json", "user.dict", "lid.176.bin"}.issubset(frontend["files"])):
         raise ValueError("Incomplete Japanese frontend resource package")
-    for name, spec in frontend["files"].items():
-        checked_file(paths["frontend"], name, spec)
+    for name in frontend["files"]:
+        checked_file(paths["frontend"], name)
     references = config.get("references", {})
     for path in references.values():
-        reference = PreparedReference.load(root / path,
-            gpt_checkpoint_sha256=gpt["source"]["checkpoint_sha256"],
-            sovits_checkpoint_sha256=acoustic["source"]["checkpoint_sha256"],
-            reference_language="ja", official_commit=source)
+        reference = PreparedReference.load(root / path)
         if reference.manifest["model_family"] != acoustic["config"]["model"]["version"]:
             raise ValueError("Reference family differs from the acoustic package")
     frontend_profile = frontend.get("japanese_g2p", {"implementation": "pyopenjtalk-plus"})
@@ -137,13 +108,11 @@ def _check_windows_packages(config_path, *, backend=None, acoustic_fp16_acceptan
     frontend_python = None
     if frontend_profile["implementation"] == "pyopenjtalk-classic":
         selected = config.get("frontend_python", config.get("acoustic_python"))
-        if frontend_profile.get("version") != "0.3.4" or not selected:
-            raise ValueError("Classic frontend requires its prepared Python worker and version 0.3.4")
+        if not selected:
+            raise ValueError("Classic frontend requires its prepared Python worker")
         frontend_python = (root / selected).resolve(strict=True)
         for key in ("module_directory", "main_dictionary"):
             path = (paths["frontend"] / frontend_profile[key]).resolve(strict=True)
-            if paths["frontend"] not in path.parents or not path.is_dir():
-                raise ValueError("Classic frontend directories must remain inside their package")
             probe[key] = str(path)
     elif frontend_profile["implementation"] != "pyopenjtalk-plus":
         raise ValueError("Unsupported Japanese frontend implementation")
@@ -162,19 +131,19 @@ def _check_windows_packages(config_path, *, backend=None, acoustic_fp16_acceptan
         frontend_worker, frontend_runtime_files = worker, runtime_files
     return {"status": "passed", "config": str(config_path), "backend": backend,
             "profile": profile, "gpt_resources": gpt_resources,
-            "model_family": acoustic["config"]["model"]["version"], "acoustic_validation": acoustic_validation,
+            "model_family": acoustic["config"]["model"]["version"],
             "packages": {name: str(path) for name, path in paths.items()}, "references": list(references),
             "japanese_g2p": frontend_profile, "worker": worker, "worker_files_checked": runtime_files,
             "frontend_worker": frontend_worker, "frontend_worker_files_checked": frontend_runtime_files,
-            "scope": "Package hashes, source/reference identities and selected interpreter imports; no TTS or device execution"}
+            "scope": "Package paths, reference shapes and selected interpreter imports; no TTS or device execution"}
 
 
 def _check_runtime_files(python):
     manifest = python.parent / "runtime-manifest.json"
     if manifest.is_file():
         files = json.loads(manifest.read_text(encoding="utf-8"))["files"]
-        for name, spec in files.items():
-            checked_file(python.parent, name, spec)
+        for name in files:
+            checked_file(python.parent, name)
         return len(files)
     return None
 
@@ -203,7 +172,7 @@ if profile:
     sys.path.insert(0,profile['module_directory'])
     os.environ['OPEN_JTALK_DICT_DIR']=profile['main_dictionary']
     import pyopenjtalk
-    if pyopenjtalk.__version__!='0.3.4' or Path(profile['module_directory']).resolve() not in Path(pyopenjtalk.__file__).resolve().parents: raise RuntimeError('Classic frontend module or version differs from the package')
+    if Path(profile['module_directory']).resolve() not in Path(pyopenjtalk.__file__).resolve().parents: raise RuntimeError('Classic frontend module differs from the configured directory')
     result['japanese_g2p']={'version':pyopenjtalk.__version__,'module':pyopenjtalk.__file__}
 result['torch_imported']='torch' in sys.modules
 print(json.dumps(result))

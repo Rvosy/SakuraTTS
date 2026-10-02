@@ -217,16 +217,15 @@ def main():
             mx.set_default_device(mx.cpu if args.device == "cpu" else mx.gpu)
             model = MLXSoVITSEncoder.load(args.package)
         else:
-            from sakuratts._internal.weight_storage import read_fp32, validate_storage
+            from sakuratts._internal.weight_storage import read_fp32
             path = args.package / manifest["weights"]["file"]
             if sha256(path) != manifest["weights"]["sha256"]:
                 raise ValueError("Package weights changed")
             weights = {}
             with np.load(path, allow_pickle=False) as archive:
-                validate_storage(manifest, archive.files)
                 for name in archive.files:
                     if name.startswith("enc_p.mrte."):
-                        weights[name] = read_fp32(archive, manifest, name).astype(np.float64)
+                        weights[name] = read_fp32(archive, name).astype(np.float64)
         for ssl_source, text_source in (("official", "official"), ("native", "native"), ("official", "native"), ("native", "official")):
             variant = f"{ssl_source}_ssl_{text_source}_text"
             data = {"ssl": sources[ssl_source]["ssl_encoded"], "text": sources[text_source]["text_encoded"], "ge512": ge512}

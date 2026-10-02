@@ -11,7 +11,6 @@ import numpy as np
 
 from sakuratts._internal.protocol import read_message, write_message
 from sakuratts.backends.onnx.sovits import ORTSoVITS, read_manifest
-from sakuratts._internal.reference_condition import sha256_file
 
 
 class ORTProcessSoVITS:
@@ -26,7 +25,6 @@ class ORTProcessSoVITS:
                                  acoustic_arena_shrink=acoustic_arena_shrink,
                                  acoustic_chunk_frames=acoustic_chunk_frames,
                                  acoustic_session_policy=acoustic_session_policy)
-        manifest_sha256=sha256_file(package / "manifest.json")
         self.encoder=SimpleNamespace(manifest=manifest)
         self.sample_rate=manifest["config"]["sample_rate"]
         self.last_transfer=None
@@ -52,22 +50,9 @@ class ORTProcessSoVITS:
             runtime,arrays=read_message(self.process.stdout)
             if runtime.get("status")!="ready":
                 raise RuntimeError(runtime.get("error","Acoustic worker did not become ready"))
-            if (arrays or runtime.get("private_acoustic_process") is not True
-                    or runtime.get("shared_cuda_process") is not False
-                    or type(runtime.get("worker_pid")) is not int or runtime["worker_pid"]<1
-                    or runtime["worker_pid"]!=self.process.pid or self.process.poll() is not None
-                    or not isinstance(runtime.get("executable"),str)
-                    or Path(runtime["executable"]).resolve()!=python
-                    or runtime.get("package_manifest_sha256")!=manifest_sha256
-                    or runtime.get("acoustic_dtype")!=manifest["dtype"]
-                    or runtime.get("acoustic_arena_shrink") is not acoustic_arena_shrink
-                    or runtime.get("chunk_frames")!=acoustic_chunk_frames
-                    or runtime.get("acoustic_session_policy")!=acoustic_session_policy
-                    or runtime.get("session_initialization")!=("deferred" if acoustic_session_policy=="staged" else "eager")
-                    or runtime.get("diagnostic") is not diagnostic
-                    or runtime.get("torch_imported") is not False or runtime.get("onnx_imported") is not False
+            if (runtime.get("worker_pid")!=self.process.pid or self.process.poll() is not None
                     or not runtime.get("providers") or runtime["providers"][0]!="CUDAExecutionProvider"):
-                raise RuntimeError("Acoustic worker identity or execution policy differs from the request")
+                raise RuntimeError("Acoustic worker process or execution provider is unavailable")
             self.runtime,self.providers=runtime,runtime["providers"]
             self.provider_options=runtime["provider_options"]
         except BaseException as error:
@@ -101,12 +86,8 @@ class ORTProcessSoVITS:
                               *math.prod(config["model"]["upsample_rates"]))
             waveform=arrays.get("waveform")
             if (not isinstance(waveform,np.ndarray) or waveform.dtype!=np.float32
-                    or waveform.shape!=(1,1,expected_samples) or not np.isfinite(waveform).all()
-                    or (not capture and set(arrays)!={"waveform"})
-                    or type(meta.get("compute_ms")) not in (float,int) or not math.isfinite(meta["compute_ms"])
-                    or meta["compute_ms"]<0
-                    or (self.acoustic_chunk_frames is not None and not isinstance(meta.get("acoustic_transport"),dict))):
-                raise RuntimeError("Acoustic worker returned an invalid complete waveform or metadata")
+                    or waveform.shape!=(1,1,expected_samples) or not np.isfinite(waveform).all()):
+                raise RuntimeError("Acoustic worker returned an invalid complete waveform")
             self.last_transfer={"roundtrip_ms":total,"worker_compute_ms":meta["compute_ms"],
                 "transport_and_scheduling_ms":total-meta["compute_ms"],
                 "upload_bytes":sum(a.nbytes for a in feeds.values()),

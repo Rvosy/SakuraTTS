@@ -71,7 +71,7 @@ class Engine:
         return cls(model, runtime, profile=profile)
 
     def synthesize(self, text, *, reference=None, seed=1234, language="ja",
-                   split_method="cut0", top_k=15, temperature=1.,
+                   split_method="cut0", top_k=15, top_p=1., temperature=1.,
                    repetition_penalty=1.35, early_stop_num=2700, cancel_requested=None,
                    fragment_interval=0.3, on_fragment=None, collect_audio=True, split_bucket=False):
         if not self._lock.acquire(blocking=False):
@@ -80,7 +80,7 @@ class Engine:
             if self._closed:
                 raise RuntimeError("Engine is closed")
             pcm, report = self._runtime.synthesize(text, reference=reference, seed=seed,
-                language=language, split_method=split_method, top_k=top_k,
+                language=language, split_method=split_method, top_k=top_k, top_p=top_p,
                 temperature=temperature, repetition_penalty=repetition_penalty,
                 early_stop_num=early_stop_num, cancel_requested=cancel_requested,
                 fragment_interval=fragment_interval, on_fragment=on_fragment, collect_audio=collect_audio,
@@ -413,6 +413,7 @@ class Inference:
                          reference_ms / 1000, reference.reference_phones.size, reference.prompt_semantic.size)
         result = self.engine.synthesize(request["text"], reference=reference, seed=request["seed"],
             language=request["text_lang"], split_method=request["text_split_method"], top_k=request["top_k"],
+            top_p=request.get("top_p", 1.),
             temperature=request["temperature"], repetition_penalty=request["repetition_penalty"],
             fragment_interval=request["fragment_interval"], on_fragment=on_fragment,
             split_bucket=request["split_bucket"],

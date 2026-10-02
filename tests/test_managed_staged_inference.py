@@ -1,6 +1,5 @@
 """Managed staging prepares frontend resources without eager GPU model loads."""
 
-import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -12,27 +11,6 @@ from test_nvidia_package_startup import fixture
 
 
 class ManagedStagedInferenceTests(unittest.TestCase):
-    def test_direct_still_rejects_staged_before_loading_resources(self):
-        with self.assertRaisesRegex(ValueError, "staged policy"):
-            Inference("missing-model.json", experimental={"policy": "staged"})
-
-    def test_production_worker_accepts_staged_before_validating_resource_paths(self):
-        from sakuratts._internal.inference_process import ProcessInference
-
-        with tempfile.TemporaryDirectory() as directory:
-            config = Path(directory) / "model.json"
-            config.write_text(json.dumps({"format": "sakuratts-windows-config-v1",
-                "gpt": "missing-gpt", "sovits": "missing-sovits", "frontend": "missing-frontend"}),
-                encoding="utf-8")
-            proxy = ProcessInference(config, experimental={"policy": "staged"}, startup_timeout=5)
-            try:
-                with self.assertRaises(FileNotFoundError):
-                    proxy.wake()
-                self.assertFalse(proxy.alive)
-                self.assertIsNone(proxy.info())
-            finally:
-                proxy.close()
-
     def test_managed_staged_initializes_frontend_and_reference_cache_without_gpu_loads(self):
         with tempfile.TemporaryDirectory() as directory:
             config, _, _ = fixture(Path(directory))

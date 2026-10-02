@@ -44,10 +44,10 @@ class ORTChunkedSoVITS(ORTSoVITS):
         provenance = {"package_manifest_sha256": sha256_file(package / "manifest.json"),
                 "package_format": manifest["format"], "settings": deepcopy(manifest["settings"]),
                 "graphs": deepcopy(manifest["graphs"]), "weights": deepcopy(manifest["weights"]),
-                "rf_spec_sha256": manifest["rf"]["sha256"],
-                "rf_original_graph_sha256": planner.source["graph_sha256"],
+                "rf_spec_sha256": manifest["rf"].get("sha256"),
+                "rf_original_graph_sha256": planner.source.get("graph_sha256"),
                 "sample_ratio": planner.samples_per_frame, "acoustic_arena_shrink": True,
-                "validation": deepcopy(manifest["validation"]),
+                "validation": deepcopy(manifest.get("validation")),
                 "ort_path": ort.__file__, "onnxruntime": ort.__version__}
         return cls(package, manifest, planner, chunk_frames, provenance,
                    profile_prefix=profile_prefix, acoustic_session_policy=acoustic_session_policy)

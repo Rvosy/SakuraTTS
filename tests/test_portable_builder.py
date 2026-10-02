@@ -140,7 +140,7 @@ class PortableBuilderTests(unittest.TestCase):
         builder.trim_main_runtime(plan)
         self.assertEqual(set(plan.files), set(keep))
 
-    def test_preparation_copies_only_verified_inventory(self):
+    def test_preparation_copies_inventory_without_personal_files(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             (root / "official/hubert").mkdir(parents=True)
@@ -160,10 +160,9 @@ class PortableBuilderTests(unittest.TestCase):
             self.assertEqual(set(plan.files), {"runtime/preparation/" + name
                 for name in (*names, "preparation-manifest.json")})
             (root / "python.exe").write_bytes(b"modified")
-            with self.assertRaisesRegex(ValueError, "checksum"):
-                builder.add_preparation(builder.Plan(), root)
+            builder.add_preparation(builder.Plan(), root)
 
-    def test_record_copies_only_library_payload_and_verifies_hash(self):
+    def test_record_copies_library_payload_with_local_patches(self):
         with tempfile.TemporaryDirectory() as temporary:
             site = Path(temporary)
             info = site / "example-1.dist-info"
@@ -179,8 +178,7 @@ class PortableBuilderTests(unittest.TestCase):
             plan.package(site, info, metadata, "runtime/site")
             self.assertEqual(list(plan.files), ["runtime/site/example.py"])
             (site / "example.py").write_bytes(b"changed")
-            with self.assertRaisesRegex(ValueError, "checksum"):
-                builder.Plan().package(site, info, metadata, "runtime/site")
+            builder.Plan().package(site, info, metadata, "runtime/site")
 
     def test_destinations_cannot_escape_output(self):
         with tempfile.TemporaryDirectory() as temporary:

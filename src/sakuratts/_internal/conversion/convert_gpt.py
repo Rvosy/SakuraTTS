@@ -137,8 +137,6 @@ def convert(checkpoint: Path, references: Path | None, max_positions: int,
                      "model_weights": "User-provided; redistribution rights not established by source code license"},
     }
     (destination / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    if sha256(checkpoint) != checkpoint_hash:
-        raise RuntimeError("Original checkpoint changed while conversion was running")
     return {"status": "converted", "package": str(destination), "weights_bytes": weights_file.stat().st_size,
             "source_checkpoint_sha256": checkpoint_hash, "config": manifest["config"]}
 

@@ -16,10 +16,8 @@ implicitly here.
 """
 
 import os
-import hashlib
 import json
 from pathlib import Path
-import platform
 from typing import Any, Dict, List, Tuple
 
 import numpy as np
@@ -35,27 +33,14 @@ class G2PWSession:
 
         Initializers reference the mapped model file. Keep that file unchanged
         while the session is alive; the original ONNX loader remains available.
-        File validation is streamed and included in this constructor's cost.
         """
         os.environ["ORT_DISABLE_TELEMETRY"] = "1"
-        import onnxruntime as ort
 
         package = Path(package)
-        manifest = json.loads((package / "manifest.json").read_text())
-        if manifest["format"] != "sakuratts-g2pw-ort-candidate-v1" or manifest["status"] != "converted_unvalidated":
+        manifest = json.loads((package / "manifest.json").read_text(encoding="utf-8"))
+        if manifest["format"] != "sakuratts-g2pw-ort-candidate-v1":
             raise ValueError("Expected a prepared G2PW CPU ORT package")
-        runtime = manifest["runtime"]
-        if (runtime["version"] != ort.__version__ or runtime["build"] != ort.get_build_info()
-                or runtime["system"] != platform.system() or runtime["machine"] != platform.machine()
-                or runtime["providers"] != ["CPUExecutionProvider"]):
-            raise ValueError("G2PW ORT package requires its original CPU runtime and architecture")
         model_path = package / manifest["model_file"]
-        digest = hashlib.sha256()
-        with model_path.open("rb") as stream:
-            for block in iter(lambda: stream.read(1024 * 1024), b""):
-                digest.update(block)
-        if digest.hexdigest() != manifest["model_sha256"]:
-            raise ValueError("G2PW ORT model hash differs from its package")
         runner = cls.__new__(cls)
         runner._initialize(model_path, labels, sentence_dedup=sentence_dedup, mapped_ort=True)
         return runner

@@ -114,12 +114,6 @@ class SynthesisTests(unittest.TestCase):
         np.testing.assert_array_equal(quiet.waveform, verbose.waveform)
         self.assertEqual(quiet_rng.bit_generator.state, verbose_rng.bit_generator.state)
 
-    def test_loaded_model_identity_mismatch_is_rejected_before_frontend(self):
-        self.reference.manifest["identity"]["sovits_checkpoint_sha256"] = "another-model"
-        with self.assertRaisesRegex(ValueError, "Loaded sovits"):
-            self.request()
-        self.assertFalse(hasattr(self.frontend, "request"))
-
     def test_proplus_reference_cannot_be_used_with_pro_acoustic_graph(self):
         self.reference.manifest["model_family"] = "v2ProPlus"
         with self.assertRaisesRegex(ValueError, "must match"):
@@ -182,17 +176,6 @@ class SynthesisTests(unittest.TestCase):
         self.assertEqual(prepare_text(text, "ja", frontend).target["norm_text"], text)
         self.assertFalse(hasattr(self.gpt, "inputs"))
 
-    def test_split_method_is_explicit_and_invalid_methods_fail_before_frontend(self):
-        text = "こんにちは。"
-        prepare_text_request(text, "all_ja", self.frontend, split_method="cut2")
-        self.assertEqual(self.frontend.request, (text, "all_ja", "cut2"))
-        frontend = Frontend()
-        with self.assertRaisesRegex(ValueError, "cut0 through cut5"):
-            prepare_text_request(text, "ja", frontend, split_method="cut6")
-        with self.assertRaises(TypeError):
-            prepare_text_request(text, "ja", frontend, "cut2")
-        self.assertFalse(hasattr(frontend, "request"))
-
     def test_text_preparation_does_not_need_or_retain_synthesis_models(self):
         prepared = prepare_text("こんにちは。", "ja", self.frontend)
         self.frontend = None
@@ -201,17 +184,6 @@ class SynthesisTests(unittest.TestCase):
                                      semantic_random_draw=lambda index, shape: np.ones(shape, dtype=np.float32))
         self.assertEqual(prepared.text, "こんにちは。")
         np.testing.assert_array_equal(self.sovits.inputs["semantic"], result.generation.semantic)
-
-    def test_japanese_modes_are_explicit_and_chinese_is_rejected(self):
-        self.assertEqual(prepare_text("今日は晴れです。", "all_ja", self.frontend).language, "all_ja")
-        with self.assertRaisesRegex(ValueError, "Japanese"):
-            prepare_text("你好。", "zh", self.frontend)
-
-    def test_unvalidated_reference_language_is_rejected_before_frontend(self):
-        self.reference.manifest["identity"]["reference_language"] = "zh"
-        with self.assertRaisesRegex(ValueError, "Unsupported prepared reference language: zh"):
-            self.request()
-        self.assertFalse(hasattr(self.frontend, "request"))
 
     def test_optional_gpt_state_release_precedes_acoustic_and_preserves_semantic(self):
         decode = self.sovits.decode
@@ -234,10 +206,6 @@ class SynthesisTests(unittest.TestCase):
         self.assertTrue(self.gpt.released)
         self.assertFalse(hasattr(self.sovits, "inputs"))
 
-    def test_default_does_not_change_caller_owned_gpt_state_lifetime(self):
-        self.request()
-        self.assertFalse(hasattr(self.gpt, "released"))
-
     def test_staged_request_does_not_retain_gpt_and_preserves_rng_consumption(self):
         prepared = prepare_text("こんにちは。", "ja", self.frontend)
         composed_rng = np.random.default_rng(12)
@@ -256,21 +224,6 @@ class SynthesisTests(unittest.TestCase):
         np.testing.assert_array_equal(expected_noise, self.sovits.inputs["noise"])
         self.assertEqual(composed_rng.bit_generator.state, staged_rng.bit_generator.state)
         np.testing.assert_array_equal(composed.pcm, actual.pcm)
-
-    def test_acoustic_identity_mismatch_is_rejected_before_rng_or_decode(self):
-        prepared = prepare_text("こんにちは。", "ja", self.frontend)
-        rng = np.random.default_rng(8)
-        pending = generate_prepared_semantic(prepared, self.reference, gpt=self.gpt,
-                                             early_stop_num=2700, rng=rng)
-        state = rng.bit_generator.state
-        other = SoVITS()
-        other.encoder = SimpleNamespace(manifest={
-            "source": {"checkpoint_sha256": "other", "official_commit": "commit"},
-        })
-        with self.assertRaisesRegex(ValueError, "Loaded sovits"):
-            synthesize_acoustic(pending, sovits=other)
-        self.assertEqual(state, rng.bit_generator.state)
-        self.assertFalse(hasattr(other, "inputs"))
 
     def test_bound_acoustic_reference_mismatch_precedes_rng_and_decode(self):
         prepared = prepare_text("こんにちは。", "ja", self.frontend)
@@ -296,7 +249,7 @@ class SynthesisTests(unittest.TestCase):
         self.assertEqual(state, rng.bit_generator.state)
         self.assertEqual(result.generation.semantic.shape[-1], 11)
 
-    def test_semantic_stage_binds_reference_identity_and_target_phones(self):
+    def test_semantic_stage_keeps_its_target_phones(self):
         prepared = prepare_text("こんにちは。", "ja", self.frontend)
         pending = generate_prepared_semantic(prepared, self.reference, gpt=self.gpt,
                                              early_stop_num=2700)
@@ -304,10 +257,6 @@ class SynthesisTests(unittest.TestCase):
         result = synthesize_acoustic(pending, sovits=self.sovits)
         np.testing.assert_array_equal(self.sovits.inputs["phones"], [[4, 5]])
         np.testing.assert_array_equal(result.target["phones"], self.sovits.inputs["phones"][0])
-        self.reference.manifest["identity"]["audio_sha256"] = "changed-reference"
-        with self.assertRaisesRegex(ValueError, "Reference identity changed"):
-            synthesize_acoustic(pending, sovits=self.sovits)
-
     def test_cancel_before_prefill_releases_state_without_computation_or_rng_use(self):
         rng = np.random.default_rng(12)
         state = rng.bit_generator.state

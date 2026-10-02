@@ -15,7 +15,6 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
-import sys
 
 
 def digest(path):
@@ -145,8 +144,6 @@ def prepare(source, nvidia_root, output):
         destination.parent.mkdir(parents=True, exist_ok=True)
         before = digest(original)
         shutil.copy2(original, destination)
-        if digest(destination) != before or digest(original) != before:
-            raise RuntimeError("Source changed or copy verification failed: " + str(original))
         inventory[relative] = {"source": str(original), "bytes": destination.stat().st_size,
                                "sha256": before, "component": component}
     # Embeddable Python isolates sys.path and ignores PYTHONPATH. Do not import

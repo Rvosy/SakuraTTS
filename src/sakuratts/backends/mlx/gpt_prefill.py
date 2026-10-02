@@ -8,16 +8,14 @@ FP32 once for the GPU decoder. No persistent FP64 weight copy is retained.
 from __future__ import annotations
 
 import time
-import json
-from pathlib import Path
 from contextlib import nullcontext
 
 import numpy as np
 
-from sakuratts._internal.weight_storage import read_fp32, validate_storage
+from sakuratts._internal.weight_storage import read_fp32
 
 
-def prefill_fp64(weights_file, config, phones, prompt, bert, measure=False, *, manifest=None, weights=None):
+def prefill_fp64(weights_file, config, phones, prompt, bert, measure=False, *, weights=None):
     """Return rounded FP32 KV/logits using a package or loaded FP32 mapping.
 
 The optional mapping is the caller's existing, validated runtime weights.
@@ -29,17 +27,12 @@ FP64 cache is retained. This path never reads a package file after load.
     t, p = phones.shape[1], prompt.shape[1]
     started = time.perf_counter() if measure else None
     weight_seconds = 0.0
-    if weights is None and manifest is None:
-        manifest_file = Path(weights_file).parent / "manifest.json"
-        manifest = json.loads(manifest_file.read_text(encoding="utf-8")) if manifest_file.exists() else {"weights": {}}
     context = np.load(weights_file, allow_pickle=False) if weights is None else nullcontext(weights)
     with context as archive:
-        if weights is None:
-            validate_storage(manifest, archive.files)
         def weight(name):
             nonlocal weight_seconds
             start = time.perf_counter() if measure else None
-            value = read_fp32(archive, manifest, name) if weights is None else np.asarray(archive[name])
+            value = read_fp32(archive, name) if weights is None else np.asarray(archive[name])
             if value.dtype != np.float32:
                 raise ValueError(f"FP64 prefill requires expanded FP32 runtime weights: {name}")
             # Copy immediately into FP64: NumPy may expose a writable shared

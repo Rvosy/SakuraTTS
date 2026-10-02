@@ -7,7 +7,6 @@ import json
 import platform
 from pathlib import Path
 import statistics
-import sys
 import time
 
 import numpy as np
@@ -118,7 +117,7 @@ def publish_experiment(package, report):
     manifest.setdefault("experimental_validations", {})[backend] = {"kind": EXPERIMENT_KIND, "passed": True,
         "file": path.name, "bytes": path.stat().st_size, "sha256": sha256_file(path)}
     write(package / "manifest.json", manifest)
-    read_manifest(package, allow_experimental_fp16=True, fp16_acceptance="finite", execution_backend=backend)
+    read_manifest(package, allow_experimental_fp16=True)
 
 
 def main(argv=None):

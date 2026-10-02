@@ -1,6 +1,5 @@
 """Sequential acoustic sessions preserve tensors and release ownership on failure."""
 import gc
-import json
 from pathlib import Path
 import sys
 import tempfile
@@ -12,9 +11,8 @@ import weakref
 import numpy as np
 
 sys.path[:0] = [str(Path(__file__).resolve().parents[1] / "src"), str(Path(__file__).resolve().parent)]
-from sakuratts.backends.onnx.sovits import ORTSoVITS, read_manifest
+from sakuratts.backends.onnx.sovits import ORTSoVITS
 from test_chunked_package import OPTIONS, make_package
-from test_ort_sovits import manifest as full_manifest
 
 
 class RuntimeFixture:
@@ -190,15 +188,6 @@ class ChunkedSessionPolicyTests(unittest.TestCase):
                 model.decode(*self.inputs, capture=True)
             self.assertEqual(fixture.events, [])
             model.close()
-
-    def test_policy_rejects_unknown_values_and_full_graph_packages(self):
-        for value in ("auto", None, True):
-            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "acoustic_session_policy"):
-                read_manifest(self.root, **OPTIONS, acoustic_session_policy=value)
-        (self.root / "manifest.json").write_text(json.dumps(full_manifest()), encoding="utf-8")
-        with self.assertRaisesRegex(ValueError, "requires a validated chunked"):
-            read_manifest(self.root, acoustic_session_policy="staged")
-
 
 if __name__ == "__main__":
     unittest.main()
