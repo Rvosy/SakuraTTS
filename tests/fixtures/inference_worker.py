@@ -13,8 +13,8 @@ import numpy as np
 
 from sakuratts.engine import Audio
 from sakuratts.model import Model
-from sakuratts._internal.generation import SynthesisCancelled
-from sakuratts._internal.inference_worker import main
+from sakuratts.AR.generation import SynthesisCancelled
+from sakuratts.runtime.inference_worker import main
 
 
 class FakeInference:
@@ -35,8 +35,8 @@ class FakeInference:
             if config.get("error"):
                 raise ValueError("Invalid fake configuration")
             if config.get("prepare_child"):
-                from sakuratts._internal.logging import run_conversion
-                logger = logging.getLogger("sakuratts.converter")
+                from sakuratts.runtime.logging import run_conversion
+                logger = logging.getLogger("sakuratts.prepare.converter")
                 logger.setLevel(config.get("preparation_log_level", "DEBUG"))
                 run_conversion([sys.executable, "-c",
                     "import sys; assert sys.stdin.buffer.read() == b''; print('ready')"], env=dict(os.environ))

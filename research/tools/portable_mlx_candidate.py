@@ -28,10 +28,10 @@ import weakref
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
+sys.path.insert(0, str(PROJECT))
 STAGES = ("quantized", "ssl_encoded", "text_encoded", "mrte", "encoder_hidden", "mean",
           "log_scale", "mask", "flow_input", "flow_output", "decoder_input", "waveform")
-RUNTIME = ("backends/mlx/gpt", "backends/mlx/gpt_prefill", "_internal/weight_storage", "_internal/generation", "_internal/sampling", "backends/mlx/sovits",
+RUNTIME = ("backends/mlx/gpt", "backends/mlx/gpt_prefill", "module/weight_storage", "AR/generation", "AR/sampling", "backends/mlx/sovits",
            "backends/mlx/encoder", "backends/mlx/flow", "backends/mlx/decoder", "backends/mlx/sovits_package")
 
 
@@ -66,7 +66,7 @@ def fixed_history(model, phones, prompt, bert, tokens):
 
 def own_history(model, phones, prompt, bert, draws, parameters):
     """No target tokens, gold logits or gold stopping condition enter this API."""
-    from sakuratts._internal.generation import generate_semantic
+    from sakuratts.AR.generation import generate_semantic
 
     captured = {}
     logits = []
@@ -252,7 +252,7 @@ def worker(output):
         report["execution"]["models_destroyed"] = dict(gpt=gpt_ref is None or gpt_ref() is None,
                                                        sovits=sovits_ref is None or sovits_ref() is None)
         report["execution"]["process_lifetime_maxrss_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        forbidden = ("torch", "transformers", "sakuratts.frontend.chinese", "sakuratts.frontend.japanese", "sakuratts.backends.mlx.bert")
+        forbidden = ("torch", "transformers", "sakuratts.text.chinese", "sakuratts.text.japanese", "sakuratts.backends.mlx.bert")
         report["execution"]["forbidden_imports"] = {name: name in sys.modules for name in forbidden}
         report["execution"]["upstream_imported"] = any(name.startswith(("module.", "AR.", "gsv_tts")) for name in sys.modules)
         if any(report["execution"]["forbidden_imports"].values()) or report["execution"]["upstream_imported"]:
@@ -269,7 +269,7 @@ def execute(args):
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     sources = ["research/tools/portable_mlx_candidate.py", "research/tools/portable_validation.py"]
-    sources += [f"src/sakuratts/{name}.py" for name in RUNTIME]
+    sources += [f"sakuratts/{name}.py" for name in RUNTIME]
     for name in sources:
         target = output / "source" / name
         target.parent.mkdir(parents=True, exist_ok=True)

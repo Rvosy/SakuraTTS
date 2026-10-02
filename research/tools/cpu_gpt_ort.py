@@ -20,8 +20,8 @@ import time
 import numpy as np
 
 from cpu_gpt_profile import CPUGPT, array_digest, replay, summarize
-from sakuratts._internal.reference_condition import PreparedReference, sha256_file
-from sakuratts._internal.conversion.export_gpt_onnx import build_graph
+from sakuratts.module.reference_condition import PreparedReference, sha256_file
+from sakuratts.prepare.export_gpt_onnx import build_graph
 
 
 def export(args):
@@ -251,7 +251,7 @@ def profile(args):
                 np.save(args.output / f"{name}-logits.npy", logits)
                 result["variants"][name] = item
                 if args.sampling:
-                    from sakuratts._internal.generation import generate_semantic
+                    from sakuratts.AR.generation import generate_semantic
                     parameters = identity["parameters"]
                     sampling_start = time.perf_counter()
                     generated = generate_semantic(candidate, *inputs, eos=baseline.config["eos"],

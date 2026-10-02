@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from sakuratts.converter import convert
+from sakuratts.prepare.converter import convert
 
 
 class ConversionPublishTests(unittest.TestCase):
@@ -39,9 +39,9 @@ class ConversionPublishTests(unittest.TestCase):
                 before = {p.name: p.read_bytes() for p in root.iterdir() if p.is_file()}
                 if with_reference:
                     options.update(reference=root / "reference.wav", reference_text="reference")
-                with patch("sakuratts.converter.run_conversion", side_effect=self.run_conversion), \
-                     patch("sakuratts.converter.shutil.copytree", side_effect=AssertionError("Conversion should not copy resources")), \
-                     patch("sakuratts._internal.diagnostics.check_prepared_packages") as check:
+                with patch("sakuratts.prepare.converter.run_conversion", side_effect=self.run_conversion), \
+                     patch("sakuratts.prepare.converter.shutil.copytree", side_effect=AssertionError("Conversion should not copy resources")), \
+                     patch("sakuratts.runtime.diagnostics.check_prepared_packages") as check:
                     model = convert(**options)
                 check.assert_called_once()
                 self.assertEqual(model.path, root / "model/model.json")
@@ -66,8 +66,8 @@ class ConversionPublishTests(unittest.TestCase):
                     if fail_conversion and Path(command[2]).name == "export_sovits_onnx.py":
                         raise RuntimeError("conversion failed")
 
-                with patch("sakuratts.converter.run_conversion", side_effect=run), \
-                     patch("sakuratts._internal.diagnostics.check_prepared_packages", side_effect=RuntimeError("invalid package")), \
+                with patch("sakuratts.prepare.converter.run_conversion", side_effect=run), \
+                     patch("sakuratts.runtime.diagnostics.check_prepared_packages", side_effect=RuntimeError("invalid package")), \
                      self.assertRaises(RuntimeError):
                     convert(**options)
                 self.assertFalse((root / "model").exists())
@@ -79,8 +79,8 @@ class ConversionPublishTests(unittest.TestCase):
             options = self.inputs(root)
             frontend_python = root / "frontend.exe"
             frontend_python.write_bytes(b"frontend interpreter")
-            with patch("sakuratts.converter.run_conversion", side_effect=self.run_conversion), \
-                 patch("sakuratts._internal.diagnostics.check_prepared_packages"):
+            with patch("sakuratts.prepare.converter.run_conversion", side_effect=self.run_conversion), \
+                 patch("sakuratts.runtime.diagnostics.check_prepared_packages"):
                 model = convert(**options, frontend_python=frontend_python)
             self.assertEqual(model.manifest["frontend_python"], str(frontend_python))
             self.assertNotIn("acoustic_python", model.manifest)

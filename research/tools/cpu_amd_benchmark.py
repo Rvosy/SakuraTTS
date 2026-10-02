@@ -158,10 +158,10 @@ def worker(engine_name, job_path, output):
                     raise RuntimeError("Genie reported a synthesis error: " + error_capture.errors[-1])
                 return data, 32000, arrivals, {"status": "completed", "termination": "not exposed"}
         else:
-            sys.path.insert(0, str(PROJECT / "src"))
+            sys.path.insert(0, str(PROJECT))
             from sakuratts.engine import Engine
             from sakuratts.model import Model
-            from sakuratts._internal.pcm import pcm_s16le_bytes
+            from sakuratts.runtime.pcm import pcm_s16le_bytes
             import onnxruntime as ort
             model = Model.load(job["model"])
             reference_name = job.get("sakura_reference") or model.default_reference

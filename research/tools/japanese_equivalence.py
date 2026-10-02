@@ -62,7 +62,7 @@ def prepare(args):
         if pinned != path.read_bytes():
             raise ValueError("Official source differs from fixed commit: " + name)
         shutil.copy2(path, run / "source" / name)
-    shutil.copy2(PROJECT / "src/sakuratts/frontend/japanese.py", run / "source/sakuratts/japanese.py")
+    shutil.copy2(PROJECT / "sakuratts/text/japanese.py", run / "source/sakuratts/japanese.py")
     shutil.copy2(__file__, run / "source/japanese_equivalence.py")
     corpus = json.loads((PROJECT / "benchmarks/cases/speech_regressions.json").read_text())
     cases = [dict(id=row["id"], text=row["text"], source="speech_regressions.json")
@@ -215,7 +215,7 @@ def worker(args):
         normalize, g2p = oracle["text_normalize"], oracle["g2p"]
     else:
         sys.path.insert(0, str(run / "source"))
-        from sakuratts.frontend.japanese import JapaneseG2P
+        from sakuratts.text.japanese import JapaneseG2P
         engine = JapaneseG2P(environment["main_dictionary"], environment["user_dictionary"])
         normalize, g2p = engine.normalize, engine.g2p
     initialization_seconds = time.perf_counter() - start

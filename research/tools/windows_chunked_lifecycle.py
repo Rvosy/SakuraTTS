@@ -21,11 +21,11 @@ import traceback
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT / "src"), str(ROOT / "research/tools"), str(ROOT / "tools")]
-from sakuratts._internal.generation import SynthesisCancelled
+sys.path[:0] = [str(ROOT), str(ROOT / "research/tools"), str(ROOT / "tools")]
+from sakuratts.AR.generation import SynthesisCancelled
 from sakuratts.backends.cuda.engine import NVIDIAEngine
-from sakuratts.backends.onnx.sovits import read_manifest
-from sakuratts._internal.reference_condition import sha256_file
+from sakuratts.module.sovits import read_manifest
+from sakuratts.module.reference_condition import sha256_file
 from windows_chunked_process import ChunkedProcessSoVITS
 from windows_chunked_synthesis import verify_split
 from windows_chunked_worker import SOURCE_FILES as WORKER_SOURCE_FILES
@@ -35,12 +35,12 @@ from windows_official_baseline import TEXT_CASES
 SOURCE_FILES = tuple(dict.fromkeys((*WORKER_SOURCE_FILES,
     "research/tools/windows_chunked_lifecycle.py", "research/tools/windows_chunked_process.py",
     "research/tools/windows_failure_lifecycle.py", "tools/windows_official_baseline.py",
-    "src/sakuratts/backends/cuda/engine.py", "src/sakuratts/backends/cuda/gpt.py", "src/sakuratts/_internal/generation.py",
-    "src/sakuratts/_internal/synthesis.py", "src/sakuratts/backends/onnx/process.py")))
-PUBLIC_SOURCE_FILES = tuple(dict.fromkeys((*SOURCE_FILES, "src/sakuratts/_internal/ort_worker.py",
-    "src/sakuratts/backends/onnx/chunked.py", "src/sakuratts/backends/onnx/chunked_package.py",
-    "src/sakuratts/backends/onnx/vocoder_receptive_field.py", "src/sakuratts/backends/cuda/runtime.py",
-    "src/sakuratts/_internal/reference_condition.py")))
+    "sakuratts/backends/cuda/engine.py", "sakuratts/backends/cuda/gpt.py", "sakuratts/AR/generation.py",
+    "sakuratts/TTS_infer_pack/synthesis.py", "sakuratts/module/process.py")))
+PUBLIC_SOURCE_FILES = tuple(dict.fromkeys((*SOURCE_FILES, "sakuratts/runtime/ort_worker.py",
+    "sakuratts/module/chunked.py", "sakuratts/module/chunked_package.py",
+    "sakuratts/module/vocoder_receptive_field.py", "sakuratts/backends/cuda/runtime.py",
+    "sakuratts/module/reference_condition.py")))
 TEXT = TEXT_CASES["long"]
 
 

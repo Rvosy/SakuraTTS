@@ -6,8 +6,8 @@ import unittest
 
 import numpy as np
 
-sys.path[:0] = [str(Path(__file__).resolve().parents[1] / "src"), str(Path(__file__).resolve().parent)]
-from sakuratts._internal.generation import generate_semantic
+sys.path[:0] = [str(Path(__file__).resolve().parents[1]), str(Path(__file__).resolve().parent)]
+from sakuratts.AR.generation import generate_semantic
 from test_generation_limits import ScriptedGPT
 
 

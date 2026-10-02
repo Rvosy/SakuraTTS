@@ -22,7 +22,7 @@ import wave
 
 
 PROJECT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PROJECT / "src"))
+sys.path.insert(0, str(PROJECT))
 DEPENDENCIES = ("numpy", "mlx", "mlx-metal", "pyopenjtalk-plus", "SudachiPy",
                 "SudachiDict-core", "onnxruntime", "split-lang", "fast-langdetect",
                 "fasttext-predict", "budoux")
@@ -41,12 +41,13 @@ def run(args, report):
     os.environ["OPEN_JTALK_DICT_DIR"] = str(main_dictionary)
     import numpy as np
     import mlx.core as mx
-    from sakuratts.frontend.japanese import JapaneseG2P
-    from sakuratts.frontend.text_frontend import LanguageSegmenter, TextFrontend
-    from sakuratts._internal.reference_condition import PreparedReference, sha256_file
+    from sakuratts.text.japanese import JapaneseG2P
+    from sakuratts.text.LangSegmenter import LanguageSegmenter
+    from sakuratts.TTS_infer_pack.TextPreprocessor import TextFrontend
+    from sakuratts.module.reference_condition import PreparedReference, sha256_file
     from sakuratts.backends.mlx.gpt import MLXGPT
     from sakuratts.backends.mlx.sovits import MLXSoVITS
-    from sakuratts._internal.synthesis import generate_prepared_semantic, prepare_text_request, synthesize_acoustic
+    from sakuratts.TTS_infer_pack.synthesis import generate_prepared_semantic, prepare_text_request, synthesize_acoustic
     mx.set_default_device(mx.gpu)
     report["timings"]["module_import_seconds"] = time.perf_counter() - start
 
@@ -75,7 +76,7 @@ def run(args, report):
                                for name, module in tuple(sys.modules.items())
                                if name.startswith("sakuratts.") and getattr(module, "__file__", None)}
     # FP64 Prefill imports this module lazily after the initial source inventory.
-    prefill_source = PROJECT / "src/sakuratts/backends/mlx/gpt_prefill.py"
+    prefill_source = PROJECT / "sakuratts/backends/mlx/gpt_prefill.py"
     report["source_sha256"][str(prefill_source.relative_to(PROJECT))] = sha256_file(prefill_source)
     report["source_sha256"][str(Path(__file__).relative_to(PROJECT))] = sha256_file(__file__)
     symbols = read_json(packages["frontend"] / "symbols-v2.json")
@@ -88,7 +89,7 @@ def run(args, report):
     try:
         japanese = JapaneseG2P(main_dictionary, packages["frontend"] / "user.dict")
         segmenter = LanguageSegmenter(packages["frontend"])
-        from sakuratts.frontend.processors import JapaneseProcessor
+        from sakuratts.text.processors import JapaneseProcessor
         frontend = TextFrontend(processors={"ja": JapaneseProcessor(japanese)}, symbols=symbols, segmenter=segmenter)
         report["timings"]["frontend_load_seconds"] = time.perf_counter() - start
         prepared_request = prepare_text_request(args.text, args.language, frontend,
@@ -311,7 +312,7 @@ def main():
             report.update(status="error", error=traceback.format_exc())
             traceback.print_exc()
             code = 1
-        forbidden = ("torch", "transformers", "sakuratts.frontend.chinese", "sakuratts.frontend.g2pw", "sakuratts.backends.mlx.bert")
+        forbidden = ("torch", "transformers", "sakuratts.text.chinese", "sakuratts.text.g2pw", "sakuratts.backends.mlx.bert")
         report["forbidden_imports"] = {
             name: any(module == name or module.startswith(name + ".") for module in sys.modules)
             for name in forbidden

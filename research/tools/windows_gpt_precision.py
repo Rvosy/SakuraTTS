@@ -10,8 +10,8 @@ import time
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "src"))
-from sakuratts._internal.reference_condition import sha256_file
+sys.path.insert(0, str(ROOT))
+from sakuratts.module.reference_condition import sha256_file
 
 
 def metrics(actual, expected):
@@ -128,7 +128,7 @@ def main():
         from sakuratts.backends.cuda.gpt import CUDAGPT
         import cupy as cp
         report.update({
-            "executor_sha256": sha256_file(ROOT / "src/sakuratts/backends/cuda/gpt.py"),
+            "executor_sha256": sha256_file(ROOT / "sakuratts/backends/cuda/gpt.py"),
             "timing_scope": "Fixed official token histories, preloaded input arrays, GPU through FP32 CPU logits. Sampling, frontend and acoustic execution excluded.",
             "numerical_scope": "FP32 original tolerances retained; fp16 screen is not quality acceptance. Same-precision comparisons must also pass the original strict tolerances.",
             "thresholds": {"strict_atol": 1e-4, "strict_rtol": 1e-5,

@@ -21,7 +21,7 @@ import traceback
 import mlx.core as mx
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from sakuratts.backends.mlx.sovits import MLXSoVITS
 from sakuratts.backends.mlx.decoder import sha256
 from mlx_sovits_decoder_replay import compare, memory_snapshot
@@ -125,9 +125,9 @@ def main():
     run.mkdir(parents=True, exist_ok=False)
     project = Path(__file__).resolve().parents[2]
     files = ["research/tools/mlx_sovits_numerical_diagnosis.py", "research/tools/mlx_sovits_decoder_replay.py",
-             *[f"src/sakuratts/{name}.py" for name in ("backends/mlx/sovits", "backends/mlx/encoder", "backends/mlx/flow", "backends/mlx/decoder")]]
-    if (project / "src/sakuratts/_internal/weight_storage.py").exists():
-        files.append("src/sakuratts/_internal/weight_storage.py")
+             *[f"sakuratts/{name}.py" for name in ("backends/mlx/sovits", "backends/mlx/encoder", "backends/mlx/flow", "backends/mlx/decoder")]]
+    if (project / "sakuratts/module/weight_storage.py").exists():
+        files.append("sakuratts/module/weight_storage.py")
     for name in files:
         target = run / "source" / name
         target.parent.mkdir(parents=True, exist_ok=True)

@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from sakuratts._internal.diagnostics import check_windows_packages
-from sakuratts._internal.reference_condition import sha256_file
+from sakuratts.runtime.diagnostics import check_windows_packages
+from sakuratts.module.reference_condition import sha256_file
 from test_nvidia_package_startup import fixture
 
 
@@ -40,8 +40,8 @@ class DiagnosticsCompositionTests(unittest.TestCase):
                 weights={"file": weights.name, "bytes": weights.stat().st_size, "sha256": sha256_file(weights)})
             gpt_path.write_text(json.dumps(gpt))
             acoustic = {"source": gpt["source"], "config": {"model": {"version": "v2ProPlus"}}}
-            with patch("sakuratts.backends.onnx.sovits.read_manifest", return_value=(acoustic, None)), \
-                    patch("sakuratts._internal.diagnostics.check_worker_imports",
+            with patch("sakuratts.module.sovits.read_manifest", return_value=(acoustic, None)), \
+                    patch("sakuratts.runtime.diagnostics.check_worker_imports",
                           side_effect=lambda python, profile, **kwargs: {"executable": str(python)}) as probe:
                 result = check_windows_packages(config_path)
             self.assertEqual(result["worker"]["executable"], str(acoustic_python))

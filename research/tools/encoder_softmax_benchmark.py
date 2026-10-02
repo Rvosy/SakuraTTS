@@ -25,7 +25,7 @@ import traceback
 import mlx.core as mx
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from sakuratts.backends.mlx.sovits import MLXSoVITS
 from mrte_numerical_diagnosis import compare
 from softmax_candidates import SEMANTICS, install_softmax_candidate
@@ -96,8 +96,8 @@ def main():
     run.mkdir(parents=True, exist_ok=False)
     project = Path(__file__).resolve().parents[2]
     files = ["research/tools/encoder_softmax_benchmark.py", "research/tools/softmax_candidates.py", "research/tools/mrte_numerical_diagnosis.py",
-             "research/tools/sovits_fixed_conditions.py", *[f"src/sakuratts/{name}.py" for name in
-              ("backends/mlx/sovits", "backends/mlx/encoder", "backends/mlx/flow", "backends/mlx/decoder", "_internal/weight_storage")]]
+             "research/tools/sovits_fixed_conditions.py", *[f"sakuratts/{name}.py" for name in
+              ("backends/mlx/sovits", "backends/mlx/encoder", "backends/mlx/flow", "backends/mlx/decoder", "module/weight_storage")]]
     for name in files:
         target = run / "source" / name
         target.parent.mkdir(parents=True, exist_ok=True)

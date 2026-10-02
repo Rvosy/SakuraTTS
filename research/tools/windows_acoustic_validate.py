@@ -12,11 +12,11 @@ import time
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT / "src"), str(ROOT / "tools")]
+sys.path[:0] = [str(ROOT), str(ROOT / "tools")]
 sys.dont_write_bytecode = True
 
-from sakuratts._internal.conversion.export_sovits_onnx import PreparedDecoder, STAGES, compare, load_official, sha256
-from sakuratts.backends.onnx.sovits import ORTSoVITS
+from sakuratts.prepare.export_sovits_onnx import PreparedDecoder, STAGES, compare, load_official, sha256
+from sakuratts.module.sovits import ORTSoVITS
 
 
 def main():

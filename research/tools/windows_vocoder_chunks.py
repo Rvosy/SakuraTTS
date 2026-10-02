@@ -17,10 +17,10 @@ import time
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT / "src"), str(ROOT / "research/tools"), str(ROOT / "tools")]
-from sakuratts.backends.onnx.sovits import INPUT_NAMES, ORTSoVITS, _package_file, read_manifest
-from sakuratts._internal.reference_condition import sha256_file
-from sakuratts._internal.synthesis import single_fragment_pcm
+sys.path[:0] = [str(ROOT), str(ROOT / "research/tools"), str(ROOT / "tools")]
+from sakuratts.module.sovits import INPUT_NAMES, ORTSoVITS, _package_file, read_manifest
+from sakuratts.module.reference_condition import sha256_file
+from sakuratts.TTS_infer_pack.synthesis import single_fragment_pcm
 from windows_acoustic_precision import compare, waveform_metrics, profile_summary
 
 LIMITS = {"max_abs_error": .005, "rmse": .0005, "minimum_snr_db": 45.,
@@ -113,8 +113,8 @@ def main():
         "source_manifest_sha256": sha256_file(args.source/"manifest.json"),
         "source_sha256": {name: sha256_file(ROOT/name) for name in
             ("research/tools/windows_vocoder_chunks.py", "research/tools/windows_acoustic_precision.py",
-             "src/sakuratts/backends/onnx/sovits.py", "src/sakuratts/_internal/synthesis.py",
-             "src/sakuratts/backends/cuda/runtime.py", "tools/windows_official_baseline.py")},
+             "sakuratts/module/sovits.py", "sakuratts/TTS_infer_pack/synthesis.py",
+             "sakuratts/backends/cuda/runtime.py", "tools/windows_official_baseline.py")},
         "input_sha256": {name: sha256_file(Path(path)) for name, path in mapping.items()},
         "record_baseline": args.record_baseline,
         "reference_sha256": (None if args.record_baseline else

@@ -20,14 +20,14 @@ import traceback
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "src"))
-from sakuratts._internal.reference_condition import sha256_file
-from sakuratts._internal.weight_storage import array_sha256, read_fp32
+sys.path.insert(0, str(ROOT))
+from sakuratts.module.reference_condition import sha256_file
+from sakuratts.module.weight_storage import array_sha256, read_fp32
 
 SHAPES = ("qkv", "attention_output", "ffn_in", "ffn_out", "output")
 CANDIDATES = {"warp4": 4, "warp8": 8}
-SOURCES = ("research/tools/windows_gemv_probe.py", "src/sakuratts/backends/cuda/gpt.py",
-           "src/sakuratts/backends/cuda/runtime.py", "src/sakuratts/_internal/weight_storage.py")
+SOURCES = ("research/tools/windows_gemv_probe.py", "sakuratts/backends/cuda/gpt.py",
+           "sakuratts/backends/cuda/runtime.py", "sakuratts/module/weight_storage.py")
 STRICT_ATOL, STRICT_RTOL = 1e-4, 1e-5
 CUDA_SOURCE = r'''
 #include <cuda_fp16.h>
@@ -162,7 +162,7 @@ def read_input_bundle(directory, model_identity, selected):
             "Recording did not finish and close cleanly, or its metadata changed")
     require(record["model"]["manifest_sha256"] == model_identity["manifest_sha256"] and
             record["model"]["weights_file_sha256"] == model_identity["weights_file_sha256"], "Recorded model differs from requested GPT")
-    require(record["sources_sha256"]["src/sakuratts/backends/cuda/gpt.py"] == sha256_file(ROOT / "src/sakuratts/backends/cuda/gpt.py"),
+    require(record["sources_sha256"]["sakuratts/backends/cuda/gpt.py"] == sha256_file(ROOT / "sakuratts/backends/cuda/gpt.py"),
             "Input recording used a different GPT executor")
     path = directory / "inputs.npz"
     require(sha256_file(path) == record["archive_sha256"], "Input archive SHA mismatch")

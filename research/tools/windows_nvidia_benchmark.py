@@ -19,7 +19,7 @@ import traceback
 import wave
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(PROJECT / "src"), str(PROJECT / "tools")]
+sys.path[:0] = [str(PROJECT), str(PROJECT / "tools")]
 from windows_official_baseline import Monitor, TEXT_CASES, digest, write_json
 
 
@@ -288,16 +288,16 @@ def main():
     sys.dont_write_bytecode = True
     write_json(output / "run-config.json", preparation)
     source_names = ("research/tools/windows_nvidia_benchmark.py", "tools/windows_official_baseline.py",
-                    "src/sakuratts/backends/cuda/engine.py", "src/sakuratts/backends/cuda/gpt.py", "src/sakuratts/backends/onnx/sovits.py",
-                    "src/sakuratts/backends/onnx/process.py", "src/sakuratts/_internal/ort_worker.py", "src/sakuratts/_internal/synthesis.py",
-                    "src/sakuratts/_internal/generation.py", "src/sakuratts/_internal/sampling.py",
-                    "src/sakuratts/frontend/text_frontend.py", "src/sakuratts/frontend/japanese.py",
-                    "src/sakuratts/frontend/classic_japanese.py", "src/sakuratts/_internal/classic_japanese_worker.py",
-                    "src/sakuratts/backends/cuda/runtime.py", "src/sakuratts/_internal/protocol.py",
-                    "src/sakuratts/_internal/reference_condition.py", "src/sakuratts/_internal/weight_storage.py")
+                    "sakuratts/backends/cuda/engine.py", "sakuratts/backends/cuda/gpt.py", "sakuratts/module/sovits.py",
+                    "sakuratts/module/process.py", "sakuratts/runtime/ort_worker.py", "sakuratts/TTS_infer_pack/synthesis.py",
+                    "sakuratts/AR/generation.py", "sakuratts/AR/sampling.py",
+                    "sakuratts/TTS_infer_pack/TextPreprocessor.py", "sakuratts/text/japanese.py",
+                    "sakuratts/text/classic_japanese.py", "sakuratts/runtime/classic_japanese_worker.py",
+                    "sakuratts/backends/cuda/runtime.py", "sakuratts/runtime/protocol.py",
+                    "sakuratts/module/reference_condition.py", "sakuratts/module/weight_storage.py")
     if args.acoustic_chunk_frames is not None:
-        source_names += ("src/sakuratts/backends/onnx/chunked.py", "src/sakuratts/backends/onnx/chunked_package.py",
-                         "src/sakuratts/backends/onnx/vocoder_receptive_field.py")
+        source_names += ("sakuratts/module/chunked.py", "sakuratts/module/chunked_package.py",
+                         "sakuratts/module/vocoder_receptive_field.py")
     source_hashes = {name: digest(PROJECT / name) for name in source_names}
     write_json(output / "environment.json", {"python": sys.version, "executable": sys.executable,
         "platform": platform.platform(), "sources_sha256": source_hashes,

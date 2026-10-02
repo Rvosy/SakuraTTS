@@ -21,10 +21,10 @@ import weakref
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts._internal.inference_process import ProcessInference, MAX_PCM, read_frame, write_frame
-from sakuratts._internal.cancellation import SynthesisCancelled
-from sakuratts._internal.pcm import pcm_from_s16le, pcm_s16le_bytes
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from sakuratts.runtime.inference_process import ProcessInference, MAX_PCM, read_frame, write_frame
+from sakuratts.runtime.cancellation import SynthesisCancelled
+from sakuratts.runtime.pcm import pcm_from_s16le, pcm_s16le_bytes
 
 FIXTURE = Path(__file__).parent / "fixtures" / "inference_worker.py"
 
@@ -99,16 +99,16 @@ class InferenceProcessTests(unittest.TestCase):
             import wave
 
             forbidden = ("numpy", "torch", "cupy", "onnxruntime", "sakuratts.backends.cuda",
-                "sakuratts.frontend.runtime", "sakuratts.frontend.processors", "sakuratts.frontend.text_frontend")
+                "sakuratts.TTS_infer_pack.frontend", "sakuratts.text.processors", "sakuratts.TTS_infer_pack.TextPreprocessor")
             class NoNumericalBackends(importlib.abc.MetaPathFinder):
                 def find_spec(self, fullname, path=None, target=None):
                     if any(fullname == name or fullname.startswith(name + ".") for name in forbidden):
                         raise AssertionError("Unexpected control-process import: " + fullname)
             sys.meta_path.insert(0, NoNumericalBackends())
-            from sakuratts._internal.cancellation import SynthesisCancelled
-            from sakuratts._internal.inference_process import ProcessInference
-            from sakuratts._internal.managed_runtime import ManagedRuntime
-            from sakuratts._internal.pcm import pcm_s16le_bytes
+            from sakuratts.runtime.cancellation import SynthesisCancelled
+            from sakuratts.runtime.inference_process import ProcessInference
+            from sakuratts.runtime.managed_runtime import ManagedRuntime
+            from sakuratts.runtime.pcm import pcm_s16le_bytes
             from sakuratts.server import create_app, pack_audio
 
             app = create_app("fake-model.json", runtime_mode="managed")
@@ -142,7 +142,7 @@ class InferenceProcessTests(unittest.TestCase):
                 proxy.close()
             assert not any(name in sys.modules for name in forbidden)
         ''')
-        environment = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1] / "src"))
+        environment = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1]))
         result = subprocess.run([sys.executable, "-c", code, str(FIXTURE)], env=environment,
             capture_output=True, text=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -166,7 +166,7 @@ class InferenceProcessTests(unittest.TestCase):
             if metadata.get("type") == "fragment":
                 frames.append((metadata, len(pcm)))
             return metadata, pcm
-        with patch("sakuratts._internal.inference_process.read_frame", side_effect=capture_frame):
+        with patch("sakuratts.runtime.inference_process.read_frame", side_effect=capture_frame):
             # Start a fresh reader so every frame passes through capture_frame.
             proxy.sleep()
             result = proxy.tts(request, on_fragment=lambda pcm, rate: parts.append(pcm))
@@ -374,11 +374,11 @@ class InferenceProcessTests(unittest.TestCase):
         config.write_text(json.dumps({"sakuratts": {"model": "fixture-model"}, "child_file": str(child_file)}), encoding="utf-8")
         code = "\n".join([
             "import os, sys, time", "from pathlib import Path",
-            "from sakuratts._internal.inference_process import ProcessInference",
+            "from sakuratts.runtime.inference_process import ProcessInference",
             f"ProcessInference._command = lambda self: [sys.executable, {str(FIXTURE)!r}]",
             f"proxy = ProcessInference(tts_config={str(config)!r})", "proxy.wake()",
             f"Path({str(worker_file)!r}).write_text(str(proxy.pid))", "time.sleep(120)"])
-        env = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1] / "src"))
+        env = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1]))
         owner = subprocess.Popen([sys.executable, "-c", code], env=env, creationflags=subprocess.CREATE_NO_WINDOW)
         self.addCleanup(lambda: owner.poll() is None and owner.kill())
         deadline = time.monotonic() + 15
@@ -425,7 +425,7 @@ class InferenceProcessTests(unittest.TestCase):
                 gc.enable()
 
     def test_worker_joins_control_reader_before_returning(self):
-        from sakuratts._internal import inference_worker
+        from sakuratts.runtime import inference_worker
         thread_type = threading.Thread
         reader_returned, release_reader, worker_returned = (threading.Event() for _ in range(3))
         shutdown_reply = threading.Event()

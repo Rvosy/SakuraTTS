@@ -8,8 +8,8 @@ import unittest
 from unittest.mock import Mock, patch
 
 from sakuratts import Engine, Model
-from sakuratts.engine import Inference
-from sakuratts._internal.inference_process import ProcessInference
+from sakuratts.TTS_infer_pack.TTS import Inference
+from sakuratts.runtime.inference_process import ProcessInference
 
 
 class InferenceProfileTests(unittest.TestCase):

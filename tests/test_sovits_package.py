@@ -8,9 +8,9 @@ from unittest.mock import patch
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sakuratts.backends.mlx.sovits_package import SoVITSPackage
-from sakuratts._internal.weight_storage import read_fp32
+from sakuratts.module.weight_storage import read_fp32
 
 
 class SoVITSPackageTests(unittest.TestCase):

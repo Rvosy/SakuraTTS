@@ -22,7 +22,7 @@ import traceback
 import mlx.core as mx
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from sakuratts.backends.mlx.sovits import MLXSoVITS
 from sakuratts.backends.mlx.encoder import MLXSoVITSEncoder
 from sakuratts.backends.mlx.flow import MLXSoVITSFlow, weight_normalize
@@ -157,8 +157,8 @@ def main():
     project = Path(__file__).resolve().parents[2]
     files = ["research/tools/sovits_static_weights.py", "research/tools/encoder_softmax_benchmark.py", "research/tools/softmax_candidates.py",
              "research/tools/mrte_numerical_diagnosis.py", "research/tools/sovits_fixed_conditions.py", "requirements/mlx-candidate.txt",
-             *[f"src/sakuratts/{name}.py" for name in ("backends/mlx/sovits", "backends/mlx/encoder", "backends/mlx/flow",
-                                                      "backends/mlx/decoder", "backends/mlx/sovits_package", "_internal/weight_storage")]]
+             *[f"sakuratts/{name}.py" for name in ("backends/mlx/sovits", "backends/mlx/encoder", "backends/mlx/flow",
+                                                      "backends/mlx/decoder", "backends/mlx/sovits_package", "module/weight_storage")]]
     for name in files:
         target = run / "source" / name
         target.parent.mkdir(parents=True, exist_ok=True)

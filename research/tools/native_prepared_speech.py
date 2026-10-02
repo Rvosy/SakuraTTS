@@ -25,8 +25,8 @@ import traceback
 import mlx.core as mx
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-from sakuratts._internal.generation import generate_semantic
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from sakuratts.AR.generation import generate_semantic
 from sakuratts.backends.mlx.gpt import MLXGPT
 from sakuratts.backends.mlx.sovits import MLXSoVITS
 from mlx_sovits_encoder_replay import compare, memory_snapshot
@@ -150,8 +150,8 @@ def main():
     project = Path(__file__).resolve().parents[2]
     files = ["research/tools/native_prepared_speech.py", "research/tools/mlx_sovits_replay.py",
              "research/tools/mlx_sovits_encoder_replay.py", "research/tools/sovits_fixed_conditions.py"]
-    files += [f"src/sakuratts/{name}.py" for name in ("_internal/generation", "_internal/sampling", "backends/mlx/gpt_prefill", "backends/mlx/gpt",
-              "backends/mlx/sovits", "backends/mlx/encoder", "backends/mlx/flow", "backends/mlx/decoder", "_internal/weight_storage")]
+    files += [f"sakuratts/{name}.py" for name in ("AR/generation", "AR/sampling", "backends/mlx/gpt_prefill", "backends/mlx/gpt",
+              "backends/mlx/sovits", "backends/mlx/encoder", "backends/mlx/flow", "backends/mlx/decoder", "module/weight_storage")]
     for name in files:
         target = run / "source" / name
         target.parent.mkdir(parents=True, exist_ok=True)

@@ -11,10 +11,10 @@ import numpy as np
 
 sys.path[:0] = [str(Path(__file__).resolve().parents[2] / part) for part in ("src", "tools", "research/tools")]
 import package_sovits_chunks as builder
-from sakuratts.backends.onnx.chunked_package import read_chunked_manifest
-from sakuratts.backends.onnx.sovits import FP16_EXECUTION_OPTIONS
-from sakuratts._internal.synthesis import single_fragment_pcm
-from sakuratts.backends.onnx.vocoder_receptive_field import TemporalOperation, VocoderReceptiveField
+from sakuratts.module.chunked_package import read_chunked_manifest
+from sakuratts.module.sovits import FP16_EXECUTION_OPTIONS
+from sakuratts.TTS_infer_pack.synthesis import single_fragment_pcm
+from sakuratts.module.vocoder_receptive_field import TemporalOperation, VocoderReceptiveField
 
 
 def write_json(path, value):

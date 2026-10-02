@@ -19,13 +19,11 @@ import time
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "src"))
-from sakuratts.backends.onnx.sovits import (FP16_EXECUTION_OPTIONS, FP16_SCREEN_VERSION,
-                                INPUT_NAMES, STAGES, _package_file, read_manifest)
-from sakuratts._internal.reference_condition import sha256_file
+sys.path.insert(0, str(ROOT))
+from sakuratts.module.sovits import FP16_EXECUTION_OPTIONS, FP16_SCREEN_VERSION, INPUT_NAMES, STAGES, _package_file, read_manifest
+from sakuratts.module.reference_condition import sha256_file
 
-from sakuratts._internal.conversion.acoustic_precision import (
-    SCREEN_LIMITS, ORIGINAL_TOLERANCE, compare, waveform_metrics)
+from sakuratts.prepare.acoustic_precision import SCREEN_LIMITS, ORIGINAL_TOLERANCE, compare, waveform_metrics
 
 RECORDED_STAGES = {"encoder_hidden": "enc_p_output_00", "mean": "enc_p_output_01",
                    "log_scale": "enc_p_output_02", "mask": "enc_p_output_03"}

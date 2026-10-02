@@ -10,8 +10,8 @@ from unittest.mock import patch
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts._internal.generation import SynthesisCancelled, generate_semantic
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from sakuratts.AR.generation import SynthesisCancelled, generate_semantic
 
 
 class ScriptedGPT:
@@ -51,8 +51,8 @@ class GenerationLimitTests(unittest.TestCase):
         )
 
     def test_plain_progress_uses_real_steps_and_rate_limited_lines(self):
-        with patch("sakuratts._internal.generation.sys.stderr", io.StringIO()), \
-                patch("sakuratts._internal.generation.time.perf_counter", side_effect=itertools.count(0, .25)), \
+        with patch("sakuratts.AR.generation.sys.stderr", io.StringIO()), \
+                patch("sakuratts.AR.generation.time.perf_counter", side_effect=itertools.count(0, .25)), \
                 self.assertLogs("sakuratts.inference", level="INFO") as logs:
             result = self.generate(eos_step=11)
         lines = [line for line in logs.output if " it · " in line and "EOS" not in line]
@@ -78,7 +78,7 @@ class GenerationLimitTests(unittest.TestCase):
             def isatty(self):
                 return True
         terminal = Terminal()
-        with patch("sakuratts._internal.generation.sys.stderr", terminal), \
+        with patch("sakuratts.AR.generation.sys.stderr", terminal), \
                 self.assertLogs("sakuratts.inference", level="INFO") as logs:
             self.generate(eos_step=11)
         self.assertIn("12 it", logs.output[-2])
@@ -92,7 +92,7 @@ class GenerationLimitTests(unittest.TestCase):
     def test_terminal_bar_counts_eos_and_closes_on_completion_or_failure(self):
         for outcome in ("completed", "cancelled", "failed"):
             with self.subTest(outcome=outcome), \
-                    patch("sakuratts._internal.generation.sys.stderr.isatty", return_value=True), \
+                    patch("sakuratts.AR.generation.sys.stderr.isatty", return_value=True), \
                     patch("tqdm.tqdm") as bar, \
                     self.assertLogs("sakuratts.inference", level="DEBUG") as logs:
                 if outcome == "completed":

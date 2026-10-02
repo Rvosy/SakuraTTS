@@ -10,7 +10,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sakuratts.cli import doctor, main
 
 
@@ -36,7 +36,7 @@ class EnvironmentTests(unittest.TestCase):
                 patch("sakuratts.backends.cuda.runtime.configure_cuda"), \
                 patch("sakuratts.backends.cuda.runtime.import_cupy"), \
                 patch("sakuratts.backends.cuda.runtime.validate_gpt_cuda_include_paths", return_value={}), \
-                patch("sakuratts._internal.diagnostics.check_windows_packages", return_value=resource_check):
+                patch("sakuratts.runtime.diagnostics.check_windows_packages", return_value=resource_check):
             report = doctor(config="runtime.json")
         self.assertTrue(report["checks_passed"])
         self.assertTrue(report["synthesis"]["dependencies_ready"])

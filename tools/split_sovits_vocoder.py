@@ -18,9 +18,9 @@ import numpy as np
 import onnx
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
-from sakuratts.backends.onnx.sovits import FP16_EXECUTION_OPTIONS, INPUT_NAMES, read_manifest
-from sakuratts._internal.reference_condition import sha256_file
+sys.path.insert(0, str(ROOT))
+from sakuratts.module.sovits import FP16_EXECUTION_OPTIONS, INPUT_NAMES, read_manifest
+from sakuratts.module.reference_condition import sha256_file
 
 FORMAT = "sakuratts-sovits-split-experiment-v1"
 VOCODER_OPS = {"Add", "Cast", "Constant", "Conv", "ConvTranspose", "Div", "Identity",

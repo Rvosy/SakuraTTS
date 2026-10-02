@@ -18,12 +18,11 @@ from types import SimpleNamespace
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT / "src"), str(ROOT / "research/tools"), str(ROOT / "tools")]
-from sakuratts.backends.onnx.chunked_package import (FORMAT, SCREEN_FORMAT, CHUNK_LIMITS, ORIGINAL_TOLERANCE,
-    identity_sha256, read_chunked_manifest)
-from sakuratts.backends.onnx.sovits import INPUT_NAMES, ORTSoVITS
-from sakuratts._internal.reference_condition import sha256_file
-from sakuratts._internal.synthesis import single_fragment_pcm
+sys.path[:0] = [str(ROOT), str(ROOT / "research/tools"), str(ROOT / "tools")]
+from sakuratts.module.chunked_package import FORMAT, SCREEN_FORMAT, CHUNK_LIMITS, ORIGINAL_TOLERANCE, identity_sha256, read_chunked_manifest
+from sakuratts.module.sovits import INPUT_NAMES, ORTSoVITS
+from sakuratts.module.reference_condition import sha256_file
+from sakuratts.TTS_infer_pack.synthesis import single_fragment_pcm
 from windows_chunked_synthesis import verify_split
 from windows_vocoder_chunks import LIMITS, check_output
 
@@ -246,7 +245,7 @@ def package_sovits_chunks(source, split_package, rf_spec, evidence_root, ordinar
             "saved_input_npz_files": 21, "recomputed_output_repetition": 0,
             "validator_sources_sha256": {name: sha256_file(ROOT / name) for name in
                 ("research/tools/package_sovits_chunks.py", "research/tools/windows_vocoder_chunks.py", "research/tools/windows_acoustic_precision.py",
-                 "src/sakuratts/backends/onnx/chunked_package.py", "src/sakuratts/backends/onnx/vocoder_receptive_field.py", "src/sakuratts/_internal/synthesis.py")}}}
+                 "sakuratts/module/chunked_package.py", "sakuratts/module/vocoder_receptive_field.py", "sakuratts/TTS_infer_pack/synthesis.py")}}}
     evidence.unchanged()
     output.mkdir(parents=True, exist_ok=False)
     for name, path in copied.items():

@@ -21,7 +21,7 @@
 
 ---
 
-SakuraTTS 是面向 AI 桌宠的 GPT-SoVITS 推理引擎，沿用原版角色模型和 API V2 调用方式，专注于降低合成耗时、显存占用和长期待机成本。
+SakuraTTS 是面向 AI 桌宠的 GPT-SoVITS 推理引擎，以完全兼容原版为目标，同时降低合成耗时、显存占用和长期待机成本。当前实现和待补齐范围见[兼容矩阵](docs/specs/compatibility-matrix.md)。
 
 桌宠需要长时间挂机，却只在交互时说话。原版推理服务在合成结束后仍会保留模型和缓存，这部分常驻显存会与游戏及其他应用争用资源。SakuraTTS 为此提供四档 CUDA 推理配置，并支持空闲休眠：无交互时释放推理进程持有的 GPU 资源，桌宠发起 LLM 请求时提前唤醒，利用等待回复的时间启动和加载模型。
 
@@ -44,10 +44,10 @@ CPU 与 AMD 核显可通过源码安装并切换后端，见 [CPU / DirectML 指
 将参考音频路径和转写替换为自己的内容：
 
 ```powershell
-curl.exe -X POST http://127.0.0.1:9880/tts -H "Content-Type: application/json" --data-raw '{"text":"こんにちは。","text_lang":"ja","ref_audio_path":"D:/Voices/reference.wav","prompt_text":"参考音声です。","prompt_lang":"ja","parallel_infer":false}' --output hello.wav
+curl.exe -X POST http://127.0.0.1:9880/tts -H "Content-Type: application/json" --data-raw '{"text":"こんにちは。","text_lang":"ja","ref_audio_path":"D:/Voices/reference.wav","prompt_text":"参考音声です。","prompt_lang":"ja"}' --output hello.wav
 ```
 
-请求须显式传 `parallel_infer=false`。首次模型转换和参考准备可能比后续请求耗时更长，建议在正式对话前完成一次首次合成。源码安装、Python 示例和资源准备见[快速开始](docs/quickstart.md)。
+`parallel_infer` 可省略；当前单项批次按顺序执行。首次模型转换和参考准备可能比后续请求耗时更长，建议在正式对话前完成一次首次合成。源码安装、Python 示例和资源准备见[快速开始](docs/quickstart.md)。
 
 ## 性能对比
 

@@ -198,7 +198,7 @@ class MLXBackend:
         started = time.perf_counter()
         import mlx.core as mx
 
-        sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
         from sakuratts.backends.mlx.sovits import MLXSoVITS
 
         self.mx = mx
@@ -307,8 +307,8 @@ def main():
     snapshot_root = run / "source"
     source_files = ["research/tools/sovits_benchmark.py"]
     if args.backend == "mlx":
-        source_files += ["src/sakuratts/backends/mlx/sovits.py", "src/sakuratts/backends/mlx/encoder.py",
-                         "src/sakuratts/backends/mlx/flow.py", "src/sakuratts/backends/mlx/decoder.py", "src/sakuratts/_internal/weight_storage.py", "requirements/mlx-candidate.txt"]
+        source_files += ["sakuratts/backends/mlx/sovits.py", "sakuratts/backends/mlx/encoder.py",
+                         "sakuratts/backends/mlx/flow.py", "sakuratts/backends/mlx/decoder.py", "sakuratts/module/weight_storage.py", "requirements/mlx-candidate.txt"]
     for name in source_files:
         destination = snapshot_root / name
         destination.parent.mkdir(parents=True, exist_ok=True)

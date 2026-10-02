@@ -25,7 +25,7 @@ def main():
         parser.error("The benchmark requires --output")
     output = Path(remaining[remaining.index("--output") + 1])
     ort_root, cuda_dir = args.ort_root.resolve(strict=True), args.cuda_dir.resolve(strict=True)
-    sys.path[:0] = [str(ort_root), str(ROOT / "src"), str(ROOT / "research/tools")]
+    sys.path[:0] = [str(ort_root), str(ROOT), str(ROOT / "research/tools")]
     handle = os.add_dll_directory(str(cuda_dir)) if os.name == "nt" else None
     os.environ["PATH"] = str(cuda_dir) + os.pathsep + os.environ.get("PATH", "")
     import onnxruntime as ort
@@ -34,14 +34,14 @@ def main():
     if "CUDAExecutionProvider" not in ort.get_available_providers():
         raise RuntimeError("The isolated ORT package lacks CUDA support")
     from sakuratts.backends.cuda.engine import NVIDIAEngine
-    from sakuratts.backends.onnx.sovits import ORTSoVITS
+    from sakuratts.module.sovits import ORTSoVITS
     import windows_nvidia_benchmark
     original = NVIDIAEngine._load_sovits
 
     def load_in_process(engine):
         if engine.sovits is None:
             if args.acoustic_python:
-                from sakuratts.backends.onnx.process import ORTProcessSoVITS
+                from sakuratts.module.process import ORTProcessSoVITS
                 engine.sovits = ORTProcessSoVITS(engine.packages["sovits"], args.acoustic_python,
                     allow_experimental_fp16=engine.allow_experimental_acoustic_fp16,
                     acoustic_arena_shrink=engine.acoustic_arena_shrink)

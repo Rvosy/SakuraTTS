@@ -19,10 +19,10 @@ import time
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT / "src"), str(ROOT / "research/tools")]
-from sakuratts.backends.onnx.sovits import INPUT_NAMES, ORTSoVITS, read_manifest
-from sakuratts._internal.reference_condition import sha256_file
-from sakuratts._internal.synthesis import single_fragment_pcm
+sys.path[:0] = [str(ROOT), str(ROOT / "research/tools")]
+from sakuratts.module.sovits import INPUT_NAMES, ORTSoVITS, read_manifest
+from sakuratts.module.reference_condition import sha256_file
+from sakuratts.TTS_infer_pack.synthesis import single_fragment_pcm
 from windows_acoustic_precision import compare
 
 KEY = "memory.enable_memory_arena_shrinkage"
@@ -73,7 +73,7 @@ def child(args):
               "input_sha256": {case: sha256_file(Path(path)) for case, path in mapping.items()},
               "source_sha256": {name: sha256_file(ROOT / name) for name in
                   ("research/tools/windows_acoustic_arena.py", "research/tools/windows_wddm_memory.py", "research/tools/windows_acoustic_precision.py",
-                   "src/sakuratts/backends/onnx/sovits.py", "src/sakuratts/_internal/synthesis.py")},
+                   "sakuratts/module/sovits.py", "sakuratts/TTS_infer_pack/synthesis.py")},
               "run_option": {KEY: "gpu:0"}, "requests": [], "snapshots": [],
               "scope": "Acoustic CPU input through full CPU waveform; final PCM uses the existing normalization and 0.3 s silence. RunOptions shrink is included in session.run duration. No frontend or GPT. WDDM boundaries are not transient peaks or exclusive VRAM."}
     model, sampler = None, None

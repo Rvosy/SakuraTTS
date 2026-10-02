@@ -61,16 +61,24 @@ uv --offline pip install --python .venv/bin/python --no-deps -e .
 
 ## 旧目录对应关系
 
+核心包位于根目录 `sakuratts/`。从旧版源码更新后，已安装的开发环境需要重新执行 `python -m pip install --no-deps -e .`，让可编辑安装指向新位置。模型目录与配置中的资源路径继续有效。
+
 | 原位置 | 当前位置 |
 | --- | --- |
+| `src/sakuratts/` | `sakuratts/`，Python 包名保持不变 |
+| `engine.py` 中的 `Inference` 与配置读取 | `TTS_infer_pack/TTS.py`、`config.py`；原导入继续可用 |
+| `frontend/text_frontend.py` | `TTS_infer_pack/TextPreprocessor.py`、`text_segmentation_method.py` 和 `text/LangSegmenter.py` |
+| `frontend/runtime.py` | `TTS_infer_pack/frontend.py`，负责语言资源装配 |
+| 其余 `frontend/` 与其中的 `_vendor/` | `text/` 与 `text/_vendor/`，保留许可与来源 |
+| `_internal/generation.py`、`sampling.py` | `AR/generation.py`、`sampling.py` |
+| `_internal/runtime.py`、`synthesis.py` | `TTS_infer_pack/runtime.py`、`synthesis.py` |
+| `backends/onnx/`、`_internal/reference_condition.py`、`weight_storage.py` | `module/` |
+| `reference.py` | `TTS_infer_pack/reference.py` |
+| `converter.py`、`_internal/conversion/` | `prepare/`；原公开转换函数保留导入入口，缓存逻辑归入 `prepare/cache.py` |
+| 其余 `_internal/` | `runtime/`，只保留运行设施 |
 | `nvidia.py` 的实现 | `backends/cuda/engine.py`；原导入保留兼容入口 |
-| `cuda_*` / `ort_*` / `mlx_*` | 对应 `backends/cuda/`、`onnx/`、`mlx/` |
-| 文本、日文、中文、G2PW 模块 | `frontend/` |
-| `tone_sandhi` / `zh_normalization` | `frontend/_vendor/`，保留许可与来源 |
-| worker、参考和采样模块 | `_internal/` |
 | `harness/` | `research/tools/`，常用入口提到 `benchmarks/` |
 | `docs/experiments/` | `research/experiments/` |
-| GPT / ONNX 导出和 Windows 参考准备 | `_internal/conversion/`，由 `sakuratts convert` 编排 |
 | 其余模型与资源脚本 | `tools/` |
 | 根目录 `requirements-*.txt` | `requirements/*.txt` |
 

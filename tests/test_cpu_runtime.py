@@ -13,11 +13,11 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 
-sys.path[:0] = [str(Path(__file__).resolve().parents[1] / "src"), str(Path(__file__).resolve().parent)]
+sys.path[:0] = [str(Path(__file__).resolve().parents[1]), str(Path(__file__).resolve().parent)]
 from sakuratts import Engine
-from sakuratts.engine import Inference
-from sakuratts._internal.cancellation import SynthesisCancelled
-from sakuratts._internal.reference_condition import PreparedReference
+from sakuratts.TTS_infer_pack.TTS import Inference
+from sakuratts.runtime.cancellation import SynthesisCancelled
+from sakuratts.module.reference_condition import PreparedReference
 from test_nvidia_package_startup import fixture
 from test_synthesis import Frontend, GPT, SoVITS
 
@@ -39,20 +39,20 @@ class CPURuntimeTests(unittest.TestCase):
             np.zeros((1024, 3), np.float32), np.zeros((1, 1024, 1), np.float32),
             np.zeros((1, 512, 1), np.float32))
         self.frontend = Mock(text=Frontend(), profile={"implementation": "fixture"})
-        self.load_frontend = self.enterContext(patch("sakuratts.frontend.runtime.load_frontend",
+        self.load_frontend = self.enterContext(patch("sakuratts.TTS_infer_pack.frontend.load_frontend",
                                                      return_value=self.frontend))
-        self.enterContext(patch("sakuratts._internal.runtime.PreparedReference.load", return_value=self.reference))
+        self.enterContext(patch("sakuratts.TTS_infer_pack.runtime.PreparedReference.load", return_value=self.reference))
         self.gpts, self.acoustics, self.events = [], [], []
         self.gpt_loader = self.enterContext(patch("sakuratts.backends.cpu.onnx_gpt.ONNXCPUGPT.load",
                                                   side_effect=self.make_gpt))
         self.gpu_gpt_loader = self.enterContext(patch("sakuratts.backends.directml.static_gpt.StaticDirectMLGPT.load",
                                                       side_effect=self.make_gpt))
         self.numpy_gpt_loader = self.enterContext(patch("sakuratts.backends.cpu.gpt.CPUGPT.load"))
-        from sakuratts.backends.onnx.sovits import ORTSoVITS
+        from sakuratts.module.sovits import ORTSoVITS
         self.real_acoustic_load = ORTSoVITS.load
-        self.acoustic_loader = self.enterContext(patch("sakuratts.backends.onnx.sovits.ORTSoVITS.load",
+        self.acoustic_loader = self.enterContext(patch("sakuratts.module.sovits.ORTSoVITS.load",
                                                        side_effect=self.make_acoustic))
-        self.process_loader = self.enterContext(patch("sakuratts.backends.onnx.process.ORTProcessSoVITS"))
+        self.process_loader = self.enterContext(patch("sakuratts.module.process.ORTProcessSoVITS"))
 
     def make_gpt(self, *args, **kwargs):
         value = GPT()
@@ -80,7 +80,7 @@ class CPURuntimeTests(unittest.TestCase):
         metadata.update(dtype="float16" if backend == "directml" else "float32",
                         precision={"fp16_scope": "all"})
         path.write_text(json.dumps(metadata), encoding="utf-8")
-        return self.enterContext(patch("sakuratts.backends.onnx.sovits.read_manifest",
+        return self.enterContext(patch("sakuratts.module.sovits.read_manifest",
                                        return_value=(metadata, None)))
 
     def yaml_config(self, *, policy="resident"):

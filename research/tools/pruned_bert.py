@@ -8,12 +8,12 @@ from pathlib import Path
 import sys
 from types import MethodType
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import torch
 from transformers import AutoTokenizer
 
-from sakuratts.frontend.bert_features import BertFeatures
+from sakuratts.text.bert_features import BertFeatures
 
 
 def install_pruned_bert_loader(tts_class):

@@ -24,8 +24,8 @@ from unittest import mock
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
-from sakuratts._internal.reference_condition import sha256_file
+sys.path.insert(0, str(PROJECT))
+from sakuratts.module.reference_condition import sha256_file
 
 COMMIT = "48b1a0169a28582a8984402f82cf438d3bfa6aca"
 CASE = "ja-reported-intro"
@@ -241,7 +241,7 @@ def main():
     run.mkdir(parents=True, exist_ok=False)
     shutil.copy2(preparation / "preflight.json", run / "reference-inputs.json")
     sources = {}
-    files = [*sorted((PROJECT / "research/tools").glob("*.py")), *sorted((PROJECT / "src/sakuratts").rglob("*.py")),
+    files = [*sorted((PROJECT / "research/tools").glob("*.py")), *sorted((PROJECT / "sakuratts").rglob("*.py")),
              PROJECT / "benchmarks/cases/speech_regressions.json"]
     for path in files:
         destination = run / "source" / path.relative_to(PROJECT)

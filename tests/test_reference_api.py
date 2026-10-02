@@ -10,10 +10,10 @@ from unittest.mock import patch, Mock
 
 import numpy as np
 
-from sakuratts.engine import Inference
+from sakuratts.TTS_infer_pack.TTS import Inference
 from sakuratts.model import Model
-from sakuratts.reference import ReferenceCache
-from sakuratts._internal.reference_condition import PreparedReference
+from sakuratts.TTS_infer_pack.reference import ReferenceCache
+from sakuratts.module.reference_condition import PreparedReference
 
 
 class ReferenceApiTests(unittest.TestCase):
@@ -136,7 +136,7 @@ class ReferenceApiTests(unittest.TestCase):
         candidate = Mock()
         candidate._runtime.load.side_effect = RuntimeError("out of memory")
         with patch("sakuratts.engine.Engine.load", return_value=candidate), \
-                patch("sakuratts.reference.ReferenceCache"):
+                patch("sakuratts.TTS_infer_pack.reference.ReferenceCache"):
             with self.assertRaisesRegex(RuntimeError, "out of memory"):
                 current._activate(Model(Path("candidate"), {}))
         old._runtime.unload.assert_called_once()

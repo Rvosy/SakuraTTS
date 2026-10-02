@@ -21,10 +21,10 @@ import traceback
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT / "src"), str(ROOT / "research/tools"), str(ROOT / "tools")]
-from sakuratts.backends.onnx.sovits import FP16_EXECUTION_OPTIONS, INPUT_NAMES, ORTSoVITS, _package_file, read_manifest
-from sakuratts._internal.reference_condition import sha256_file
-from sakuratts.backends.onnx.chunked import ORTChunkedSoVITS, _clear_session_tracebacks
+sys.path[:0] = [str(ROOT), str(ROOT / "research/tools"), str(ROOT / "tools")]
+from sakuratts.module.sovits import FP16_EXECUTION_OPTIONS, INPUT_NAMES, ORTSoVITS, _package_file, read_manifest
+from sakuratts.module.reference_condition import sha256_file
+from sakuratts.module.chunked import ORTChunkedSoVITS, _clear_session_tracebacks
 from vocoder_receptive_field import VocoderReceptiveField
 
 
@@ -247,7 +247,7 @@ def main():
         "sources_sha256": {name: sha256_file(ROOT / name) for name in
             ("research/tools/windows_chunked_synthesis.py", "research/tools/windows_vocoder_chunks.py",
              "research/tools/windows_nvidia_benchmark.py", "tools/vocoder_receptive_field.py",
-             "src/sakuratts/backends/onnx/sovits.py", "src/sakuratts/backends/cuda/engine.py", "src/sakuratts/_internal/synthesis.py")},
+             "sakuratts/module/sovits.py", "sakuratts/backends/cuda/engine.py", "sakuratts/TTS_infer_pack/synthesis.py")},
         "measurement": "Existing benchmark request timer, including host HALF latent and chunk copies, full reconstruction and one PCM normalization. Sampling-run timings are ineligible. No streaming first-packet claim."}
     from sakuratts.backends.cuda.engine import NVIDIAEngine
     import windows_nvidia_benchmark

@@ -7,7 +7,7 @@ CPU 和 AMD 各提供一套配置。只指定 `backend` 即使用对应默认值
 | `cpu` | `int8` | ONNX Runtime CPU 动态 INT8 | ONNX Runtime CPU FP32 | GPT 4 线程，声学 8 线程，KV 容量 2048 |
 | `directml` | `fp16` | DirectML FP16，Decode KV 保留在 GPU | DirectML 全图 FP16 | GPT 的 CPU 部分 4 线程，声学的 CPU 部分 2 线程，KV 容量 1280 |
 
-CPU 模式不创建 GPU 会话。AMD 模式让 GPT Transformer 与声学模型使用 GPU，文本前端、embedding 和采样仍使用 CPU。线程数不表示 GPU 并行度。具体默认值与可用组合由 [profiles.py](../src/sakuratts/profiles.py) 定义，CUDA 和 MLX 的档位保持各自行为。
+CPU 模式不创建 GPU 会话。AMD 模式让 GPT Transformer 与声学模型使用 GPU，文本前端、embedding 和采样仍使用 CPU。线程数不表示 GPU 并行度。具体默认值与可用组合由 [profiles.py](../sakuratts/profiles.py) 定义，CUDA 和 MLX 的档位保持各自行为。
 
 Radeon 780M 的 Genie 前后复测、完整请求、内存和试听见 [Genie 对比](../research/notes/genie-comparison-20260927.md)。此前候选、失败结果和数值检查保存在 [精度实验](../research/notes/cpu-amd-precision-listening-20260927.md)；其中其他 CPU / AMD 档位不再作为当前公开配置。选择这两条路径的原因见 [ADR 0006](adr/0006-device-precision-and-directml-kv.md)，硬件与质量验证范围见[兼容矩阵](specs/compatibility-matrix.md)。
 
@@ -112,7 +112,7 @@ sakuratts serve -c configs/tts_infer.amd.yaml
 
 CPU 服务可将 [CPU 示例](../examples/tts-cpu.example.yaml)复制为 `configs/tts_infer.cpu.yaml`，填写对应 CPU 模型路径。省略 `profile` 也会选择各自默认档位。YAML 中的相对模型路径按服务启动目录解析，搬迁后须保持目录关系或填写新的路径。
 
-命令行 `--backend` 覆盖配置中的后端，`--profile` 覆盖预设名。`sakuratts.runtime_options` 覆盖预设，显式 `--experimental FILE` 再覆盖同名值。所选设备、实现与实际图精度需要相容。配置合并见 [read_inference_configuration 与 Inference](../src/sakuratts/engine.py)。
+命令行 `--backend` 覆盖配置中的后端，`--profile` 覆盖预设名。`sakuratts.runtime_options` 覆盖预设，显式 `--experimental FILE` 再覆盖同名值。所选设备、实现与实际图精度需要相容。配置合并见 [read_inference_configuration 与 Inference](../sakuratts/engine.py)。
 
 CPU / AMD 在主解释器中执行 GPT 与声学，不启动 `acoustic_python` 声学 worker。经典日文前端仍使用 `frontend_python`；旧配置省略时继续沿用 `acoustic_python`。安装路径需要保持有效，见[日文运行资源](japanese-runtime.md)。
 
@@ -126,7 +126,7 @@ DirectML 不按 GPU 厂商过滤设备；AMD、Intel 等硬件仍需分别通过
 sakuratts doctor --backend directml
 ```
 
-输出中的 `directml.adapters` 按 DXGI 顺序列出 `device_id`、`description`、专用显存与共享系统内存字节数，以及可用于对照 WDDM 计量的 `luid`。实现见 [list_adapters](../src/sakuratts/backends/directml/devices.py)。列表可能包含软件适配器；枚举结果只说明设备身份，不代表它已通过模型执行测试。硬件查询失败时，诊断保留原因，推理仍由实际 Session 初始化决定能否执行。
+输出中的 `directml.adapters` 按 DXGI 顺序列出 `device_id`、`description`、专用显存与共享系统内存字节数，以及可用于对照 WDDM 计量的 `luid`。实现见 [list_adapters](../sakuratts/backends/directml/devices.py)。列表可能包含软件适配器；枚举结果只说明设备身份，不代表它已通过模型执行测试。硬件查询失败时，诊断保留原因，推理仍由实际 Session 初始化决定能否执行。
 
 `device_id` 默认是 `0`，不会自动选择显存最多或速度最快的显卡，也不能用 `Win32_VideoController` 的返回顺序代替。核显与独显共存时，将查到的目标编号写入配置。例如目标编号为 `1`：
 
@@ -144,7 +144,7 @@ CLI 可在 `--experimental FILE` 指定的 JSON 中写入 `{"device_id": 1}`；P
 
 ## 调整资源与休眠
 
-默认资源参数由 [profiles.py](../src/sakuratts/profiles.py) 与 [CPUEngine](../src/sakuratts/backends/cpu/engine.py) 定义。可以显式调整 `threads`、`gpt_threads`、`capacity` 和 `policy`，但应重新测量完整请求与占用。
+默认资源参数由 [profiles.py](../sakuratts/profiles.py) 与 [CPUEngine](../sakuratts/backends/cpu/engine.py) 定义。可以显式调整 `threads`、`gpt_threads`、`capacity` 和 `policy`，但应重新测量完整请求与占用。
 
 `capacity` 包含文本、参考语义和已生成语义。AMD 修改容量后必须重新导出匹配容量的静态 decode 资源；缺包或超过容量时明确报错，不截断输入、不自动换设备。更长文本也可以通过公共分句选项减少每片长度。
 

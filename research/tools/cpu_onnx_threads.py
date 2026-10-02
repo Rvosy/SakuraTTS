@@ -22,7 +22,7 @@ import psutil
 from cpu_gpt_ort import load_inputs
 from cpu_gpt_profile import array_digest
 from sakuratts.backends.cpu.onnx_gpt import ONNXCPUGPT
-from sakuratts._internal.reference_condition import sha256_file
+from sakuratts.module.reference_condition import sha256_file
 
 
 class MemorySampler:

@@ -21,7 +21,7 @@ from unittest.mock import patch
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT))
 from sakuratts.backends.directml.static_gpt import StaticDirectMLGPT
 
 
@@ -181,7 +181,7 @@ def timing_breakdown(model, inputs, tokens):
 def model_probe(args):
     from cpu_gpt_ort import load_inputs
     from cpu_gpt_profile import replay, array_digest, summarize
-    from sakuratts._internal.reference_condition import sha256_file
+    from sakuratts.module.reference_condition import sha256_file
     import onnxruntime as ort
 
     args.output.mkdir(parents=True, exist_ok=False)
@@ -262,7 +262,7 @@ def model_probe(args):
             if not breakdown["matches_normal_logits"]:
                 raise ValueError("Instrumented replay changed the production logits")
         if args.sampling:
-            from sakuratts._internal.generation import generate_semantic
+            from sakuratts.AR.generation import generate_semantic
             parameters = identity["parameters"]
             start = time.perf_counter()
             generated = generate_semantic(model, *inputs, eos=model.config["eos"],

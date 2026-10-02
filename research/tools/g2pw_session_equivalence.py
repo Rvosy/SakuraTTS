@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
+sys.path.insert(0, str(PROJECT))
 FIELDS = ("input_ids", "token_type_ids", "attention_masks", "phoneme_masks", "char_ids", "position_ids")
 
 
@@ -75,7 +75,7 @@ def prepare(args):
     write_json(run / "labels.json", labels)
     shutil.copy2(args.boundary_run / "sources/onnx_api.py", run / "official_onnx_api.py")
     shutil.copy2(Path(__file__), run / "research.tools.py")
-    shutil.copy2(PROJECT / "src/sakuratts/frontend/g2pw_session.py", run / "g2pw_session.py")
+    shutil.copy2(PROJECT / "sakuratts/text/g2pw_session.py", run / "g2pw_session.py")
     model = args.references.resolve() / "GPT-SoVITS/GPT_SoVITS/text/G2PWModel/g2pW.onnx"
     write_json(run / "prepared.json", dict(command=[sys.executable, *sys.argv], cases=cases,
         model=str(model), model_bytes=model.stat().st_size,
@@ -127,7 +127,7 @@ def worker(args):
         invoke = lambda mode, inputs, texts: (functions["_predict_with_sentence_dedup"](shell, inputs, texts)
                                              if mode == "dedup" else shell._predict(inputs))
     else:
-        from sakuratts.frontend.g2pw_session import G2PWSession
+        from sakuratts.text.g2pw_session import G2PWSession
         runner = G2PWSession(prepared["model"], labels)
         session = runner.session
         original_run = runner.run
@@ -201,7 +201,7 @@ def execute(args):
     for name, expected in prepared["files"].items():
         if sha256(run / name) != expected:
             raise ValueError(f"Prepared artifact changed: {name}")
-    if sha256(PROJECT / "src/sakuratts/frontend/g2pw_session.py") != prepared["files"]["g2pw_session.py"]:
+    if sha256(PROJECT / "sakuratts/text/g2pw_session.py") != prepared["files"]["g2pw_session.py"]:
         raise ValueError("Native runtime changed after input preparation")
     env = os.environ.copy()
     env.update(ORT_DISABLE_TELEMETRY="1", OMP_NUM_THREADS="2", OPENBLAS_NUM_THREADS="2",

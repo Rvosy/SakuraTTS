@@ -23,7 +23,7 @@ import traceback
 import mlx.core as mx
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from sakuratts.backends.mlx.gpt import MLXGPT, sha256
 from sakuratts.backends.mlx.gpt_prefill import prefill_fp64
 from mlx_gpt_replay import compare, trace_inputs
@@ -84,7 +84,7 @@ def main():
     run = args.references / "runs" / f"{timestamp}-fp64-prefill-{'cpu-only' if args.cpu_prefill_only else 'mlx-decode'}"
     run.mkdir(parents=True, exist_ok=False)
     root = Path(__file__).resolve().parents[2]
-    for name in ("research/tools/fp64_prefill_replay.py", "research/tools/mlx_gpt_replay.py", "src/sakuratts/backends/mlx/gpt.py", "src/sakuratts/backends/mlx/gpt_prefill.py", "src/sakuratts/_internal/weight_storage.py"):
+    for name in ("research/tools/fp64_prefill_replay.py", "research/tools/mlx_gpt_replay.py", "sakuratts/backends/mlx/gpt.py", "sakuratts/backends/mlx/gpt_prefill.py", "sakuratts/module/weight_storage.py"):
         destination = run / "source" / name
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(root / name, destination)

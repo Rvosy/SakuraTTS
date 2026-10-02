@@ -5,10 +5,8 @@ import json
 from pathlib import Path
 import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts.backends.onnx.vocoder_receptive_field import (
-    VocoderReceptiveField as RuntimeVocoderReceptiveField,
-    TemporalOperation, ceil_div, conv_input_interval, transpose_input_interval)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from sakuratts.module.vocoder_receptive_field import VocoderReceptiveField as RuntimeVocoderReceptiveField, TemporalOperation, ceil_div, conv_input_interval, transpose_input_interval
 
 
 class VocoderReceptiveField(RuntimeVocoderReceptiveField):

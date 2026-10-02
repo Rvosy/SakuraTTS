@@ -9,8 +9,8 @@ import unittest
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts._internal.reference_condition import BoundAcousticReference, PreparedReference
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from sakuratts.module.reference_condition import BoundAcousticReference, PreparedReference
 
 
 class BoundReferenceTests(unittest.TestCase):
@@ -27,7 +27,7 @@ class BoundReferenceTests(unittest.TestCase):
         )
 
     def test_local_archive_loads_with_stale_metadata_but_requires_aligned_arrays(self):
-        from sakuratts._internal.reference_condition import ARRAY_DTYPES, FORMAT
+        from sakuratts.module.reference_condition import ARRAY_DTYPES, FORMAT
         arrays = {name: getattr(self.reference, name) for name in ARRAY_DTYPES}
         with tempfile.TemporaryDirectory() as folder:
             package = Path(folder)

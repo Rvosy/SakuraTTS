@@ -13,11 +13,11 @@ import time
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
+sys.path.insert(0, str(PROJECT))
 
-from sakuratts._internal.generation import SynthesisCancelled
+from sakuratts.AR.generation import SynthesisCancelled
 from sakuratts.backends.cuda.engine import NVIDIAEngine
-from sakuratts._internal.reference_condition import sha256_file
+from sakuratts.module.reference_condition import sha256_file
 
 
 TEXT = "おはよう。今日もよろしくね。"
@@ -152,7 +152,7 @@ def main():
         "acoustic_arena_shrink": args.acoustic_arena_shrink,
         "gpt_attention": args.gpt_attention, "gpt_attention_chunk_size": args.gpt_attention_chunk_size,
         "model_config_sha256": sha256_file(args.config),
-        "source_sha256": {name: sha256_file(PROJECT / "src" / "sakuratts" / name)
+        "source_sha256": {name: sha256_file(PROJECT / "sakuratts" / name)
                           for name in ("nvidia.py", "cuda_gpt.py", "ort_process.py", "ort_sovits.py")},
         "wall_seconds": time.perf_counter() - started,
         "torch_imported": "torch" in sys.modules,

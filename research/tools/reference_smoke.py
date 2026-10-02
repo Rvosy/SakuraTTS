@@ -72,9 +72,9 @@ def main() -> None:
     for path in harness_dir.glob("*.py"):
         shutil.copy2(path, evidence_code / path.name)
     if args.prune_bert:
-        evidence_src = output / "source" / "src" / "sakuratts"
+        evidence_src = output / "source" / "sakuratts"
         evidence_src.mkdir(parents=True)
-        shutil.copy2(harness_dir.parent / "src/sakuratts/frontend/bert_features.py", evidence_src / "bert_features.py")
+        shutil.copy2(harness_dir.parent / "sakuratts/text/bert_features.py", evidence_src / "bert_features.py")
     os.environ.setdefault("HF_HOME", str(root / ".cache" / "huggingface"))
     os.environ.setdefault("NLTK_DATA", str(root / "models" / "nltk_data"))
     os.environ.setdefault("language", "en_US")

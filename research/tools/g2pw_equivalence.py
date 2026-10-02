@@ -46,7 +46,7 @@ def prepare(args):
               dict(id='tokenizer-error-empty-input', sentences='你好。', context=16, opencc=True, tokenizer_error=True)]
     write_json(run / 'cases.json', cases)
     for name in MODULES:
-        shutil.copy2(PROJECT / 'src/sakuratts' / (name + '.py'), run / 'source/sakuratts' / (name + '.py'))
+        shutil.copy2(PROJECT / 'sakuratts' / (name + '.py'), run / 'source/sakuratts' / (name + '.py'))
     for name in ('onnx_api.py', 'char_convert.py', 'char_bopomofo_dict.json'):
         shutil.copy2(args.text_run / 'source' / name, run / 'source' / name)
     official = args.references / 'GPT-SoVITS'
@@ -140,7 +140,7 @@ def worker(args):
             shell.enable_opencc = case['opencc']
     else:
         sys.path.insert(0, str(run / 'source'))
-        from sakuratts.frontend.g2pw import G2PW
+        from sakuratts.text.g2pw import G2PW
         engine = G2PW(resources, Path(prepared['tokenizer']) / 'tokenizer.json',
                       None if prepared.get('ort_package') else prepared['model'], ort_package=prepared.get('ort_package'))
         session, tokenizer = engine.session.session, engine.inputs.tokenizer

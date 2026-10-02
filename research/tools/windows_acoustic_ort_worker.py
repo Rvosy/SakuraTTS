@@ -46,8 +46,8 @@ def main():
         os.environ["PATH"] = str(path.resolve()) + os.pathsep + os.environ.get("PATH", "")
     if args.cuda_wheel_root:
         sys.path.append(str(args.cuda_wheel_root.resolve()))
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-    from sakuratts.backends.onnx.sovits import ORTSoVITS
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from sakuratts.module.sovits import ORTSoVITS
 
     args.output.mkdir(parents=True, exist_ok=False)
     monitor = None

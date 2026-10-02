@@ -21,7 +21,7 @@ import traceback
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from mrte_numerical_diagnosis import compare
 from sovits_fixed_conditions import load_acoustic, sha256, source_inventory
 
@@ -120,7 +120,7 @@ def main():
     run = root / "runs" / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ") + f"-attention-nodes-{args.backend}")
     run.mkdir(parents=True, exist_ok=False)
     files = ("research/tools/attention_node_diagnosis.py", "research/tools/mrte_numerical_diagnosis.py", "research/tools/sovits_fixed_conditions.py",
-             "src/sakuratts/backends/mlx/encoder.py", "src/sakuratts/_internal/weight_storage.py")
+             "sakuratts/backends/mlx/encoder.py", "sakuratts/module/weight_storage.py")
     for name in files:
         target = run / "source" / name
         target.parent.mkdir(parents=True, exist_ok=True)

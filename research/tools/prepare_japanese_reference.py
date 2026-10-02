@@ -26,8 +26,8 @@ import traceback
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
-from sakuratts._internal.reference_condition import ARRAY_DTYPES, FORMAT, PreparedReference, sha256_array, sha256_file, validate_arrays
+sys.path.insert(0, str(PROJECT))
+from sakuratts.module.reference_condition import ARRAY_DTYPES, FORMAT, PreparedReference, sha256_array, sha256_file, validate_arrays
 
 COMMIT = "48b1a0169a28582a8984402f82cf438d3bfa6aca"
 OFFICIAL_FILES = (
@@ -40,7 +40,7 @@ OFFICIAL_FILES = (
     "GPT_SoVITS/text/symbols.py", "GPT_SoVITS/text/symbols2.py", "GPT_SoVITS/text/LangSegmenter/langsegmenter.py",
 )
 LOCAL_FILES = ("research/tools/prepare_japanese_reference.py", "research/tools/prepared_reference.py",
-               "research/tools/prepared_acoustic.py", "src/sakuratts/_internal/reference_condition.py")
+               "research/tools/prepared_acoustic.py", "sakuratts/module/reference_condition.py")
 DISTRIBUTIONS = ("torch", "torchaudio", "transformers", "numpy", "librosa", "soundfile", "soxr", "audioread",
                  "scipy", "numba", "llvmlite", "pyopenjtalk-plus", "SudachiPy", "SudachiDict-core",
                  "onnxruntime", "split-lang", "fast-langdetect", "fasttext-predict", "budoux", "pydantic")

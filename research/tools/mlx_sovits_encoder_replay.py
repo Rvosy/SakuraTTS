@@ -20,10 +20,8 @@ import traceback
 import mlx.core as mx
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-from sakuratts.backends.mlx.encoder import (
-    MLXSoVITSEncoder, absolute_to_relative, attention, relative_embeddings, relative_to_absolute, sha256,
-)
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from sakuratts.backends.mlx.encoder import MLXSoVITSEncoder, absolute_to_relative, attention, relative_embeddings, relative_to_absolute, sha256
 
 
 STAGES = ("quantized", "ssl_encoded", "text_encoded", "mrte", "encoder_hidden", "mean", "log_scale", "mask")
@@ -157,7 +155,7 @@ def main():
     run = args.references.resolve() / "runs" / f"{timestamp}-mlx-sovits-encoder-{'self-test-cpu' if args.self_test else args.device}"
     source_root = run / "source"
     project = Path(__file__).resolve().parents[2]
-    files = ("research/tools/mlx_sovits_encoder_replay.py", "src/sakuratts/backends/mlx/encoder.py", "src/sakuratts/_internal/weight_storage.py", "requirements/mlx-candidate.txt")
+    files = ("research/tools/mlx_sovits_encoder_replay.py", "sakuratts/backends/mlx/encoder.py", "sakuratts/module/weight_storage.py", "requirements/mlx-candidate.txt")
     for name in files:
         target = source_root / name
         target.parent.mkdir(parents=True, exist_ok=True)

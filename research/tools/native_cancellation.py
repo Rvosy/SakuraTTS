@@ -28,7 +28,7 @@ import weakref
 import numpy as np
 
 from native_text_speech import CASES, PATHS, PROJECT, read_json, write_json
-from sakuratts._internal.reference_condition import PreparedReference, sha256_file
+from sakuratts.module.reference_condition import PreparedReference, sha256_file
 
 STAGES = ("before_prefill", "after_prefill", "after_decode", "after_acoustic")
 
@@ -95,12 +95,13 @@ def worker(args):
     os.environ["ORT_DISABLE_TELEMETRY"] = "1"
     os.environ["OPEN_JTALK_DICT_DIR"] = config["japanese_main_dictionary"]
     import mlx.core as mx
-    from sakuratts._internal.generation import SynthesisCancelled
-    from sakuratts.frontend.japanese import JapaneseG2P
-    from sakuratts.frontend.text_frontend import LanguageSegmenter, TextFrontend
+    from sakuratts.AR.generation import SynthesisCancelled
+    from sakuratts.text.japanese import JapaneseG2P
+    from sakuratts.text.LangSegmenter import LanguageSegmenter
+    from sakuratts.TTS_infer_pack.TextPreprocessor import TextFrontend
     from sakuratts.backends.mlx.gpt import MLXGPT
     from sakuratts.backends.mlx.sovits import MLXSoVITS
-    import sakuratts._internal.synthesis as synthesis
+    import sakuratts.TTS_infer_pack.synthesis as synthesis
     from native_prepared_speech import checks, load_case
     from mlx_sovits_encoder_replay import compare, memory_snapshot
     from mlx_sovits_replay import write_wav
@@ -377,7 +378,7 @@ def worker(args):
         report["process_lifetime_maxrss_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         report["max_request_allocator_peak_bytes"] = max(
             (row["request_allocator_peak_bytes"] for row in report["requests"] + report["cancellations"]), default=0)
-        forbidden = ("torch", "transformers", "sakuratts.frontend.chinese", "sakuratts.frontend.g2pw", "sakuratts.backends.mlx.bert")
+        forbidden = ("torch", "transformers", "sakuratts.text.chinese", "sakuratts.text.g2pw", "sakuratts.backends.mlx.bert")
         report["forbidden_imports"] = {name: name in sys.modules for name in forbidden}
         if any(report["forbidden_imports"].values()):
             report["status"] = "unexpected_dependency"

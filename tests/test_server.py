@@ -33,7 +33,7 @@ class ServerTests(unittest.TestCase):
         for mode in ("direct", "managed"):
             fake = process_double()
             with patch("sakuratts.server.Inference", DirectInference), \
-                    patch("sakuratts._internal.inference_process.ProcessInference", fake), \
+                    patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
                     TestClient(create_app("model", runtime_mode=mode)) as client:
                 for request in cases:
                     for method in ("get", "post"):

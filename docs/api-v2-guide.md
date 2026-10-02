@@ -103,7 +103,7 @@ with urlopen("http://127.0.0.1:9880/tts?" + urlencode(params)) as response:
 
 ## `/tts` 参数支持表
 
-字段与默认值由 [server.SpeechRequest](../src/sakuratts/server.py) 定义，固定上游对照保存在 [API 快照](../tests/fixtures/gpt_sovits_api_v2.json)。下表说明各字段的使用方式；GET 使用查询字符串，POST 使用 JSON。
+字段与默认值由 [server.SpeechRequest](../sakuratts/server.py) 定义，固定上游对照保存在 [API 快照](../tests/fixtures/gpt_sovits_api_v2.json)。下表说明各字段的使用方式；GET 使用查询字符串，POST 使用 JSON。
 
 ### 文本、语言与参考
 
@@ -124,7 +124,7 @@ with urlopen("http://127.0.0.1:9880/tts?" + urlencode(params)) as response:
 | --- | --- | --- |
 | `text_split_method` | `"cut5"` | 支持 `cut0`～`cut5`；其他值返回 400 |
 | `top_k` | `15` | 已接入采样，必须 ≥ 1 |
-| `top_p` | `1` | 支持 `(0, 1]`，用于核采样 |
+| `top_p` | `1` | 当前整条推理仅支持 `1`；其他合法值会在生成时被拒绝，核采样尚未贯通 |
 | `temperature` | `1` | 已接入采样，必须为有限正数 |
 | `repetition_penalty` | `1.35` | 已接入重复惩罚，必须为有限正数 |
 | `seed` | `-1` | `-1` 随机；非负整数固定种子。同 seed 不保证与原版 Torch 输出相同 |

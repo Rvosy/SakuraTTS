@@ -119,7 +119,7 @@ class ManagedServerTests(unittest.TestCase):
         from fastapi.testclient import TestClient
         from sakuratts.server import create_app
         fake = process_double()
-        with patch("sakuratts._internal.inference_process.ProcessInference", fake), \
+        with patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
                 patch("sakuratts.server.Inference", side_effect=AssertionError("Direct engine was constructed")), \
                 TestClient(create_app("model", runtime_mode="managed")) as client:
             for _ in range(3):
@@ -139,7 +139,7 @@ class ManagedServerTests(unittest.TestCase):
         from fastapi.testclient import TestClient
         from sakuratts.server import create_app
         fake = process_double()
-        with patch("sakuratts._internal.inference_process.ProcessInference", fake), \
+        with patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
                 TestClient(create_app(runtime_mode="managed")) as client:
             self.assertFalse(client.get("/runtime").json()["model_configured"])
             self.assertEqual(client.post("/runtime/wake").status_code, 400)
@@ -149,7 +149,7 @@ class ManagedServerTests(unittest.TestCase):
         from fastapi.testclient import TestClient
         from sakuratts.server import create_app
         fake = process_double()
-        with patch("sakuratts._internal.inference_process.ProcessInference", fake), \
+        with patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
                 TestClient(create_app("model", runtime_mode="managed",
                                       experimental={"policy": "staged"})) as client:
             self.assertEqual(client.post("/runtime/wake").status_code, 202)
@@ -172,7 +172,7 @@ class ManagedServerTests(unittest.TestCase):
         fake = process_double()
         fake.wake_release.clear()
         fake.tts_release.clear()
-        with patch("sakuratts._internal.inference_process.ProcessInference", fake), \
+        with patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
                 TestClient(create_app("model", runtime_mode="managed")) as client:
             with ThreadPoolExecutor(max_workers=1) as requests:
                 try:
@@ -210,7 +210,7 @@ class ManagedServerTests(unittest.TestCase):
         from sakuratts.server import create_app
         fake = process_double()
         fake.wake_failures = 1
-        with patch("sakuratts._internal.inference_process.ProcessInference", fake), \
+        with patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
                 TestClient(create_app("model", runtime_mode="managed")) as client:
             self.assertEqual(client.post("/runtime/wake").status_code, 202)
             failed = self.wait_state(client, "failed")
@@ -230,7 +230,7 @@ class ManagedServerTests(unittest.TestCase):
                 fake = process_double()
                 fake.wake_release.clear()
                 fake.wake_failures = 1
-                with patch("sakuratts._internal.inference_process.ProcessInference", fake), \
+                with patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
                         TestClient(create_app("model", runtime_mode="managed")) as client:
                     with ThreadPoolExecutor(max_workers=1) as requests:
                         first = requests.submit(client.post, "/tts", json=dict(REQUEST, streaming_mode=streaming))
@@ -251,7 +251,7 @@ class ManagedServerTests(unittest.TestCase):
         from sakuratts.server import create_app
         fake = process_double()
         fake.sleep_release.clear()
-        with patch("sakuratts._internal.inference_process.ProcessInference", fake), \
+        with patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
                 TestClient(create_app("model", runtime_mode="managed")) as client:
             self.assertEqual(client.post("/runtime/wake").status_code, 202)
             self.wait_state(client, "awake")
@@ -283,7 +283,7 @@ class ManagedServerTests(unittest.TestCase):
         from fastapi.testclient import TestClient
         from sakuratts.server import create_app
         fake = process_double()
-        with patch("sakuratts._internal.inference_process.ProcessInference", fake), \
+        with patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
                 TestClient(create_app("model", runtime_mode="managed", idle_sleep_seconds=.15)) as client:
             self.assertEqual(client.post("/runtime/wake", json={"keep_alive_seconds": 0}).status_code, 202)
             self.wait_state(client, "awake")
@@ -301,7 +301,7 @@ class ManagedServerTests(unittest.TestCase):
         from fastapi.testclient import TestClient
         from sakuratts.server import create_app
         fake = process_double()
-        with patch("sakuratts._internal.inference_process.ProcessInference", fake), \
+        with patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
                 TestClient(create_app("model", runtime_mode="managed")) as client:
             self.assertEqual(client.post("/tts", json=REQUEST).status_code, 200)
             for inspect_status in (True, False):
@@ -327,7 +327,7 @@ class ManagedServerTests(unittest.TestCase):
                     raise RuntimeError("Acoustic synthesis failed")
                 return super().tts(request, **kwargs)
 
-        with patch("sakuratts._internal.inference_process.ProcessInference", FailingStream), \
+        with patch("sakuratts.runtime.inference_process.ProcessInference", FailingStream), \
                 TestClient(create_app("model", runtime_mode="managed")) as client:
             with self.assertLogs("sakuratts.server", level="ERROR"):
                 response = client.post("/tts", json=dict(REQUEST, text="fail", streaming_mode=True))
@@ -389,7 +389,7 @@ class ManagedServerTests(unittest.TestCase):
             with self.subTest(streaming=streaming):
                 fake = process_double()
                 fake.wake_release.clear()
-                with patch("sakuratts._internal.inference_process.ProcessInference", fake):
+                with patch("sakuratts.runtime.inference_process.ProcessInference", fake):
                     asyncio.run(run(fake, streaming))
 
     def test_idle_sleep_waits_for_actual_synthesis_completion(self):
@@ -397,7 +397,7 @@ class ManagedServerTests(unittest.TestCase):
         from sakuratts.server import create_app
         fake = process_double()
         fake.tts_release.clear()
-        with patch("sakuratts._internal.inference_process.ProcessInference", fake), \
+        with patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
                 TestClient(create_app("model", runtime_mode="managed", idle_sleep_seconds=.05)) as client:
             with ThreadPoolExecutor(max_workers=1) as requests:
                 first = requests.submit(client.post, "/tts", json=REQUEST)
@@ -421,7 +421,7 @@ class ManagedServerTests(unittest.TestCase):
         from fastapi.testclient import TestClient
         from sakuratts.server import create_app
         fake = process_double()
-        with patch("sakuratts._internal.inference_process.ProcessInference", fake), \
+        with patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
                 TestClient(create_app("model", runtime_mode="managed", idle_sleep_seconds=.05)) as client:
             self.assertEqual(client.post("/runtime/wake", json={"keep_alive_seconds": .3}).status_code, 202)
             self.wait_state(client, "awake")
@@ -438,7 +438,7 @@ class ManagedServerTests(unittest.TestCase):
         from fastapi.testclient import TestClient
         from sakuratts.server import create_app
         fake = process_double()
-        with patch("sakuratts._internal.inference_process.ProcessInference", fake), \
+        with patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
                 TestClient(create_app("model", runtime_mode="managed")) as client:
             for keep_alive in (-1, 3601, "invalid"):
                 response = client.post("/runtime/wake", json={"keep_alive_seconds": keep_alive})
@@ -487,12 +487,12 @@ class ManagedServerTests(unittest.TestCase):
                     finish.set()
                 await asyncio.gather(*app.state.jobs, return_exceptions=True)
                 self.assertFalse(app.state.busy)
-        with patch("sakuratts._internal.inference_process.ProcessInference", StreamingProcess):
+        with patch("sakuratts.runtime.inference_process.ProcessInference", StreamingProcess):
             asyncio.run(run())
 
     def test_shutdown_finishes_stream_waiting_for_its_first_fragment(self):
         import httpx
-        from sakuratts._internal.generation import SynthesisCancelled
+        from sakuratts.AR.generation import SynthesisCancelled
         from sakuratts.server import create_app
         fake = process_double()
         class SlowFirstFragment(fake):
@@ -521,7 +521,7 @@ class ManagedServerTests(unittest.TestCase):
                         request.cancel()
                         await asyncio.gather(request, return_exceptions=True)
 
-        with patch("sakuratts._internal.inference_process.ProcessInference", SlowFirstFragment):
+        with patch("sakuratts.runtime.inference_process.ProcessInference", SlowFirstFragment):
             asyncio.run(run())
 
     def test_connected_slow_stream_consumer_cannot_hold_inference_past_timeout(self):
@@ -575,5 +575,5 @@ class ManagedServerTests(unittest.TestCase):
                     release_send.set()
                     await asyncio.wait_for(asyncio.gather(request, return_exceptions=True), 3)
 
-        with patch("sakuratts._internal.inference_process.ProcessInference", ManyFragments):
+        with patch("sakuratts.runtime.inference_process.ProcessInference", ManyFragments):
             asyncio.run(run())

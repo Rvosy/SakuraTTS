@@ -13,7 +13,7 @@ import wave
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT / "research/tools"), str(ROOT / "src")]
+sys.path[:0] = [str(ROOT / "research/tools"), str(ROOT)]
 import windows_nvidia_benchmark as benchmark
 
 

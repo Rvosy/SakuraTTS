@@ -9,9 +9,9 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 
-from sakuratts.frontend.processors import JapaneseProcessor
-from sakuratts.frontend.runtime import load_frontend
-from sakuratts.frontend.text_frontend import TextFrontend
+from sakuratts.text.processors import JapaneseProcessor
+from sakuratts.TTS_infer_pack.frontend import load_frontend
+from sakuratts.TTS_infer_pack.TextPreprocessor import TextFrontend
 from test_nvidia_package_startup import fixture
 
 
@@ -22,8 +22,8 @@ class FrontendCompositionTests(unittest.TestCase):
             config = json.loads(config_path.read_text())
             config.pop("acoustic_python")
             config["frontend_python"] = "language/python.exe"
-            with patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P") as worker, \
-                    patch("sakuratts.frontend.text_frontend.LanguageSegmenter") as segmenter:
+            with patch("sakuratts.text.classic_japanese.ClassicJapaneseG2P") as worker, \
+                    patch("sakuratts.text.LangSegmenter.LanguageSegmenter") as segmenter:
                 frontend = load_frontend(config_path, config, path.parent, manifest)
                 self.assertEqual(worker.call_args.args[0], Path(folder) / "language/python.exe")
                 self.assertEqual(set(frontend.text.processors), {"ja"})
@@ -36,7 +36,7 @@ class FrontendCompositionTests(unittest.TestCase):
             config_path, path, manifest = fixture(Path(folder))
             config = json.loads(config_path.read_text())
             config["languages"] = ["ja", "zh"]
-            with patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P") as worker:
+            with patch("sakuratts.text.classic_japanese.ClassicJapaneseG2P") as worker:
                 with self.assertRaisesRegex(ValueError, "ja.*only"):
                     load_frontend(config_path, config, path.parent, manifest)
                 worker.assert_not_called()
@@ -89,7 +89,7 @@ class FrontendCompositionTests(unittest.TestCase):
             frontend.segment("你好", "auto")
 
     def test_english_resources_are_loaded_only_when_declared_and_verified(self):
-        from sakuratts._internal.reference_condition import sha256_file
+        from sakuratts.module.reference_condition import sha256_file
         with tempfile.TemporaryDirectory() as folder:
             config_path, path, manifest = fixture(Path(folder))
             config = json.loads(config_path.read_text())
@@ -101,9 +101,9 @@ class FrontendCompositionTests(unittest.TestCase):
                 resource.write_bytes(b"test")
                 manifest["files"]["english/" + name] = {"bytes": 4, "sha256": sha256_file(resource)}
             manifest["english_g2p"] = {"implementation": "gpt-sovits-english-v1", "directory": "english"}
-            with patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P"), \
-                    patch("sakuratts.frontend.text_frontend.LanguageSegmenter"), \
-                    patch("sakuratts.frontend.english.EnglishG2P") as g2p:
+            with patch("sakuratts.text.classic_japanese.ClassicJapaneseG2P"), \
+                    patch("sakuratts.text.LangSegmenter.LanguageSegmenter"), \
+                    patch("sakuratts.text.english.EnglishG2P") as g2p:
                 frontend = load_frontend(config_path, config, path.parent, manifest)
                 self.assertEqual(set(frontend.text.processors), {"ja", "en"})
                 self.assertEqual(g2p.call_args.args[0], english)

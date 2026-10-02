@@ -7,13 +7,13 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock
 
-from sakuratts.frontend.english import EnglishG2P
+from sakuratts.text.english import EnglishG2P
 
 
 class EnglishFrontendTests(unittest.TestCase):
     @unittest.skipUnless(importlib.util.find_spec("inflect"), "Install the english extra")
     def test_normalization_matches_official_examples(self):
-        from sakuratts.frontend._vendor.english_normalization import normalize
+        from sakuratts.text._vendor.english_normalization import normalize
         frontend = EnglishG2P.__new__(EnglishG2P)
         frontend.normalize_numbers = normalize
         fixture = json.loads((Path(__file__).parent / "fixtures/gpt_sovits_english.json").read_text(encoding="utf-8"))

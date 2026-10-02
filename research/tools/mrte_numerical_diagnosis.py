@@ -19,7 +19,7 @@ import traceback
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from sovits_fixed_conditions import load_acoustic, sha256, source_inventory
 
 
@@ -167,7 +167,7 @@ def main():
     run.mkdir(parents=True, exist_ok=False)
     project = Path(__file__).resolve().parents[2]
     files = ("research/tools/mrte_numerical_diagnosis.py", "research/tools/sovits_fixed_conditions.py",
-             "src/sakuratts/backends/mlx/encoder.py", "src/sakuratts/_internal/weight_storage.py")
+             "sakuratts/backends/mlx/encoder.py", "sakuratts/module/weight_storage.py")
     for name in files:
         target = run / "source" / name
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -217,7 +217,7 @@ def main():
             mx.set_default_device(mx.cpu if args.device == "cpu" else mx.gpu)
             model = MLXSoVITSEncoder.load(args.package)
         else:
-            from sakuratts._internal.weight_storage import read_fp32
+            from sakuratts.module.weight_storage import read_fp32
             path = args.package / manifest["weights"]["file"]
             if sha256(path) != manifest["weights"]["sha256"]:
                 raise ValueError("Package weights changed")

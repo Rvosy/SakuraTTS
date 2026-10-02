@@ -14,11 +14,11 @@ import weakref
 
 import numpy as np
 
-sys.path[:0] = [str(Path(__file__).resolve().parents[1] / "src"), str(Path(__file__).resolve().parent)]
+sys.path[:0] = [str(Path(__file__).resolve().parents[1]), str(Path(__file__).resolve().parent)]
 from sakuratts import Engine
 from sakuratts.backends.mlx.engine import _load_mlx
-from sakuratts._internal.cancellation import SynthesisCancelled
-from sakuratts._internal.reference_condition import PreparedReference
+from sakuratts.runtime.cancellation import SynthesisCancelled
+from sakuratts.module.reference_condition import PreparedReference
 from test_nvidia_package_startup import fixture
 from test_synthesis import Frontend, GPT, SoVITS
 
@@ -43,9 +43,9 @@ class MLXRuntimeTests(unittest.TestCase):
             np.zeros((1024, 3), np.float32), np.zeros((1, 1024, 1), np.float32),
             np.zeros((1, 512, 1), np.float32))
         self.frontend = Mock(text=Frontend(), profile={"implementation": "fixture"})
-        self.load_frontend = self.enterContext(patch("sakuratts.frontend.runtime.load_frontend",
+        self.load_frontend = self.enterContext(patch("sakuratts.TTS_infer_pack.frontend.load_frontend",
                                                      return_value=self.frontend))
-        self.enterContext(patch("sakuratts._internal.runtime.PreparedReference.load", return_value=self.reference))
+        self.enterContext(patch("sakuratts.TTS_infer_pack.runtime.PreparedReference.load", return_value=self.reference))
         self.mx = Mock(gpu="metal")
         self.mx.stream.side_effect = lambda device: nullcontext()
         self.enterContext(patch("sakuratts.backends.mlx.engine._load_mlx", return_value=self.mx))
@@ -178,11 +178,11 @@ class MLXRuntimeTests(unittest.TestCase):
 
 class MLXAvailabilityAndCleanupTests(unittest.TestCase):
     def test_unsupported_http_and_raw_conversion_fail_before_starting_work(self):
-        from sakuratts.converter import convert
-        from sakuratts.engine import Inference
+        from sakuratts.prepare.converter import convert
+        from sakuratts.TTS_infer_pack.TTS import Inference
         from sakuratts.model import Model
         with patch("sakuratts.backends.create_runtime") as runtime, \
-                patch("sakuratts.converter.run_conversion") as conversion:
+                patch("sakuratts.prepare.converter.run_conversion") as conversion:
             with self.assertRaisesRegex(NotImplementedError, "Engine only"):
                 Inference(backend="mlx")
             with self.assertRaisesRegex(NotImplementedError, "Engine only"):
@@ -213,7 +213,7 @@ class MLXAvailabilityAndCleanupTests(unittest.TestCase):
                 _load_mlx()
 
     def test_model_close_drops_arrays_and_components(self):
-        directory = Path(__file__).resolve().parents[1] / "src/sakuratts/backends/mlx"
+        directory = Path(__file__).resolve().parents[1] / "sakuratts/backends/mlx"
         mx = Mock()
         mlx = ModuleType("mlx")
         mlx.core = mx

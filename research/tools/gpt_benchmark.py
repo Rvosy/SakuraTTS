@@ -189,7 +189,7 @@ class MLXBackend:
     def __init__(self, package, capacity, device, prefill_precision="fp32"):
         import mlx.core as mx
 
-        sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
         from sakuratts.backends.mlx.gpt import MLXGPT
 
         self.mx = mx
@@ -309,9 +309,9 @@ def main():
     snapshot_root = run / "source"
     source_files = ["research/tools/gpt_benchmark.py"]
     if args.backend.startswith("mlx"):
-        source_files += ["src/sakuratts/backends/mlx/gpt.py", "src/sakuratts/_internal/weight_storage.py", "requirements/mlx-candidate.txt"]
+        source_files += ["sakuratts/backends/mlx/gpt.py", "sakuratts/module/weight_storage.py", "requirements/mlx-candidate.txt"]
     if args.backend == "mlx-fp64-prefill":
-        source_files += ["src/sakuratts/backends/mlx/gpt_prefill.py"]
+        source_files += ["sakuratts/backends/mlx/gpt_prefill.py"]
     for name in source_files:
         destination = snapshot_root / name
         destination.parent.mkdir(parents=True, exist_ok=True)

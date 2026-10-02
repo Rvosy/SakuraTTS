@@ -10,4 +10,4 @@
 | 声学图转换与检查 | `convert_sovits_onnx_fp16.py`、`conv_transpose_polyphase.py`、`split_sovits_vocoder.py`、`vocoder_receptive_field.py` |
 | 历史合成与官方对照 | `synthesize_japanese.py`、`windows_official_baseline.py` |
 
-依赖实验回放证据的 `package_sovits_chunks.py` 和旧 Mac 参考准备工具 `prepare_japanese_reference.py` 已移到 `research/tools/`，需要 Git checkout。公共模型转换及 HTTP 参考准备使用包内 `_internal/conversion/`，不依赖该目录。
+依赖实验回放证据的 `package_sovits_chunks.py` 和旧 Mac 参考准备工具 `prepare_japanese_reference.py` 已移到 `research/tools/`，需要 Git checkout。公共模型转换及 HTTP 参考准备使用包内 `prepare/`，不依赖该目录。

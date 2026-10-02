@@ -137,7 +137,7 @@ class LowVRAMMeasurementTests(unittest.TestCase):
 
     def test_profiler_restores_methods_and_collects_direct_and_worker_metadata(self):
         from sakuratts.backends.cuda import engine
-        from sakuratts._internal import synthesis
+        from sakuratts.TTS_infer_pack import synthesis
 
         class FakeGPT:
             def prefill(self):

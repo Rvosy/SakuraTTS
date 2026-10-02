@@ -24,7 +24,7 @@ import weakref
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
+sys.path.insert(0, str(PROJECT))
 from sovits_reference_projection import (CASES, STAGES, comparison, exact, inventory,
     load_inputs, memory, read_json, sha256, spec, write_json)
 
@@ -227,7 +227,7 @@ def load_or_raise(slot, package, policy, conditions, manifest_hash):
 
 
 def diagnostic(slot, bundle, references, prepared, output, report, package, manifest_hash):
-    from sakuratts._internal.synthesis import single_fragment_pcm
+    from sakuratts.TTS_infer_pack.synthesis import single_fragment_pcm
 
     report["switches"] = []
     report["mismatch_rejections"] = []
@@ -340,7 +340,7 @@ def stage_profile(model, policy, data, conditions, parameters, manifest_hash, mx
 
 
 def resource_run(slot, bundle, references, prepared, output, report, package, manifest_hash, policy, mx):
-    from sakuratts._internal.synthesis import single_fragment_pcm
+    from sakuratts.TTS_infer_pack.synthesis import single_fragment_pcm
 
     report["load"] = load_or_raise(slot, package, policy, references["A"], manifest_hash)
     report["idle_after_load"] = memory(mx)
@@ -383,8 +383,8 @@ def resource_run(slot, bundle, references, prepared, output, report, package, ma
 
 def prepared_request(slot, bundle, references, prepared, output, report, package, manifest_hash, policy, mx):
     from sakuratts.backends.mlx.gpt import MLXGPT
-    from sakuratts._internal.generation import generate_semantic
-    from sakuratts._internal.synthesis import single_fragment_pcm
+    from sakuratts.AR.generation import generate_semantic
+    from sakuratts.TTS_infer_pack.synthesis import single_fragment_pcm
 
     gpt = None
     gpt_ref = None
@@ -570,7 +570,7 @@ def run(args):
     prior_result = read_json(args.baseline_run / "result.json")
     if prior_result["status"] != "completed" or not prior_result["candidate_equivalence_passed"]:
         raise ValueError("Require the completed projection-cache baseline experiment")
-    files = sorted(set(prior["source_sha256"]) | {"research/tools/sovits_bound_projection.py", "src/sakuratts/backends/mlx/gpt.py", "src/sakuratts/backends/mlx/gpt_prefill.py"})
+    files = sorted(set(prior["source_sha256"]) | {"research/tools/sovits_bound_projection.py", "sakuratts/backends/mlx/gpt.py", "sakuratts/backends/mlx/gpt_prefill.py"})
     for name in files:
         path = output / "source" / name
         path.parent.mkdir(parents=True, exist_ok=True)

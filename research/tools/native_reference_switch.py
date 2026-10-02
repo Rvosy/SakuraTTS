@@ -23,8 +23,8 @@ import wave
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
-from sakuratts._internal.reference_condition import ARRAY_DTYPES, PreparedReference, sha256_array, sha256_file
+sys.path.insert(0, str(PROJECT))
+from sakuratts.module.reference_condition import ARRAY_DTYPES, PreparedReference, sha256_array, sha256_file
 
 CASE = "ja-reported-intro"
 SEQUENCES = {"isolated-a": ["a"], "isolated-b": ["b"], "switch": ["a", "b", "a"]}
@@ -72,11 +72,12 @@ def worker(run, sequence_name):
                 raise ValueError("Prepared input/source changed: " + path)
         os.environ.update(ORT_DISABLE_TELEMETRY="1", OPEN_JTALK_DICT_DIR=config["main_dictionary"])
         import mlx.core as mx
-        from sakuratts.frontend.japanese import JapaneseG2P
-        from sakuratts.frontend.text_frontend import LanguageSegmenter, TextFrontend
+        from sakuratts.text.japanese import JapaneseG2P
+        from sakuratts.text.LangSegmenter import LanguageSegmenter
+        from sakuratts.TTS_infer_pack.TextPreprocessor import TextFrontend
         from sakuratts.backends.mlx.gpt import MLXGPT
         from sakuratts.backends.mlx.sovits import MLXSoVITS
-        from sakuratts._internal.synthesis import prepare_text, synthesize_prepared
+        from sakuratts.TTS_infer_pack.synthesis import prepare_text, synthesize_prepared
         mx.set_default_device(mx.gpu)
 
         class ObservedGPT(MLXGPT):
@@ -250,7 +251,7 @@ def main():
     case = next(row for row in read_json(PROJECT / "benchmarks/cases/speech_regressions.json")["cases"] if row["id"] == CASE)
     run = Path(config["references"]) / "runs" / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ") + "-native-reference-switch")
     run.mkdir(parents=True, exist_ok=False)
-    files = [PROJECT / "benchmarks/cases/speech_regressions.json", *sorted((PROJECT / "src/sakuratts").rglob("*.py")),
+    files = [PROJECT / "benchmarks/cases/speech_regressions.json", *sorted((PROJECT / "sakuratts").rglob("*.py")),
              *sorted((PROJECT / "research/tools").glob("*.py"))]
     hashes = {}
     for path in files:

@@ -24,7 +24,7 @@ import traceback
 import numpy as np
 
 from native_text_speech import CASES, PATHS, PROJECT, read_json, write_json
-from sakuratts._internal.reference_condition import PreparedReference, sha256_file
+from sakuratts.module.reference_condition import PreparedReference, sha256_file
 
 POLICIES = ("request", "resident", "resident-release-state", "resident-release-before-acoustic")
 
@@ -94,11 +94,12 @@ def worker(args):
     os.environ["OPEN_JTALK_DICT_DIR"] = config["japanese_main_dictionary"]
     import_start = time.perf_counter()
     import mlx.core as mx
-    from sakuratts.frontend.japanese import JapaneseG2P
-    from sakuratts.frontend.text_frontend import LanguageSegmenter, TextFrontend
+    from sakuratts.text.japanese import JapaneseG2P
+    from sakuratts.text.LangSegmenter import LanguageSegmenter
+    from sakuratts.TTS_infer_pack.TextPreprocessor import TextFrontend
     from sakuratts.backends.mlx.gpt import MLXGPT
     from sakuratts.backends.mlx.sovits import MLXSoVITS
-    from sakuratts._internal.synthesis import prepare_text, synthesize_prepared
+    from sakuratts.TTS_infer_pack.synthesis import prepare_text, synthesize_prepared
     from native_prepared_speech import checks, load_case
     from mlx_sovits_encoder_replay import compare, memory_snapshot
     from mlx_sovits_replay import write_wav
@@ -414,7 +415,7 @@ def worker(args):
             (row["request_allocator_peak_bytes"] for row in report["requests"] + report["expected_errors"]),
             default=0) if diagnostic else None
         report["process_lifetime_maxrss_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        forbidden = ("torch", "transformers", "sakuratts.frontend.chinese", "sakuratts.frontend.g2pw", "sakuratts.backends.mlx.bert")
+        forbidden = ("torch", "transformers", "sakuratts.text.chinese", "sakuratts.text.g2pw", "sakuratts.backends.mlx.bert")
         report["forbidden_imports"] = {name: name in sys.modules for name in forbidden}
         if any(report["forbidden_imports"].values()):
             report["status"] = "unexpected_dependency"

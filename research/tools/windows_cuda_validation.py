@@ -8,10 +8,10 @@ import time
 
 import numpy as np
 
-sys.path.insert(0,str(Path(__file__).resolve().parents[2]/"src"))
+sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from sakuratts.backends.cuda.gpt import CUDAGPT
-from sakuratts._internal.generation import generate_semantic
-from sakuratts._internal.reference_condition import sha256_file
+from sakuratts.AR.generation import generate_semantic
+from sakuratts.module.reference_condition import sha256_file
 
 
 def metric(actual,expected):

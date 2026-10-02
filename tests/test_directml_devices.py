@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 
 from sakuratts.backends.directml.gpt import DirectMLGPT
 from sakuratts.backends.directml.static_gpt import StaticDirectMLGPT
-from sakuratts.backends.onnx.sovits import INPUT_NAMES, ORTSoVITS
+from sakuratts.module.sovits import INPUT_NAMES, ORTSoVITS
 from test_ort_sovits import manifest
 
 
@@ -19,7 +19,7 @@ class DirectMLDeviceTests(unittest.TestCase):
         self.ort = ort
         self.enterContext(patch.object(ort, "get_available_providers",
                                       return_value=["DmlExecutionProvider", "CPUExecutionProvider"]))
-        self.enterContext(patch("sakuratts.backends.onnx.sovits.read_manifest",
+        self.enterContext(patch("sakuratts.module.sovits.read_manifest",
                                 return_value=(manifest(), Path("unused-acoustic.onnx"))))
 
     def portable_probe(self):

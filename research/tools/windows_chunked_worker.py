@@ -10,15 +10,15 @@ import time
 import traceback
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT / "src"), str(ROOT / "research/tools")]
-from sakuratts._internal.protocol import read_message, write_message
-from sakuratts.backends.onnx.sovits import INPUT_NAMES
-from sakuratts._internal.reference_condition import sha256_file
+sys.path[:0] = [str(ROOT), str(ROOT / "research/tools")]
+from sakuratts.runtime.protocol import read_message, write_message
+from sakuratts.module.sovits import INPUT_NAMES
+from sakuratts.module.reference_condition import sha256_file
 from windows_chunked_synthesis import SplitAcousticAdapter
 
 SOURCE_FILES = ("research/tools/windows_chunked_worker.py", "research/tools/windows_chunked_synthesis.py",
-                "tools/vocoder_receptive_field.py", "src/sakuratts/backends/onnx/sovits.py",
-                "src/sakuratts/_internal/protocol.py")
+                "tools/vocoder_receptive_field.py", "sakuratts/module/sovits.py",
+                "sakuratts/runtime/protocol.py")
 
 
 def send_error(output_stream, error):

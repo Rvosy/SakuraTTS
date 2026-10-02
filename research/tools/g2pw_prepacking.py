@@ -24,12 +24,12 @@ import numpy as np
 from g2pw_session_equivalence import FIELDS, memory, sha256, write_json
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
+sys.path.insert(0, str(PROJECT))
 
 
 def worker(args):
     import onnxruntime as ort
-    from sakuratts.frontend.g2pw_session import G2PWSession
+    from sakuratts.text.g2pw_session import G2PWSession
 
     source, run = args.equivalence_run.resolve(), args.run.resolve()
     prepared = json.loads((source / "prepared.json").read_text())
@@ -194,7 +194,7 @@ def main():
     run = args.references / "runs" / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ") + "-g2pw-prepacking")
     run.mkdir(parents=True)
     snapshots = {}
-    for name in ("research/tools/g2pw_prepacking.py", "research/tools/g2pw_session_equivalence.py", "src/sakuratts/frontend/g2pw_session.py"):
+    for name in ("research/tools/g2pw_prepacking.py", "research/tools/g2pw_session_equivalence.py", "sakuratts/text/g2pw_session.py"):
         path = run / "source" / name
         path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(PROJECT / name, path)

@@ -1,6 +1,23 @@
 # 模型与功能验证矩阵
 
-本页集中记录产品支持范围与验证依据。请求字段和限制见 [API V2 使用说明](../api-v2-guide.md)，默认值由 [SpeechRequest](../../src/sakuratts/server.py) 与 [Engine.synthesize](../../src/sakuratts/engine.py) 定义。
+本页集中记录产品支持范围与验证依据。请求字段和限制见 [API V2 使用说明](../api-v2-guide.md)，默认值由 [SpeechRequest](../../sakuratts/server.py) 与 [Engine.synthesize](../../sakuratts/engine.py) 定义。
+
+## 完整兼容目标与当前差距
+
+兼容基准为 GPT-SoVITS [`48b1a016`](https://github.com/RVC-Boss/GPT-SoVITS/tree/48b1a0169a28582a8984402f82cf438d3bfa6aca)。目标覆盖该版本的模型、语言、配置、调用入口与行为。版本升级时先核对差异，再更新基准和回归样例；目录相似、字段齐全或单句出声都不能代替兼容验收。
+
+| 维度 | 当前差距与验收要求 |
+| --- | --- |
+| 模型与资源 | Windows 公共转换和推理集中在 V2ProPlus，MLX 为预制 V2Pro；V1、V2、V3、V4 及其他组合仍须逐一完成权重识别、加载、转换、参考编码和音频对照 |
+| 语言 | 日文、英文及日英混合已接入；中文组件尚未贯通公共入口，粤语、韩语及其混合模式待补齐；同时验证目标文本与参考转写 |
+| 推理参数 | 多参考、无转写、语速、真正的批量/并行、语义 Token 流式 2/3 与超采样仍有缺口；Top-p 的 HTTP 字段与采样函数已存在，但生成循环仍要求 `top_p=1`，不能标成已贯通 |
+| 配置 | 当前读取部分上游 YAML 字段；上游 `is_half`、模型版本分支、设备切换与全部资源字段尚未完全映射；不能用 SakuraTTS 的独立 profile 宣称上游配置已兼容 |
+| 调用入口 | 当前 HTTP 为 API V2 子集；根目录 `api.py` 启动同一 V2 服务，尚未实现旧版协议。原版 Python 类/导入接口、Gradio、WebUI 和其他启动流程仍需适配与回归 |
+| 输出与错误 | 逐项对照分句、顺序、采样和停止规则、PCM、流式时机、错误响应及取消；同种子不保证不同计算库逐样本一致，数值和语音质量分别验收 |
+| 训练与数据工具联动 | 当前交付推理与准备组件；训练、标注、数据制作所用的路径、配置、产物与调用流程尚未全面核对。按独立组件确定交付方式，不把训练依赖直接并入日常推理环境 |
+| 分发与设备 | 每种设备分别验证首次准备、缓存、搬迁、切换失败恢复和退出回收；已测的一种设备或模型不能代表所有组合 |
+
+现有默认值和未实现项的具体错误保持当前行为，新增兼容能力通过对应回归验收后更新下表。重构只调整代码归属，不提升任何未验证项的状态。
 
 ## 实现范围
 
@@ -13,7 +30,7 @@
 | 生命周期 | 默认 `direct`；可选 `managed` 提供提前唤醒、保活与空闲休眠 |
 | 分发 | wheel、源码包和可离线构建的 Windows 整合包；构建、验收与发布分别记录 |
 
-后端实现表在 [backends._IMPLEMENTATIONS](../../src/sakuratts/backends/__init__.py)，语言模式在 [frontend.profiles](../../src/sakuratts/frontend/profiles.py)。`Model` 允许读取结构有效的其他语言或后端声明；执行时仍由已实现的适配器判断是否可用。中文研究模块未接入公共 Engine。MLX 的模型限制和安装方式见 [Apple 指南](../apple.md)。
+后端实现表在 [backends._IMPLEMENTATIONS](../../sakuratts/backends/__init__.py)，语言模式在 [frontend.profiles](../../sakuratts/text/profiles.py)。`Model` 允许读取结构有效的其他语言或后端声明；执行时仍由已实现的适配器判断是否可用。中文研究模块未接入公共 Engine。MLX 的模型限制和安装方式见 [Apple 指南](../apple.md)。
 
 ## 已有验证与未验收项
 

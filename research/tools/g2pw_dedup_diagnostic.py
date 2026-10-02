@@ -23,7 +23,7 @@ sys.dont_write_bytecode = True
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
+sys.path.insert(0, str(PROJECT))
 COMMIT = "48b1a0169a28582a8984402f82cf438d3bfa6aca"
 
 
@@ -87,8 +87,8 @@ def main():
     from opencc import OpenCC
     from pypinyin import Style, pinyin
     from transformers import AutoTokenizer
-    from sakuratts.frontend.g2pw_inputs import G2PWInputs
-    from sakuratts.frontend.tokenizer import ChineseBertTokenizer
+    from sakuratts.text.g2pw_inputs import G2PWInputs
+    from sakuratts.text.tokenizer import ChineseBertTokenizer
 
     namespace = dict(re=re, np=np, Any=Any, Dict=Dict, List=List, Optional=Optional, Tuple=Tuple,
                      pinyin=pinyin, Style=Style)
@@ -203,7 +203,7 @@ def main():
                   status="captured", native_all_equal=all(all(case["native_arrays_equal"].values()) for case in report["cases"]))
     shutil.copy2(Path(__file__), run / "g2pw_dedup_diagnostic.py")
     for name in ("g2pw_inputs.py", "tokenizer.py"):
-        shutil.copy2(PROJECT / "src/sakuratts" / name, run / name)
+        shutil.copy2(PROJECT / "sakuratts" / name, run / name)
     write_json(run / "result.json", report)
     print(json.dumps(dict(status=report["status"], native_all_equal=report["native_all_equal"],
                           cases=[dict(id=case["id"], query_count=len(case["model_query_ids"]),

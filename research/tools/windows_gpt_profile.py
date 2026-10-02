@@ -13,8 +13,8 @@ import numpy as np
 import psutil
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "src"))
-from sakuratts._internal.reference_condition import sha256_file
+sys.path.insert(0, str(ROOT))
+from sakuratts.module.reference_condition import sha256_file
 from windows_gpt_precision import load_reference_prompt
 
 
@@ -198,7 +198,7 @@ def main():
             captures[case] = {key: archive[key] for key in ("gpt_all_phones", "gpt_all_bert", "sampled_tokens")}
         identities[case] = {"path": str(path), "sha256": sha256_file(path)}
     prompt, reference_hash = load_reference_prompt(args.reference)
-    source_hash = sha256_file(ROOT / "src/sakuratts/backends/cuda/gpt.py")
+    source_hash = sha256_file(ROOT / "sakuratts/backends/cuda/gpt.py")
     report = {"status": "running", "precision": args.precision, "pid": os.getpid(),
               "executable": sys.executable, "reference_archive_sha256": reference_hash,
               "gpt_manifest_sha256": sha256_file(args.gpt / "manifest.json"),
@@ -247,7 +247,7 @@ def main():
     finally:
         if model is not None:
             model.close()
-        report["source_unchanged"] = source_hash == sha256_file(ROOT / "src/sakuratts/backends/cuda/gpt.py")
+        report["source_unchanged"] = source_hash == sha256_file(ROOT / "sakuratts/backends/cuda/gpt.py")
         np.savez(args.output / "timings.npz", **timings)
         (args.output / "result.json").write_text(json.dumps(report, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
     return 0

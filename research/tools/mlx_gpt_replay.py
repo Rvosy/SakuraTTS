@@ -21,7 +21,7 @@ import traceback
 import mlx.core as mx
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from sakuratts.backends.mlx.gpt import MLXGPT, sha256
 
 
@@ -210,9 +210,9 @@ def main():
     source_root = run / "source"
     snapshot_files = {
         "research/tools/mlx_gpt_replay.py": Path(__file__).resolve(),
-        "src/sakuratts/backends/mlx/gpt.py": project_root / "src/sakuratts/backends/mlx/gpt.py",
-        "src/sakuratts/backends/mlx/gpt_prefill.py": project_root / "src/sakuratts/backends/mlx/gpt_prefill.py",
-        "src/sakuratts/_internal/weight_storage.py": project_root / "src/sakuratts/_internal/weight_storage.py",
+        "sakuratts/backends/mlx/gpt.py": project_root / "sakuratts/backends/mlx/gpt.py",
+        "sakuratts/backends/mlx/gpt_prefill.py": project_root / "sakuratts/backends/mlx/gpt_prefill.py",
+        "sakuratts/module/weight_storage.py": project_root / "sakuratts/module/weight_storage.py",
         "requirements/mlx-candidate.txt": project_root / "requirements/mlx-candidate.txt",
     }
     for name, original in snapshot_files.items():

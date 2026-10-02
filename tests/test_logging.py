@@ -11,7 +11,7 @@ import unittest
 import unicodedata
 from unittest.mock import patch
 
-from sakuratts._internal.logging import request_id, request_scope, run_conversion, service_logging, terminal_progress_enabled
+from sakuratts.runtime.logging import request_id, request_scope, run_conversion, service_logging, terminal_progress_enabled
 
 
 class LoggingTests(unittest.TestCase):

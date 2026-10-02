@@ -20,7 +20,7 @@ import traceback
 import mlx.core as mx
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from sakuratts.backends.mlx.decoder import MLXSoVITSDecoder, leaky_relu, sha256
 from mlx_sovits_encoder_replay import compare, memory_snapshot
 
@@ -58,7 +58,7 @@ def main():
     run.mkdir(parents=True, exist_ok=False)
     project = Path(__file__).resolve().parents[2]
     files = ("research/tools/decoder_workspace.py", "research/tools/mlx_sovits_encoder_replay.py",
-             "src/sakuratts/backends/mlx/decoder.py", "src/sakuratts/_internal/weight_storage.py")
+             "sakuratts/backends/mlx/decoder.py", "sakuratts/module/weight_storage.py")
     for name in files:
         target = run / "source" / name
         target.parent.mkdir(parents=True, exist_ok=True)

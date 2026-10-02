@@ -34,12 +34,12 @@ import time
 import traceback
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
+sys.path.insert(0, str(PROJECT))
 CASES = ("ja-reported-intro", "ja-short", "ja-long", "ja-punctuation")
 CONFIG_PATHS = ("symbols_json", "language_model_dir", "japanese_main_dictionary", "japanese_user_dictionary")
 DEPENDENCIES = ("numpy", "pyopenjtalk-plus", "SudachiPy", "SudachiDict-core", "onnxruntime",
                 "split-lang", "fast-langdetect", "fasttext-predict", "budoux")
-FORMAT = "sakuratts.frontend-process-draft.v1"
+FORMAT = "sakuratts.text-process-draft.v1"
 
 
 def read_json(path):
@@ -69,9 +69,10 @@ def prepare_in_process(case, config):
     """Run the original frontend and preserve its complete PreparedText data."""
     os.environ["ORT_DISABLE_TELEMETRY"] = "1"
     os.environ["OPEN_JTALK_DICT_DIR"] = str(config["japanese_main_dictionary"])
-    from sakuratts.frontend.japanese import JapaneseG2P
-    from sakuratts.frontend.text_frontend import LanguageSegmenter, TextFrontend
-    from sakuratts._internal.synthesis import prepare_text
+    from sakuratts.text.japanese import JapaneseG2P
+    from sakuratts.text.LangSegmenter import LanguageSegmenter
+    from sakuratts.TTS_infer_pack.TextPreprocessor import TextFrontend
+    from sakuratts.TTS_infer_pack.synthesis import prepare_text
 
     japanese = segmenter = None
     try:
@@ -108,7 +109,7 @@ def save_prepared(output, case, prepared):
 
 def load_prepared(output, case):
     import numpy as np
-    from sakuratts._internal.synthesis import PreparedText
+    from sakuratts.TTS_infer_pack.synthesis import PreparedText
 
     record = read_json(output / "prepared.json")
     if record["format"] != FORMAT or record["case"] != case:
@@ -196,8 +197,8 @@ def frontend_worker(job_path):
         traceback.print_exc()
     report["modules"] = {name: any(key == name or key.startswith(name + ".") for key in sys.modules)
                          for name in ("mlx", "torch", "transformers", "pyopenjtalk", "onnxruntime", "sudachipy",
-                                      "sakuratts.frontend.chinese", "sakuratts.frontend.g2pw", "sakuratts.backends.mlx.bert")}
-    if any(report["modules"][name] for name in ("mlx", "torch", "transformers", "sakuratts.frontend.chinese", "sakuratts.frontend.g2pw", "sakuratts.backends.mlx.bert")):
+                                      "sakuratts.text.chinese", "sakuratts.text.g2pw", "sakuratts.backends.mlx.bert")}
+    if any(report["modules"][name] for name in ("mlx", "torch", "transformers", "sakuratts.text.chinese", "sakuratts.text.g2pw", "sakuratts.backends.mlx.bert")):
         report["status"] = "unexpected_dependency"
     report["wall_seconds_before_record_write"] = time.perf_counter() - started
     report["scope"] = "Raw original frontend only; no semantic/acoustic model. Parent confirms exit separately."
@@ -215,7 +216,7 @@ def prepare(args):
         raise ValueError("Keep the original ja request language")
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
-    source_names = [p.relative_to(PROJECT).as_posix() for p in sorted((PROJECT / "src/sakuratts").rglob("*.py"))]
+    source_names = [p.relative_to(PROJECT).as_posix() for p in sorted((PROJECT / "sakuratts").rglob("*.py"))]
     source_names.append("research/tools/japanese_frontend_process.py")
     for name in source_names:
         destination = output / "source" / name

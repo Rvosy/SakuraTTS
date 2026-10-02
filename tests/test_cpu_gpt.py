@@ -11,10 +11,10 @@ from unittest.mock import patch
 import numpy as np
 from threadpoolctl import threadpool_info
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sakuratts.backends.cpu.gpt import CPUGPT
-from sakuratts._internal.generation import SynthesisCancelled, generate_semantic
-from sakuratts._internal.reference_condition import sha256_file
+from sakuratts.AR.generation import SynthesisCancelled, generate_semantic
+from sakuratts.module.reference_condition import sha256_file
 
 
 def model_data():

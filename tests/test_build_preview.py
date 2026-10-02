@@ -25,8 +25,9 @@ def source_tree(root):
              "packaging/recipes/windows-nvidia-ja.toml": 'target="windows-x64"\nbackend="cuda"\n',
              "docs/preview-release.md": "Developer installation guide\n",
              "docs/third-party/example-LICENSE.txt": "Example license\n",
-             "src/sakuratts/__init__.py": '"""Package."""\n',
-             "src/sakuratts/_internal/conversion/convert_gpt.py": "pass\n",
+             "sakuratts/__init__.py": '"""Package."""\n',
+             "packaging/auxiliary-model-sources.json": '{}\n',
+             "sakuratts/prepare/convert_gpt.py": "pass\n",
              "benchmarks/cases/speech_regressions.json": '{"cases": []}\n',
              "tests/test_probe.py": "pass\n", "examples/runtime.json": "{}\n"}
     for name, text in files.items():
@@ -40,8 +41,8 @@ def write_distributions(source, dist, fault=None):
     """Produce real, minimal archives as the mocked build backend's output."""
     source_files = {path.relative_to(source).as_posix(): path.read_bytes()
                     for path in source.rglob("*") if path.is_file()}
-    wheel_files = {name.removeprefix("src/"): data for name, data in source_files.items()
-                   if name.startswith("src/sakuratts/") and name.endswith(".py")}
+    wheel_files = {name: data for name, data in source_files.items()
+                   if name.startswith("sakuratts/") and name.endswith(".py")}
     for name, data in source_files.items():
         if name == "LICENSE" or (name.startswith("docs/third-party/") and Path(name).suffix in (".txt", ".md")):
             wheel_files["sakuratts-0.1.0a1.dist-info/licenses/" + name] = data
@@ -76,7 +77,7 @@ class PreviewBuildTests(unittest.TestCase):
             (research / "weights.npz").write_bytes(b"binary")
             (root / "research/probe.py").write_text("pass\n", encoding="utf-8")
             inventory = preview.stage_source(root, staged)
-            self.assertIn("src/sakuratts/_internal/conversion/convert_gpt.py", inventory)
+            self.assertIn("sakuratts/prepare/convert_gpt.py", inventory)
             self.assertIn("packaging/recipes/windows-nvidia-ja.toml", inventory)
             self.assertIn("api_v2.py", inventory)
             self.assertFalse(any(name.startswith("research/") for name in inventory))
@@ -91,8 +92,8 @@ class PreviewBuildTests(unittest.TestCase):
             excluded = [".env", "data/private.json", "models/model.json", "outputs/log.txt",
                         "configs/tts_infer.yaml", ".cache/sakuratts/references/condition.json",
                         "logs/sakuratts.log", ".venv-windows-runtime/Lib/site-packages/local.py",
-                        "build/lib/old.py", "src/sakuratts.egg-info/SOURCES.txt",
-                        "src/sakuratts/kernel.dll", "docs/audio.wav", "docs/snapshot.png",
+                        "build/lib/old.py", "sakuratts.egg-info/SOURCES.txt",
+                        "sakuratts/kernel.dll", "docs/audio.wav", "docs/snapshot.png",
                         "scripts/.venv/secret.py", "scripts/__pycache__/cached.py",
                         "scripts/build/old.py", "scripts/local.egg-info/PKG-INFO"]
             for name in excluded:
@@ -169,7 +170,7 @@ class PreviewBuildTests(unittest.TestCase):
     def test_sdist_missing_source_and_source_drift_prevent_publication(self):
         self.assert_bad_distribution_rejected(("sdist", "research/local.json", b"{}"), "research files")
         for name, replacement in [("benchmarks/cases/speech_regressions.json", None),
-                                  ("src/sakuratts/_internal/conversion/convert_gpt.py", b"changed source\n"),
+                                  ("sakuratts/prepare/convert_gpt.py", b"changed source\n"),
                                   ("packaging/recipes/windows-nvidia-ja.toml", None)]:
             with self.subTest(name=name):
                 self.assert_bad_distribution_rejected(("sdist", name, replacement), "sdist source")

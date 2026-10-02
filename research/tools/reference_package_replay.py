@@ -13,8 +13,8 @@ import zipfile
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
-from sakuratts._internal.reference_condition import ARRAY_DTYPES, PreparedReference, sha256_file
+sys.path.insert(0, str(PROJECT))
+from sakuratts.module.reference_condition import ARRAY_DTYPES, PreparedReference, sha256_file
 
 
 def read_json(path):
@@ -83,9 +83,9 @@ def run(args):
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     output = args.references.resolve() / "runs" / (timestamp + "-reference-condition-reload")
     (output / "source/research/tools").mkdir(parents=True)
-    (output / "source/src/sakuratts").mkdir(parents=True)
+    (output / "source/sakuratts").mkdir(parents=True)
     shutil.copy2(__file__, output / "source/research/tools/reference_package_replay.py")
-    shutil.copy2(PROJECT / "src/sakuratts/_internal/reference_condition.py", output / "source/src/sakuratts/_internal/reference_condition.py")
+    shutil.copy2(PROJECT / "sakuratts/module/reference_condition.py", output / "source/sakuratts/module/reference_condition.py")
     relocated = output / "relocated-package"
     relocated.mkdir()
     for name in ("manifest.json", "conditions.npz"):
@@ -98,7 +98,7 @@ def run(args):
     report = {"status": "passed" if result.returncode == 0 else "failed", "command": command,
               "exit_code": result.returncode, "run": str(output), "source_package": str(args.package.resolve()),
               "source_manifest_sha256": sha256_file(args.package / "manifest.json"),
-              "reader_sha256": sha256_file(output / "source/src/sakuratts/_internal/reference_condition.py"),
+              "reader_sha256": sha256_file(output / "source/sakuratts/module/reference_condition.py"),
               "harness_sha256": sha256_file(output / "source/research/tools/reference_package_replay.py")}
     write_json(output / "result.json", report)
     print(json.dumps(report, ensure_ascii=False))

@@ -16,7 +16,7 @@ import time
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
+sys.path.insert(0, str(PROJECT))
 
 
 def sha256(path):
@@ -69,7 +69,7 @@ def official_segments(args):
 def prepare(args):
     import torch
     from transformers import AutoModelForMaskedLM, AutoTokenizer, BertConfig, BertForMaskedLM
-    from sakuratts.frontend.bert_features import BertFeatures
+    from sakuratts.text.bert_features import BertFeatures
 
     torch.set_num_threads(2)
     run = args.references.resolve() / "runs" / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ") + "-mlx-bert-cpu")
@@ -185,7 +185,7 @@ def prepare(args):
         "conversion_python": sys.version, "torch": torch.__version__, "transformers": metadata.version("transformers"),
     }
     write_json(package / "manifest.json", manifest)
-    for source_file in (Path(__file__), PROJECT / "src/sakuratts/backends/mlx/bert.py", PROJECT / "src/sakuratts/frontend/bert_features.py", PROJECT / "src/sakuratts/_internal/weight_storage.py"):
+    for source_file in (Path(__file__), PROJECT / "sakuratts/backends/mlx/bert.py", PROJECT / "sakuratts/text/bert_features.py", PROJECT / "sakuratts/module/weight_storage.py"):
         shutil.copy2(source_file, run / source_file.name)
     write_json(run / "prepared.json", report)
     print(f"PREPARED={run}", flush=True)
@@ -201,8 +201,8 @@ def validate(args):
     if destination.exists() or list(run.glob(f"*-mlx-{args.device}.npz")):
         raise FileExistsError("Validation artifacts already exist; prepare a new run to preserve them")
     shutil.copy2(Path(__file__), run / f"validation-{args.device}-research.tools.py")
-    shutil.copy2(PROJECT / "src/sakuratts/backends/mlx/bert.py", run / f"validation-{args.device}-runtime.py")
-    shutil.copy2(PROJECT / "src/sakuratts/_internal/weight_storage.py", run / f"validation-{args.device}-weight_storage.py")
+    shutil.copy2(PROJECT / "sakuratts/backends/mlx/bert.py", run / f"validation-{args.device}-runtime.py")
+    shutil.copy2(PROJECT / "sakuratts/module/weight_storage.py", run / f"validation-{args.device}-weight_storage.py")
     prepared = json.loads((run / "prepared.json").read_text())
     model = MLXBertFeatures.load(run / "package")
     report = {"status": "running", "device": str(mx.default_device()), "mlx": metadata.version("mlx"),

@@ -8,8 +8,8 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
-sys.path[:0] = [str(Path(__file__).resolve().parents[1] / "src"), str(Path(__file__).resolve().parent)]
-from sakuratts.backends.onnx.sovits import INPUT_NAMES, ORTSoVITS
+sys.path[:0] = [str(Path(__file__).resolve().parents[1]), str(Path(__file__).resolve().parent)]
+from sakuratts.module.sovits import INPUT_NAMES, ORTSoVITS
 from test_ort_directml import SessionOptions
 from test_ort_sovits import manifest
 

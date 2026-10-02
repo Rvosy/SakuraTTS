@@ -20,7 +20,7 @@ import traceback
 from unittest import mock
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(PROJECT / "src"), str(PROJECT / "tools"), str(PROJECT / "research/tools")]
+sys.path[:0] = [str(PROJECT), str(PROJECT / "tools"), str(PROJECT / "research/tools")]
 from windows_official_baseline import digest, write_json
 
 

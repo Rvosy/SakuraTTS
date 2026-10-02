@@ -9,9 +9,9 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts._internal.portable import model_config, preparation_settings
-from sakuratts._internal.diagnostics import read_windows_config
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from sakuratts.runtime.portable import model_config, preparation_settings
+from sakuratts.runtime.diagnostics import read_windows_config
 
 
 class PortableRuntimeTests(unittest.TestCase):

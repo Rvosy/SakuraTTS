@@ -8,7 +8,7 @@ import wave
 
 import numpy as np
 
-sys.path.insert(0,str(Path(__file__).resolve().parents[2]/"src"))
+sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from sakuratts.backends.cuda.engine import NVIDIAEngine,write_wav
 
 

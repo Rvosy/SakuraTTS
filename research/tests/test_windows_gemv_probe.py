@@ -58,7 +58,7 @@ def input_fixture(directory, model_identity, *, dtype="float16"):
         info[name] = {"input_sha256": probe.array_sha256(x), "output_sha256": probe.array_sha256(output)}
     np.savez(directory / "inputs.npz", **arrays)
     record = {"format": "sakuratts-gemv-inputs-v1", "status": "captured", "model": deepcopy(model_identity),
-        "sources_sha256": {"src/sakuratts/backends/cuda/gpt.py": probe.sha256_file(ROOT / "src/sakuratts/backends/cuda/gpt.py")},
+        "sources_sha256": {"sakuratts/backends/cuda/gpt.py": probe.sha256_file(ROOT / "sakuratts/backends/cuda/gpt.py")},
         "archive_sha256": probe.sha256_file(directory / "inputs.npz"), "arrays": info}
     write_json(directory / "inputs.json", record)
     write_json(directory / "result.json", {"status": "captured", "sources_changed": [],

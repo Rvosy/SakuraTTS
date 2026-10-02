@@ -18,7 +18,7 @@ import traceback
 PROJECT = Path(__file__).resolve().parents[2]
 BASELINE = 'a67074a'
 COMPONENTS = ('encoder', 'flow', 'decoder')
-sys.path.insert(0, str(PROJECT / 'src'))
+sys.path.insert(0, str(PROJECT))
 
 
 def dump(path, data):
@@ -30,7 +30,7 @@ def worker(args):
     import numpy as np
     import sakuratts.backends.mlx.sovits_package as package_module
     from sakuratts.backends.mlx.sovits import MLXSoVITS
-    from sakuratts._internal.weight_storage import array_sha256
+    from sakuratts.module.weight_storage import array_sha256
     from g2pw_session_equivalence import memory as rss_memory
     mx.set_default_device(mx.gpu)
     mx.set_cache_limit(256 * 1024 * 1024)
@@ -115,10 +115,10 @@ def main():
     previous.mkdir(parents=True)
     for component in COMPONENTS:
         filename = f'mlx_sovits_{component}.py'
-        source = subprocess.check_output(['git', 'show', f'{BASELINE}:src/sakuratts/{filename}'], cwd=PROJECT)
+        source = subprocess.check_output(['git', 'show', f'{BASELINE}:sakuratts/{filename}'], cwd=PROJECT)
         (previous / filename).write_bytes(source)
     for name in ['research/tools/sovits_package_loading.py', 'research/tools/g2pw_session_equivalence.py',
-                 *['src/sakuratts/' + v + '.py' for v in ['mlx_sovits', 'sovits_package', 'weight_storage', *['mlx_sovits_' + c for c in COMPONENTS]]]]:
+                 *['sakuratts/' + v + '.py' for v in ['mlx_sovits', 'sovits_package', 'weight_storage', *['mlx_sovits_' + c for c in COMPONENTS]]]]:
         target = run / 'source' / name
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(PROJECT / name, target)

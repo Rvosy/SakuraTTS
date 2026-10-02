@@ -28,7 +28,7 @@ import weakref
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
+sys.path.insert(0, str(PROJECT))
 CASES = ("ja-reported-intro", "ja-short", "ja-long", "ja-punctuation")
 STAGES = ("quantized", "ssl_encoded", "text_encoded", "mrte", "encoder_hidden", "mean",
           "log_scale", "mask", "flow_input", "flow_output", "decoder_input", "waveform")
@@ -170,7 +170,7 @@ def inventory(model):
 
 def load_inputs(prepared):
     from portable_validation import load_bundle
-    from sakuratts._internal.reference_condition import PreparedReference
+    from sakuratts.module.reference_condition import PreparedReference
 
     bundle = load_bundle(Path(prepared["bundle"]), sovits_package=Path(prepared["package"]))
     if bundle["manifest_sha256"] != prepared["bundle_manifest_sha256"]:
@@ -201,7 +201,7 @@ def memory(mx):
 
 
 def diagnostic(model, bundle, references, policy, output, report, mx):
-    from sakuratts._internal.synthesis import single_fragment_pcm
+    from sakuratts.TTS_infer_pack.synthesis import single_fragment_pcm
 
     for name in CASES:
         data = bundle["arrays"][name]
@@ -238,7 +238,7 @@ def diagnostic(model, bundle, references, policy, output, report, mx):
 
 
 def paired(model, bundle, references, output, report, mx, warmup, repeat):
-    from sakuratts._internal.synthesis import single_fragment_pcm
+    from sakuratts.TTS_infer_pack.synthesis import single_fragment_pcm
 
     for name in CASES:
         data = bundle["arrays"][name]
@@ -397,9 +397,9 @@ def run(args):
     run = args.output.resolve()
     run.mkdir(parents=True, exist_ok=False)
     files = ["research/tools/sovits_reference_projection.py", "research/tools/portable_validation.py",
-             *[f"src/sakuratts/{name}.py" for name in ("backends/mlx/sovits", "backends/mlx/encoder",
-               "backends/mlx/flow", "backends/mlx/decoder", "backends/mlx/sovits_package", "_internal/weight_storage", "_internal/synthesis",
-               "_internal/generation", "_internal/sampling", "_internal/reference_condition")]]
+             *[f"sakuratts/{name}.py" for name in ("backends/mlx/sovits", "backends/mlx/encoder",
+               "backends/mlx/flow", "backends/mlx/decoder", "backends/mlx/sovits_package", "module/weight_storage", "TTS_infer_pack/synthesis",
+               "AR/generation", "AR/sampling", "module/reference_condition")]]
     for name in files:
         target = run / "source" / name
         target.parent.mkdir(parents=True, exist_ok=True)

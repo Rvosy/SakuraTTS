@@ -19,13 +19,13 @@ import sys
 import time
 import traceback
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import numpy as np
 import torch
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
-from sakuratts.frontend.bert_features import BertFeatures
+from sakuratts.text.bert_features import BertFeatures
 
 
 def write_json(path, value):
@@ -100,7 +100,7 @@ def main():
     }
     shutil.copy2(frontend_path, output / "official-frontend.json")
     shutil.copy2(__file__, output / "bert_equivalence.py")
-    module_path = Path(__file__).resolve().parents[2] / "src/sakuratts/frontend/bert_features.py"
+    module_path = Path(__file__).resolve().parents[2] / "sakuratts/text/bert_features.py"
     shutil.copy2(module_path, output / "bert_features.py")
     report["harness_sha256"] = sha256(Path(__file__))
     report["module_sha256"] = sha256(module_path)

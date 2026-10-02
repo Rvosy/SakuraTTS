@@ -4,7 +4,7 @@
 
 ## 产品目标与范围
 
-SakuraTTS 是面向本地应用的 GPT-SoVITS 轻量推理后端，接收支持范围内的模型，经转换后由选定后端推理。设备目标覆盖 CPU、NVIDIA、AMD 和 Apple M 系列；当前各后端的模型范围与验证状态由[兼容矩阵](compatibility-matrix.md)维护。以固定原版版本的接口和推理语义为兼容基准，优先缩短合成耗时、减少活动与空闲资源占用。缺失功能应明确报错并列入兼容清单，不能为简化实现而静默忽略请求参数。
+SakuraTTS 以完全兼容 GPT-SoVITS 为目标，接收原版模型，经转换后由选定后端推理。设备目标覆盖 CPU、NVIDIA、AMD 和 Apple M 系列；完整兼容目标、当前实现与验证状态由[兼容矩阵](compatibility-matrix.md)维护。以固定原版版本的接口和推理语义为兼容基准，在保持行为的基础上缩短合成耗时、减少活动与空闲资源占用。缺失功能应明确报错并列入兼容清单，不能为简化实现而静默忽略请求参数，也不能将当前支持子集当作最终目标。
 
 主要使用场景是桌宠。低端设备需要同时控制响应时间、CPU 占用、内存与显存；速度优先和内存优先的取舍通过显式配置选择，并保留测量依据。主运行包只包含实际推理和服务依赖；模型转换、新参考准备所需的 PyTorch、导出器和辅助模型作为可选准备组件，不能为构建方便全部塞进主包。发布使用 7z，并通过实际压缩结果比较体积、压缩耗时和解压成本。
 
@@ -22,7 +22,7 @@ SakuraTTS 是面向本地应用的 GPT-SoVITS 轻量推理后端，接收支持�
 
 当前 Windows 开发者预览采用独立安装的 wheel 与外部资源包。不同 Python ABI 的私有工作进程只加载指定的 SakuraTTS 包，不得把主环境整个 `site-packages` 加入搜索路径，否则可能误载主环境的 NumPy / ORT。CuPy / NVRTC 的头文件路径当前须为 ASCII；GPT 初始化与 `doctor --nvidia` 应提前说明不支持的安装路径。这项限制不用于拒绝日文文本、参考名称或模型资源路径。
 
-产品范围为推理引擎、CLI 和 HTTP 服务，训练、标注与数据集管理由外部工具负责。文本规范化、音素处理等使用 CPU 不违背 GPU 推理目标；中文特征模型的设备和精度需独立评估。
+当前交付推理引擎、CLI 和 HTTP 服务，训练、标注与数据集管理使用外部工具；这些工具与原版的配置、产物和流程兼容情况仍需核对，见[兼容矩阵](compatibility-matrix.md)。文本规范化、音素处理等使用 CPU 不违背 GPU 推理目标；中文特征模型的设备和精度需独立评估。
 
 当前原生实现尚不包含多租户服务、多请求批处理和多模型同时常驻。量化、多 token 预测、蒸馏和模型结构修改不进入初始正确性基线。
 
@@ -40,7 +40,7 @@ SakuraTTS 是面向本地应用的 GPT-SoVITS 轻量推理后端，接收支持�
 
 后端选择可以由调用方显式覆盖，覆盖不修改模型文件。执行选项由对应后端解释，公共生命周期不得硬编码设备依赖。服务配置 `sakuratts.runtime_options` 提供后端选项，显式 `experimental` 参数覆盖同名字段；direct 与 managed 使用同一合并结果。语言处理器与设备选择分开；改变语言必须同时提供对应的规范化、音素、特征和资源准备实现，中文不能复用日文的零 BERT 特征作为兼容实现。
 
-执行预设可由 Python `profile`、CLI `--profile` 或 YAML `sakuratts.profile` 显式选择。CPU 只提供 `int8`，DirectML 只提供 `fp16`，省略时也选择各自默认档位；CUDA 与 MLX 的现有组合及默认行为不变。优先级为显式后端选项、YAML `runtime_options`、预设默认值；显式 `profile` 覆盖 YAML 的预设名。线程、容量和驻留策略可以调整，设备与精度必须符合对应路径。预设不会转换权重或自动切换设备，不支持的组合和精度包错配必须报错。Managed 睡醒后保留本次服务会话的选择；总体错峰策略的准备状态与加载时机仍遵循既有生命周期契约。具体组合由 [profiles.py](../../src/sakuratts/profiles.py) 定义。
+执行预设可由 Python `profile`、CLI `--profile` 或 YAML `sakuratts.profile` 显式选择。CPU 只提供 `int8`，DirectML 只提供 `fp16`，省略时也选择各自默认档位；CUDA 与 MLX 的现有组合及默认行为不变。优先级为显式后端选项、YAML `runtime_options`、预设默认值；显式 `profile` 覆盖 YAML 的预设名。线程、容量和驻留策略可以调整，设备与精度必须符合对应路径。预设不会转换权重或自动切换设备，不支持的组合和精度包错配必须报错。Managed 睡醒后保留本次服务会话的选择；总体错峰策略的准备状态与加载时机仍遵循既有生命周期契约。具体组合由 [profiles.py](../../sakuratts/profiles.py) 定义。
 
 DirectML 的公共 `device_id` 使用 DXGI 适配器索引，GPT Prefill、Decode、GPU KV 与声学必须归属同一选择。初始化失败保留原因，不整体重试 CPU 或自动改选显卡；图内 CPU 分区仍由 ORT 处理。`doctor --backend directml` 的设备枚举只提供诊断，查询失败不阻塞真实加载，查询成功也不代表推理通过。配置用法见[设备指南](../cpu-amd.md#选择-amd-显卡)，Session 内部设备序号与缓存分配原因见 [ADR 0006](../adr/0006-device-precision-and-directml-kv.md#显卡选择与-kv-分配)。
 
@@ -48,7 +48,7 @@ DirectML 的公共 `device_id` 使用 DXGI 适配器索引，GPT Prefill、Decod
 
 HTTP 以原版 api_v2 的 GET/POST 字段和默认值为准，保留一个活动模型、一个计算请求。忙碌返回 409；业务输入错误和不支持的功能返回 400，类型校验错误返回 422。客户端断开不能提前释放忙碌状态，模型创建、切换、计算和关闭发生在同一工作线程。完整响应以 `X-SakuraTTS-Status` 区分正常完成和达到长度限制。模式 1 在各片完成后发送音频，有界队列施加背压，不先聚合完整请求；模式 2/3 尚未实现。具体差异见 [HTTP API](../http-api.md)。
 
-兼容范围只包括原版 API v2，API 版本不等于模型家族版本。旧版 `api.py` 协议、Gradio 客户端和原版 Python 模块接口不纳入适配目标；自有 CLI / Python API 继续独立提供。已声明但未实现的计算功能返回 400，未知额外字段忽略。参数拒绝发生在推理或 managed 唤醒之前；未注册路径仍为 404，HTTP 方法不匹配仍为 405。
+当前 HTTP 实现覆盖原版 API V2 的部分能力，API 版本不等于模型家族版本。旧版 `api.py` 协议、Gradio 客户端和原版 Python 模块接口仍是待补齐的兼容项；自有 CLI / Python API 继续提供。已声明但未实现的计算功能返回 400，未知额外字段忽略。参数拒绝发生在推理或 managed 唤醒之前；未注册路径仍为 404，HTTP 方法不匹配仍为 405。
 
 `batch_size=1` 时接收 `parallel_infer` 的原版默认值 `true`，按单项顺序执行；它不改变音频内容。`top_p` 支持 `(0, 1]`。`batch_threshold` 在单项批次下、`sample_steps` 在 V2ProPlus 下、`overlap_length` / `min_chunk_length` 在模式 0/1 下不影响计算。参数用法见 [API v2 使用指南](../api-v2-guide.md)。
 

@@ -18,8 +18,8 @@ import sys
 import numpy as np
 import torch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-import sakuratts._internal.sampling as sampling
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+import sakuratts.AR.sampling as sampling
 
 PINNED_COMMIT = "48b1a0169a28582a8984402f82cf438d3bfa6aca"
 

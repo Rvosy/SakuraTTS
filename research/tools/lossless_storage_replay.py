@@ -16,12 +16,12 @@ import traceback
 import mlx.core as mx
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from sakuratts.backends.mlx.gpt import MLXGPT, sha256
 from sakuratts.backends.mlx.bert import MLXBertFeatures
 from sakuratts.backends.mlx.sovits import MLXSoVITS
 from sakuratts.backends.mlx.gpt_prefill import prefill_fp64
-from sakuratts._internal.weight_storage import array_sha256
+from sakuratts.module.weight_storage import array_sha256
 from gpt_benchmark import load_trace
 
 
@@ -35,8 +35,8 @@ def main():
     run = args.references.resolve() / "runs" / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ") + "-lossless-storage-runtime")
     run.mkdir(parents=True, exist_ok=False)
     project = Path(__file__).resolve().parents[2]
-    sources = ["research/tools/lossless_storage_replay.py", "research/tools/gpt_benchmark.py", "src/sakuratts/_internal/weight_storage.py",
-               *[f"src/sakuratts/{name}.py" for name in ("backends/mlx/gpt", "backends/mlx/gpt_prefill", "backends/mlx/bert", "backends/mlx/sovits", "backends/mlx/encoder", "backends/mlx/flow", "backends/mlx/decoder")]]
+    sources = ["research/tools/lossless_storage_replay.py", "research/tools/gpt_benchmark.py", "sakuratts/module/weight_storage.py",
+               *[f"sakuratts/{name}.py" for name in ("backends/mlx/gpt", "backends/mlx/gpt_prefill", "backends/mlx/bert", "backends/mlx/sovits", "backends/mlx/encoder", "backends/mlx/flow", "backends/mlx/decoder")]]
     for name in sources:
         target = run / "source" / name
         target.parent.mkdir(parents=True, exist_ok=True)

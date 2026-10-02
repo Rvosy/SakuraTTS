@@ -10,8 +10,8 @@ import weakref
 
 import numpy as np
 
-sys.path[:0] = [str(Path(__file__).resolve().parents[1] / "src"), str(Path(__file__).resolve().parent)]
-from sakuratts.backends.onnx.sovits import ORTSoVITS
+sys.path[:0] = [str(Path(__file__).resolve().parents[1]), str(Path(__file__).resolve().parent)]
+from sakuratts.module.sovits import ORTSoVITS
 from test_chunked_package import OPTIONS, make_package
 
 

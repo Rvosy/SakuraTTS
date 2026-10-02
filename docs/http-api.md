@@ -1,6 +1,6 @@
 # HTTP 服务配置与生命周期
 
-本页说明服务启动、后台控制和诊断。客户端路由、请求字段、默认值与错误处理集中在 [API V2 使用说明](api-v2-guide.md)；字段实现见 [server.SpeechRequest](../src/sakuratts/server.py)。
+本页说明服务启动、后台控制和诊断。客户端路由、请求字段、默认值与错误处理集中在 [API V2 使用说明](api-v2-guide.md)；字段实现见 [server.SpeechRequest](../sakuratts/server.py)。
 
 ## 启动
 

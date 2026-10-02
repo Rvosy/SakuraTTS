@@ -21,7 +21,7 @@ import traceback
 import mlx.core as mx
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from mrte_numerical_diagnosis import compare
 from sovits_fixed_conditions import sha256
 

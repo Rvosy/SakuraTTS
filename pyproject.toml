@@ -63,7 +63,7 @@ dev = ["sakuratts[convert]", "psutil==7.2.2", "httpx==0.28.1"]
 sakuratts = "sakuratts.cli:main"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
 include = ["sakuratts*"]
 
 [tool.setuptools]

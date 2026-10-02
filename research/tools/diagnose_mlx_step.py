@@ -97,7 +97,7 @@ def analyze(args, x, prompt, tokens, expected):
 
 def mlx_replay(args, config, package, inputs):
     import mlx.core as mx
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
     from sakuratts.backends.mlx.gpt import MLXGPT
     mx.set_default_device(mx.cpu if args.device == "cpu" else mx.gpu)
 
@@ -282,7 +282,7 @@ def main():
     run = args.references.resolve() / "runs" / f"{timestamp}-gpt-step-{args.mode}-{args.variant}"
     run.mkdir(parents=True, exist_ok=False)
     project = Path(__file__).resolve().parents[2]
-    for relative in ("research/tools/diagnose_mlx_step.py", "src/sakuratts/backends/mlx/gpt.py"):
+    for relative in ("research/tools/diagnose_mlx_step.py", "sakuratts/backends/mlx/gpt.py"):
         dest = run / "source" / relative
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(project / relative, dest)

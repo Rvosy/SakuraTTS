@@ -63,8 +63,11 @@ def prepare(args):
         if source.read_bytes() != subprocess.check_output(["git", "-C", str(upstream), "show", COMMIT + ":" + name]):
             raise ValueError("Fixed official source changed: " + name)
         shutil.copy2(source, run / "source/official" / source.name)
-    for name in ("japanese.py", "text_frontend.py"):
-        shutil.copy2(PROJECT / "src/sakuratts" / name, run / "source/sakuratts" / name)
+    for name in ("text/japanese.py", "text/LangSegmenter.py", "TTS_infer_pack/TextPreprocessor.py",
+                 "TTS_infer_pack/text_segmentation_method.py"):
+        target = run / "source/sakuratts" / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(PROJECT / "sakuratts" / name, target)
     shutil.copy2(__file__, run / "source/text_frontend_equivalence.py")
     corpus = [row for row in json.loads((PROJECT / "benchmarks/cases/speech_regressions.json").read_text())["cases"] if row["language"] == "ja"]
     first = refs / "runs/20260919T102853.549769Z-official-mps"
@@ -155,7 +158,7 @@ def offline(args):
     output = run / "offline"
     output.mkdir()
     sys.path.insert(0, str(run / "source"))
-    from sakuratts.frontend.text_frontend import TextFrontend, pre_seg_text, replace_consecutive_punctuation
+    from sakuratts.TTS_infer_pack.TextPreprocessor import TextFrontend, pre_seg_text, replace_consecutive_punctuation
     official, ns = official_processor(run)
     texts = [row["text"] for row in json.loads((run / "cases.json").read_text())]
     texts += ["\n\n", " ", "!?", "。", "あ。", "はい\nいいえ\nまた明日", "123.45です。次の文です。",
@@ -245,7 +248,8 @@ def worker(args):
             raise ValueError("Installed Japanese resource changed: " + path)
     os.environ["OPEN_JTALK_DICT_DIR"] = environment["main_dictionary"]
     sys.path.insert(0, str(run / "source"))
-    from sakuratts.frontend.text_frontend import LanguageSegmenter, TextFrontend, pre_seg_text, replace_consecutive_punctuation
+    from sakuratts.text.LangSegmenter import LanguageSegmenter
+    from sakuratts.TTS_infer_pack.TextPreprocessor import TextFrontend, pre_seg_text, replace_consecutive_punctuation
     symbols = json.loads((resources / "symbols-v2.json").read_text())
     mapping = {symbol: index for index, symbol in enumerate(symbols)}
     before = memory()
@@ -269,7 +273,7 @@ def worker(args):
         target = lambda text, lang: processor.preprocess(text, lang, "cut0", "v2Pro")
         prefix = lambda text: processor.pre_seg_text(processor.replace_consecutive_punctuation(text), "ja", "cut0")
     else:
-        from sakuratts.frontend.japanese import JapaneseG2P
+        from sakuratts.text.japanese import JapaneseG2P
         engine = JapaneseG2P(environment["main_dictionary"], resources / "user.dict")
         router = LanguageSegmenter(resources)
         frontend = TextFrontend(engine, symbols, router)
@@ -326,8 +330,8 @@ def worker(args):
         del frontend, engine, router, target, prefix
         gc.collect()
     closed = memory()
-    imports = {name: name in sys.modules for name in ("torch", "transformers", "mlx", "sakuratts.frontend.chinese",
-        "sakuratts.frontend.g2pw", "sakuratts.backends.mlx.bert", "tokenizers", "opencc", "pypinyin", "jieba_fast")}
+    imports = {name: name in sys.modules for name in ("torch", "transformers", "mlx", "sakuratts.text.chinese",
+        "sakuratts.text.g2pw", "sakuratts.backends.mlx.bert", "tokenizers", "opencc", "pypinyin", "jieba_fast")}
     assert not any(imports.values())
     report = dict(status="passed", backend=args.backend, normal=args.normal, command=[sys.executable, *sys.argv],
         routes=routes, cases=rows, requests=request_results, versions={name: metadata.version(name) for name in PACKAGES},

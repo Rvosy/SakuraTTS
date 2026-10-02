@@ -33,7 +33,7 @@ start_server("models/sakura", runtime_mode="managed", idle_sleep_seconds=60,
 
 HTTP 的总体 `policy="staged"` 仅允许显式启用的 `managed` 模式。可读取 `examples/minimum-vram.json`，通过 `start_server("MODEL", experimental=options, runtime_mode="managed")` 使用 H 档，模型须匹配 FP16 chunk256 声学包。此时 `/runtime.preparation="runtime_init"`，`awake` 表示推理进程、前端和配置已准备；GPU 权重在执行时交替加载，`model_loaded` 始终为 `false`。其他档位仍为 `preparation="model_load"`，加载步骤完成后 `model_loaded=true`。`direct` 的加载时机和策略限制保持不变。
 
-`synthesize` 可指定 `reference`、`seed`、`language`（见[语言能力与资源要求](english-frontend.md)）、`split_method`（`cut0` 至 `cut5`，默认 `cut0`）、`top_k`、`temperature`、`repetition_penalty`、`early_stop_num` 和 `cancel_requested`。完整签名与默认值见 [Engine.synthesize](../src/sakuratts/engine.py)。NumPy 与官方 Torch 使用不同随机数实现。
+`synthesize` 可指定 `reference`、`seed`、`language`（见[语言能力与资源要求](english-frontend.md)）、`split_method`（`cut0` 至 `cut5`，默认 `cut0`）、`top_k`、`temperature`、`repetition_penalty`、`early_stop_num` 和 `cancel_requested`。完整签名与默认值见 [Engine.synthesize](../sakuratts/engine.py)。NumPy 与官方 Torch 使用不同随机数实现。
 
 `tts` CLI 可通过 `--split-method cut5` 按标点分句，默认仍为 `cut0`。CUDA 提供 FP32、FP16 标准、FP16 低显存、FP16 极限[四档配置](inference-profiles.md)，分句作为独立选项。历史实验和实测范围见[低显存报告](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/low-vram-20260921.md)。
 
@@ -45,7 +45,7 @@ CUDA 引擎默认在每片声学计算结束后收缩 ORT 显存池，释放不�
 
 需要对照旧策略时，可用 `Engine.load(path, experimental={"acoustic_arena_shrink": False})` 关闭收缩。CLI 的 `tts`、`serve`、`benchmark` 可通过 `--experimental` 读取同样的 JSON；旧 `synthesize` 命令可用 `--no-acoustic-arena-shrink`。实际策略记录在合成报告的 `acoustic_arena_shrink` 字段中。内部 `ORTSoVITS` / `ORTProcessSoVITS` 的直接调用仍需显式选择收缩，研究脚本应记录自己的选项。
 
-后端选项通过 `Engine.load(path, experimental={...})` 显式传入。CUDA 的键与默认值由 [NVIDIAEngine](../src/sakuratts/backends/cuda/engine.py) 定义，CPU / DirectML 由 [CPUEngine](../src/sakuratts/backends/cpu/engine.py) 定义；常用组合分别见[CUDA 推理档位](inference-profiles.md)和 [CPU / DirectML 指南](cpu-amd.md)。
+后端选项通过 `Engine.load(path, experimental={...})` 显式传入。CUDA 的键与默认值由 [NVIDIAEngine](../sakuratts/backends/cuda/engine.py) 定义，CPU / DirectML 由 [CPUEngine](../sakuratts/backends/cpu/engine.py) 定义；常用组合分别见[CUDA 推理档位](inference-profiles.md)和 [CPU / DirectML 指南](cpu-amd.md)。
 
 `acoustic_session_policy` 默认 `"resident"`，保留 latent 和 vocoder 两个 Session。设为 `"staged"` 时，先加载 latent Session 并取回完整 CPU latent，再释放它、加载一次 vocoder Session 处理该片段的所有块，最后释放 vocoder。它只支持已经验证的分块声学包，必须同时指定 `acoustic_chunk_frames` 并开启 `acoustic_arena_shrink`；每个片段会重建 Session，增加加载时间。模型图、块长、完整上下文和输入噪声保持不变。此选项控制声学内部的驻留方式，与控制 GPT／声学模型驻留的 `policy` 分开设置。私有 worker 的 `session_initialization="deferred"` 表示模型包与进程已准备，CUDA Session 将在执行时创建并检查。
 

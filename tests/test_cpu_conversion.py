@@ -9,12 +9,12 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-sys.path[:0] = [str(Path(__file__).resolve().parents[1] / "src"), str(Path(__file__).resolve().parent)]
+sys.path[:0] = [str(Path(__file__).resolve().parents[1]), str(Path(__file__).resolve().parent)]
 from sakuratts import Model
 from sakuratts.cli import main
-from sakuratts.converter import convert, package_model
-from sakuratts.engine import Inference
-from sakuratts._internal.reference_condition import sha256_file
+from sakuratts.prepare.converter import convert, package_model
+from sakuratts.TTS_infer_pack.TTS import Inference
+from sakuratts.module.reference_condition import sha256_file
 from test_backend_selection import FakeRuntime
 
 
@@ -89,10 +89,10 @@ class CPUConversionTests(unittest.TestCase):
                     return {"inference_tested": False}
 
                 selected = backend
-                with patch("sakuratts.converter.run_conversion", side_effect=self.run_conversion) as exported, \
-                        patch("sakuratts.backends.onnx.sovits.read_manifest", side_effect=lambda path, **kwargs:
+                with patch("sakuratts.prepare.converter.run_conversion", side_effect=self.run_conversion) as exported, \
+                        patch("sakuratts.module.sovits.read_manifest", side_effect=lambda path, **kwargs:
                               (json.loads((path / "manifest.json").read_text(encoding="utf-8")), None)), \
-                        patch("sakuratts._internal.diagnostics.check_worker_imports", side_effect=probe) as checked, \
+                        patch("sakuratts.runtime.diagnostics.check_worker_imports", side_effect=probe) as checked, \
                         patch("sakuratts.backends.cpu.onnx_gpt.read_sidecar", side_effect=self.read_gpt), \
                         patch("sakuratts.backends.directml.static_gpt.read_static_sidecar", side_effect=self.read_gpt), \
                         patch("sakuratts.backends.cuda.runtime.configure_cuda",
@@ -113,14 +113,14 @@ class CPUConversionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             options = self.inputs(root)
-            with patch("sakuratts.converter.run_conversion") as exported:
+            with patch("sakuratts.prepare.converter.run_conversion") as exported:
                 with self.assertRaisesRegex(NotImplementedError, "not implemented"):
                     convert(**options, backend="rocm")
             exported.assert_not_called()
             self.assertFalse(options["output"].exists())
 
     def test_cli_does_not_silently_override_backend_when_repackaging(self):
-        with patch("sakuratts.converter.package_model") as package, \
+        with patch("sakuratts.prepare.converter.package_model") as package, \
                 contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as error:
             main(["convert", "--config", "model.json", "--output", "packed", "--backend", "cpu"])
         self.assertEqual(error.exception.code, 1)
@@ -155,8 +155,8 @@ class CPUConversionTests(unittest.TestCase):
                     runtime.name = kwargs["backend"]
                     return runtime
 
-                with patch("sakuratts._internal.portable.bundle_root", return_value=None), \
-                        patch("sakuratts.converter.convert", side_effect=publish) as conversion, \
+                with patch("sakuratts.runtime.portable.bundle_root", return_value=None), \
+                        patch("sakuratts.prepare.converter.convert", side_effect=publish) as conversion, \
                         patch("sakuratts.backends.create_runtime", side_effect=create) as runtime:
                     for backend in (initial, switched, initial):
                         settings["backend"] = backend
@@ -182,7 +182,7 @@ class CPUConversionTests(unittest.TestCase):
                     if Path(command[2]).name == failed:
                         raise RuntimeError("target preparation failed")
 
-                with patch("sakuratts.converter.run_conversion", side_effect=run):
+                with patch("sakuratts.prepare.converter.run_conversion", side_effect=run):
                     with self.assertRaisesRegex(RuntimeError, "target preparation failed"):
                         convert(**options, backend="directml")
                 self.assertFalse(options["output"].exists())

@@ -25,8 +25,8 @@ import zipfile
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts._internal.weight_storage import LOSSLESS_STORAGE, array_sha256, read_fp32
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from sakuratts.module.weight_storage import LOSSLESS_STORAGE, array_sha256, read_fp32
 
 
 FORMATS = {"sakuratts-gpt-fp32-v1", "sakuratts-sovits-decode-fp32-v1", "sakuratts-bert-features-fp32-v1"}
@@ -71,7 +71,7 @@ def repack(package, destination):
         if "GPT-SoVITS-LICENSE" not in copied_attachments:
             raise ValueError("Original manifest references a missing GPT-SoVITS license attachment")
     project = Path(__file__).resolve().parents[1]
-    for name in ("tools/repack_weights.py", "src/sakuratts/_internal/weight_storage.py"):
+    for name in ("tools/repack_weights.py", "sakuratts/module/weight_storage.py"):
         target = destination / "repack_source" / name
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(project / name, target)
@@ -128,7 +128,7 @@ def repack(package, destination):
         manifest["repack"] = {"created_at_utc": timestamp(), "parent_package": str(package),
                               "parent_manifest_file": "parent_manifest.json", "numpy": np.__version__,
                               "script_sha256": sha256(Path(__file__)),
-                              "helper_sha256": sha256(project / "src/sakuratts/_internal/weight_storage.py"),
+                              "helper_sha256": sha256(project / "sakuratts/module/weight_storage.py"),
                               "source_archive_sha256": source_hash,
                               "copied_source_attachments": copied_attachments,
                               "note": "Storage only. source, tensor_sources, config and original conversion fields are unchanged; top-level dtype continues to describe expanded runtime weights."}

@@ -149,8 +149,8 @@ class WDDMSynthesisTests(unittest.TestCase):
                 report = json.loads(state.output.read_text(encoding="utf-8"))
                 self.assertEqual(report["status"], "failed")
                 self.assertEqual(len(report["snapshots"]), 8)
-                self.assertEqual(report["source_sha256"]["src/sakuratts/backends/cuda/gpt.py"], original(ROOT / "src/sakuratts/backends/cuda/gpt.py"))
-                self.assertEqual(report["source_check_errors"][0]["path"], "src/sakuratts/backends/cuda/gpt.py")
+                self.assertEqual(report["source_sha256"]["sakuratts/backends/cuda/gpt.py"], original(ROOT / "sakuratts/backends/cuda/gpt.py"))
+                self.assertEqual(report["source_check_errors"][0]["path"], "sakuratts/backends/cuda/gpt.py")
 
     def test_existing_evidence_is_not_overwritten(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -20,7 +20,7 @@ import traceback
 import mlx.core as mx
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from sakuratts.backends.mlx.flow import MLXSoVITSFlow, sha256, weight_normalize
 
 
@@ -190,7 +190,7 @@ def main():
     run = args.references.resolve() / "runs" / f"{timestamp}-mlx-sovits-flow-{'self-test-cpu' if args.self_test else args.device}"
     project = Path(__file__).resolve().parents[2]
     source_root = run / "source"
-    files = ("research/tools/mlx_sovits_flow_replay.py", "src/sakuratts/backends/mlx/flow.py", "src/sakuratts/_internal/weight_storage.py", "requirements/mlx-candidate.txt")
+    files = ("research/tools/mlx_sovits_flow_replay.py", "sakuratts/backends/mlx/flow.py", "sakuratts/module/weight_storage.py", "requirements/mlx-candidate.txt")
     for name in files:
         target = source_root / name
         target.parent.mkdir(parents=True, exist_ok=True)

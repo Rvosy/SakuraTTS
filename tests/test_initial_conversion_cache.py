@@ -9,10 +9,10 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts.engine import Inference
-from sakuratts.reference import ReferenceCache
-from sakuratts._internal.reference_condition import sha256_file
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from sakuratts.TTS_infer_pack.TTS import Inference
+from sakuratts.TTS_infer_pack.reference import ReferenceCache
+from sakuratts.module.reference_condition import sha256_file
 
 
 class InitialConversionCacheTests(unittest.TestCase):
@@ -49,7 +49,7 @@ class InitialConversionCacheTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             original = Path(temporary) / "original"
             self.fixture(original)
-            with patch("sakuratts.converter.convert", side_effect=lambda **kwargs: kwargs["output"].mkdir(parents=True)) as convert, \
+            with patch("sakuratts.prepare.converter.convert", side_effect=lambda **kwargs: kwargs["output"].mkdir(parents=True)) as convert, \
                  patch("sakuratts.engine.Model.load", side_effect=lambda path: path):
                 with patch.dict(os.environ, SAKURATTS_BUNDLE_ROOT=str(original)):
                     first = self.inference(original)
@@ -85,7 +85,7 @@ class InitialConversionCacheTests(unittest.TestCase):
             root = Path(temporary)
             self.fixture(root)
             inference = self.inference(root)
-            with patch("sakuratts.converter.convert", side_effect=lambda **kwargs: kwargs["output"].mkdir(parents=True)) as convert, \
+            with patch("sakuratts.prepare.converter.convert", side_effect=lambda **kwargs: kwargs["output"].mkdir(parents=True)) as convert, \
                     patch("sakuratts.engine.Model.load", side_effect=lambda path: path):
                 for backend, options, count in (
                     ("cuda", None, 1), ("cpu", None, 2), ("cpu", {"threads": 3}, 2),
@@ -115,7 +115,7 @@ class InitialConversionCacheTests(unittest.TestCase):
                 output.mkdir(parents=True)
                 (output / "manifest.json").write_text('{"format":"sakuratts-gpt-fp32-v1"}')
 
-            with patch("sakuratts.converter.convert_checkpoint", side_effect=prepare) as convert:
+            with patch("sakuratts.prepare.converter.convert_checkpoint", side_effect=prepare) as convert:
                 inference.set_weights("gpt", root / "gpt.ckpt")
                 self.assertEqual(convert.call_args.kwargs["backend"], "directml")
                 inference.experimental = {"capacity": 1280, "device_id": 1, "threads": 3}
@@ -150,9 +150,9 @@ class InitialConversionCacheTests(unittest.TestCase):
                     "official_commit": "same-source"}} for kind in ("gpt", "sovits")},
                     packages={"frontend": root / "frontend"}))
             with patch.dict(os.environ, SAKURATTS_BUNDLE_ROOT=str(root)), \
-                 patch("sakuratts.reference.sha256_file", wraps=sha256_file) as digest, \
-                 patch("sakuratts.converter.prepare_reference", side_effect=lambda **kwargs: kwargs["output"].mkdir(parents=True)) as prepare, \
-                 patch("sakuratts.reference.PreparedReference.load"):
+                 patch("sakuratts.TTS_infer_pack.reference.sha256_file", wraps=sha256_file) as digest, \
+                 patch("sakuratts.prepare.converter.prepare_reference", side_effect=lambda **kwargs: kwargs["output"].mkdir(parents=True)) as prepare, \
+                 patch("sakuratts.TTS_infer_pack.reference.PreparedReference.load"):
                 ReferenceCache(engine, settings).prepare_audio(root / "audio.wav")
                 self.assertNotIn(bundled / "weights.bin", [Path(call.args[0]) for call in digest.call_args_list])
                 settings["cnhubert"] = str(custom)

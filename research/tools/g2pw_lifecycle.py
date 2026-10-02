@@ -21,7 +21,7 @@ for name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "VECLIB_MAXIMUM_THREADS"
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
+sys.path.insert(0, str(PROJECT))
 
 
 def memory():
@@ -67,7 +67,7 @@ def main():
     run.mkdir(parents=True)
     print(f"RUN_DIRECTORY={run}", flush=True)
     import onnxruntime as ort
-    from sakuratts.frontend.g2pw_session import G2PWSession
+    from sakuratts.text.g2pw_session import G2PWSession
 
     report = dict(status="running", command=[sys.executable, *sys.argv], input_run=str(source),
                   ort_package=str(args.ort_package) if args.ort_package else None,
@@ -106,7 +106,7 @@ def main():
                   runtime_imported_transformers="transformers" in sys.modules)
     (run / "result.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
     shutil.copy2(Path(__file__), run / "g2pw_lifecycle.py")
-    shutil.copy2(PROJECT / "src/sakuratts/frontend/g2pw_session.py", run / "g2pw_session.py")
+    shutil.copy2(PROJECT / "sakuratts/text/g2pw_session.py", run / "g2pw_session.py")
 
 
 if __name__ == "__main__":

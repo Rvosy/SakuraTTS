@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 from sakuratts import Model
 from sakuratts.backends import SUPPORTED_BACKENDS, create_runtime
-from sakuratts.engine import Inference
+from sakuratts.TTS_infer_pack.TTS import Inference
 
 
 class FakeRuntime:

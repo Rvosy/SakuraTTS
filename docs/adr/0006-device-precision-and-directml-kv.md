@@ -18,7 +18,7 @@ ORT 的 IOBinding 可能在绑定输入时复制数据。因此每个 token 更�
 
 DirectML 默认使用 GPU FP16 GPT 与全图 FP16 声学，GPT 的 CPU 部分 4 线程、声学的 CPU 部分 2 线程、KV 容量 1280。原有有限输出、重复性和真实设备执行报告保留为实验记录。历史误差或缺少报告不会阻止本地资源加载，执行兼容性由实际图、张量和 provider 判断。
 
-公开预设由 [profiles.py](../../src/sakuratts/profiles.py) 定义。CPU 提供 `int8`，DirectML 提供 `fp16`，省略时使用各自默认值。显式选项可以覆盖预设，加载器检查所选实现能否执行该配置。CUDA 与 MLX 的现有档位不变。历史候选和失败证据保留在 [research](../../research/notes/cpu-amd-precision-listening-20260927.md)。
+公开预设由 [profiles.py](../../sakuratts/profiles.py) 定义。CPU 提供 `int8`，DirectML 提供 `fp16`，省略时使用各自默认值。显式选项可以覆盖预设，加载器检查所选实现能否执行该配置。CUDA 与 MLX 的现有档位不变。历史候选和失败证据保留在 [research](../../research/notes/cpu-amd-precision-listening-20260927.md)。
 
 统一转换在临时目录内完成基础资源、目标 GPT 图和 AMD FP16 声学，再发布产物。目标 GPU 的筛查实验独立执行，不作为转换前提。原始权重切换复用相同准备流程，缓存区分后端和静态容量。具体用法见 [CPU / AMD 指南](../cpu-amd.md)。
 
@@ -30,7 +30,7 @@ DirectML 默认使用 GPU FP16 GPT 与全图 FP16 声学，GPT 的 CPU 部分 4 
 
 ORT v1.24.4 的独立 Python `GetDmlAllocator(id)` 虽以 `id` 索引缓存，创建 D3D12 设备时却固定使用 DXGI 适配器 `0`。因此 `OrtValue.ortvalue_from_numpy(..., "dml", device_id)` 或独立空缓冲区工厂不能保证分配到所选的非零适配器。具体实现见[上游 GetDmlAllocator](https://github.com/microsoft/onnxruntime/blob/v1.24.4/onnxruntime/python/onnxruntime_pybind_mlvalue.cc#L251-L296)。
 
-[StaticDirectMLGPT](../../src/sakuratts/backends/directml/static_gpt.py) 改用当前 Decode Session 的输出分配器。Prefill 缓存先由 CPU OrtValue 持有；前两次实际 Decode 分别分配一组 GPU KV，随后绑定并复用这两组输出。首步结束先清除种子输入绑定，再释放它们依赖的 NumPy 存储，不增加专门的预热请求或分配 Session。
+[StaticDirectMLGPT](../../sakuratts/backends/directml/static_gpt.py) 改用当前 Decode Session 的输出分配器。Prefill 缓存先由 CPU OrtValue 持有；前两次实际 Decode 分别分配一组 GPU KV，随后绑定并复用这两组输出。首步结束先清除种子输入绑定，再释放它们依赖的 NumPy 存储，不增加专门的预热请求或分配 Session。
 
 IOBinding 中的 `bind_output(..., "dml", 0)` 使用 Session 内部的 OrtDevice 序号。这个 `0` 与公开的 DXGI `device_id` 不同：该版本的 [DML ExecutionProvider](https://github.com/microsoft/onnxruntime/blob/v1.24.4/onnxruntime/core/providers/dml/DmlExecutionProvider/src/ExecutionProvider.cpp#L63-L84) 和[分配器内存描述](https://github.com/microsoft/onnxruntime/blob/v1.24.4/onnxruntime/core/providers/dml/DmlExecutionProvider/src/BucketizedBufferAllocator.cpp#L33-L52)都使用内部序号 `0`，实际 D3D12 设备由 Session 的 provider 选项确定。缓存因而跟随所选 Session，不调用固定默认适配器的独立工厂。
 

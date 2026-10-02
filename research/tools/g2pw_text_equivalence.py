@@ -33,7 +33,7 @@ def prepare(args):
         if pinned != path.read_bytes():
             raise ValueError(f"Official source changed: {relative}")
         shutil.copy2(path, source / path.name)
-    shutil.copy2(PROJECT / "src/sakuratts/frontend/g2pw_text.py", source / "g2pw_text.py")
+    shutil.copy2(PROJECT / "sakuratts/text/g2pw_text.py", source / "g2pw_text.py")
     shutil.copy2(__file__, source / "research.tools.py")
     shutil.copy2(PROJECT / "research/tools/g2pw_dedup_diagnostic.py", source / "g2pw_dedup_diagnostic.py")
     resources = args.references / "models/converted" / (stamp + "-g2pw-text")

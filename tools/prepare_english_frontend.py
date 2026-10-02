@@ -111,8 +111,8 @@ def prepare(frontend, output, source, python):
 
 
 def verify(frontend):
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-    from sakuratts.frontend.english import EnglishG2P
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from sakuratts.text.english import EnglishG2P
     symbols = json.loads((frontend / "symbols-v2.json").read_text(encoding="utf-8"))
     g2p = EnglishG2P(frontend / "english", symbols)
     probes = json.loads((frontend / "english/probes.json").read_text(encoding="utf-8"))

@@ -10,12 +10,11 @@ import unittest
 from unittest.mock import patch
 import weakref
 
-sys.path[:0] = [str(Path(__file__).resolve().parents[1] / "src"), str(Path(__file__).resolve().parent)]
-from sakuratts.backends.onnx.chunked_package import (FORMAT, SCREEN_FORMAT, SCREEN_CHECKS, CHUNK_LIMITS,
-    ORIGINAL_TOLERANCE, identity_sha256, read_chunked_manifest)
-from sakuratts.backends.onnx.sovits import ORTSoVITS, FP16_EXECUTION_OPTIONS, read_manifest
-from sakuratts._internal.reference_condition import sha256_file
-from sakuratts.backends.onnx.vocoder_receptive_field import TemporalOperation, VocoderReceptiveField
+sys.path[:0] = [str(Path(__file__).resolve().parents[1]), str(Path(__file__).resolve().parent)]
+from sakuratts.module.chunked_package import FORMAT, SCREEN_FORMAT, SCREEN_CHECKS, CHUNK_LIMITS, ORIGINAL_TOLERANCE, identity_sha256, read_chunked_manifest
+from sakuratts.module.sovits import ORTSoVITS, FP16_EXECUTION_OPTIONS, read_manifest
+from sakuratts.module.reference_condition import sha256_file
+from sakuratts.module.vocoder_receptive_field import TemporalOperation, VocoderReceptiveField
 
 
 def file_spec(path):

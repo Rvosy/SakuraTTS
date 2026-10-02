@@ -14,11 +14,11 @@
 
 在显式后端表中加入 `cpu` 和 `directml`。首轮 CPU GPT 使用 NumPy BLAS，随后加入 ONNX Runtime；两种模式分别选择 ORT CPU 或 DirectML 声学 Session。当时 DirectML 模式的 GPT、文本前端和采样均在 CPU 上执行，合成报告分别记录语义和声学设备。
 
-CPU GPT 保留一份 FP32 权重，KV 按容量分配并原位写入。Prefill 按 query 分块，控制临时得分矩阵的大小；每块保留完整允许历史。Decode 使用矩阵与向量运算和可复用工作区。BLAS 线程限制仅在计算期间生效，调用结束恢复宿主设置。实现与默认值由 [CPUGPT](../../src/sakuratts/backends/cpu/gpt.py) 维护，独立小模型的全历史计算用于验证缓存结果。
+CPU GPT 保留一份 FP32 权重，KV 按容量分配并原位写入。Prefill 按 query 分块，控制临时得分矩阵的大小；每块保留完整允许历史。Decode 使用矩阵与向量运算和可复用工作区。BLAS 线程限制仅在计算期间生效，调用结束恢复宿主设置。实现与默认值由 [CPUGPT](../../sakuratts/backends/cpu/gpt.py) 维护，独立小模型的全历史计算用于验证缓存结果。
 
-后续加入的 [ONNXCPUGPT](../../src/sakuratts/backends/cpu/onnx_gpt.py) 让 Prefill 和 Decode 共用一个 ORT Session，避免重复驻留 Transformer 权重。独立导出的附加资源绑定原 GPT 包身份，运行时不解压原 Transformer 权重。这轮路径保留 CPU FP32 计算和固定容量 KV，但不支持 query 分块。当前精度选择与资源校验边界见 [ADR 0006](0006-device-precision-and-directml-kv.md)。
+后续加入的 [ONNXCPUGPT](../../sakuratts/backends/cpu/onnx_gpt.py) 让 Prefill 和 Decode 共用一个 ORT Session，避免重复驻留 Transformer 权重。独立导出的附加资源绑定原 GPT 包身份，运行时不解压原 Transformer 权重。这轮路径保留 CPU FP32 计算和固定容量 KV，但不支持 query 分块。当前精度选择与资源校验边界见 [ADR 0006](0006-device-precision-and-directml-kv.md)。
 
-共享的模型装配、请求编排、随机数消耗、取消、错误回收和报告移入 [InferenceRuntime](../../src/sakuratts/_internal/runtime.py)。后端只负责执行选项和模型加载。原 CUDA 的默认精度、资源策略、独立声学 worker 和公共入口继续保留。
+共享的模型装配、请求编排、随机数消耗、取消、错误回收和报告移入 [InferenceRuntime](../../sakuratts/TTS_infer_pack/runtime.py)。后端只负责执行选项和模型加载。原 CUDA 的默认精度、资源策略、独立声学 worker 和公共入口继续保留。
 
 首轮 CPU / DirectML 使用 FP32 GPT 与 FP32 整图声学包，随后验证了 DirectML 声码器混合 FP16。该候选单独转换，通过绑定文件身份、执行参数和 GPU 算子证据的工程筛查；记录保留硬件与运行库版本，不代表其他设备的质量验收。CUDA 的 FP16 筛查不能直接用于 DirectML，chunked 声学执行限 CUDA。这些对照用于后续独立设备路径的选择。
 

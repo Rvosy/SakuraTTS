@@ -26,8 +26,8 @@ from unittest import mock
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
-from sakuratts._internal.reference_condition import sha256_file
+sys.path.insert(0, str(PROJECT))
+from sakuratts.module.reference_condition import sha256_file
 
 COMMIT = "48b1a0169a28582a8984402f82cf438d3bfa6aca"
 TIMING_SCOPE = "diagnostic; synchronized stages, CPU copies and nested hooks; not normal E2E"
@@ -430,7 +430,7 @@ def main():
     shutil.copy2(preparation, run / "reference-inputs.json")
     sources = {}
     for path in (Path(__file__).resolve(), PROJECT / "research/tools/trace_reference.py",
-                 *sorted((PROJECT / "src/sakuratts").rglob("*.py"))):
+                 *sorted((PROJECT / "sakuratts").rglob("*.py"))):
         destination = run / "source" / path.relative_to(PROJECT)
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, destination)

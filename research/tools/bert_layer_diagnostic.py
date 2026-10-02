@@ -16,7 +16,7 @@ import sys
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
+sys.path.insert(0, str(PROJECT))
 
 
 def digest(path):
@@ -135,8 +135,8 @@ def validate(args):
               "runtime_imported_torch": "torch" in sys.modules, "cases": [],
               "scope": "single layer and independent operations from fixed official inputs; diagnostic only"}
     shutil.copy2(__file__, run / f"validation-{args.device}-research.tools.py")
-    shutil.copy2(PROJECT / "src/sakuratts/backends/mlx/bert.py", run / f"validation-{args.device}-runtime.py")
-    shutil.copy2(PROJECT / "src/sakuratts/_internal/weight_storage.py", run / f"validation-{args.device}-weight_storage.py")
+    shutil.copy2(PROJECT / "sakuratts/backends/mlx/bert.py", run / f"validation-{args.device}-runtime.py")
+    shutil.copy2(PROJECT / "sakuratts/module/weight_storage.py", run / f"validation-{args.device}-weight_storage.py")
     for case in prepared["cases"]:
         name = case["id"]
         x = mx.array(np.load(run / f"{name}-input.npy"))

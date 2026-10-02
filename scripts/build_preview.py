@@ -18,7 +18,7 @@ import zipfile
 
 
 ROOT_FILES = {"README.md", "LICENSE", "MANIFEST.in", "pyproject.toml", "AGENTS.md", "uv.lock", "start-server.bat", "api.py", "api_v2.py"}
-SOURCE_DIRS = ("src/sakuratts", "scripts", "tools", "requirements", "packaging/recipes", "benchmarks", "tests", "docs", "examples")
+SOURCE_DIRS = ("sakuratts", "scripts", "tools", "requirements", "packaging", "benchmarks", "tests", "docs", "examples")
 TEXT_SUFFIXES = {".py", ".md", ".txt", ".toml", ".json", ".ps1", ".bat", ".yaml", ".yml", ".rst", ".ini", ".cfg"}
 EXCLUDED_DIRS = {"build", "dist", "__pycache__", "node_modules"}
 
@@ -70,7 +70,8 @@ def stage_source(root, destination):
         target.write_bytes(data)
         inventory[relative] = {"bytes": len(data), "sha256": sha256(data)}
     required = ROOT_FILES - {"AGENTS.md", "uv.lock"}
-    required |= {"docs/preview-release.md", "requirements/windows-runtime.txt", "src/sakuratts/__init__.py"}
+    required |= {"docs/preview-release.md", "requirements/windows-runtime.txt", "sakuratts/__init__.py",
+                 "packaging/auxiliary-model-sources.json"}
     missing = sorted(required - inventory.keys())
     if missing:
         raise ValueError("Required preview sources are missing: " + ", ".join(missing))
@@ -110,8 +111,8 @@ def verify_distributions(wheel, sdist, inventory):
             if member is None or not member.isfile():
                 raise ValueError("sdist source missing: " + relative)
             verify(archive.extractfile(member).read(), relative, "sdist")
-    product = {name.removeprefix("src/"): name for name in inventory
-               if name.startswith("src/sakuratts/") and name.endswith(".py")}
+    product = {name: name for name in inventory
+               if name.startswith("sakuratts/") and name.endswith(".py")}
     licenses = [name for name in inventory if name == "LICENSE" or
                 (name.startswith("docs/third-party/") and Path(name).suffix in (".txt", ".md"))]
     with zipfile.ZipFile(wheel) as archive:

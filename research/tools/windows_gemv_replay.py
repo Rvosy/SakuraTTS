@@ -17,14 +17,14 @@ import traceback
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "research/tools"))
 import windows_gemv_probe as probe
 from windows_gpt_precision import memory, replay
 
 ALLOWED_SHAPES = ("attention_output", "ffn_out", "output")
 SOURCES = tuple(dict.fromkeys(("research/tools/windows_gemv_replay.py", "research/tools/windows_gpt_precision.py",
-    *probe.SOURCES, "src/sakuratts/_internal/reference_condition.py")))
+    *probe.SOURCES, "sakuratts/module/reference_condition.py")))
 require = probe.require
 
 

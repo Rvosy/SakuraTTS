@@ -9,10 +9,10 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
-sys.path[:0] = [str(Path(__file__).resolve().parents[1] / "src"), str(Path(__file__).resolve().parent)]
+sys.path[:0] = [str(Path(__file__).resolve().parents[1]), str(Path(__file__).resolve().parent)]
 from sakuratts import cli
-from sakuratts._internal.diagnostics import check_windows_packages, check_prepared_packages, check_worker_imports
-from sakuratts._internal.reference_condition import sha256_file
+from sakuratts.runtime.diagnostics import check_windows_packages, check_prepared_packages, check_worker_imports
+from sakuratts.module.reference_condition import sha256_file
 from test_nvidia_package_startup import fixture
 
 
@@ -30,7 +30,7 @@ class CPUDoctorTests(unittest.TestCase):
         self.imports = self.enterContext(patch("sakuratts.cli.import_module", side_effect=self.import_module))
         self.enterContext(patch("sakuratts.cli.metadata.version", side_effect=self.version))
         self.enterContext(patch("sakuratts.cli.platform.system", return_value="Windows"))
-        self.resource_check = self.enterContext(patch("sakuratts._internal.diagnostics.check_windows_packages",
+        self.resource_check = self.enterContext(patch("sakuratts.runtime.diagnostics.check_windows_packages",
             side_effect=lambda *args, backend, profile=None: {
                 "status": "passed", "profile": profile or {"cpu": "int8", "directml": "fp16"}[backend]}))
         self.cuda = self.enterContext(patch("sakuratts.backends.cuda.runtime.configure_cuda",
@@ -123,7 +123,7 @@ sys.modules['sakuratts.backends.cuda.runtime']=cuda
             command[3] = prelude + command[3]
             return actual_run(command, **kwargs)
 
-        with patch("sakuratts._internal.diagnostics.subprocess.run", side_effect=run_with_stubs):
+        with patch("sakuratts.runtime.diagnostics.subprocess.run", side_effect=run_with_stubs):
             for backend in ("cpu", "directml"):
                 report = check_worker_imports(Path(sys.executable), {}, backend=backend)
                 self.assertEqual(report["available_providers"], providers)
@@ -152,8 +152,8 @@ sys.modules['sakuratts.backends.cuda.runtime']=cuda
                     weights={"file": weights.name, "bytes": weights.stat().st_size, "sha256": sha256_file(weights)})
                 manifest_path.write_text(json.dumps(gpt), encoding="utf-8")
                 acoustic = {"source": gpt["source"], "config": {"model": {"version": "v2ProPlus"}}}
-                with patch("sakuratts.backends.onnx.sovits.read_manifest", return_value=(acoustic, None)), \
-                        patch("sakuratts._internal.diagnostics.check_worker_imports",
+                with patch("sakuratts.module.sovits.read_manifest", return_value=(acoustic, None)), \
+                        patch("sakuratts.runtime.diagnostics.check_worker_imports",
                               side_effect=lambda python, profile, **kwargs: {"executable": str(python)}) as probe:
                     report = check_prepared_packages(config_path)
                 self.assertEqual(report["backend"], backend)
@@ -182,9 +182,9 @@ class GPTPackageDiagnosticsTests(unittest.TestCase):
         (self.root / "gpt/manifest.json").write_text(json.dumps(self.gpt), encoding="utf-8")
         self.acoustic = {"dtype": "float32", "source": self.gpt["source"],
             "config": {"model": {"version": "v2ProPlus"}}}
-        self.acoustic_reader = self.enterContext(patch("sakuratts.backends.onnx.sovits.read_manifest",
+        self.acoustic_reader = self.enterContext(patch("sakuratts.module.sovits.read_manifest",
             side_effect=lambda *args, **kwargs: (self.acoustic, None)))
-        self.probe = self.enterContext(patch("sakuratts._internal.diagnostics.check_worker_imports", return_value={}))
+        self.probe = self.enterContext(patch("sakuratts.runtime.diagnostics.check_worker_imports", return_value={}))
         self.compute = self.enterContext(patch("sakuratts.backends.cpu.onnx_gpt.ONNXCPUGPT.load",
             side_effect=AssertionError("Diagnostics must not load model sessions")))
 

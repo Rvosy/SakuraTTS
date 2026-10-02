@@ -14,7 +14,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "research/tools"))
 import windows_chunked_lifecycle as probe
-from sakuratts._internal.generation import check_cancelled
+from sakuratts.AR.generation import check_cancelled
 from sakuratts.backends.cuda.engine import NVIDIAEngine
 
 
@@ -139,9 +139,9 @@ class EngineFactory:
 class ChunkedLifecycleTests(unittest.TestCase):
     def run_fake_suite(self, output, *, pcm_delta=0, chunks=3):
         factory, result = EngineFactory(pcm_delta=pcm_delta, chunks=chunks), record()
-        with patch("sakuratts._internal.runtime.prepare_text_request", side_effect=factory.prepare), \
-                patch("sakuratts._internal.runtime.generate_prepared_semantic", side_effect=factory.semantic), \
-                patch("sakuratts._internal.runtime.synthesize_acoustic", side_effect=factory.acoustic):
+        with patch("sakuratts.TTS_infer_pack.runtime.prepare_text_request", side_effect=factory.prepare), \
+                patch("sakuratts.TTS_infer_pack.runtime.generate_prepared_semantic", side_effect=factory.semantic), \
+                patch("sakuratts.TTS_infer_pack.runtime.synthesize_acoustic", side_effect=factory.acoustic):
             probe.run_checks(factory, output, result)
         return factory, result
 
@@ -184,9 +184,9 @@ class ChunkedLifecycleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             factory, result = EngineFactory(), record()
             result.update(entrypoint="public-package", loads=[])
-            with patch("sakuratts._internal.runtime.prepare_text_request", side_effect=factory.prepare), \
-                    patch("sakuratts._internal.runtime.generate_prepared_semantic", side_effect=factory.semantic), \
-                    patch("sakuratts._internal.runtime.synthesize_acoustic", side_effect=factory.acoustic):
+            with patch("sakuratts.TTS_infer_pack.runtime.prepare_text_request", side_effect=factory.prepare), \
+                    patch("sakuratts.TTS_infer_pack.runtime.generate_prepared_semantic", side_effect=factory.semantic), \
+                    patch("sakuratts.TTS_infer_pack.runtime.synthesize_acoustic", side_effect=factory.acoustic):
                 probe.run_checks(factory, Path(directory), result)
         self.assertTrue(probe.aggregate(result["cases"], result["cleanup"])["lifecycle_passed"])
         self.assertEqual({row["worker_pid"] for row in result["loads"]}, {worker.pid for worker in factory.workers})
@@ -282,7 +282,7 @@ class ChunkedLifecycleTests(unittest.TestCase):
                     self.assertEqual(actual_output, output)
                     self.assertEqual(result["entrypoint"], "public-package")
                     self.assertEqual(result["provenance"]["sample_ratio"], 3)
-                    self.assertIn("src/sakuratts/backends/onnx/chunked.py", result["sources_sha256"])
+                    self.assertIn("sakuratts/module/chunked.py", result["sources_sha256"])
                     result["cases"].append({"checks": {"completed": True}})
                     result["cleanup"].append({"passed": True})
 

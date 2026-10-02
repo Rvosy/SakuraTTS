@@ -21,9 +21,9 @@ import traceback
 import mlx.core as mx
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from sakuratts.backends.mlx.gpt import MLXGPT
-from sakuratts._internal.generation import generate_semantic
+from sakuratts.AR.generation import generate_semantic
 
 
 def sha256(path):
@@ -144,9 +144,9 @@ def main():
     output = args.references / "runs" / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ") + "-native-gpt-generation")
     output.mkdir(parents=True, exist_ok=False)
     root = Path(__file__).resolve().parents[2]
-    for relative in ("research/tools/native_gpt_generation.py", "src/sakuratts/backends/mlx/gpt.py",
-                     "src/sakuratts/backends/mlx/gpt_prefill.py", "src/sakuratts/_internal/sampling.py",
-                     "src/sakuratts/_internal/generation.py", "src/sakuratts/_internal/weight_storage.py"):
+    for relative in ("research/tools/native_gpt_generation.py", "sakuratts/backends/mlx/gpt.py",
+                     "sakuratts/backends/mlx/gpt_prefill.py", "sakuratts/AR/sampling.py",
+                     "sakuratts/AR/generation.py", "sakuratts/module/weight_storage.py"):
         target = output / "source" / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(root / relative, target)

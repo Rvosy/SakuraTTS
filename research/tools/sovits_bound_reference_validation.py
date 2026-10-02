@@ -26,7 +26,7 @@ import weakref
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
+sys.path.insert(0, str(PROJECT))
 from sovits_reference_projection import (CASES, STAGES, comparison, exact, load_inputs,
     memory, read_json, sha256, spec, write_json)
 
@@ -157,7 +157,7 @@ def decode(model, data, reference, parameters, *, capture):
 
 
 def capture(model, data, reference, parameters):
-    from sakuratts._internal.synthesis import single_fragment_pcm
+    from sakuratts.TTS_infer_pack.synthesis import single_fragment_pcm
 
     waveform, stages = decode(model, data, reference, parameters, capture=True)
     if set(stages) != set(STAGES):
@@ -176,9 +176,9 @@ def save_arrays(output, stem, arrays):
 
 def request_from_fixture(case, data, reference):
     """Acoustic cancellation input; no GPT inference is claimed in this Harness."""
-    from sakuratts._internal.generation import SemanticGeneration
-    from sakuratts._internal.sampling import StopResult
-    from sakuratts._internal.synthesis import PreparedSemantic, PreparedText
+    from sakuratts.AR.generation import SemanticGeneration
+    from sakuratts.AR.sampling import StopResult
+    from sakuratts.TTS_infer_pack.synthesis import PreparedSemantic, PreparedText
 
     generation = SemanticGeneration(data["tokens"].copy(), StopResult(data["history"].copy(), True,
         tuple(case["stop"]["reasons"]), case["stop"]["returned_index"]))
@@ -190,8 +190,8 @@ def request_from_fixture(case, data, reference):
 
 
 def rejection_and_cancellation(model, data, case, reference, other, expected):
-    from sakuratts._internal.generation import SynthesisCancelled
-    from sakuratts._internal.synthesis import synthesize_acoustic
+    from sakuratts.AR.generation import SynthesisCancelled
+    from sakuratts.TTS_infer_pack.synthesis import synthesize_acoustic
 
     report = dict(rejections=[], cancellations=[])
     parameters = case["parameters"]
@@ -291,7 +291,7 @@ def worker(args):
             if sha256(args.run / "source" / name) != expected:
                 raise ValueError("Frozen source changed: " + name)
         bundle, conditions, _ = load_inputs(prepared)
-        from sakuratts._internal.reference_condition import PreparedReference
+        from sakuratts.module.reference_condition import PreparedReference
         identities = bundle["manifest"]["external_models"]
         references = {name: PreparedReference.load(Path(prepared["reference_" + name.lower()]))
             for name in ("A", "B")}

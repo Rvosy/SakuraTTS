@@ -17,7 +17,7 @@ import numpy as np
 
 from test_cpu_gpt import model_data, save_package, full_prefix
 from sakuratts.backends.cpu.onnx_gpt import ONNXCPUGPT
-from sakuratts._internal.reference_condition import sha256_file
+from sakuratts.module.reference_condition import sha256_file
 from sakuratts.backends.directml.static_gpt import StaticDirectMLGPT, read_static_sidecar, static_directory
 
 
@@ -124,8 +124,8 @@ class DeviceSession:
 class StaticDirectMLGPTTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        from sakuratts._internal.conversion.export_gpt_onnx import export_sidecar
-        from sakuratts._internal.conversion.export_gpt_directml import export_sidecar as export_static
+        from sakuratts.prepare.export_gpt_onnx import export_sidecar
+        from sakuratts.prepare.export_gpt_directml import export_sidecar as export_static
         cls.folder = tempfile.TemporaryDirectory()
         cls.manifest, cls.weights = model_data()
         cls.root = save_package(cls.folder.name, cls.manifest, cls.weights)

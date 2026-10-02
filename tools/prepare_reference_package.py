@@ -17,10 +17,8 @@ import sys
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PROJECT / "src"))
-from sakuratts._internal.reference_condition import (
-    ARRAY_DTYPES, FORMAT, PreparedReference, sha256_array, sha256_file, validate_arrays,
-)
+sys.path.insert(0, str(PROJECT))
+from sakuratts.module.reference_condition import ARRAY_DTYPES, FORMAT, PreparedReference, sha256_array, sha256_file, validate_arrays
 
 SOURCE_FILES = (
     "prepared-reference.json", "prepared-reference.npz", "prepared-acoustic.npz",
@@ -111,7 +109,7 @@ def prepare(args):
         },
         "export": {"command": [sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]],
                    "numpy": np.__version__, "script_sha256": sha256_file(__file__),
-                   "reader_sha256": sha256_file(PROJECT / "src/sakuratts/_internal/reference_condition.py")},
+                   "reader_sha256": sha256_file(PROJECT / "sakuratts/module/reference_condition.py")},
     }
     write_json(destination / "manifest.json", manifest)
     restored = PreparedReference.load(destination)
@@ -120,9 +118,9 @@ def prepare(args):
             raise AssertionError("Export roundtrip changed array bytes: " + name)
     evidence = args.references / "runs" / (timestamp + "-reference-condition-export")
     (evidence / "source/scripts").mkdir(parents=True)
-    (evidence / "source/src/sakuratts").mkdir(parents=True)
+    (evidence / "source/sakuratts").mkdir(parents=True)
     shutil.copy2(__file__, evidence / "source/tools/prepare_reference_package.py")
-    shutil.copy2(PROJECT / "src/sakuratts/_internal/reference_condition.py", evidence / "source/src/sakuratts/_internal/reference_condition.py")
+    shutil.copy2(PROJECT / "sakuratts/module/reference_condition.py", evidence / "source/sakuratts/module/reference_condition.py")
     summary = {"status": "passed", "package": str(destination), "evidence": str(evidence),
                "manifest_sha256": sha256_file(destination / "manifest.json"),
                "raw_array_bytes": sum(a.nbytes for a in arrays.values()),

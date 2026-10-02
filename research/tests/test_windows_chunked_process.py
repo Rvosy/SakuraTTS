@@ -16,7 +16,7 @@ import windows_chunked_process as process_module
 import windows_chunked_worker as worker_module
 from windows_chunked_process import ChunkedProcessSoVITS
 from windows_chunked_worker import serve
-from sakuratts._internal.protocol import read_message, write_message
+from sakuratts.runtime.protocol import read_message, write_message
 import test_windows_chunked_synthesis as split_fixture
 from test_windows_chunked_synthesis import LatentSession, RunOptions, VocoderSession, synthetic_manifest, synthetic_planner
 from windows_chunked_synthesis import SplitAcousticAdapter
@@ -247,9 +247,9 @@ class ChunkedProcessTests(unittest.TestCase):
 
         model._load_sovits = load_sovits
         try:
-            with patch("sakuratts._internal.runtime.prepare_text_request", return_value=prepared()), \
-                 patch("sakuratts._internal.runtime.generate_prepared_semantic", return_value=SimpleNamespace(generation=speech().generation)), \
-                 patch("sakuratts._internal.runtime.synthesize_acoustic", side_effect=acoustic):
+            with patch("sakuratts.TTS_infer_pack.runtime.prepare_text_request", return_value=prepared()), \
+                 patch("sakuratts.TTS_infer_pack.runtime.generate_prepared_semantic", return_value=SimpleNamespace(generation=speech().generation)), \
+                 patch("sakuratts.TTS_infer_pack.runtime.synthesize_acoustic", side_effect=acoustic):
                 with self.assertRaisesRegex(RuntimeError, "worker failed"):
                     model.synthesize("first")
                 self.assertIsNone(model.sovits)

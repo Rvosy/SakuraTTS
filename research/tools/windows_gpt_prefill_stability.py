@@ -8,9 +8,9 @@ import sys
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT))
 from windows_gpt_precision import load_reference_prompt, metrics
-from sakuratts._internal.reference_condition import sha256_file
+from sakuratts.module.reference_condition import sha256_file
 
 
 def main():
@@ -38,7 +38,7 @@ def main():
     order += np.random.default_rng(20260920).choice(names, size=32).tolist()
     report = {"passed": False, "cases": [], "captures": identities,
               "reference_archive_sha256": reference_hash,
-              "executor_sha256": sha256_file(ROOT / "src/sakuratts/backends/cuda/gpt.py"),
+              "executor_sha256": sha256_file(ROOT / "sakuratts/backends/cuda/gpt.py"),
               "scope": "Prefill and one decode only; not a complete-request timing benchmark.",
               "atol": 1e-4, "rtol": 1e-5}
     for attention, chunk in (("baseline", 256), ("split-kv", 256), ("split-kv", 512)):

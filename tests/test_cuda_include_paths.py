@@ -13,7 +13,7 @@ from unittest.mock import patch
 import warnings
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT))
 cli = importlib.import_module("sakuratts.cli")
 cuda_runtime = importlib.import_module("sakuratts.backends.cuda.runtime")
 
@@ -70,7 +70,7 @@ class CudaIncludePathTests(unittest.TestCase):
                 cuda_runtime.validate_gpt_cuda_include_paths()
 
     def test_gpt_import_rejects_bad_headers_before_importing_cupy(self):
-        path = ROOT / "src/sakuratts/backends/cuda/gpt.py"
+        path = ROOT / "sakuratts/backends/cuda/gpt.py"
         spec = importlib.util.spec_from_file_location("sakuratts._include_path_test", path)
         module = importlib.util.module_from_spec(spec)
         original_import = builtins.__import__

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from sakuratts.engine import Inference
+from sakuratts.TTS_infer_pack.TTS import Inference
 from sakuratts.model import Model
 from test_nvidia_package_startup import fixture
 
@@ -14,9 +14,9 @@ class ManagedStagedInferenceTests(unittest.TestCase):
     def test_managed_staged_initializes_frontend_and_reference_cache_without_gpu_loads(self):
         with tempfile.TemporaryDirectory() as directory:
             config, _, _ = fixture(Path(directory))
-            with patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P") as japanese, \
-                    patch("sakuratts.frontend.text_frontend.LanguageSegmenter"), \
-                    patch("sakuratts.frontend.text_frontend.TextFrontend"), \
+            with patch("sakuratts.text.classic_japanese.ClassicJapaneseG2P") as japanese, \
+                    patch("sakuratts.text.LangSegmenter.LanguageSegmenter"), \
+                    patch("sakuratts.TTS_infer_pack.TextPreprocessor.TextFrontend"), \
                     patch("sakuratts.backends.cuda.engine.NVIDIAEngine._load_gpt") as gpt, \
                     patch("sakuratts.backends.cuda.engine.NVIDIAEngine._load_sovits") as sovits:
                 current = Inference(config, experimental={"policy": "staged"}, _allow_staged=True)
@@ -40,9 +40,9 @@ class ManagedStagedInferenceTests(unittest.TestCase):
             config, _, _ = fixture(Path(directory))
             for policy in ("resident", "release-state"):
                 with self.subTest(policy=policy), \
-                        patch("sakuratts.frontend.classic_japanese.ClassicJapaneseG2P"), \
-                        patch("sakuratts.frontend.text_frontend.LanguageSegmenter"), \
-                        patch("sakuratts.frontend.text_frontend.TextFrontend"), \
+                        patch("sakuratts.text.classic_japanese.ClassicJapaneseG2P"), \
+                        patch("sakuratts.text.LangSegmenter.LanguageSegmenter"), \
+                        patch("sakuratts.TTS_infer_pack.TextPreprocessor.TextFrontend"), \
                         patch("sakuratts.backends.cuda.engine.NVIDIAEngine._load_gpt") as gpt, \
                         patch("sakuratts.backends.cuda.engine.NVIDIAEngine._load_sovits") as sovits:
                     current = Inference(config, experimental={"policy": policy}, _allow_staged=True)

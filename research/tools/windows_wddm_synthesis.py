@@ -11,10 +11,10 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT / "src"), str(ROOT / "research/tools")]
+sys.path[:0] = [str(ROOT), str(ROOT / "research/tools")]
 from windows_wddm_memory import WDDMMemorySampler
 from windows_nvidia_benchmark import TEXT_CASES
-from sakuratts._internal.reference_condition import sha256_file
+from sakuratts.module.reference_condition import sha256_file
 
 
 def nvidia_smi_snapshot():
@@ -60,8 +60,8 @@ def main():
         (args.output/"result.json").write_text(json.dumps(report, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
     try:
         report["config_sha256"] = sha256_file(args.config)
-        for name in ("research/tools/windows_wddm_synthesis.py", "research/tools/windows_wddm_memory.py", "src/sakuratts/backends/cuda/engine.py",
-                     "src/sakuratts/backends/cuda/gpt.py", "src/sakuratts/backends/onnx/sovits.py", "src/sakuratts/backends/onnx/process.py"):
+        for name in ("research/tools/windows_wddm_synthesis.py", "research/tools/windows_wddm_memory.py", "sakuratts/backends/cuda/engine.py",
+                     "sakuratts/backends/cuda/gpt.py", "sakuratts/module/sovits.py", "sakuratts/module/process.py"):
             report["source_sha256"][name] = sha256_file(ROOT/name)
         if args.ort_root:
             ort_root, cuda_dir = args.ort_root.resolve(strict=True), args.cuda_dir.resolve(strict=True)
@@ -114,7 +114,7 @@ def main():
                                   allow_experimental_acoustic_fp16=args.allow_experimental_acoustic_fp16,
                                   acoustic_arena_shrink=args.acoustic_arena_shrink)
             if args.ort_root:
-                from sakuratts.backends.onnx.sovits import ORTSoVITS
+                from sakuratts.module.sovits import ORTSoVITS
                 def load_shared():
                     if engine.sovits is None:
                         engine.sovits = ORTSoVITS.load(engine.packages["sovits"],

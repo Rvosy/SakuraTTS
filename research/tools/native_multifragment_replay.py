@@ -26,8 +26,8 @@ import wave
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
-from sakuratts._internal.reference_condition import PreparedReference, sha256_file
+sys.path.insert(0, str(PROJECT))
+from sakuratts.module.reference_condition import PreparedReference, sha256_file
 from portable_validation import _numeric
 
 COMMIT = "48b1a0169a28582a8984402f82cf438d3bfa6aca"
@@ -236,11 +236,12 @@ def worker(run):
         os.environ.update(ORT_DISABLE_TELEMETRY="1", OPEN_JTALK_DICT_DIR=config["main_dictionary"],
                           PYTHONDONTWRITEBYTECODE="1", HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1")
         import mlx.core as mx
-        from sakuratts.frontend.japanese import JapaneseG2P
-        from sakuratts.frontend.text_frontend import LanguageSegmenter, TextFrontend
+        from sakuratts.text.japanese import JapaneseG2P
+        from sakuratts.text.LangSegmenter import LanguageSegmenter
+        from sakuratts.TTS_infer_pack.TextPreprocessor import TextFrontend
         from sakuratts.backends.mlx.gpt import MLXGPT
         from sakuratts.backends.mlx.sovits import MLXSoVITS
-        import sakuratts._internal.synthesis as synthesis
+        import sakuratts.TTS_infer_pack.synthesis as synthesis
         mx.set_default_device(mx.gpu)
         source, gold, observed_reference, official_pcm, _ = load_gold(Path(config["official_run"]))
         split_method = source["request"]["text_split_method"]
@@ -455,7 +456,7 @@ def main():
     run = args.references.resolve(strict=True) / "runs" / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
                                                           + "-native-multifragment-replay")
     run.mkdir(parents=True, exist_ok=False)
-    files = [Path(__file__).resolve(), PROJECT / "research/tools/portable_validation.py", *sorted((PROJECT / "src/sakuratts").rglob("*.py"))]
+    files = [Path(__file__).resolve(), PROJECT / "research/tools/portable_validation.py", *sorted((PROJECT / "sakuratts").rglob("*.py"))]
     source_hashes = {}
     for path in files:
         relative = path.relative_to(PROJECT)

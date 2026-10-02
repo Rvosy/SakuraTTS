@@ -187,7 +187,7 @@ class Service:
         self.sampling_errors = []
 
     def __enter__(self):
-        process_tree = runpy.run_path(str(PROJECT / "src/sakuratts/_internal/process_tree.py"))["ProcessTree"]
+        process_tree = runpy.run_path(str(PROJECT / "sakuratts/runtime/process_tree.py"))["ProcessTree"]
         self.tree = process_tree()
         try:
             self.console = self.console_path.open("xb")

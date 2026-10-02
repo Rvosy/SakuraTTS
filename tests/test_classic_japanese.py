@@ -7,9 +7,9 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts._internal.protocol import read_message, write_message
-from sakuratts.frontend.classic_japanese import ClassicJapaneseG2P
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from sakuratts.runtime.protocol import read_message, write_message
+from sakuratts.text.classic_japanese import ClassicJapaneseG2P
 
 
 def frontend(response):

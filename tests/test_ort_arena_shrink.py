@@ -7,8 +7,8 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts.backends.onnx.sovits import INPUT_NAMES, ORTSoVITS
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from sakuratts.module.sovits import INPUT_NAMES, ORTSoVITS
 from test_ort_sovits import manifest
 
 
@@ -35,7 +35,7 @@ class ORTArenaShrinkTests(unittest.TestCase):
         inputs = (np.zeros((1, 1, 3), np.int64), np.zeros((1, 4), np.int64),
                   np.zeros((1, 1024, 1), np.float32), np.zeros((1, 512, 1), np.float32),
                   np.zeros((1, 192, 6), np.float32))
-        with patch("sakuratts.backends.onnx.sovits.read_manifest", return_value=(manifest(), Path("unused"))), \
+        with patch("sakuratts.module.sovits.read_manifest", return_value=(manifest(), Path("unused"))), \
              patch.dict(sys.modules, {"onnxruntime": ort, "sakuratts.backends.cuda.runtime": SimpleNamespace(configure_cuda=Mock())}):
             baseline = ORTSoVITS.load("unused", device_id=2)
             off_options = ort.InferenceSession.call_args.kwargs

@@ -24,7 +24,7 @@ import time
 import traceback
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT / "src"), str(ROOT / "tools"), str(ROOT / "research/tools")]
+sys.path[:0] = [str(ROOT), str(ROOT / "tools"), str(ROOT / "research/tools")]
 from windows_official_baseline import TEXT_CASES, digest, write_json
 from windows_wddm_memory import WDDMMemorySampler
 
@@ -97,7 +97,7 @@ class NativeStageProfiler:
 
     def __enter__(self):
         from sakuratts.backends.cuda import engine as cuda_engine
-        from sakuratts._internal import synthesis
+        from sakuratts.TTS_infer_pack import synthesis
 
         original_load = cuda_engine.NVIDIAEngine._load_gpt
 
@@ -494,7 +494,7 @@ def worker(args):
 
 
 def source_paths(args):
-    paths = list((ROOT / "src").rglob("*.py"))
+    paths = list((ROOT).rglob("*.py"))
     paths += [Path(__file__), ROOT / "research/tools/windows_wddm_memory.py", ROOT / "tools/windows_official_baseline.py"]
     if args.config:
         config_path = args.config / "model.json" if args.config.is_dir() else args.config

@@ -16,9 +16,9 @@ import types
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT / "src"), str(ROOT / "tools")]
+sys.path[:0] = [str(ROOT), str(ROOT / "tools")]
 from sakuratts.backends.cuda.engine import NVIDIAEngine
-from sakuratts._internal.reference_condition import sha256_file
+from sakuratts.module.reference_condition import sha256_file
 from windows_official_baseline import TEXT_CASES
 
 
@@ -46,7 +46,7 @@ def main():
     args = parser.parse_args()
     engine = NVIDIAEngine(args.config)
     if args.classic_python:
-        from sakuratts.frontend.classic_japanese import ClassicJapaneseG2P
+        from sakuratts.text.classic_japanese import ClassicJapaneseG2P
         if args.classic_module is None or args.dictionary is None:
             parser.error("Classic comparison requires --classic-module and --dictionary")
         user_dictionary = engine.japanese.user_dictionary

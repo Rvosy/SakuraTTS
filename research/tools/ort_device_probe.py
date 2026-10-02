@@ -21,7 +21,7 @@ import traceback
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(PROJECT / "src"), str(PROJECT / "tools")]
+sys.path[:0] = [str(PROJECT), str(PROJECT / "tools")]
 from windows_official_baseline import digest, write_json
 
 INPUT_NAMES = ("codes", "phones", "ge", "ge512", "noise", "noise_scale")
@@ -134,7 +134,7 @@ def run_probe(args, *, loader=None):
         "cases": [{"case": index, "file": path.name, "sha256": digest(path)} for index, path in cases],
         "harness_sha256": digest(__file__),
         "tolerance": {"atol": ATOL, "rtol": RTOL,
-            "source": "FP32 export validation: src/sakuratts/_internal/conversion/export_sovits_onnx.py"},
+            "source": "FP32 export validation: sakuratts/prepare/export_sovits_onnx.py"},
         "scope": "Acoustic-only saved validation inputs; expected_waveform comes from the package. "
             "No text frontend, natural sampling, reference preparation or listening acceptance.",
         "timing_scope": "Profiling enabled. Wall time covers CPU inputs to returned CPU waveform; "
@@ -144,7 +144,7 @@ def run_probe(args, *, loader=None):
     write_json(output / "result.json", result)
     try:
         if loader is None:
-            from sakuratts.backends.onnx.sovits import ORTSoVITS
+            from sakuratts.module.sovits import ORTSoVITS
             loader = ORTSoVITS.load
         started = time.perf_counter()
         model = loader(package, device=args.device, device_id=args.device_id,

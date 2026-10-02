@@ -13,13 +13,12 @@ import weakref
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from sakuratts._internal.reference_condition import PreparedReference
-from sakuratts._internal.generation import SynthesisCancelled
-from sakuratts._internal.synthesis import (generate_prepared_semantic, prepare_text, prepare_text_request, synthesize,
-                                 single_fragment_pcm, synthesize_acoustic, synthesize_prepared)
-from sakuratts.frontend.text_frontend import TextFrontend
-from sakuratts.frontend.processors import JapaneseProcessor
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from sakuratts.module.reference_condition import PreparedReference
+from sakuratts.AR.generation import SynthesisCancelled
+from sakuratts.TTS_infer_pack.synthesis import generate_prepared_semantic, prepare_text, prepare_text_request, synthesize, single_fragment_pcm, synthesize_acoustic, synthesize_prepared
+from sakuratts.TTS_infer_pack.TextPreprocessor import TextFrontend
+from sakuratts.text.processors import JapaneseProcessor
 
 
 class Frontend:
@@ -101,13 +100,13 @@ class SynthesisTests(unittest.TestCase):
         self.assertTrue(np.all(result.pcm[4:] == 0))
 
     def test_progress_logging_preserves_tokens_audio_and_rng_state(self):
-        from sakuratts._internal.generation import logger
+        from sakuratts.AR.generation import logger
         quiet_rng = np.random.default_rng(1234)
         verbose_rng = np.random.default_rng(1234)
         with patch.object(logger, "level", logging.WARNING):
             quiet = self.request(rng=quiet_rng)
         with self.assertLogs("sakuratts.inference", level="INFO"), \
-                patch("sakuratts._internal.generation.sys.stderr", io.StringIO()):
+                patch("sakuratts.AR.generation.sys.stderr", io.StringIO()):
             verbose = self.request(rng=verbose_rng)
         np.testing.assert_array_equal(quiet.generation.sampled_tokens, verbose.generation.sampled_tokens)
         np.testing.assert_array_equal(quiet.pcm, verbose.pcm)
@@ -336,7 +335,7 @@ class SynthesisTests(unittest.TestCase):
             return result
 
         self.sovits.decode = decode
-        with patch("sakuratts._internal.synthesis.single_fragment_pcm") as make_pcm:
+        with patch("sakuratts.TTS_infer_pack.synthesis.single_fragment_pcm") as make_pcm:
             with self.assertRaises(SynthesisCancelled) as caught:
                 self.request(cancel_requested=cancelled.is_set, release_gpt_state=True,
                              rng=np.random.default_rng(12))

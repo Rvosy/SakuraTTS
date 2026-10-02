@@ -7,7 +7,7 @@ import threading
 import unittest
 from unittest.mock import patch
 
-from sakuratts._internal.cancellation import SynthesisCancelled
+from sakuratts.runtime.cancellation import SynthesisCancelled
 from test_public_api import audio
 from test_server import REQUEST
 

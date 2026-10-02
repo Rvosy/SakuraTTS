@@ -68,8 +68,8 @@ def prepare(args):
         shutil.copy2(source, target)
     for name in ("chinese", "tone_sandhi", "g2pw", "g2pw_text", "g2pw_inputs", "g2pw_session",
                  "tokenizer", "mlx_bert", "weight_storage"):
-        shutil.copy2(PROJECT / "src/sakuratts" / (name + ".py"), run / "source/sakuratts" / (name + ".py"))
-    shutil.copytree(PROJECT / "src/sakuratts/zh_normalization", run / "source/sakuratts/zh_normalization",
+        shutil.copy2(PROJECT / "sakuratts" / (name + ".py"), run / "source/sakuratts" / (name + ".py"))
+    shutil.copytree(PROJECT / "sakuratts/zh_normalization", run / "source/sakuratts/zh_normalization",
                     ignore=shutil.ignore_patterns("__pycache__"))
     shutil.copy2(Path(__file__), run / "source/chinese_equivalence.py")
     shutil.copy2(PROJECT / "tools/prepare_chinese_resources.py", run / "source/prepare_chinese_resources.py")
@@ -176,13 +176,13 @@ def worker(args):
         symbols = json.loads((resources / "symbols-v2.json").read_text())
         phone_ids = lambda phones: [symbols.index(phone) for phone in phones]
     else:
-        from sakuratts.frontend.chinese import ChinesePhones, text_normalize
+        from sakuratts.text.chinese import ChinesePhones, text_normalize
         frontend = ChinesePhones(resources, batch)
         clean, normalize, correct, phone_ids = frontend.clean, text_normalize, frontend.correct_pronunciation, frontend.phone_ids
     if args.full_native:
         if args.backend != "native":
             raise ValueError("full-native requires the native backend")
-        from sakuratts.frontend.g2pw import G2PW
+        from sakuratts.text.g2pw import G2PW
         pp = json.loads((Path(prepared["pinyin_run"]) / "prepared.json").read_text())
         started = time.perf_counter()
         engine = G2PW(pp["resources"], Path(pp["tokenizer"]) / "tokenizer.json", pp["model"])
@@ -226,9 +226,9 @@ def worker(args):
         gc.collect()
         result["memory"]["after_g2pw_close"] = memory()
         import mlx.core as mx
-        from sakuratts.frontend.chinese import chinese_bert_features
+        from sakuratts.text.chinese import chinese_bert_features
         from sakuratts.backends.mlx.bert import MLXBertFeatures
-        from sakuratts.frontend.tokenizer import ChineseBertTokenizer
+        from sakuratts.text.tokenizer import ChineseBertTokenizer
         bert_run = Path(prepared["bert_run"])
         bert_cases = json.loads((bert_run / "input-provenance.json").read_text())
         tokenizer = ChineseBertTokenizer(Path(pp["tokenizer"]) / "tokenizer.json")

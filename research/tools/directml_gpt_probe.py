@@ -10,9 +10,9 @@ import traceback
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT / "src"), str(Path(__file__).parent)]
+sys.path[:0] = [str(ROOT), str(Path(__file__).parent)]
 from sakuratts.backends.directml.gpt import DirectMLGPT
-from sakuratts._internal.reference_condition import sha256_file
+from sakuratts.module.reference_condition import sha256_file
 from cpu_gpt_ort import load_inputs
 from directml_acoustic_precision import profile_summary
 

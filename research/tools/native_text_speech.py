@@ -24,15 +24,16 @@ import traceback
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
-from sakuratts._internal.reference_condition import PreparedReference, sha256_file
+sys.path.insert(0, str(PROJECT))
+from sakuratts.module.reference_condition import PreparedReference, sha256_file
 
 CASES = ["ja-reported-intro", "ja-short", "ja-long", "ja-punctuation"]
 PATHS = ("official_run", "official_conditions", "gpt_package", "sovits_package", "reference_package",
          "symbols_json", "language_model_dir", "japanese_main_dictionary", "japanese_user_dictionary")
-RUNTIME = ("_internal/synthesis", "_internal/reference_condition", "frontend/text_frontend", "frontend/japanese", "_internal/generation", "_internal/sampling",
+RUNTIME = ("TTS_infer_pack/synthesis", "module/reference_condition", "TTS_infer_pack/TextPreprocessor",
+           "TTS_infer_pack/text_segmentation_method", "text/LangSegmenter", "text/japanese", "AR/generation", "AR/sampling",
            "backends/mlx/gpt", "backends/mlx/gpt_prefill", "backends/mlx/sovits", "backends/mlx/encoder", "backends/mlx/flow",
-           "backends/mlx/decoder", "backends/mlx/sovits_package", "_internal/weight_storage")
+           "backends/mlx/decoder", "backends/mlx/sovits_package", "module/weight_storage")
 HARNESS = ("native_text_speech", "native_prepared_speech", "mlx_sovits_replay",
            "mlx_sovits_encoder_replay", "sovits_fixed_conditions")
 
@@ -80,7 +81,7 @@ def prepare(args):
         if len(records) != 1 or records[0]["language"] != "ja":
             raise ValueError("Expected exactly one original Japanese source request: " + name)
         cases.append(dict(id=name, text=records[0]["text"], language=args.language_mode))
-    files = [f"src/sakuratts/{name}.py" for name in RUNTIME] + [f"research/tools/{name}.py" for name in HARNESS]
+    files = [f"sakuratts/{name}.py" for name in RUNTIME] + [f"research/tools/{name}.py" for name in HARNESS]
     for name in files:
         target = run / "source" / name
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -119,11 +120,12 @@ def worker(args):
     os.environ["OPEN_JTALK_DICT_DIR"] = config["japanese_main_dictionary"]
     import_start = time.perf_counter()
     import mlx.core as mx
-    from sakuratts.frontend.japanese import JapaneseG2P
-    from sakuratts.frontend.text_frontend import LanguageSegmenter, TextFrontend
+    from sakuratts.text.japanese import JapaneseG2P
+    from sakuratts.text.LangSegmenter import LanguageSegmenter
+    from sakuratts.TTS_infer_pack.TextPreprocessor import TextFrontend
     from sakuratts.backends.mlx.gpt import MLXGPT
     from sakuratts.backends.mlx.sovits import MLXSoVITS
-    from sakuratts._internal.synthesis import prepare_text, synthesize_prepared
+    from sakuratts.TTS_infer_pack.synthesis import prepare_text, synthesize_prepared
     from native_prepared_speech import checks, load_case
     from mlx_sovits_encoder_replay import compare, memory_snapshot
     from mlx_sovits_replay import write_wav
@@ -287,7 +289,7 @@ def worker(args):
         mx.synchronize()
         report["final_memory"] = boundary()
         report["process_lifetime_maxrss_bytes"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        forbidden = ("torch", "transformers", "sakuratts.frontend.chinese", "sakuratts.frontend.g2pw", "sakuratts.backends.mlx.bert")
+        forbidden = ("torch", "transformers", "sakuratts.text.chinese", "sakuratts.text.g2pw", "sakuratts.backends.mlx.bert")
         report["forbidden_imports"] = {name: name in sys.modules for name in forbidden}
         if any(report["forbidden_imports"].values()):
             report["status"] = "unexpected_dependency"

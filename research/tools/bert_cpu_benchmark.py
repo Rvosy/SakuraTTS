@@ -23,7 +23,7 @@ import time
 import traceback
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
+sys.path.insert(0, str(PROJECT))
 
 
 def sha256(path):
@@ -81,11 +81,11 @@ def benchmark(args):
         "memory_before_numeric_imports": initial_memory, "cases": [],
     }
     shutil.copy2(__file__, output / "bert_cpu_benchmark.py")
-    runtime_file = PROJECT / "src/sakuratts" / ("bert_features.py" if args.backend == "torch" else "mlx_bert.py")
+    runtime_file = PROJECT / "sakuratts" / ("bert_features.py" if args.backend == "torch" else "mlx_bert.py")
     shutil.copy2(runtime_file, output / runtime_file.name)
     report["runtime_sha256"] = sha256(runtime_file)
     if args.backend != "torch":
-        storage_helper = PROJECT / "src/sakuratts/_internal/weight_storage.py"
+        storage_helper = PROJECT / "sakuratts/module/weight_storage.py"
         shutil.copy2(storage_helper, output / storage_helper.name)
         report["weight_storage_sha256"] = sha256(storage_helper)
     write_json(output / "result.json", report)
@@ -94,7 +94,7 @@ def benchmark(args):
         import numpy as np
         if args.backend == "torch":
             import torch
-            from sakuratts.frontend.bert_features import BertFeatures
+            from sakuratts.text.bert_features import BertFeatures
             torch.set_num_threads(args.threads)
             torch.set_num_interop_threads(1)
             report.update(torch=torch.__version__, transformers=metadata.version("transformers"),

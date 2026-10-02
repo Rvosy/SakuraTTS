@@ -17,7 +17,7 @@ import numpy as np
 
 from sakuratts import Audio, BusyError, Engine, Model
 from sakuratts.cli import main
-from sakuratts.converter import package_model
+from sakuratts.prepare.converter import package_model
 
 
 def model_directory(root):
@@ -70,7 +70,7 @@ assert model.backend == 'mlx'
 assert model.languages == ('ja', 'zh')
 assert model.runtime_config['frontend_python'] == 'old/frontend/python.exe'
 assert not set(('numpy', 'cupy', 'torch', 'onnxruntime', 'fastapi', 'mlx',
-                'sakuratts._internal.portable', 'sakuratts.backends')) & sys.modules.keys()
+                'sakuratts.runtime.portable', 'sakuratts.backends')) & sys.modules.keys()
 print(json.dumps(model.info()))
 """
             environment = dict(os.environ, SAKURATTS_BUNDLE_ROOT=str(Path(folder) / "missing-bundle"))
@@ -92,7 +92,7 @@ print(json.dumps(model.info()))
             model.path.write_text(json.dumps(dict(model.manifest, acoustic_python="../worker.exe",
                 frontend_python="../frontend.exe", gpt="../shared-gpt")), encoding="utf-8")
             (root / "old/gpt").rename(root / "shared-gpt")
-            with patch("sakuratts._internal.diagnostics.check_prepared_packages") as check:
+            with patch("sakuratts.runtime.diagnostics.check_prepared_packages") as check:
                 packed = package_model(model.path, root / "new")
             check.assert_called_once()
             self.assertEqual(packed.name, "テスト")
@@ -100,14 +100,14 @@ print(json.dumps(model.info()))
             self.assertEqual(packed.manifest["frontend_python"], str(frontend_worker.resolve()))
             self.assertEqual(packed.references, ("通常",))
             self.assertTrue((root / "old/model.json").exists())
-            with self.assertRaises(FileExistsError), patch("sakuratts._internal.diagnostics.check_prepared_packages"):
+            with self.assertRaises(FileExistsError), patch("sakuratts.runtime.diagnostics.check_prepared_packages"):
                 package_model(model.path, root / "new")
 
     def test_failed_package_validation_does_not_publish_partial_model(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             model = model_directory(root / "old")
-            with patch("sakuratts._internal.diagnostics.check_prepared_packages", side_effect=ValueError("bad hash")):
+            with patch("sakuratts.runtime.diagnostics.check_prepared_packages", side_effect=ValueError("bad hash")):
                 with self.assertRaisesRegex(ValueError, "bad hash"):
                     package_model(model.path, root / "new")
             self.assertFalse((root / "new").exists())

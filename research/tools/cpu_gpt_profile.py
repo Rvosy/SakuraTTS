@@ -22,9 +22,9 @@ import numpy as np
 from threadpoolctl import threadpool_info
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT))
 from sakuratts.backends.cpu.gpt import CPUGPT
-from sakuratts._internal.reference_condition import PreparedReference, sha256_file
+from sakuratts.module.reference_condition import PreparedReference, sha256_file
 
 
 def array_digest(value):
@@ -124,7 +124,7 @@ def main():
     model = CPUGPT.load(gpt_root, threads=args.threads[0])
     output = {"identity": identity, "environment": {"python": sys.version, "numpy": np.__version__,
         "platform": platform.platform(), "blas": threadpool_info(),
-        "runtime_source_sha256": sha256_file(ROOT / "src/sakuratts/backends/cpu/gpt.py")},
+        "runtime_source_sha256": sha256_file(ROOT / "sakuratts/backends/cpu/gpt.py")},
         "scope": "Fixed-history GPT only; acoustics, text frontend, sampling and model loading excluded",
         "repeats": args.repeats, "threads": {}}
     reference = None

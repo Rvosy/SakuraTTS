@@ -17,8 +17,8 @@ import sys
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-from sakuratts._internal.sampling import exclude_initial_eos, logits_to_probs
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from sakuratts.AR.sampling import exclude_initial_eos, logits_to_probs
 from sovits_fixed_conditions import sha256
 
 
@@ -111,7 +111,7 @@ def main():
     run = args.references.resolve() / "runs" / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ") + "-gpt-probability-sensitivity")
     run.mkdir(parents=True, exist_ok=False)
     project = Path(__file__).resolve().parents[2]
-    files = ("research/tools/gpt_probability_sensitivity.py", "src/sakuratts/_internal/sampling.py", "research/tools/sovits_fixed_conditions.py")
+    files = ("research/tools/gpt_probability_sensitivity.py", "sakuratts/AR/sampling.py", "research/tools/sovits_fixed_conditions.py")
     for name in files:
         target = run / "source" / name
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -120,7 +120,7 @@ def main():
     native, attribution = json.loads(native_path.read_text()), json.loads(attribution_path.read_text())
     if attribution["native_result_sha256"] != sha256(native_path) or not attribution["identical_logits_all_pass"]:
         raise ValueError("Need unchanged native run and completed identical-logit sampler attribution")
-    if sha256(project / "src/sakuratts/_internal/sampling.py") != sha256(args.native_run / "source/src/sakuratts/_internal/sampling.py"):
+    if sha256(project / "sakuratts/AR/sampling.py") != sha256(args.native_run / "source/sakuratts/AR/sampling.py"):
         raise ValueError("Sampler changed since the attributed run")
     report = {"status": "diagnosis_completed", "command": [sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]],
               "native_run": str(args.native_run), "native_manifest_sha256": sha256(native_path),

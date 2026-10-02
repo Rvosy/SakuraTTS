@@ -189,7 +189,7 @@ def export(args):
     # Create the environment in its final location: venv records absolute paths.
     output.mkdir(parents=True, exist_ok=False)
     origins = {}
-    copy_tree(PROJECT / "src", output / "src", origins, output=output)
+    copy_tree(PROJECT, output, origins, output=output)
     (output / "tools").mkdir()
     copy_tree(PROJECT / "tools/synthesize_japanese.py", output / "tools/synthesize_japanese.py",
               origins, output=output)

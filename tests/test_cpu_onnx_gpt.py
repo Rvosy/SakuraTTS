@@ -21,7 +21,7 @@ AVAILABLE = all(importlib.util.find_spec(name) is not None for name in ("onnx", 
 class ONNXCPUGPTTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        from sakuratts._internal.conversion.export_gpt_onnx import export_sidecar
+        from sakuratts.prepare.export_gpt_onnx import export_sidecar
         cls.folder = tempfile.TemporaryDirectory()
         cls.manifest, cls.weights = model_data()
         cls.root = save_package(cls.folder.name, cls.manifest, cls.weights)
@@ -144,7 +144,7 @@ class ONNXCPUGPTTests(unittest.TestCase):
     @unittest.skipUnless(sys.platform == "win32", "Windows Unicode conversion")
     def test_int8_unicode_model_and_temp_match_ascii_conversion_and_restore_shape_inference(self):
         import onnx
-        from sakuratts._internal.conversion.export_gpt_onnx import export_sidecar
+        from sakuratts.prepare.export_gpt_onnx import export_sidecar
         original_infer = onnx.shape_inference.infer_shapes_path
         with tempfile.TemporaryDirectory() as temporary:
             temporary = Path(temporary)
@@ -174,7 +174,7 @@ class ONNXCPUGPTTests(unittest.TestCase):
     @unittest.skipUnless(sys.platform == "win32", "Windows Unicode conversion")
     def test_unicode_quantization_failure_restores_shape_inference_and_original_error(self):
         import onnx
-        from sakuratts._internal.conversion.export_gpt_onnx import export_sidecar
+        from sakuratts.prepare.export_gpt_onnx import export_sidecar
         original_infer = onnx.shape_inference.infer_shapes_path
         failure = RuntimeError("quantization failed")
         with tempfile.TemporaryDirectory() as temporary:

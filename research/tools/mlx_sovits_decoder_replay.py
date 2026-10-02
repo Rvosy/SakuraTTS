@@ -20,7 +20,7 @@ import traceback
 import mlx.core as mx
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from sakuratts.backends.mlx.decoder import MLXSoVITSDecoder, normalized_weight, sha256
 
 
@@ -183,7 +183,7 @@ def main():
     run = args.references.resolve() / "runs" / f"{timestamp}-mlx-sovits-decoder-{'self-test-cpu' if args.self_test else args.device}"
     source_root = run / "source"
     project = Path(__file__).resolve().parents[2]
-    files = ("research/tools/mlx_sovits_decoder_replay.py", "src/sakuratts/backends/mlx/decoder.py", "src/sakuratts/_internal/weight_storage.py", "requirements/mlx-candidate.txt")
+    files = ("research/tools/mlx_sovits_decoder_replay.py", "sakuratts/backends/mlx/decoder.py", "sakuratts/module/weight_storage.py", "requirements/mlx-candidate.txt")
     for name in files:
         target = source_root / name
         target.parent.mkdir(parents=True, exist_ok=True)

@@ -5,12 +5,12 @@ import sys
 import tempfile
 import unittest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import torch
 from transformers import BertConfig, BertForMaskedLM
 
-from sakuratts.frontend.bert_features import BertFeatures, feature_config
+from sakuratts.text.bert_features import BertFeatures, feature_config
 
 
 class BertFeaturesTests(unittest.TestCase):

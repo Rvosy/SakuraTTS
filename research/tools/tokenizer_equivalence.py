@@ -29,7 +29,7 @@ sys.dont_write_bytecode = True
 import numpy as np
 
 PROJECT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT / "src"))
+sys.path.insert(0, str(PROJECT))
 PLATFORM = platform.platform()
 FUNCTIONS = {
     "utils.py": {"wordize_and_map", "tokenize_and_map"},
@@ -71,7 +71,7 @@ def pure_g2pw(source, tokenizer, *, use_mask=True):
 
 
 def native_g2pw(source, tokenizer, *, use_mask=True):
-    from sakuratts.frontend.g2pw_inputs import G2PWInputs, tokenize_and_map
+    from sakuratts.text.g2pw_inputs import G2PWInputs, tokenize_and_map
 
     polyphonic = [line.split("\t") for line in (source / "POLYPHONIC_CHARS.txt").read_text().strip().splitlines()]
     builder = G2PWInputs(tokenizer, polyphonic, use_mask=use_mask)
@@ -244,7 +244,7 @@ def prepare(args):
 
 
 def validate(args):
-    from sakuratts.frontend.tokenizer import ChineseBertTokenizer
+    from sakuratts.text.tokenizer import ChineseBertTokenizer
 
     run = args.run.resolve()
     output = args.references.resolve() / "runs" / (
@@ -299,14 +299,14 @@ def validate(args):
                   packing_setup_scope="Import native module, read labels, build static character IDs and masks",
                   mapping_checks=mapping_checks, array_checks=checks, benchmark=benchmark_result,
                   query_cache_checks=cache_checks, query_cache_matches_official=cache_equal,
-                  candidate_g2pw_implementation="sakuratts.frontend.g2pw_inputs.G2PWInputs",
+                  candidate_g2pw_implementation="sakuratts.text.g2pw_inputs.G2PWInputs",
                   scope="Native tokenizer and G2PW inputs; no neural model inference")
     np.savez(output / "candidate-arrays.npz", **arrays)
     write_json(output / "candidate-details.json", details)
     write_json(output / "result.json", report)
     shutil.copy2(Path(__file__), output / "validation-research.tools.py")
-    shutil.copy2(PROJECT / "src/sakuratts/frontend/tokenizer.py", output / "tokenizer.py")
-    shutil.copy2(PROJECT / "src/sakuratts/frontend/g2pw_inputs.py", output / "g2pw_inputs.py")
+    shutil.copy2(PROJECT / "sakuratts/text/tokenizer.py", output / "tokenizer.py")
+    shutil.copy2(PROJECT / "sakuratts/text/g2pw_inputs.py", output / "g2pw_inputs.py")
     print(json.dumps(dict(status=report["status"], mappings=len(mapping_checks), arrays=len(checks),
                           runtime_imported_torch=info["runtime_imported_torch"],
                           runtime_imported_transformers=info["runtime_imported_transformers"])))

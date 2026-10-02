@@ -1,0 +1,92 @@
+{
+  "date": "2026-10-03",
+  "baseline_commit": "bcf8755",
+  "upstream_commit": "48b1a0169a28582a8984402f82cf438d3bfa6aca",
+  "source_state": "working tree on refactor/gpt-sovits-layout",
+  "product_source_sha256": "9bfa301517b0fb42bb186f95ff304e3d77ac847c2ef7c52378fe25e3cedebb48",
+  "platform": "Windows-11-10.0.22631-SP0",
+  "python": "3.12.14",
+  "request": {
+    "seed": 1234,
+    "split_method": "cut5",
+    "reference": "reference",
+    "texts": [
+      "こんにちは。",
+      "今日はいい天気ですね。窓を開けて、少し休みましょう。"
+    ]
+  },
+  "checks": [
+    {
+      "backend": "cpu",
+      "ort": "1.30.0",
+      "case": 0,
+      "model_manifest_sha256": "47c1ee11d4a19dc120fc3d45516c790edb136e5640c5d496f1ec03258d1dead2",
+      "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b",
+      "samples": 49280,
+      "dtype": "int16",
+      "before_pcm_sha256": "cf1417fc80cc27227d2c63488957da20e7cbc12342029f6a504c52b8db39b9e3",
+      "after_pcm_sha256": "cf1417fc80cc27227d2c63488957da20e7cbc12342029f6a504c52b8db39b9e3",
+      "stream_pcm_sha256": "cf1417fc80cc27227d2c63488957da20e7cbc12342029f6a504c52b8db39b9e3",
+      "status": "completed",
+      "sample_rate": 32000
+    },
+    {
+      "backend": "cpu",
+      "ort": "1.30.0",
+      "case": 1,
+      "model_manifest_sha256": "47c1ee11d4a19dc120fc3d45516c790edb136e5640c5d496f1ec03258d1dead2",
+      "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b",
+      "samples": 179840,
+      "dtype": "int16",
+      "before_pcm_sha256": "690ef45077d0f3416adcb95dc192d86ff5dd73904a8249a42ae8595e012b7b7f",
+      "after_pcm_sha256": "690ef45077d0f3416adcb95dc192d86ff5dd73904a8249a42ae8595e012b7b7f",
+      "stream_pcm_sha256": "690ef45077d0f3416adcb95dc192d86ff5dd73904a8249a42ae8595e012b7b7f",
+      "status": "completed",
+      "sample_rate": 32000
+    },
+    {
+      "backend": "directml",
+      "ort": "1.24.4",
+      "case": 0,
+      "model_manifest_sha256": "7d3a8f28c9e917ac00e3fc133f60057ccfebde246cab8d74d1f0cd9837bbe828",
+      "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b",
+      "samples": 49280,
+      "dtype": "int16",
+      "before_pcm_sha256": "51c2ad5110a92511a497f57d776f4a5cb73ab82d3ab5d45bae5446d291f0916a",
+      "after_pcm_sha256": "51c2ad5110a92511a497f57d776f4a5cb73ab82d3ab5d45bae5446d291f0916a",
+      "stream_pcm_sha256": "51c2ad5110a92511a497f57d776f4a5cb73ab82d3ab5d45bae5446d291f0916a",
+      "status": "completed",
+      "sample_rate": 32000
+    },
+    {
+      "backend": "directml",
+      "ort": "1.24.4",
+      "case": 1,
+      "model_manifest_sha256": "7d3a8f28c9e917ac00e3fc133f60057ccfebde246cab8d74d1f0cd9837bbe828",
+      "reference_manifest_sha256": "4b8cd00bef46c3259b38926e0a5c401d837062071239095883c973f37f1d0f7b",
+      "samples": 179840,
+      "dtype": "int16",
+      "before_pcm_sha256": "ec42b3ce9db8252295724bfc142cc7018b8e2b78e108a92f22fe31cd80dd69b1",
+      "after_pcm_sha256": "ec42b3ce9db8252295724bfc142cc7018b8e2b78e108a92f22fe31cd80dd69b1",
+      "stream_pcm_sha256": "ec42b3ce9db8252295724bfc142cc7018b8e2b78e108a92f22fe31cd80dd69b1",
+      "status": "completed",
+      "sample_rate": 32000
+    }
+  ],
+  "validation": {
+    "product_tests": 379,
+    "product_skipped": 1,
+    "product_failed": 0,
+    "sdist_tests": 379,
+    "sdist_skipped": 1,
+    "sdist_failed": 0,
+    "research_tests": 151,
+    "research_failures_before_and_after": 2,
+    "research_errors_before_and_after": 6,
+    "research_skipped": 2,
+    "distribution_hashes_passed": true,
+    "wheel_python_files": 108,
+    "wheel_license_files": 16
+  },
+  "scope": "Refactor regression against the preceding implementation; no upstream audio equivalence, performance or perceptual-quality claim."
+}
