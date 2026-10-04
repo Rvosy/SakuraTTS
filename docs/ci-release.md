@@ -6,7 +6,7 @@
 
 ## 运行环境输入
 
-`runtime-base-20261004` GitHub Release 草稿保存固定运行环境输入，来源是已完成本机联调的完整包。它不是用户发行版；Windows 输入分成两段，构建时顺序拼接。下载脚本见 [fetch_ci_base.py](../scripts/fetch_ci_base.py)。Actions 使用自身的只读仓库令牌访问草稿，不公开草稿下载地址。
+`runtime-base-20261004` GitHub Release 草稿保存固定运行环境输入，来源是已完成本机联调的完整包。它不是用户发行版；Windows 输入分成两段，构建时顺序拼接。下载脚本见 [fetch_ci_base.py](../scripts/fetch_ci_base.py)。GitHub 的 Release 草稿仅向具备推送权限的调用者可见，因此构建任务使用自身令牌的 `contents: write` 权限访问草稿；任务不写入 GitHub 仓库，不公开草稿下载地址。
 
 每次发行从检出的源码重新构建 wheel，完整替换旧产品模块和启动器，重新生成版本与源码身份；准备环境和推理依赖来自固定基包。当前依赖声明与基包不匹配时构建失败，需要重新准备基包。这不是从空环境重新编译所有第三方依赖的工作流。
 

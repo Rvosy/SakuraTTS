@@ -14,6 +14,9 @@ concurrency:
 
 jobs:
   build:
+    # GitHub 仅向具备推送权限的调用者返回 Release 草稿。
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
