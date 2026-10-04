@@ -8,6 +8,9 @@ import signal
 import sys
 import threading
 
+from .worker import enable_windows_long_import_paths
+enable_windows_long_import_paths()
+
 from .inference_process import MAX_PCM, read_frame, write_frame
 
 

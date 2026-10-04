@@ -8,6 +8,10 @@ import sys
 import time
 import traceback
 
+if __name__ == '__main__':
+    from runpy import run_path
+    run_path(str(Path(__file__).with_name('worker.py')))['enable_windows_long_import_paths']()
+
 if not __package__:
     from runpy import run_path
     run_path(str(Path(__file__).with_name("worker.py")))["load_package"](Path(__file__).resolve().parents[1])

@@ -1,6 +1,7 @@
 """Worker package imports must not expose another interpreter's site-packages."""
 
 import json
+import importlib.util
 from pathlib import Path
 import shutil
 import subprocess
@@ -15,6 +16,26 @@ import sakuratts.diagnostics.resources as diagnostics
 
 
 class WorkerBootstrapTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == 'win32', 'Windows native DLL path boundary')
+    def test_native_extension_import_from_long_installation_path(self):
+        directory = self.root / ('deep-installation-' * 6) / ('private-runtime-' * 6)
+        directory.mkdir(parents=True)
+        source = Path(importlib.util.find_spec('_decimal').origin)
+        destination = directory / source.name
+        shutil.copy2(source, destination)
+        self.assertGreater(len(str(destination)), 260)
+        code = """import json,runpy,sys
+sys.path.insert(0,sys.argv[2])
+before=list(sys.path)
+runpy.run_path(sys.argv[1])['enable_windows_long_import_paths']()
+import _decimal
+assert _decimal.Decimal('1.25')+_decimal.Decimal('2.75')==4
+assert sys.path==before
+assert _decimal.__file__==str(__import__('pathlib').Path(sys.argv[2])/'_decimal.pyd')
+print(json.dumps({'native_import':True}))
+"""
+        self.assertTrue(self.isolated(code, ROOT / 'sakuratts/runtime/worker.py', directory)['native_import'])
+
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)

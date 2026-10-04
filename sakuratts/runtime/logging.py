@@ -2,6 +2,7 @@
 
 from contextlib import contextmanager
 from contextvars import ContextVar
+from collections import deque
 from itertools import count
 import ast
 import logging
@@ -210,12 +211,15 @@ def log_result(audio):
     logger.debug("合成报告: %s", report)
 
 
+class PreparationError(subprocess.CalledProcessError):
+    def __str__(self):
+        return f"模型准备失败（退出码 {self.returncode}）：\n{self.output}"
+
+
 def run_conversion(command, *, env):
-    """Stream preparation output to diagnostics without retaining it in RAM."""
+    """Stream diagnostics and retain the final lines for the caller's error."""
     logger = logging.getLogger("sakuratts.prepare.converter")
-    if not logger.isEnabledFor(logging.DEBUG):
-        return subprocess.run(command, check=True, env=env, stdin=subprocess.DEVNULL,
-                              creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    tail = deque(maxlen=20)
     logger.debug("运行准备命令: %r", command)
     with subprocess.Popen(command, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, encoding="utf-8", errors="replace",
@@ -225,6 +229,7 @@ def run_conversion(command, *, env):
                 line = line.rstrip("\r\n")
                 if not line:
                     continue
+                tail.append(line)
                 logger.debug("准备进程: %s", line)
                 match = re.search(r"_IncompatibleKeys\(missing_keys=(\[.*?\]), unexpected_keys=(\[.*?\])\)", line)
                 if match:
@@ -244,5 +249,5 @@ def run_conversion(command, *, env):
                 process.wait()
             raise
     if code:
-        raise subprocess.CalledProcessError(code, command)
+        raise PreparationError(code, command, output="\n".join(tail))
     return subprocess.CompletedProcess(command, code)

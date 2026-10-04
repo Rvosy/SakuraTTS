@@ -19,6 +19,9 @@ import sys
 import time
 import types
 
+from runpy import run_path
+run_path(str(Path(__file__).resolve().parents[1] / "runtime/worker.py"))["enable_windows_long_import_paths"]()
+
 import numpy as np
 import torch
 from torch import nn

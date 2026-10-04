@@ -21,6 +21,8 @@ import time
 import traceback
 
 PACKAGE = Path(__file__).resolve().parents[1]
+from runpy import run_path
+run_path(str(PACKAGE / "runtime/worker.py"))["enable_windows_long_import_paths"]()
 SOURCE_FILE = "GPT_SoVITS/TTS_infer_pack/TTS.py"
 
 
@@ -218,6 +220,7 @@ def worker(job_file):
                       PYTHONIOENCODING="utf-8")
     from runpy import run_path
     run_path(str(PACKAGE / "runtime/worker.py"))["load_package"](PACKAGE)
+    run_path(str(PACKAGE / "runtime/worker.py"))["enable_windows_long_import_paths"]()
     sys.path[:0] = [str(root), str(root / "GPT_SoVITS")]
     os.chdir(root)
     result = {"status": "running", "prepare_only": True, "target_synthesis_calls": 0, "references": []}
