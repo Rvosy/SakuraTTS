@@ -15,6 +15,29 @@ REQUEST = {"text": "こんにちは。", "text_lang": "ja", "ref_audio_path": "r
 
 @unittest.skipUnless(importlib.util.find_spec("fastapi") and importlib.util.find_spec("httpx"), "Install server and dev extras")
 class ServerTests(unittest.TestCase):
+    def test_complete_audio_response_exposes_stage_metrics_without_request_text(self):
+        from fastapi.testclient import TestClient
+        from sakuratts.server import create_app
+        class FakeInference:
+            def __init__(self, *args, **kwargs): pass
+            def info(self): return None
+            def close(self): pass
+            def tts(self, *args, **kwargs):
+                result = audio()
+                result.report.update(reference_ms=1400, reference_cache='miss', frontend_ms=2, backend='cuda',
+                    fragments=[{'timings': {'semantic_seconds': .7, 'acoustic_seconds': .4}}])
+                return result
+        with patch('sakuratts.server.Inference', FakeInference), TestClient(create_app()) as client:
+            response = client.post('/tts', json=REQUEST)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.content.startswith(b'RIFF'))
+        self.assertEqual(response.headers['X-SakuraTTS-Reference-Ms'], '1400')
+        self.assertEqual(response.headers['X-SakuraTTS-Semantic-Ms'], '700.0')
+        self.assertEqual(response.headers['X-SakuraTTS-Acoustic-Ms'], '400.0')
+        self.assertEqual(response.headers['X-SakuraTTS-Reference-Cache'], 'miss')
+        self.assertGreaterEqual(float(response.headers['X-SakuraTTS-Total-Ms']), 0)
+        self.assertNotIn(REQUEST['text'], str(response.headers))
+
     def test_unimplemented_requests_fail_before_direct_or_managed_inference(self):
         from fastapi.testclient import TestClient
         from sakuratts.server import create_app

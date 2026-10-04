@@ -102,6 +102,10 @@ Prefill、Decode、CUDA Graph 捕获和新参考编码在实际请求时执行�
 
 完整响应的 `X-SakuraTTS-Status` 区分 `completed` 和 `stopped_at_limit`。`X-SakuraTTS-Request-Ms` 包含本次参考解析和原生推理，音频压缩与网络发送不在其中。达到长度限制不表示内容完整。
 
+完整响应还提供 `X-SakuraTTS-Total-Ms`（含唤醒等待和音频编码，不含网络发送）、`Reference-Ms`、`Frontend-Ms`、`Semantic-Ms`、`Acoustic-Ms` 阶段耗时，以及 `Audio-Seconds` 音频时长；后五项同样以 `X-SakuraTTS-` 开头。`X-SakuraTTS-Reference-Cache` 的 `memory`、`disk`、`package`、`miss` 分别表示内存、磁盘、部署包命中和首次准备，`X-SakuraTTS-Backend` 表示实际推理后端。没有对应测量的阶段不发送响应头。
+
 流式队列最多保留两个片段，发送慢时阻塞生产。`direct` 和 `managed` 的完整响应及流式响应都监听客户端断开，包括首片音频产生之前。断开后发出取消信号，计算边界检查该信号；当前内核或参考准备尚未返回时不会提前释放忙碌状态。第一片之前失败可以返回 JSON 错误；已开始发送后失败会中断连接，不补成成功音频。模型加载、显存释放、句间 RNG 顺序沿用原生实现。
 
 首次原始参考编码需要配置中的原始检查点、HuBERT / 说话人模型与准备环境；缓存命中后的普通推理不需要 PyTorch。缓存保存音频条件，参考文本特征按当前文本、语言和前端重新计算，修改转写不会误用上一次文本。
+
+同一推理会话在首次参考准备后复用 CPU 准备进程及其模型，切换语气时不再反复导入依赖和加载准备模型。切换模型或关闭推理会话时回收准备进程；managed 模式的休眠和取消也回收它。首次加载仍有冷启动开销。

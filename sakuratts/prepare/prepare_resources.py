@@ -211,12 +211,13 @@ def disable_network():
     sys.addaudithook(check)
 
 
-def worker(job_file):
+def worker(job_file, engine_holder=None):
     job = read_json(job_file)
     root, run = Path(job["official_source"]), Path(job_file).parent
+    cache = Path(job.get("cache_dir", run))
     sys.dont_write_bytecode = True
     os.environ.update(PYTHONDONTWRITEBYTECODE="1", HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1",
-                      NUMBA_CACHE_DIR=str(run / "numba-cache"), MPLCONFIGDIR=str(run / "mpl-cache"),
+                      NUMBA_CACHE_DIR=str(cache / "numba-cache"), MPLCONFIGDIR=str(cache / "mpl-cache"),
                       PYTHONIOENCODING="utf-8")
     from runpy import run_path
     run_path(str(PACKAGE / "runtime/worker.py"))["load_package"](PACKAGE)
@@ -226,7 +227,8 @@ def worker(job_file):
     result = {"status": "running", "prepare_only": True, "target_synthesis_calls": 0, "references": []}
     started = time.perf_counter()
     try:
-        disable_network()
+        if engine_holder is None:
+            disable_network()
         try:
             import numpy as np
             import torch
@@ -265,7 +267,9 @@ def worker(job_file):
         config = TTS_Config(config_data)
         config.configs_path = str(run / "tts-prepare.yaml")
         os.chdir(root)
-        engine = ReferenceOnlyTTS(config)
+        engine = engine_holder[0] if engine_holder else ReferenceOnlyTTS(config)
+        if engine_holder is not None and not engine_holder:
+            engine_holder.append(engine)
         if (engine.configs.version != family or str(engine.configs.device) != job["device"]
                 or engine.t2s_model is not None or engine.bert_model is not None):
             raise RuntimeError("Reference-only initialization differs from the requested model family or device")
@@ -323,7 +327,28 @@ def worker(job_file):
     return 0 if result["status"] == "completed" else 1
 
 
-def main():
+def serve():
+    # Third-party Python/native output must not enter the protocol stream.
+    output = os.fdopen(os.dup(sys.stdout.fileno()), 'wb', buffering=0)
+    os.dup2(sys.stderr.fileno(), sys.stdout.fileno())
+    sys.stdout = sys.stderr
+    run_path(str(PACKAGE / 'runtime/worker.py'))['load_package'](PACKAGE)
+    from sakuratts.runtime.protocol import read_message, write_message
+    disable_network()
+    engine_holder = []
+    try:
+        while True:
+            request, _ = read_message(sys.stdin.buffer)
+            try:
+                main(request['arguments'], engine_holder)
+                write_message(output, {'status': 'ok'})
+            except Exception:
+                write_message(output, {'status': 'error', 'error': traceback.format_exc()})
+    except EOFError:
+        return 0
+
+
+def main(argv=None, engine_holder=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--official-source", type=Path)
     parser.add_argument("--character", type=Path)
@@ -336,10 +361,14 @@ def main():
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     parser.add_argument("--precision", choices=("fp32", "fp16"), default="fp32")
     parser.add_argument("--cpu-threads", type=int, default=4)
+    parser.add_argument("--cache-dir", type=Path, help="Reuse audio preprocessing compilation caches across references")
     parser.add_argument("--frontend-only", action="store_true")
     parser.add_argument("--frontend-preflight", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--worker", type=Path, help=argparse.SUPPRESS)
-    args = parser.parse_args()
+    parser.add_argument("--serve", action='store_true', help=argparse.SUPPRESS)
+    args = parser.parse_args(argv)
+    if args.serve:
+        return serve()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
@@ -385,11 +414,16 @@ def main():
            "source_id": frontend["official_commit"], "cnhubert": str(cnhubert), "device": args.device, "precision": args.precision,
            "frontend_preflight": preflight,
            "references": references, "cpu_threads": args.cpu_threads,
+           "cache_dir": str((args.cache_dir or output / "cache").resolve()),
            "source_hashes": {str(p): digest(p) for p in source_paths}}
     run = output / ("prepare-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ"))
     run.mkdir(parents=True, exist_ok=False)
     job_file = run / "job.json"
     write_json(job_file, job)
+    if engine_holder is not None:
+        if worker(job_file, engine_holder):
+            raise RuntimeError(read_json(run / 'result.json')['error'])
+        return 0
     env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONIOENCODING="utf-8")
     command = [str(args.python.resolve(strict=True)), "-B", str(Path(__file__).resolve()), "--worker", str(job_file)]
     with (run / "worker.log").open("w", encoding="utf-8") as log:
