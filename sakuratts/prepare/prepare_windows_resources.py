@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare portable Japanese frontend and V2ProPlus reference packages.
+"""Prepare portable Japanese frontend and V2Pro/V2ProPlus reference packages.
 
 Preparation alone needs PyTorch and an explicit GPT-SoVITS source distribution.
 The resulting packages do not need that distribution for ordinary inference.
@@ -229,6 +229,7 @@ def worker(job_file):
             import torch
             from GPT_SoVITS.TTS_infer_pack.TTS import TTS, TTS_Config
             from module import commons
+            from process_ckpt import get_sovits_version_from_path_fast
             from TTS_infer_pack.text_segmentation_method import splits
             from sakuratts.module.reference_condition import validate_arrays
             import fast_langdetect
@@ -248,7 +249,10 @@ def worker(job_file):
                 self.init_vits_weights(self.configs.vits_weights_path)
                 self.init_cnhuhbert_weights(self.configs.cnhuhbert_base_path)
 
-        config_data = {"custom": {"version": "v2ProPlus", "device": job["device"], "is_half": job["precision"] == "fp16",
+        _, family, lora = get_sovits_version_from_path_fast(job["sovits"])
+        if family not in ("v2Pro", "v2ProPlus") or lora:
+            raise ValueError("Reference preparation supports non-LoRA V2Pro and V2ProPlus checkpoints")
+        config_data = {"custom": {"version": family, "device": job["device"], "is_half": job["precision"] == "fp16",
                        "t2s_weights_path": job["gpt"], "vits_weights_path": job["sovits"],
                        "bert_base_path": str(root / "GPT_SoVITS/pretrained_models/chinese-roberta-wwm-ext-large"),
                        "cnhuhbert_base_path": job.get("cnhubert", str(root / "GPT_SoVITS/pretrained_models/chinese-hubert-base"))}}
@@ -259,16 +263,16 @@ def worker(job_file):
         config.configs_path = str(run / "tts-prepare.yaml")
         os.chdir(root)
         engine = ReferenceOnlyTTS(config)
-        if (engine.configs.version != "v2ProPlus" or str(engine.configs.device) != job["device"]
+        if (engine.configs.version != family or str(engine.configs.device) != job["device"]
                 or engine.t2s_model is not None or engine.bert_model is not None):
-            raise RuntimeError("Reference-only initialization differs from the requested V2ProPlus scope")
+            raise RuntimeError("Reference-only initialization differs from the requested model family or device")
         for ref in job["references"]:
             phase = time.perf_counter()
             engine.set_ref_audio(ref["audio"])
             prompt = ref["text"].strip("\n")
             if prompt[-1] not in splits:
                 prompt += "。"
-            phones, bert, normalized = engine.text_preprocessor.segment_and_extract_feature_for_text(prompt, "ja", "v2ProPlus")
+            phones, bert, normalized = engine.text_preprocessor.segment_and_extract_feature_for_text(prompt, "ja", family)
             with torch.no_grad():
                 spec, audio = engine.prompt_cache["refer_spec"][0]
                 spec = spec.to(dtype=engine.precision, device=job["device"])
@@ -288,7 +292,7 @@ def worker(job_file):
             package.mkdir(parents=True, exist_ok=False)
             archive = package / "conditions.npz"
             np.savez(archive, **arrays)
-            manifest = {"format": "sakuratts-prepared-reference-v1", "model_family": "v2ProPlus",
+            manifest = {"format": "sakuratts-prepared-reference-v1", "model_family": family,
                         "identity": {"gpt_checkpoint_sha256": job["source_hashes"][job["gpt"]],
                             "sovits_checkpoint_sha256": job["source_hashes"][job["sovits"]],
                             "audio_sha256": job["source_hashes"][ref["audio"]], "official_commit": job["source_id"],

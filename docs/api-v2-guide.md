@@ -1,6 +1,6 @@
 # API V2 使用说明
 
-SakuraTTS 只以 GPT-SoVITS 的 `api_v2.py` 作为 HTTP 兼容目标。当前可用于 Windows / NVIDIA、V2ProPlus 模型的日文合成，加入[英文资源](english-frontend.md)后可处理英文与日英混合。尚未实现的 V2 功能返回 HTTP 400。旧版 `api.py` 协议、Gradio 接口和原版 Python 调用接口不在兼容范围内。
+SakuraTTS 只以 GPT-SoVITS 的 `api_v2.py` 作为 HTTP 兼容目标。当前可用于 Windows / NVIDIA、V2ProPlus 模型的日文合成，加入[英文资源](english-frontend.md)后可处理英文与日英混合。Apple silicon 的 MLX／V2Pro 使用同一 HTTP 入口，安装与准备方式见 [Apple 指南](apple.md)。尚未实现的 V2 功能返回 HTTP 400。旧版 `api.py` 协议、Gradio 接口和原版 Python 调用接口不在兼容范围内。
 
 这份文档用于客户端接入；部署细节见[快速开始](quickstart.md)，接口实现与生命周期见 [HTTP 服务配置](http-api.md)。对照版本固定为 GPT-SoVITS [`48b1a016`](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/api_v2.py)。
 

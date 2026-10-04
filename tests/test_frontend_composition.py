@@ -18,14 +18,14 @@ from test_nvidia_package_startup import fixture
 class FrontendCompositionTests(unittest.TestCase):
     def test_classic_frontend_can_use_its_own_python_without_acoustic_runtime(self):
         with tempfile.TemporaryDirectory() as folder:
-            config_path, path, manifest = fixture(Path(folder))
+            config_path, path, manifest = fixture(Path(folder).resolve())
             config = json.loads(config_path.read_text())
             config.pop("acoustic_python")
             config["frontend_python"] = "language/python.exe"
             with patch("sakuratts.text.classic_japanese.ClassicJapaneseG2P") as worker, \
                     patch("sakuratts.text.LangSegmenter.LanguageSegmenter") as segmenter:
                 frontend = load_frontend(config_path, config, path.parent, manifest)
-                self.assertEqual(worker.call_args.args[0], Path(folder) / "language/python.exe")
+                self.assertEqual(worker.call_args.args[0], Path(folder).resolve() / "language/python.exe")
                 self.assertEqual(set(frontend.text.processors), {"ja"})
                 frontend.close()
                 worker.return_value.close.assert_called_once()
@@ -33,7 +33,7 @@ class FrontendCompositionTests(unittest.TestCase):
 
     def test_japanese_resource_does_not_advertise_unimplemented_languages(self):
         with tempfile.TemporaryDirectory() as folder:
-            config_path, path, manifest = fixture(Path(folder))
+            config_path, path, manifest = fixture(Path(folder).resolve())
             config = json.loads(config_path.read_text())
             config["languages"] = ["ja", "zh"]
             with patch("sakuratts.text.classic_japanese.ClassicJapaneseG2P") as worker:
@@ -91,7 +91,7 @@ class FrontendCompositionTests(unittest.TestCase):
     def test_english_resources_are_loaded_only_when_declared_and_verified(self):
         from sakuratts.module.reference_condition import sha256_file
         with tempfile.TemporaryDirectory() as folder:
-            config_path, path, manifest = fixture(Path(folder))
+            config_path, path, manifest = fixture(Path(folder).resolve())
             config = json.loads(config_path.read_text())
             config["languages"] = ["ja", "en"]
             english = path.parent / "english"

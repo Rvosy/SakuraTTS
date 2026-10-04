@@ -99,6 +99,27 @@ class MLXRuntimeTests(unittest.TestCase):
         self.gpts[-1].close.assert_called_once()
         self.acoustics[-1].close.assert_called_once()
 
+    def test_http_inference_uses_mlx_and_keeps_native_weights_after_failed_switch(self):
+        from sakuratts.TTS_infer_pack.TTS import Inference
+        request = dict(text="test", text_lang="ja", ref_audio_path="reference.wav",
+            prompt_lang="ja", prompt_text="reference", seed=1234, top_k=15, temperature=1.,
+            repetition_penalty=1.35, text_split_method="cut0", fragment_interval=0., split_bucket=False)
+        with patch("sakuratts.TTS_infer_pack.reference.ReferenceCache") as references:
+            references.return_value.resolve.return_value = self.reference
+            inference = Inference(self.config, backend="mlx")
+            self.addCleanup(inference.close)
+            # Exercise the same request adapter used by the HTTP worker.
+            audio = inference.tts(request)
+            self.assertEqual(audio.report["backend"], "mlx")
+            replacement = self.root / "replacement"
+            replacement.mkdir()
+            (replacement / "manifest.json").write_text(json.dumps(self.manifest))
+            self.acoustic_loader.side_effect = [RuntimeError("candidate failed"), self.make_acoustic()]
+            with self.assertRaisesRegex(RuntimeError, "candidate failed"):
+                inference.set_weights("sovits", replacement)
+            restored = inference.tts(request)
+            np.testing.assert_array_equal(audio.pcm, restored.pcm)
+
     def test_release_state_reuses_weights_and_reclaims_allocator_cache(self):
         with Engine.load(self.config, backend="mlx", experimental={"policy": "release-state"}) as engine:
             first = engine.synthesize("first", fragment_interval=0.)
@@ -177,21 +198,13 @@ class MLXRuntimeTests(unittest.TestCase):
 
 
 class MLXAvailabilityAndCleanupTests(unittest.TestCase):
-    def test_unsupported_http_and_raw_conversion_fail_before_starting_work(self):
-        from sakuratts.prepare.converter import convert
+    def test_unconfigured_http_waits_for_model_without_loading_metal(self):
         from sakuratts.TTS_infer_pack.TTS import Inference
-        from sakuratts.model import Model
-        with patch("sakuratts.backends.create_runtime") as runtime, \
-                patch("sakuratts.prepare.converter.run_conversion") as conversion:
-            with self.assertRaisesRegex(NotImplementedError, "Engine only"):
-                Inference(backend="mlx")
-            with self.assertRaisesRegex(NotImplementedError, "Engine only"):
-                Inference(Model(Path("unused.json"), {"backend": {"preferred": "mlx"}}))
-            with self.assertRaisesRegex(NotImplementedError, "raw checkpoint conversion"):
-                convert(gpt="unused.ckpt", sovits="unused.pth", official_source="unused-source",
-                        output="unused-output", backend="mlx")
+        with patch("sakuratts.backends.create_runtime") as runtime:
+            inference = Inference(backend="mlx")
+            self.assertIsNone(inference.info())
+            inference.close()
             runtime.assert_not_called()
-            conversion.assert_not_called()
 
     def test_platform_dependency_and_metal_failures_are_explicit(self):
         with patch("sakuratts.backends.mlx.engine.platform.system", return_value="Windows"), \

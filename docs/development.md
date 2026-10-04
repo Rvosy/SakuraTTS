@@ -14,6 +14,8 @@ python scripts/build_preview.py --output dist/preview-0.1.0a1
 
 ## 环境准备
 
+Linux CPU 的锁定环境安装与诊断见 [Linux 指南](linux.md)。Windows、macOS 和 Linux 共用 `uv.lock`，选择当前平台的 extra；Linux CUDA 整合包尚未接入。
+
 ### Windows / NVIDIA 开发环境
 
 安装 [uv](https://docs.astral.sh/uv/getting-started/installation/)，在仓库根目录运行：
@@ -47,7 +49,15 @@ CUDA 包由安装脚本单独从 PyTorch 官方 cu128 索引安装，再安装�
 
 ### Apple Silicon 日文实验环境
 
-保留原先实测的完整依赖清单：
+`requirements/mlx-japanese.txt` 保留早期独立推理环境的冻结清单。当前产品测试使用 `pyproject.toml` 的运行与开发依赖；Mac 构建需另选目标系统版本的 wheel，见 [Mac 整合包指南](portable-macos.md)。
+
+```sh
+uv venv --python 3.11 .venv
+uv pip install --python .venv/bin/python -e '.[mlx,japanese,english,cpu,server,dev]'
+.venv/bin/python -m unittest discover -s tests
+```
+
+复现早期实验环境：
 
 ```sh
 uv --offline venv --python 3.11 .venv

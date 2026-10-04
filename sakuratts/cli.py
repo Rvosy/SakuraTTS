@@ -118,8 +118,7 @@ def doctor(*, japanese=False, cuda=False, nvidia=False, config=None, backend=Non
         report["synthesis"]["platform_supported"] = (
             platform.system() == "Darwin" and platform.machine().lower() in ("arm64", "aarch64"))
         report["synthesis"]["limitations"] = (
-            "Prepared native V2Pro model and references through Engine only; FP16, V2ProPlus, "
-            "raw checkpoint conversion and HTTP dynamic references are not supported")
+            "Native V2Pro and FP32 only; FP16 and V2ProPlus are not supported")
         try:
             from sakuratts.backends.mlx.engine import _load_mlx
             _load_mlx()
@@ -318,7 +317,7 @@ def main(argv=None):
         from .text.profiles import SUPPORTED_LANGUAGES
         print(json.dumps({"backends": available_backends(), "languages": list(SUPPORTED_LANGUAGES),
             "profiles": available_profiles(),
-            "experimental_backends": {"mlx": "Apple silicon; prepared native V2Pro and references only; FP16 and V2ProPlus are not implemented"},
+            "experimental_backends": {"mlx": "Apple silicon; native V2Pro FP32 with conversion and HTTP; FP16 and V2ProPlus are not implemented"},
             "language_modes": list(SUPPORTED_LANGUAGE_MODES),
             "scope": "Implemented components; driver availability and model compatibility are checked when loading."}))
         return 0

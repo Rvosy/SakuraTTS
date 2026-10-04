@@ -121,17 +121,33 @@ def check_ort(backend, device_id=0):
             "matmul": True, "torch_imported": "torch" in sys.modules}
 
 
+def check_mlx():
+    import mlx.core as mx
+    from importlib.metadata import version
+    if not mx.metal.is_available():
+        raise RuntimeError("Apple Metal is unavailable")
+    with mx.stream(mx.gpu):
+        data = mx.array([[1., 2.], [3., 4.]], dtype=mx.float32)
+        result = data @ data
+        mx.eval(result)
+        if result.tolist() != [[7., 10.], [15., 22.]]:
+            raise RuntimeError("Metal matrix product differs from the expected result")
+    return {"backend": "mlx", "mlx": version("mlx"), "metal_execution": True,
+            "matmul": True, "torch_imported": "torch" in sys.modules}
+
+
 if __name__ == '__main__':
     release = json.loads((ROOT / "runtime/portable.json").read_text(encoding="utf-8"))["release"]
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--backend", choices=("cpu", "directml", "cuda"),
+    parser.add_argument("--backend", choices=("cpu", "directml", "cuda", "mlx"),
                         default="cpu" if release["backend"] == "directml" else release["backend"])
     parser.add_argument("--device-id", type=int, default=0, help="DXGI adapter index for DirectML")
     args = parser.parse_args()
     output = ROOT / 'cache/runtime-check.json'
     output.parent.mkdir(parents=True, exist_ok=True)
     try:
-        result = check_cuda() if args.backend == "cuda" else check_ort(args.backend, args.device_id)
+        result = (check_cuda() if args.backend == "cuda" else check_mlx() if args.backend == "mlx"
+                  else check_ort(args.backend, args.device_id))
         report = dict(result, passed=True, synthesis_tested=False, quality_validated=False)
     except Exception as error:
         report = {'passed': False, 'error': str(error), 'error_type': type(error).__name__,

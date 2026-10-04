@@ -4,6 +4,8 @@ import json
 import importlib.util
 import os
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -15,6 +17,31 @@ from sakuratts.runtime.diagnostics import read_windows_config
 
 
 class PortableRuntimeTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == "nt", "Windows batch launchers")
+    def test_batch_launchers_write_unicode_to_redirected_output(self):
+        templates = Path(__file__).resolve().parents[1] / "scripts/portable"
+        base = Path(sys.base_prefix)
+        stem = "python" + str(sys.version_info.major) + str(sys.version_info.minor)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "樱花 空格"
+            runtime = root / "runtime/main"
+            runtime.mkdir(parents=True)
+            for name in ("python.exe", stem + ".dll", "python3.dll", "vcruntime140.dll", "vcruntime140_1.dll"):
+                if (base / name).is_file():
+                    shutil.copy2(base / name, runtime / name)
+            (runtime / (stem + "._pth")).write_text("\n".join(str(base / name)
+                for name in (stem + ".zip", "Lib", "DLLs")) + "\n", encoding="utf-8")
+            (root / "launcher.py").write_text("print('樱花 🧪')\n", encoding="utf-8")
+            environment = dict(os.environ, PYTHONUTF8="0", PYTHONIOENCODING="ascii")
+            for name in ("sakuratts.bat", "start-server.bat", "check-runtime.bat"):
+                with self.subTest(launcher=name):
+                    shutil.copy2(templates / name, root / name)
+                    command = '"' + os.environ["COMSPEC"] + '" /d /s /c ""' + str(root / name) + '""'
+                    result = subprocess.run(command, env=environment, stdin=subprocess.DEVNULL,
+                                            capture_output=True, timeout=15)
+                    self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8", errors="replace"))
+                    self.assertIn("樱花 🧪".encode("utf-8"), result.stdout)
+
     def test_launcher_keeps_cuda_libraries_and_accepts_unicode_cpu_amd_root(self):
         path = Path(__file__).resolve().parents[1] / "scripts/portable/launcher.py"
         spec = importlib.util.spec_from_file_location("portable_launcher", path)
@@ -22,11 +49,11 @@ class PortableRuntimeTests(unittest.TestCase):
         spec.loader.exec_module(launcher)
         with tempfile.TemporaryDirectory() as temporary:
             for backend, folder in (("cuda", "cuda"), ("directml", "cpu-amd"), ("directml", "樱花 空格")):
-                root = Path(temporary) / folder
+                root = Path(temporary).resolve() / folder
                 (root / "runtime").mkdir(parents=True)
                 (root / "runtime/portable.json").write_text(json.dumps({"release": {"backend": backend}}))
-                external_temp = str(Path(temporary) / "中文用户/Temp")
-                external_tmp = str(Path(temporary) / "另一目录/Tmp")
+                external_temp = str(Path(temporary).resolve() / "中文用户/Temp")
+                external_tmp = str(Path(temporary).resolve() / "另一目录/Tmp")
                 with patch.object(launcher, "ROOT", root), \
                      patch.object(sys, "executable", str(root / "runtime/main/python.exe")), \
                      patch.dict(os.environ, {"TEMP": external_temp, "TMP": external_tmp}, clear=True), \
@@ -45,7 +72,7 @@ class PortableRuntimeTests(unittest.TestCase):
 
     def test_in_process_bundle_drops_exporter_workers(self):
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             (root / "runtime").mkdir()
             (root / "runtime/portable.json").write_text(json.dumps({"format": "sakuratts-portable-v1", "workers": {}}))
             with patch.dict(os.environ, SAKURATTS_BUNDLE_ROOT=str(root)):
@@ -66,7 +93,7 @@ class PortableRuntimeTests(unittest.TestCase):
 
     def test_preparation_uses_current_bundle_without_changing_user_inputs(self):
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             preparation, _ = self.preparation_bundle(root)
             with patch.dict(os.environ, SAKURATTS_BUNDLE_ROOT=str(root)):
                 result = preparation_settings(dict(python="Z:/old/python.exe", official_source="Z:/old",
@@ -82,7 +109,7 @@ class PortableRuntimeTests(unittest.TestCase):
 
     def test_incomplete_preparation_does_not_fall_back(self):
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             preparation, _ = self.preparation_bundle(root)
             (preparation / "preparation.json").unlink()
             with patch.dict(os.environ, SAKURATTS_BUNDLE_ROOT=str(root)):
@@ -91,7 +118,7 @@ class PortableRuntimeTests(unittest.TestCase):
 
     def test_preparation_marker_rejects_external_paths(self):
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             preparation, config = self.preparation_bundle(root)
             for path in ("../main/python.exe", "C:/Python/python.exe", "..\\main\\python.exe"):
                 with self.subTest(path=path), patch.dict(os.environ, SAKURATTS_BUNDLE_ROOT=str(root)):
@@ -107,7 +134,7 @@ class PortableRuntimeTests(unittest.TestCase):
 
     def test_model_uses_relocated_worker_and_drops_external_dictionary(self):
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             (root / "runtime/acoustic").mkdir(parents=True)
             (root / "runtime/acoustic/python.exe").touch()
             (root / "runtime/portable.json").write_text('{"format":"sakuratts-portable-v1"}')
@@ -128,7 +155,7 @@ class PortableRuntimeTests(unittest.TestCase):
 
     def test_portable_marker_binds_frontend_and_acoustic_workers_independently(self):
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             workers = {"frontend": "runtime/language/python.exe", "acoustic": "runtime/onnx/python.exe"}
             for name in workers.values():
                 path = root / name
@@ -147,7 +174,7 @@ class PortableRuntimeTests(unittest.TestCase):
 
     def test_portable_worker_path_cannot_escape_the_installation(self):
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary) / "bundle"
+            root = Path(temporary).resolve() / "bundle"
             (root / "runtime").mkdir(parents=True)
             (root.parent / "outside.exe").touch()
             (root / "runtime/portable.json").write_text(json.dumps({
@@ -160,7 +187,7 @@ class PortableRuntimeTests(unittest.TestCase):
     def test_acoustic_worker_discovers_shared_main_cuda_libraries(self):
         from sakuratts.backends.cuda import runtime
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             shared = root / "runtime/main/Lib/site-packages/nvidia/cublas/bin"
             shared.mkdir(parents=True)
             (root / "runtime/portable.json").write_text('{"format":"sakuratts-portable-v1"}')
@@ -174,7 +201,7 @@ class PortableRuntimeTests(unittest.TestCase):
 
     def test_missing_worker_fails_without_developer_fallback(self):
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             (root / "runtime").mkdir()
             (root / "runtime/portable.json").write_text('{"format":"sakuratts-portable-v1"}')
             with patch.dict(os.environ, SAKURATTS_BUNDLE_ROOT=str(root)):

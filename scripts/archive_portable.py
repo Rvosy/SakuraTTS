@@ -3,8 +3,9 @@
 import argparse
 import hashlib
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import subprocess
+import tarfile
 import time
 
 PROFILES = {"balanced": ["-mx=5", "-md=32m"],
@@ -42,20 +43,27 @@ def compress(sevenzip, source, listing, archive, profile):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bundle", type=Path, required=True)
-    parser.add_argument("--sevenzip", type=Path, required=True)
+    parser.add_argument("--sevenzip", type=Path)
+    parser.add_argument("--format", choices=("7z", "tar.gz"), default="7z")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--profile", choices=PROFILES, default="maximum")
     args = parser.parse_args()
+    if (args.format == "7z" or args.benchmark) and args.sevenzip is None:
+        parser.error("7z compression requires --sevenzip")
+    if args.format == "tar.gz" and args.benchmark:
+        parser.error("--benchmark is only available for 7z")
     root, output = args.bundle.resolve(), args.output.resolve()
     manifest = json.loads((root / "bundle-manifest.json").read_text(encoding="utf-8"))
     if output.exists():
         raise FileExistsError(output)
-    output.mkdir(parents=True)
     for name, spec in manifest["files"].items():
+        if PurePosixPath(name).is_absolute() or ".." in PurePosixPath(name).parts or "\\" in name:
+            raise ValueError("Unsafe bundle file name: " + name)
         path = (root / name).resolve(strict=True)
-        if root not in path.parents or not path.is_file():
+        if root not in path.parents or not path.is_file() or digest(path) != spec["sha256"]:
             raise ValueError("Bundle file changed or escaped its directory: " + name)
+    output.mkdir(parents=True)
     results = []
     if args.benchmark:
         sample = output / "sample"
@@ -81,10 +89,27 @@ def main():
         listing = output / "archive-files.txt"
         names = [root.name + "/" + name for name in manifest["files"]] + [root.name + "/bundle-manifest.json"]
         listing.write_text("\n".join(names) + "\n", encoding="utf-8")
-        archive = output / (root.name + ".7z")
-        result = compress(args.sevenzip, root.parent, listing, archive, args.profile)
+        archive = output / (root.name + "." + args.format)
+        if args.format == "tar.gz":
+            started = time.perf_counter()
+            with tarfile.open(archive, "w:gz", dereference=True) as compressed:
+                for name in names:
+                    compressed.add(root.parent / name, arcname=name, recursive=False)
+            result = {"format": "tar.gz", "bytes": archive.stat().st_size,
+                      "compression_seconds": round(time.perf_counter() - started, 3)}
+            with tarfile.open(archive, "r:gz") as compressed:
+                if compressed.getnames() != names:
+                    raise ValueError("Archive inventory differs from the bundle")
+                for member in compressed:
+                    name = Path(member.name).relative_to(root.name).as_posix()
+                    expected = manifest["files"][name]["sha256"] if name in manifest["files"] else digest(root / name)
+                    checksum = hashlib.file_digest(compressed.extractfile(member), "sha256").hexdigest()
+                    if checksum != expected:
+                        raise ValueError("Archive checksum mismatch: " + name)
+        else:
+            result = compress(args.sevenzip, root.parent, listing, archive, args.profile)
         result["sha256"] = digest(archive)
-        (output / (archive.name + ".sha256")).write_text(result["sha256"] + "  " + archive.name + "\n", encoding="ascii")
+        (output / (archive.name + ".sha256")).write_text(result["sha256"] + "  " + archive.name + "\n", encoding="utf-8")
         report = dict(result, unpacked_bytes=manifest["bytes"], files=len(names))
         print(json.dumps(report), flush=True)
     (output / "compression-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

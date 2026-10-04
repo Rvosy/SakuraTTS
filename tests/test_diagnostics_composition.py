@@ -15,7 +15,7 @@ from test_nvidia_package_startup import fixture
 class DiagnosticsCompositionTests(unittest.TestCase):
     def check(self, *, separate=False, frontend_only=False):
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             config_path, _, _ = fixture(root)
             config = json.loads(config_path.read_text())
             config["references"] = {}

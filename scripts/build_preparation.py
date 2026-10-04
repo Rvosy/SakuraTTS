@@ -149,16 +149,31 @@ def preparation_distributions(site, runtime_site=None):
 
 def make_plan(args):
     plan = PreparationPlan()
-    stem, version, paths = add_interpreter(plan, args.python_base, args.vc_runtime)
+    apple = getattr(args, "target", "windows-x64") == "macos-arm64"
+    if apple:
+        version, site_target = _helpers.macos.add_interpreter(plan, args.python_base, "")
+        stem, paths = None, []
+        plan.release = {"target": "macos-arm64", "minimum_macos": args.minimum_macos}
+    else:
+        if args.vc_runtime is None:
+            raise ValueError("Windows preparation requires --vc-runtime")
+        stem, version, paths = add_interpreter(plan, args.python_base, args.vc_runtime)
+        site_target = "Lib/site-packages"
+        plan.release = {"target": "windows-x64"}
     installed, origins = preparation_distributions(args.site, args.runtime_site)
     frontend = "pyopenjtalk" if "pyopenjtalk" in installed else "pyopenjtalk-plus"
     # A local GPU wheel also contains the CPU backend. Omit its optional GPU
     # providers above rather than downloading another copy of the CPU runtime.
     onnxruntime = "onnxruntime" if "onnxruntime" in installed else "onnxruntime-gpu"
-    names = _helpers.dependency_names(installed, [*ROOT_REQUIREMENTS, frontend, onnxruntime], version)
+    names = _helpers.dependency_names(installed, [*ROOT_REQUIREMENTS, frontend, onnxruntime], version,
+                                     "macos-arm64" if apple else "windows-x64")
     for name in names:
         directory, metadata = installed[name]
         site = origins[name]
+        if apple:
+            _helpers.macos.wheel_compatible(directory, args.minimum_macos, version)
+        elif directory.name != "EGG-INFO":
+            _helpers.windows_wheel_compatible(directory, version)
         if directory.name == "EGG-INFO":
             egg = directory.parent
             component = "Lib/site-packages:" + metadata["Name"]
@@ -169,18 +184,32 @@ def make_plan(args):
                     plan.add(path, "Lib/site-packages/" + relative, component)
             paths.append("Lib/site-packages/" + egg.name)
         else:
-            plan.package(site, directory, metadata, "Lib/site-packages")
+            plan.package(site, directory, metadata, site_target)
     # pyopenjtalk classic downloads its dictionary after wheel installation, so
     # the original wheel RECORD does not describe this required public resource.
     frontend_site = origins[canonicalize_name(frontend.split("==")[0])]
-    dictionary = frontend_site / "pyopenjtalk" / ("open_jtalk_dic_utf_8-1.11" if frontend.startswith("pyopenjtalk==") else "dictionary")
+    dictionary = frontend_site / "pyopenjtalk" / ("open_jtalk_dic_utf_8-1.11" if frontend == "pyopenjtalk" else "dictionary")
     if not (dictionary / "sys.dic").is_file() or not (dictionary / "COPYING").is_file():
         raise FileNotFoundError("Local OpenJTalk dictionary and COPYING are required: " + str(dictionary))
     for path in tree(dictionary):
-        plan.add(path, "Lib/site-packages/" + path.relative_to(frontend_site).as_posix(), "openjtalk-dictionary")
+        plan.add(path, site_target + "/" + path.relative_to(frontend_site).as_posix(), "openjtalk-dictionary")
     add_official_sources(plan, args.official_source, args.language_model)
     for name in ("GPT-SoVITS-model-card.md", "fasttext-language-identification.html", "fasttext-CC-BY-SA-3.0.txt"):
         plan.add(Path(__file__).resolve().parents[1] / "docs/third-party" / name, "licenses/" + name, "auxiliary-model-notices")
+    if apple:
+        # Numba's optional OpenMP/TBB pools require external runtimes. Its
+        # bundled workqueue remains available for reference preparation.
+        for name in list(plan.files):
+            if (("/numba/np/ufunc/" in name and Path(name).name.startswith(("omppool.", "tbbpool.")))
+                    or ("/torchaudio/lib/" in name and "sox" in Path(name).name)
+                    or "/torio/lib/" in name):
+                # Reference audio uses the bundled FFmpeg executable and
+                # SoundFile, without TorchAudio's optional SoX/FFmpeg plugins.
+                del plan.files[name]
+        # Torch and TorchAudio load their own libraries explicitly before
+        # importing the native extensions that refer to their install names.
+        plan.release["binary_audit"] = _helpers.macos.audit(plan, args.minimum_macos, "bin/python3",
+            preload_directories=(site_target + "/torch/lib", site_target + "/torchaudio/lib"))
     return plan, stem, paths
 
 
@@ -192,7 +221,7 @@ def license_inventory(plan):
         result[name] = {**component, "notices": sorted(files)}
     result["cpython"] = {"notices": ["LICENSE.txt"]}
     result["gpt-sovits-source"] = {"notices": sorted(path for path in plan.files if path.startswith("official/") and Path(path).name.upper().startswith(("LICENSE", "NOTICE", "COPYING")))}
-    result["openjtalk-dictionary"] = {"notices": sorted(path for path in plan.files if path.startswith("Lib/site-packages/pyopenjtalk/") and Path(path).name == "COPYING")}
+    result["openjtalk-dictionary"] = {"notices": sorted(path for path in plan.files if "/pyopenjtalk/" in path and Path(path).name == "COPYING")}
     # The local upstream bundle does not supply weight license texts. Record the
     # gap rather than attributing the upstream source's MIT license to weights.
     result["public-analysis-resource"] = {
@@ -211,22 +240,27 @@ def assemble(args, plan, stem, paths):
     for index, (name, row) in enumerate(plan.files.items()):
         target = output / name
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(row["source"], target)
+        shutil.copy2(row["source"], target)
         inventory[name] = {key: row[key] for key in ("bytes", "sha256", "component")}
         if index % 2000 == 0:
             print(f"Copied {index}/{len(plan.files)} files", flush=True)
     # The local upstream config can contain personal checkpoint paths. The
     # preparer supplies its own explicit job config.
-    generated = {stem + "._pth": "\n".join(paths) + "\n",
-                 "official/GPT_SoVITS/configs/tts_infer.yaml": "{}\n",
-                 "preparation.json": json.dumps(MARKER, indent=2) + "\n",
+    marker = dict(MARKER)
+    if stem is None:
+        marker["python"] = "bin/python3"
+    generated = {"official/GPT_SoVITS/configs/tts_infer.yaml": "{}\n",
+                 "preparation.json": json.dumps(marker, indent=2) + "\n",
                  "licenses.json": json.dumps(license_inventory(plan), indent=2) + "\n",
                  "auxiliary-model-sources.json": (Path(__file__).resolve().parents[1] / "packaging/auxiliary-model-sources.json").read_text(encoding="utf-8")}
+    if stem is not None:
+        generated[stem + "._pth"] = "\n".join(paths) + "\n"
     for name, content in generated.items():
         path = output / name
         write(path, content)
         inventory[name] = {"bytes": path.stat().st_size, "sha256": digest(path), "component": "generated"}
     manifest = {"format": "sakuratts-preparation-bundle-v1", "network_used": False,
+                "release": plan.release,
                 "synthesis_models_included": False, "personal_references_included": False,
                 "auxiliary_analysis_models_included": True,
                 "source_sha256": digest(args.official_source / "GPT_SoVITS/TTS_infer_pack/TTS.py"),
@@ -238,8 +272,11 @@ def assemble(args, plan, stem, paths):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ("python-base", "site", "vc-runtime", "official-source", "output", "audit"):
+    for name in ("python-base", "site", "official-source", "output", "audit"):
         parser.add_argument("--" + name, type=Path, required=True)
+    parser.add_argument("--vc-runtime", type=Path, help="Required Microsoft redistributable CRT for Windows")
+    parser.add_argument("--target", choices=("windows-x64", "macos-arm64"), default="windows-x64")
+    parser.add_argument("--minimum-macos", default="14.0")
     parser.add_argument("--plan-only", action="store_true")
     parser.add_argument("--language-model", type=Path, help="Local lid.176.bin; defaults to the upstream pretrained_models directory")
     parser.add_argument("--runtime-site", type=Path,

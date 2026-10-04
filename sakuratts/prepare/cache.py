@@ -23,7 +23,7 @@ def conversion_settings(settings):
 def prepare_initial_model(settings, experimental=None):
     import hashlib
     import json
-    from .converter import convert, _preparation_identity
+    from .converter import convert, _preparation_identity, acoustic_converter
     from ..runtime.portable import bundle_root
     from ..module.reference_condition import sha256_file
     options = conversion_settings(settings)
@@ -37,7 +37,7 @@ def prepare_initial_model(settings, experimental=None):
     else:
         identity["preparation"] = sha256_file(portable_root / "runtime/preparation/preparation-manifest.json")
     identity["converter"] = sha256_file(Path(__file__).with_name("converter.py"))
-    for script in ("convert_gpt.py", "export_sovits_onnx.py", "prepare_windows_resources.py"):
+    for script in ("convert_gpt.py", acoustic_converter(backend), "prepare_windows_resources.py"):
         identity[script] = sha256_file(Path(__file__).parent / script)
     key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
     output = Path(settings.get("cache_dir", ".cache/sakuratts")) / "models" / key
@@ -56,12 +56,12 @@ def prepare_initial_model(settings, experimental=None):
 def prepare_checkpoint(kind, path, digest, settings, *, backend, experimental=None):
     import hashlib
     import json
-    from .converter import convert_checkpoint, _preparation_identity
+    from .converter import convert_checkpoint, _preparation_identity, acoustic_converter
     from ..runtime.portable import bundle_root
     from ..module.reference_condition import sha256_file
     options = conversion_settings(settings)
     source_hash = sha256_file(Path(options["official_source"]) / "GPT_SoVITS/TTS_infer_pack/TTS.py")
-    script = "convert_gpt.py" if kind == "gpt" else "export_sovits_onnx.py"
+    script = "convert_gpt.py" if kind == "gpt" else acoustic_converter(backend)
     converter_hash = sha256_file(Path(__file__).parent / script)
     identity = digest + source_hash + kind + converter_hash
     identity += json.dumps(_preparation_identity(backend, experimental), sort_keys=True)

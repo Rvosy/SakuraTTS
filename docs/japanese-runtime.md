@@ -1,6 +1,6 @@
 # Mac 日文研究入口
 
-Apple Silicon 的 MLX 实现用于复现日文 V2Pro 实验，尚未接入公共 Engine。Windows 产品用法见[部署指南](setup-windows-nvidia.md)。
+本页保留独立资源包的日文 V2Pro 研究入口。MLX 已接入公共 Engine、转换与 HTTP；当前使用和整合包说明见 [Apple 指南](apple.md)。
 
 研究需要 Git checkout、[Mac 实验环境](development.md#apple-silicon-日文实验环境)和四个独立资源包：GPT、SoVITS、日文前端、参考条件。使用自己的资源目录执行：
 

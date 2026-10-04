@@ -1,0 +1,5 @@
+target = "macos-arm64"
+minimum_macos = "14.0"
+backend = "mlx"
+languages = ["ja"]
+services = ["http"]

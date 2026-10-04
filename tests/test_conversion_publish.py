@@ -34,7 +34,7 @@ class ConversionPublishTests(unittest.TestCase):
     def test_publish_renames_generated_resources_and_leaves_inputs_unchanged(self):
         for with_reference in (False, True):
             with self.subTest(reference=with_reference), tempfile.TemporaryDirectory() as temporary:
-                root = Path(temporary)
+                root = Path(temporary).resolve()
                 options = self.inputs(root)
                 before = {p.name: p.read_bytes() for p in root.iterdir() if p.is_file()}
                 if with_reference:
@@ -58,7 +58,7 @@ class ConversionPublishTests(unittest.TestCase):
     def test_failed_converter_or_final_check_does_not_publish(self):
         for fail_conversion in (True, False):
             with self.subTest(fail_conversion=fail_conversion), tempfile.TemporaryDirectory() as temporary:
-                root = Path(temporary)
+                root = Path(temporary).resolve()
                 options = self.inputs(root)
 
                 def run(command, **kwargs):
@@ -75,7 +75,7 @@ class ConversionPublishTests(unittest.TestCase):
 
     def test_explicit_frontend_worker_does_not_select_acoustic_interpreter(self):
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             options = self.inputs(root)
             frontend_python = root / "frontend.exe"
             frontend_python.write_bytes(b"frontend interpreter")
@@ -84,6 +84,29 @@ class ConversionPublishTests(unittest.TestCase):
                 model = convert(**options, frontend_python=frontend_python)
             self.assertEqual(model.manifest["frontend_python"], str(frontend_python))
             self.assertNotIn("acoustic_python", model.manifest)
+
+    def test_mlx_conversion_publishes_native_acoustics_without_onnx(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            options = self.inputs(root)
+            with patch("sakuratts.prepare.converter.run_conversion", side_effect=self.run_conversion), \
+                 patch("sakuratts.backends.mlx.diagnostics.check_packages") as check:
+                model = convert(**options, backend="mlx")
+            self.assertEqual(model.backend, "mlx")
+            self.assertEqual((root / "model/acoustic/weights.bin").read_bytes(), b"convert_sovits_mlx.py")
+            self.assertEqual(model.references, ())
+            check.assert_called_once()
+
+    def test_mlx_rejected_acoustic_package_is_not_published(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            options = self.inputs(root)
+            with patch("sakuratts.prepare.converter.run_conversion", side_effect=self.run_conversion), \
+                 patch("sakuratts.backends.mlx.diagnostics.check_packages", side_effect=ValueError("Unsupported V2ProPlus")), \
+                 self.assertRaisesRegex(ValueError, "V2ProPlus"):
+                convert(**options, backend="mlx")
+            self.assertFalse(options["output"].exists())
+            self.assertTrue(options["sovits"].is_file())
 
 
 if __name__ == "__main__":

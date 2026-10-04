@@ -25,8 +25,8 @@ def read_inference_configuration(model=None, *, tts_config=None):
                 settings.setdefault("backend", custom["device"])
             if custom.get("is_half", False):
                 raise NotImplementedError("Official is_half mode is not yet supported; use is_half: false")
-            if custom.get("version", "v2ProPlus") != "v2ProPlus":
-                raise NotImplementedError("The native service currently supports v2ProPlus")
+            if custom.get("version", "v2ProPlus") not in ("v2Pro", "v2ProPlus"):
+                raise NotImplementedError("The native service currently supports v2Pro and v2ProPlus")
             model = model or settings.get("model")
             for key, field in (("gpt", "t2s_weights_path"), ("sovits", "vits_weights_path")):
                 if custom.get(field):

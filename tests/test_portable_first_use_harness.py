@@ -122,12 +122,13 @@ class PortableFirstUseHarnessTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "does not belong"):
             service.http("/control?command=exit")
 
-    def test_process_paths_allow_windows_helpers_but_reject_external_python(self):
+    def test_process_paths_allow_system_helpers_but_reject_external_python(self):
         service = object.__new__(harness.Service)
         service.bundle = Path("test-bundle").resolve()
-        system = Path(harness.os.environ.get("SystemRoot", "C:/Windows")) / "System32"
+        system = (Path(harness.os.environ.get("SystemRoot", "C:/Windows")) / "System32/cmd.exe"
+                  if harness.os.name == "nt" else Path("/usr/bin/sw_vers"))
         service.sampling_errors = []
-        service.record = {"processes": [{"executable": str(system / "cmd.exe")}],
+        service.record = {"processes": [{"executable": str(system)}],
                           "graceful_exit": True, "exit_code": 0, "checks": {}}
         service.assert_process_paths()
         service.record["processes"].append({"executable": str(service.bundle.parent / "external/python.exe")})

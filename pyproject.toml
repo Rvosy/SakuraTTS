@@ -71,7 +71,11 @@ include-package-data = false
 
 [tool.uv]
 # The pinned conversion stack has no Python 3.14 wheels.
-environments = ["sys_platform == 'win32' and python_version < '3.14'", "sys_platform == 'darwin' and python_version < '3.14'"]
+environments = [
+    "sys_platform == 'win32' and python_version < '3.14'",
+    "sys_platform == 'darwin' and python_version < '3.14'",
+    "sys_platform == 'linux' and python_version < '3.14'",
+]
 conflicts = [
     [{extra = "directml"}, {extra = "cpu"}],
     [{extra = "directml"}, {extra = "japanese"}],

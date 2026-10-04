@@ -5,5 +5,5 @@ if not exist "%~dp0runtime\main\python.exe" (
   echo System Python and Git are not required.
   exit /b 1
 )
-"%~dp0runtime\main\python.exe" -I -B -u "%~dp0launcher.py" %*
+"%~dp0runtime\main\python.exe" -I -X utf8 -B -u "%~dp0launcher.py" %*
 exit /b %ERRORLEVEL%

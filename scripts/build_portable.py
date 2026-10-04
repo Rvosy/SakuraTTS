@@ -1,9 +1,10 @@
-"""Assemble a model-free Windows bundle from explicit local inputs, offline."""
+"""Assemble a model-free portable bundle from explicit local inputs, offline."""
 
 import argparse
 import csv
 from email.parser import Parser
 import hashlib
+import importlib.util
 import json
 import re
 from pathlib import Path, PurePosixPath
@@ -15,11 +16,17 @@ import zipfile
 
 from packaging.markers import default_environment
 from packaging.requirements import Requirement
+from packaging.tags import compatible_tags, cpython_tags, parse_tag
 from packaging.utils import canonicalize_name
+
+_spec = importlib.util.spec_from_file_location("macos_runtime", Path(__file__).with_name("macos_runtime.py"))
+macos = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(macos)
 
 BACKEND_EXTRAS = {("windows-x64", "cuda"): "nvidia",
                   ("windows-x64", "directml"): "directml",
-                  ("windows-x64", "cpu"): "cpu"}
+                  ("windows-x64", "cpu"): "cpu",
+                  ("macos-arm64", "mlx"): "mlx"}
 LANGUAGE_EXTRAS = {"ja": "japanese", "en": "english"}
 SERVICE_EXTRAS = {"http": "server"}
 
@@ -28,18 +35,21 @@ def read_recipe(path):
     """Select implemented payloads before inspecting any large local inputs."""
     recipe = tomllib.loads(Path(path).read_text(encoding="utf-8"))
     if (recipe["target"], recipe["backend"]) not in BACKEND_EXTRAS:
-        raise ValueError("Portable assembly supports windows-x64 with backend cuda, directml or cpu")
+        raise ValueError("Portable assembly supports windows-x64 with backend cuda, directml or cpu, and macos-arm64 with mlx")
     if "ja" not in recipe["languages"] or set(recipe["languages"]) - LANGUAGE_EXTRAS.keys():
         raise ValueError("Portable language components require ja, with optional en")
     if set(recipe["services"]) - SERVICE_EXTRAS.keys():
         raise ValueError("Unknown service component; supported services: http")
-    return {key: recipe[key] for key in ("target", "backend", "languages", "services")} | {"workers": recipe.get("workers", {})}
+    selected = {key: recipe[key] for key in ("target", "backend", "languages", "services")}
+    if recipe["target"] == "macos-arm64":
+        selected["minimum_macos"] = recipe["minimum_macos"]
+    return selected | {"workers": recipe.get("workers", {})}
 
 
 def main_requirements(project, recipe):
     """Platform, language and service extras are independent package choices."""
     extras = [BACKEND_EXTRAS[recipe["target"], recipe["backend"]],
-              *("japanese-text" if name == "ja" and recipe["backend"] != "cuda" else LANGUAGE_EXTRAS[name]
+              *("japanese-text" if name == "ja" and recipe["backend"] in ("cpu", "directml") else LANGUAGE_EXTRAS[name]
                 for name in recipe["languages"]),
               *(SERVICE_EXTRAS[name] for name in recipe["services"])]
     requirements = list(project["dependencies"])
@@ -59,6 +69,9 @@ def main_requirements(project, recipe):
 
 
 def launch_files(recipe):
+    if recipe["target"] == "macos-arm64":
+        return ["launcher.py", "check_runtime.py", "sakuratts.command", "check-runtime.command", "README-macos.md"] + (
+            ["start-server.command"] if "http" in recipe["services"] else [])
     names = ["launcher.py", "check_runtime.py", "sakuratts.bat", "check-runtime.bat", "README.md"]
     if "http" in recipe["services"]:
         names.append("start-server.bat")
@@ -102,13 +115,34 @@ def distributions(site):
     return result
 
 
-def dependency_names(installed, roots, python_version):
+def windows_wheel_compatible(directory, python_version):
+    """Reject native libraries built for another interpreter or platform."""
+    wheel = directory / "WHEEL"
+    if not wheel.is_file():
+        raise ValueError("Windows runtime input requires wheel metadata: " + str(directory))
+    tags = {tag for line in wheel.read_text(encoding="utf-8").splitlines() if line.startswith("Tag: ")
+            for tag in parse_tag(line[5:])}
+    version = tuple(map(int, python_version.split(".")))
+    interpreter = "cp" + python_version.replace(".", "")
+    supported = set(cpython_tags(version, abis=[interpreter], platforms=["win_amd64"]))
+    supported.update(compatible_tags(version, interpreter=interpreter, platforms=["win_amd64"]))
+    if not tags & supported:
+        raise ValueError(f"{directory.name} has no Windows x64 wheel compatible with Python {python_version}")
+
+
+def dependency_names(installed, roots, python_version, target="windows-x64"):
     env = dict(default_environment(), python_version=python_version,
                python_full_version=python_version + ".0", sys_platform="win32",
                platform_system="Windows", platform_machine="AMD64", extra="")
+    if target == "macos-arm64":
+        env.update(sys_platform="darwin", platform_system="Darwin", platform_machine="arm64", os_name="posix")
+    else:
+        env["os_name"] = "nt"
     selected, visited, pending = set(), set(), list(roots)
     while pending:
         requirement = Requirement(pending.pop())
+        if requirement.marker is not None and not requirement.marker.evaluate(env):
+            continue
         name = canonicalize_name(requirement.name)
         if name not in installed:
             raise ValueError("Local runtime dependency is missing: " + name)
@@ -122,6 +156,7 @@ def dependency_names(installed, roots, python_version):
         for value in installed[name][1].get_all("Requires-Dist", []):
             req = Requirement(value)
             if req.marker is None or any(req.marker.evaluate(dict(env, extra=extra)) for extra in ("", *requirement.extras)):
+                req.marker = None
                 pending.append(str(req))
     return sorted(selected)
 
@@ -135,6 +170,7 @@ class Plan:
         self.workers = {}
         self.python_stem = "python311"
         self.python_paths = [".", "DLLs", "Lib", "Lib/site-packages"]
+        self.site_target = "runtime/main/Lib/site-packages"
 
     def add(self, source, destination, component):
         source = Path(source)
@@ -222,7 +258,14 @@ def make_plan(args):
     plan.release["preparation"] = args.preparation is not None
     plan.release["backends"] = ["cpu", "directml"] if recipe["backend"] == "directml" else [recipe["backend"]]
     plan.workers = recipe["workers"]
-    plan.python_stem, version, plan.python_paths = add_interpreter(plan, args.python_base, "runtime/main", args.vc_runtime)
+    apple = recipe["target"] == "macos-arm64"
+    if apple:
+        version, plan.site_target = macos.add_interpreter(plan, args.python_base, "runtime/main")
+        plan.release.update(minimum_macos=recipe["minimum_macos"], python_executable="runtime/main/bin/python3")
+    else:
+        if args.vc_runtime is None:
+            raise ValueError("Windows assembly requires --vc-runtime")
+        plan.python_stem, version, plan.python_paths = add_interpreter(plan, args.python_base, "runtime/main", args.vc_runtime)
     main = distributions(args.main_site)
     ort_packages = set(main) & {"onnxruntime", "onnxruntime-directml", "onnxruntime-gpu"}
     if len(ort_packages) > 1:
@@ -232,8 +275,12 @@ def make_plan(args):
     commit = subprocess.run(["git", "-C", str(args.root), "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
     dirty = subprocess.run(["git", "-C", str(args.root), "status", "--porcelain"], capture_output=True, text=True, check=True).stdout.strip()
     plan.release.update(source_commit=commit, source_dirty=bool(dirty), python=version)
-    for name in dependency_names(main, main_requirements(project, recipe), version):
-        plan.package(args.main_site, *main[name], "runtime/main/Lib/site-packages")
+    for name in dependency_names(main, main_requirements(project, recipe), version, recipe["target"]):
+        if apple:
+            macos.wheel_compatible(main[name][0], recipe["minimum_macos"], version)
+        else:
+            windows_wheel_compatible(main[name][0], version)
+        plan.package(args.main_site, *main[name], plan.site_target)
     trim_main_runtime(plan)
 
     # The private acoustic ABI is copied only through its existing hash manifest.
@@ -252,14 +299,17 @@ def make_plan(args):
         if name.startswith("runtime/acoustic/cuda/") and same and same[1]["sha256"] == row["sha256"]:
             plan.shared_files[name] = same[0]
             del plan.files[name]
-    plan.add(args.ffmpeg, "runtime/bin/ffmpeg.exe", "ffmpeg-local")
+    plan.add(args.ffmpeg, "runtime/bin/ffmpeg" if apple else "runtime/bin/ffmpeg.exe", "ffmpeg-local")
     for name in ("GPT-SoVITS-LICENSE.txt", "OpenJTalk-dictionary-COPYING.txt",
                  "pyopenjtalk-LICENSE.md", "SudachiDict-LEGAL.txt", "VITS-LICENSE.txt", "LGPL-3.0.txt", "GPL-3.0.txt"):
         plan.add(args.root / "docs/third-party" / name, "licenses/sakuratts/" + name, "third-party-notices")
     plan.add(args.root / "LICENSE", "licenses/SakuraTTS-LICENSE.txt", "sakuratts")
-    profiles = ("fp32.json", "fp16.json", "low-vram.json", "minimum-vram.json") if recipe["backend"] == "cuda" else ("cpu.json", "directml.json")
+    profiles = (() if apple else ("fp32.json", "fp16.json", "low-vram.json", "minimum-vram.json")
+                if recipe["backend"] == "cuda" else ("cpu.json", "directml.json"))
     for name in profiles:
         plan.add(args.root / "examples" / name, "configs/" + name, "inference-profiles")
+    if apple:
+        plan.release["binary_audit"] = macos.audit(plan, recipe["minimum_macos"], "runtime/main/bin/python3")
     if args.preparation is not None:
         add_preparation(plan, args.preparation)
     for name, path in plan.workers.items():
@@ -275,6 +325,14 @@ def add_preparation(plan, source):
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if manifest.get("format") != "sakuratts-preparation-bundle-v1":
         raise ValueError("Unsupported preparation component manifest")
+    release = manifest.get("release", {})
+    target = plan.release.get("target", "windows-x64")
+    preparation_target = release.get("target", "windows-x64")
+    if preparation_target != target:
+        raise ValueError("Preparation component target " + preparation_target + " does not match bundle target " + target)
+    if target == "macos-arm64":
+        if tuple(map(int, release["minimum_macos"].split("."))) > tuple(map(int, plan.release["minimum_macos"].split("."))):
+            raise ValueError("Preparation requires a newer macOS version than the main runtime")
     marker = json.loads((source / "preparation.json").read_text(encoding="utf-8"))
     if marker.get("format") != "sakuratts-preparation-v1":
         raise ValueError("Unsupported preparation component marker")
@@ -315,7 +373,7 @@ def assemble(args, plan):
     for index, (name, row) in enumerate(plan.files.items()):
         path = output / name
         path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(row["source"], path)
+        shutil.copy2(row["source"], path)
         if index % 2000 == 0:
             print(f"Copied {index}/{len(plan.files)} files", flush=True)
     # Only our independently built product wheel is allowed to install sakuratts.
@@ -326,23 +384,28 @@ def assemble(args, plan):
             parts = PurePosixPath(name).parts
             if ".." in parts or name.startswith("/") or ":" in name or "\\" in name or name.endswith(".pth"):
                 raise ValueError("Unsafe wheel entry: " + name)
-            target = output / "runtime/main/Lib/site-packages" / name
+            target = output / plan.site_target / name
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(archive.read(name))
-    write(output / ("runtime/main/" + plan.python_stem + "._pth"), "\n".join(plan.python_paths) + "\n")
+    apple = plan.release["target"] == "macos-arm64"
+    if not apple:
+        write(output / ("runtime/main/" + plan.python_stem + "._pth"), "\n".join(plan.python_paths) + "\n")
     # Marker read only by the explicit portable launcher.
     write(output / "runtime/portable.json", json.dumps({"format": "sakuratts-portable-v1",
         "has_preparation": plan.release["preparation"],
         "workers": plan.workers, "release": plan.release}))
     templates = args.root / "scripts/portable"
     for name in launch_files(plan.release):
-        shutil.copyfile(templates / name, output / name)
+        destination = output / ("README.md" if name == "README-macos.md" else name)
+        shutil.copy2(templates / name, destination)
+        if name.endswith(".command"):
+            destination.chmod(0o755)
     for directory in ("models", "configs", "logs", "cache"):
         (output / directory).mkdir(exist_ok=True)
         write(output / directory / ".keep", "")
     backends = plan.release.get("backends", [plan.release["backend"]])
     for backend in backends:
-        config = ("custom:\n  version: v2ProPlus\n  device: " + backend + "\n  is_half: false\n"
+        config = ("custom:\n  version: " + ("v2Pro" if apple else "v2ProPlus") + "\n  device: " + backend + "\n  is_half: false\n"
                   "  t2s_weights_path: models/your-gpt.ckpt\n  vits_weights_path: models/your-sovits.pth\n"
                   "sakuratts:\n  backend: " + backend + "\n")
         write(output / ("configs/tts_infer." + backend + ".example.yaml"), config)
@@ -369,8 +432,9 @@ def assemble(args, plan):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ("python-base", "main-site", "vc-runtime", "ffmpeg", "wheel", "output", "audit"):
+    for name in ("python-base", "main-site", "ffmpeg", "wheel", "output", "audit"):
         parser.add_argument("--" + name, type=Path, required=True)
+    parser.add_argument("--vc-runtime", type=Path, help="Required Microsoft redistributable CRT for Windows")
     parser.add_argument("--worker", type=Path, help="Verified acoustic/frontend worker component (CUDA recipe)")
     parser.add_argument("--preparation", type=Path,
                         help="Optional verified offline component built by build_preparation.py")

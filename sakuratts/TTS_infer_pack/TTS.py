@@ -34,8 +34,6 @@ class Inference:
         if "backend" in self.settings:
             from ..backends import require_backend
             require_backend(self.settings["backend"])
-            if self.settings["backend"] == "mlx":
-                raise NotImplementedError("MLX currently supports prepared native V2Pro packages through Engine only; HTTP Inference is not supported")
         try:
             if model is not None:
                 self._activate(model if isinstance(model, Model) else Model.load(model))
@@ -57,8 +55,6 @@ class Inference:
             raise
 
     def _activate(self, model):
-        if self.settings.get("backend", model.backend) == "mlx":
-            raise NotImplementedError("MLX currently supports prepared native V2Pro packages through Engine only; HTTP Inference is not supported")
         from .reference import ReferenceCache
         workers = {name: str(Path(self.settings[name]).resolve()) for name in ("acoustic_python", "frontend_python")
                    if self.settings.get(name)}
@@ -160,6 +156,8 @@ class Inference:
             checkpoint = None
         manifest = json.loads((path / "manifest.json").read_text(encoding="utf-8"))
         expected = "sakuratts-gpt-fp32-v1" if kind == "gpt" else "sakuratts-sovits-onnx-v1"
+        if kind == "sovits" and self.engine is not None and self.engine._runtime.name == "mlx":
+            expected = "sakuratts-sovits-decode-fp32-v1"
         if manifest.get("format") != expected:
             raise ValueError("Wrong model type for " + kind)
         if self.model is None:

@@ -26,7 +26,7 @@ class CPURuntimeTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
-        self.root = Path(self.temporary.name)
+        self.root = Path(self.temporary.name).resolve()
         self.config, _, _ = fixture(self.root)
         metadata = json.loads(self.config.read_text(encoding="utf-8"))
         metadata["backend"] = {"preferred": "cpu"}

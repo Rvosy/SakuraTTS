@@ -20,7 +20,7 @@ class CPUDoctorTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
-        self.root = Path(self.temporary.name)
+        self.root = Path(self.temporary.name).resolve()
         self.config, _, _ = fixture(self.root)
         self.available = ["DmlExecutionProvider", "CPUExecutionProvider"]
         self.distributions = {"numpy": "test", "threadpoolctl": "test", "sakuratts": "test",
@@ -137,7 +137,7 @@ sys.modules['sakuratts.backends.cuda.runtime']=cuda
     def test_cpu_and_directml_probe_main_acoustics_and_keep_classic_frontend_worker(self):
         for backend in ("cpu", "directml"):
             with self.subTest(backend=backend), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
+                root = Path(directory).resolve()
                 config_path, _, _ = fixture(root)
                 config = json.loads(config_path.read_text(encoding="utf-8"))
                 config.update(backend={"preferred": backend}, references={})
@@ -168,7 +168,7 @@ class GPTPackageDiagnosticsTests(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
-        self.root = Path(temporary.name)
+        self.root = Path(temporary.name).resolve()
         self.config, _, _ = fixture(self.root)
         config = json.loads(self.config.read_text(encoding="utf-8"))
         config.update(backend={"preferred": "cpu"}, references={})

@@ -158,6 +158,8 @@ class CPUGPTTests(unittest.TestCase):
             model.prefill(self.phones, self.prompt, self.bert)
 
     def test_blas_thread_limit_is_scoped_and_restored_on_failure(self):
+        if not any(item["user_api"] == "blas" for item in threadpool_info()):
+            self.skipTest("The NumPy BLAS provider is not controlled by threadpoolctl (for example Accelerate)")
         model = CPUGPT(self.manifest, self.weights, threads=1)
         before = [(item["prefix"], item["num_threads"]) for item in threadpool_info()]
         with patch.object(model, "_linear", side_effect=RuntimeError("injected failure")):

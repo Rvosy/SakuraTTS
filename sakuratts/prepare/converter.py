@@ -14,6 +14,10 @@ from ..runtime.logging import run_conversion
 logger = logging.getLogger("sakuratts.prepare.converter")
 
 
+def acoustic_converter(backend):
+    return "convert_sovits_mlx.py" if backend == "mlx" else "export_sovits_onnx.py"
+
+
 def _preparation_identity(backend, experimental=None):
     """Cache the selected artifacts, independently of execution tuning."""
     from ..profiles import resolve_profile
@@ -117,8 +121,6 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
     """Convert supported checkpoints; reference audio is optional."""
     from ..backends import require_backend
     backend = require_backend(backend)
-    if backend == "mlx":
-        raise NotImplementedError("MLX raw checkpoint conversion is not supported; use prepared native V2Pro packages with Engine")
     if bool(reference) != bool(reference_text and reference_text.strip()):
         raise ValueError("Supply both reference and reference_text, or neither")
     paths = {key: Path(value).resolve(strict=True) for key, value in
@@ -149,7 +151,7 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
         logger.info("准备日文前端与参考资源")
         run_conversion(command, env=env)
         for script, checkpoint, target in (("convert_gpt.py", paths["gpt"], "gpt"),
-                                           ("export_sovits_onnx.py", paths["sovits"], "sovits")):
+                                           (acoustic_converter(backend), paths["sovits"], "sovits")):
             logger.info("转换 %s 权重，首次准备需要一些时间", "GPT" if target == "gpt" else "SoVITS")
             run_conversion([interpreter, "-B", str(tools / script), "--checkpoint", str(checkpoint),
                 "--official-source", str(paths["source"]), "--output", str(prepared / target)], env=env)
@@ -175,7 +177,10 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
             (prepared / "references/reference").rename(staged / "references/000")
         _write_manifest(staged, config, name=name or output.name)
         from ..runtime.diagnostics import check_prepared_packages, check_windows_packages
-        if backend in ("cpu", "directml"):
+        if backend == "mlx":
+            from ..backends.mlx.diagnostics import check_packages
+            check_packages(staged)
+        elif backend in ("cpu", "directml"):
             check_windows_packages(staged, experimental=experimental)
         else:
             check_prepared_packages(staged)
@@ -212,7 +217,7 @@ def prepare_reference(*, gpt, sovits, audio, text, frontend, official_source, py
 
 def convert_checkpoint(kind, checkpoint, output, *, official_source, python, backend="cuda", experimental=None):
     """Publish one converted checkpoint only after its converter succeeds."""
-    scripts = {"gpt": "convert_gpt.py", "sovits": "export_sovits_onnx.py"}
+    scripts = {"gpt": "convert_gpt.py", "sovits": acoustic_converter(backend)}
     script = Path(__file__).parent / scripts[kind]
     output = _destination(output)
     source = Path(official_source).resolve(strict=True)

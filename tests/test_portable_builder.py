@@ -20,6 +20,29 @@ SPEC.loader.exec_module(builder)
 
 
 class PortableBuilderTests(unittest.TestCase):
+    def test_windows_wheels_match_target_python_and_architecture(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary) / "example.dist-info"
+            directory.mkdir()
+            for tag, compatible in (
+                ("cp312-cp312-win_amd64", True), ("cp311-abi3-win_amd64", True),
+                ("py3-none-any", True), ("py2.py3-none-any", True),
+                ("cp311-cp311-win_amd64", False), ("cp313-abi3-win_amd64", False),
+                ("cp312-cp312-win32", False), ("cp312-cp312-win_arm64", False),
+                ("cp312-cp312-macosx_14_0_arm64", False),
+                ("cp312-cp312-manylinux_2_28_x86_64", False),
+            ):
+                with self.subTest(tag=tag):
+                    (directory / "WHEEL").write_text("Tag: " + tag + "\n")
+                    if compatible:
+                        builder.windows_wheel_compatible(directory, "3.12")
+                    else:
+                        with self.assertRaisesRegex(ValueError, "Windows x64 wheel compatible"):
+                            builder.windows_wheel_compatible(directory, "3.12")
+            (directory / "WHEEL").unlink()
+            with self.assertRaisesRegex(ValueError, "requires wheel metadata"):
+                builder.windows_wheel_compatible(directory, "3.12")
+
     def test_recipe_keeps_platform_language_and_service_dependencies_separate(self):
         root = Path(__file__).resolve().parents[1]
         recipe = builder.read_recipe(root / "packaging/recipes/windows-nvidia-ja.toml")
@@ -161,6 +184,18 @@ class PortableBuilderTests(unittest.TestCase):
                 for name in (*names, "preparation-manifest.json")})
             (root / "python.exe").write_bytes(b"modified")
             builder.add_preparation(builder.Plan(), root)
+
+    def test_preparation_rejects_cross_platform_components_before_assembly(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for target, component in (("windows-x64", "macos-arm64"), ("macos-arm64", "windows-x64")):
+                with self.subTest(target=target, component=component):
+                    manifest = {"format": "sakuratts-preparation-bundle-v1", "release": {"target": component}}
+                    (root / "preparation-manifest.json").write_text(json.dumps(manifest))
+                    plan = builder.Plan()
+                    plan.release = {"target": target}
+                    with self.assertRaisesRegex(ValueError, "does not match bundle target"):
+                        builder.add_preparation(plan, root)
 
     def test_record_copies_library_payload_with_local_patches(self):
         with tempfile.TemporaryDirectory() as temporary:

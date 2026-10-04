@@ -1,4 +1,4 @@
-"""Verify Windows first use or relocated cache reuse from raw checkpoints.
+"""Verify portable first use or relocated cache reuse from raw checkpoints.
 
 Run with a development Python that has psutil. The service and every preparation
 or inference child must use the selected bundle. This is a real GPU acceptance
@@ -84,8 +84,9 @@ def external_environment(output):
         if name.upper().startswith(("PYTHON", "CUDA_PATH", "CUDA_HOME", "SAKURATTS_")):
             environment.pop(name)
     system = Path(os.environ.get("SystemRoot", "C:/Windows"))
+    paths = (system / "System32", system) if os.name == "nt" else (Path("/usr/bin"), Path("/bin"))
     invalid = str(output / "nonexistent-external-runtime")
-    environment.update(PATH=os.pathsep.join(map(str, (system / "System32", system))),
+    environment.update(PATH=os.pathsep.join(map(str, paths)),
         PYTHONHOME=invalid, PYTHONPATH=invalid, CUDA_PATH=invalid, CUDA_HOME=invalid,
         PYTHONIOENCODING="utf-8", PYTHONUTF8="1", NO_COLOR="1")
     return environment
@@ -169,7 +170,8 @@ class Service:
         self.bundle, self.output, self.mode, self.port = bundle, output, mode, port
         self.console_path = output / (name + "-console.log")
         self.log_path = output / (name + ".log")
-        command = [str(bundle / "runtime/main/python.exe"), "-I", "-B", "-u", "-c", START_GATE,
+        marker = json.loads((bundle / "runtime/portable.json").read_text(encoding="utf-8"))
+        command = [str(bundle / marker["release"].get("python_executable", "runtime/main/python.exe")), "-I", "-B", "-u", "-c", START_GATE,
                    str(bundle / "launcher.py"), "serve", "--tts-config", str(config),
                    "--host", "127.0.0.1", "--port", str(port), "--log-level", "info",
                    "--log-file", str(self.log_path)]
@@ -365,22 +367,22 @@ class Service:
                 raise
 
     def assert_process_paths(self):
-        system = (Path(os.environ.get("SystemRoot", "C:/Windows")) / "System32").resolve()
+        systems = [(Path(os.environ.get("SystemRoot", "C:/Windows")) / "System32").resolve()] if os.name == "nt" else [Path("/usr/bin"), Path("/bin")]
         # Windows owns console hosts and helpers such as platform's `cmd /c ver`.
         # Only application executables need to come from this bundle.
         invalid = [row for row in self.record["processes"]
                    if not Path(row["executable"]).resolve().is_relative_to(self.bundle)
-                   and not Path(row["executable"]).resolve().is_relative_to(system)]
+                   and not any(Path(row["executable"]).resolve().is_relative_to(system) for system in systems)]
         if invalid or self.sampling_errors:
             raise AssertionError("Process isolation failed: " + repr(invalid or self.sampling_errors))
         if not self.record.get("graceful_exit") or self.record.get("exit_code") != 0:
             raise AssertionError("Service did not exit normally: " + repr(self.record.get("shutdown_error")))
-        self.record["checks"]["observed_executables_bundled_or_windows"] = True
+        self.record["checks"]["observed_executables_bundled_or_system"] = True
         self.record["checks"]["owned_process_tree_reaped"] = True
 
     def assert_execution(self, backend, profile):
-        gpt = "INT8" if backend == "cpu" else ("FP32" if profile == "fp32" else "FP16")
-        acoustic = "FP32" if backend == "cpu" or profile == "fp32" else "FP16"
+        gpt = "INT8" if backend == "cpu" else ("FP32" if backend == "mlx" or profile == "fp32" else "FP16")
+        acoustic = "FP32" if backend in ("cpu", "mlx") or profile == "fp32" else "FP16"
         expected = f"GPT {gpt} / SoVITS {acoustic}"
         if not any(backend.upper() in line and expected in line for line in self.log().splitlines()):
             raise AssertionError("Service log did not confirm " + backend + " " + expected)
@@ -399,18 +401,20 @@ def check_inputs(args):
         raise FileExistsError("Choose a new output directory: " + str(args.output))
     if args.output.is_relative_to(args.bundle):
         raise ValueError("Verification output must be outside the release bundle")
-    for name in ("runtime/main/python.exe", "launcher.py",
+    marker = json.loads((args.bundle / "runtime/portable.json").read_text(encoding="utf-8"))
+    preparation = json.loads((args.bundle / "runtime/preparation/preparation.json").read_text(encoding="utf-8"))
+    args.preparation_python = args.bundle / "runtime/preparation" / preparation["python"]
+    for name in (marker["release"].get("python_executable", "runtime/main/python.exe"), "launcher.py",
                  "runtime/portable.json", "bundle-manifest.json", "runtime/preparation/preparation.json",
-                 "runtime/preparation/preparation-manifest.json", "runtime/preparation/python.exe"):
+                 "runtime/preparation/preparation-manifest.json", args.preparation_python):
         if not (args.bundle / name).is_file():
             raise FileNotFoundError(args.bundle / name)
-    marker = json.loads((args.bundle / "runtime/portable.json").read_text(encoding="utf-8"))
     for name in marker.get("workers", {"acoustic": "runtime/acoustic/python.exe"}).values():
         if not (args.bundle / name).is_file():
             raise FileNotFoundError(args.bundle / name)
     release = marker["release"]
     args.backend = args.backend or ("cpu" if release["backend"] == "directml" else release["backend"])
-    args.profile = args.profile or {"cpu": "int8", "directml": "fp16", "cuda": "fp32"}[args.backend]
+    args.profile = args.profile or {"cpu": "int8", "directml": "fp16", "cuda": "fp32", "mlx": "fp32"}[args.backend]
     if args.backend not in release.get("backends", [release["backend"]]):
         raise ValueError("Backend is not included in this bundle: " + args.backend)
     if not args.prompt_text.strip():
@@ -447,7 +451,7 @@ def verify_first_use(args, report, config, request, port):
         first.record["checks"]["repeat_reused_cache"] = True
         first.sleep()
     first.assert_process_paths()
-    if not any(Path(row["executable"]).resolve() == args.bundle / "runtime/preparation/python.exe"
+    if not any(Path(row["executable"]).resolve() == args.preparation_python
                for row in first.record["processes"]):
         raise AssertionError("No bundled preparation interpreter was observed during first use")
     first.record["checks"]["preparation_interpreter_observed"] = True
@@ -486,7 +490,7 @@ def speech_request(reference, prompt_text):
 
 def verify(args, report):
     config = args.output / "tts-config.json"
-    config.write_text(json.dumps({"custom": {"version": "v2ProPlus", "device": args.backend, "is_half": False,
+    config.write_text(json.dumps({"custom": {"version": "v2Pro" if args.backend == "mlx" else "v2ProPlus", "device": args.backend, "is_half": False,
         "t2s_weights_path": str(args.gpt), "vits_weights_path": str(args.sovits)},
         "sakuratts": {"backend": args.backend, "profile": args.profile}},
         ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -504,7 +508,7 @@ def verify(args, report):
         raise AssertionError("Repeated/restarted/direct PCM differs in length or by more than 1 int16 LSB")
     report["checks"].update(configured_execution=True, repeated_pcm_within_one_lsb=True,
         managed_disk_cache=True, default_direct_disk_cache=True,
-        sleeping_inference_tree_exited=True, observed_executables_bundled_or_windows=True)
+        sleeping_inference_tree_exited=True, observed_executables_bundled_or_system=True)
 
 
 def main(argv=None):
@@ -513,13 +517,11 @@ def main(argv=None):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--prompt-text", required=True)
     parser.add_argument("--port", type=int)
-    parser.add_argument("--backend", choices=("cpu", "directml", "cuda"))
+    parser.add_argument("--backend", choices=("cpu", "directml", "cuda", "mlx"))
     parser.add_argument("--profile", help="Execution profile; defaults to the selected backend preset")
     parser.add_argument("--reuse-cache", action="store_true",
                         help="Verify existing caches, for example after copying the bundle to a new directory")
     args = parser.parse_args(argv)
-    if os.name != "nt":
-        parser.error("This acceptance harness requires Windows")
     import psutil  # Fail before creating any output or launching a service.
     initial = check_inputs(args)
     inputs = {name: {"path": str(getattr(args, name)), "sha256": sha256(getattr(args, name))}
@@ -534,7 +536,7 @@ def main(argv=None):
         "harness_sha256": sha256(__file__), "psutil_version": psutil.__version__,
         "scope": "Local raw-checkpoint and reference acceptance (see verification_mode); no listening, cross-device, "
                  "network-isolation, file-read isolation, or peak-memory claim",
-        "launch_environment": {"external_cwd": True, "initial_path_windows_only": True,
+        "launch_environment": {"external_cwd": True, "initial_path_system_only": True,
                                "poisoned_pythonhome_pythonpath_cuda": True},
         "cache_before": initial, "services": [], "audio": [], "checks": {}}
     report_path = args.output / "report.json"

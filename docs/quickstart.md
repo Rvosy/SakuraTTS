@@ -1,6 +1,6 @@
 # 快速开始
 
-当前公共 Engine 支持 CUDA、CPU 和 Windows DirectML，使用 V2ProPlus 模型，支持日文；加入[英文依赖与资源](english-frontend.md)后支持英文与日英混合。本文介绍 NVIDIA 安装方式；CPU 与 AMD 显卡请按 [CPU / DirectML 指南](cpu-amd.md)安装。模型转换环境与日常运行环境分开。
+当前公共 Engine 支持 CUDA、CPU 和 Windows DirectML，使用 V2ProPlus 模型，支持日文；加入[英文依赖与资源](english-frontend.md)后支持英文与日英混合。本文介绍 NVIDIA 安装方式；CPU 与 AMD 显卡请按 [CPU / DirectML 指南](cpu-amd.md)安装。Apple silicon 的 V2Pro／FP32 路径见 [Apple 指南](apple.md)。模型转换环境与日常运行环境分开。
 
 ## 安装运行环境
 

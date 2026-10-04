@@ -1,5 +1,7 @@
 # Windows 整合包
 
+Apple silicon 的独立运行组件、构建与验收见 [Mac 整合包指南](portable-macos.md)。
+
 整合包可以只用本地文件构建。默认发行组合包含 HTTP、CLI、日文推理及私有 Python 和所选后端的运行库；完整包另外带独立准备组件，让用户提供原始权重和新参考音频后直接调用 HTTP。PyTorch、原版准备源码和公共辅助模型放在准备组件中，按需启动 CPU 进程，完成后退出。HTTP 和准备组件可以分别省略。
 
 提供两个主要发行组合：CPU/AMD 共用 DirectML ONNX Runtime，可用配置或 `--backend cpu|directml` 切换；NVIDIA 使用独立 CUDA 组合。无需按显卡代际拆包。带准备组件的完整包可处理原始权重和新参考；精简包仅适合已有转换资源，按实际分发需求选择，不必同时发布两种大小。
@@ -122,6 +124,8 @@ python scripts/build_portable.py `
 构建脚本需要 `packaging`，使用已有开发 Python 即可；不执行安装或下载。`--plan-only` 只校验并列出构建输入。输出目录必须不存在。源文件按安装包 RECORD 和声学组件清单选取，不整体复制 venv，不复制可编辑安装、`.pth`、字节码或开发配置。绝对来源路径只写在包外的本地 audit；发行清单不包含这些路径。
 
 省略 `--preparation` 可构建精简包。解释器版本从输入中的 `python3X.dll` 读取，主环境与准备环境分别选择，并与各自依赖的 ABI 匹配；支持标准和嵌入式布局。前端扩展模块使用所选环境对应的 Python ABI，不单独限制版本号。准备组件只使用 CPU PyTorch / torchaudio；`--runtime-site` 可覆盖来源目录中的对应包，不修改原环境。源环境本身就是 CPU 版时可省略该参数。构建器不会联网补装依赖。
+
+构建器检查主环境和准备环境的 wheel 标签，拒绝不同系统、架构或 Python ABI 的依赖。准备组件的目标平台也必须与主包一致；旧版未记录目标字段的准备清单按 Windows 处理。平台检查不能代替目标设备上的启动与模型验收。
 
 准备组件不带头文件、静态链接库和依赖的测试目录。若本地只有 GPU 版 ORT，保留其 CPU 核心，排除准备阶段不会使用的 CUDA / TensorRT provider。原版 TTS 导入时仍会加载部分训练相关库，目前保留这些实际依赖。主推理环境保留 NVRTC 所需的 NVIDIA、CuPy 和 NumPy 头文件，不能套用准备环境的裁剪规则。
 

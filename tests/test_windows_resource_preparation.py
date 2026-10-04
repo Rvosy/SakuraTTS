@@ -20,7 +20,7 @@ class WindowsResourcePreparationTests(unittest.TestCase):
     def test_new_reference_preparation_reuses_english_frontend_without_rewriting_it(self):
         with tempfile.TemporaryDirectory() as directory:
             root, _, language = self.fixture(directory)
-            output = Path(directory) / "frontend"
+            output = Path(directory).resolve() / "frontend"
             manifest = prepare.prepare_frontend(root, output)
             (output / "english").mkdir()
             for name in ("g2p.json", "checkpoint.npz"):
@@ -43,7 +43,7 @@ class WindowsResourcePreparationTests(unittest.TestCase):
         self.assertIn("Reference preparation is offline", result.stderr)
 
     def fixture(self, directory):
-        root = Path(directory) / "official"
+        root = Path(directory).resolve() / "official"
         user = root / "GPT_SoVITS/text/ja_userdic"
         user.mkdir(parents=True)
         (user / "userdict.csv").write_bytes(b"existing user dictionary source")
@@ -62,7 +62,7 @@ class WindowsResourcePreparationTests(unittest.TestCase):
             root, user, language = self.fixture(directory)
             (user / "userdict.md5").write_text("stale")
             before = {p.name: p.read_bytes() for p in user.iterdir()}
-            output = Path(directory) / "frontend"
+            output = Path(directory).resolve() / "frontend"
             prepare.prepare_frontend(root, output)
             self.assertEqual((output / "user.dict").read_bytes(), before["user.dict"])
             self.assertEqual((output / "lid.176.bin").read_bytes(), language.read_bytes())
@@ -105,7 +105,7 @@ class WindowsResourcePreparationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root, _, language = self.fixture(directory)
             preflight = self.classic_fixture(root)
-            output = Path(directory) / "frontend"
+            output = Path(directory).resolve() / "frontend"
             before = {str(p): prepare.digest(p) for p in root.rglob("*") if p.is_file()}
             manifest = prepare.prepare_frontend(root, output, preflight=preflight)
             self.assertEqual(manifest["japanese_g2p"]["main_dictionary"],
@@ -122,7 +122,7 @@ class WindowsResourcePreparationTests(unittest.TestCase):
 
     def test_reference_preparation_uses_current_files_after_frontend_relocation(self):
         with tempfile.TemporaryDirectory() as directory:
-            original = Path(directory) / "original"
+            original = Path(directory).resolve() / "original"
             root, _, language = self.fixture(original)
             preflight = self.classic_fixture(root)
             frontend = original / "frontend"
@@ -135,7 +135,7 @@ class WindowsResourcePreparationTests(unittest.TestCase):
             config.write_bytes(b"config fixture")
             for name in ("gpt.ckpt", "sovits.pth", "reference.wav"):
                 (original / name).write_bytes(name.encode())
-            relocated = Path(directory) / "relocated"
+            relocated = Path(directory).resolve() / "relocated"
             original.rename(relocated)
             root = relocated / "official"
             frontend = relocated / "frontend"
@@ -168,7 +168,7 @@ class WindowsResourcePreparationTests(unittest.TestCase):
 
     def test_duplicate_tones_do_not_silently_replace_a_reference(self):
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
+            root = Path(directory).resolve()
             for name in ("gpt.ckpt", "sovits.pth", "a.ogg", "b.ogg"):
                 (root / name).write_bytes(b"fixture")
             (root / "character.json").write_text(json.dumps({"voice": {
