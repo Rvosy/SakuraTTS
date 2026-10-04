@@ -95,9 +95,10 @@ class LoggingTests(unittest.TestCase):
             file = Path(folder) / "server.log"
             with service_logging(file):
                 run_conversion([sys.executable, "-c", code], env=dict(os.environ, PYTHONUTF8="1"))
-                with self.assertRaises(subprocess.CalledProcessError):
+                with self.assertRaises(subprocess.CalledProcessError) as failure:
                     run_conversion([sys.executable, "-c", "print('conversion failed'); raise SystemExit(7)"],
                                    env=dict(os.environ, PYTHONUTF8="1"))
+                self.assertIn("conversion failed", str(failure.exception))
             details = file.read_text(encoding="utf-8")
         self.assertNotIn("enc_q.pre.weight", console.getvalue())
         self.assertIn("dec.weight", console.getvalue())

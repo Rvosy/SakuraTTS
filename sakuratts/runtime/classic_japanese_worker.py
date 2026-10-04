@@ -6,6 +6,10 @@ from pathlib import Path
 import sys
 import traceback
 
+if __name__ == '__main__':
+    from runpy import run_path
+    run_path(str(Path(__file__).with_name('worker.py')))['enable_windows_long_import_paths']()
+
 sys.dont_write_bytecode = True
 if not __package__:
     from runpy import run_path

@@ -1,8 +1,31 @@
 """Load only the requested SakuraTTS package into a separate worker ABI."""
 
 import importlib.util
+import importlib.machinery
+import copy
+import os
 from pathlib import Path
 import sys
+
+
+def enable_windows_long_import_paths():
+    """Use extended paths only for native DLL loading, not Python resource paths."""
+    if sys.platform != "win32":
+        return
+    original = importlib.machinery.ExtensionFileLoader.create_module
+    if getattr(original, '_sakuratts_long_paths', False):
+        return
+    def create_module(loader, spec):
+        native = copy.copy(spec)
+        path = os.path.abspath(spec.origin)
+        if not path.startswith('\\\\?\\'):
+            path = '\\\\?\\UNC\\' + path[2:] if path.startswith('\\\\') else '\\\\?\\' + path
+        native.origin = path
+        module = original(loader, native)
+        module.__file__ = spec.origin
+        return module
+    create_module._sakuratts_long_paths = True
+    importlib.machinery.ExtensionFileLoader.create_module = create_module
 
 
 def load_package(package_directory):
