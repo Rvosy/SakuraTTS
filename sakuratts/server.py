@@ -10,6 +10,7 @@ import math
 import shutil
 import subprocess
 import threading
+import time
 from typing import Annotated, Optional, Union
 import wave
 
@@ -385,6 +386,7 @@ def create_app(model=None, *, tts_config=None, backend=None, profile=None, exper
             await asyncio.gather(watcher, return_exceptions=True)
 
     async def tts(request, connection):
+        started = time.perf_counter()
         try:
             values = request.checked()
         except Exception as error:
@@ -407,9 +409,21 @@ def create_app(model=None, *, tts_config=None, backend=None, profile=None, exper
             return error_response(error, synthesis=True)
         finally:
             app.state.streams.discard(stop)
-        return Response(data, media_type="audio/" + values["media_type"], headers={
+        headers = {
             "X-SakuraTTS-Status": audio.report["status"],
-            "X-SakuraTTS-Request-Ms": str(round(audio.report["request_ms"], 2)), "Cache-Control": "no-store"})
+            "X-SakuraTTS-Request-Ms": str(round(audio.report["request_ms"], 2)),
+            "X-SakuraTTS-Total-Ms": str(round((time.perf_counter() - started) * 1000, 2)),
+            "X-SakuraTTS-Audio-Seconds": str(round(len(audio.pcm) / audio.sample_rate, 3)),
+            "Cache-Control": "no-store"}
+        for key, header in [('reference_ms', 'Reference-Ms'), ('frontend_ms', 'Frontend-Ms'),
+                            ('reference_cache', 'Reference-Cache'), ('backend', 'Backend')]:
+            if key in audio.report:
+                headers['X-SakuraTTS-' + header] = str(audio.report[key])
+        if 'fragments' in audio.report:
+            for key, header in [('semantic_seconds', 'Semantic-Ms'), ('acoustic_seconds', 'Acoustic-Ms')]:
+                headers['X-SakuraTTS-' + header] = str(round(sum(
+                    part['timings'][key] for part in audio.report['fragments']) * 1000, 2))
+        return Response(data, media_type="audio/" + values["media_type"], headers=headers)
 
     async def stream_tts(values, connection):
         loop = asyncio.get_running_loop()

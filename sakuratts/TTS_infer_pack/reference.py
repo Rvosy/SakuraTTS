@@ -19,6 +19,9 @@ class ReferenceCache:
         self.settings = settings
         self.audio_cache = OrderedDict()
         self.text_cache = None
+        from ..prepare.reference_process import ReferencePreparer
+        self.preparer = ReferencePreparer()
+        self.cache_status = None
         runtime = engine._runtime
         self.identity = {kind + "_checkpoint_sha256": runtime.manifests[kind]["source"]["checkpoint_sha256"]
                          for kind in ("gpt", "sovits")}
@@ -30,6 +33,7 @@ class ReferenceCache:
         audio_path = Path(audio_path).resolve(strict=True)
         audio_hash = sha256_file(audio_path)
         if audio_hash in self.audio_cache:
+            self.cache_status = 'memory'
             self.audio_cache.move_to_end(audio_hash)
             logger.debug("参考音频条件 | 命中内存缓存 | SHA256=%s", audio_hash)
             return self.audio_cache[audio_hash]
@@ -40,6 +44,7 @@ class ReferenceCache:
             manifest = json.loads((path / "manifest.json").read_text(encoding="utf-8"))
             if all(manifest["identity"].get(k) == v for k, v in expected.items()):
                 base = PreparedReference.load(path)
+                self.cache_status = 'package'
                 logger.debug("参考音频条件 | 复用部署包缓存 | %s", path)
                 break
         if base is None:
@@ -70,8 +75,10 @@ class ReferenceCache:
                 sort_keys=True).encode("utf-8")).hexdigest()
             path = Path(self.settings.get("cache_dir", ".cache/sakuratts")) / "references" / key
             if path.exists():
+                self.cache_status = 'disk'
                 logger.debug("参考音频条件 | 命中磁盘缓存 | %s", path)
             else:
+                self.cache_status = 'miss'
                 required = ("gpt_checkpoint", "sovits_checkpoint", "official_source", "python")
                 missing = [name for name in required if not self.settings.get(name)]
                 if missing:
@@ -85,7 +92,7 @@ class ReferenceCache:
                 prepare_reference(gpt=self.settings["gpt_checkpoint"], sovits=self.settings["sovits_checkpoint"],
                     audio=audio_path, text="参考音声。", frontend=self.engine._runtime.packages["frontend"],
                     official_source=self.settings["official_source"], python=self.settings["python"], output=path,
-                    cnhubert=self.settings.get("cnhubert"))
+                    cnhubert=self.settings.get("cnhubert"), runner=self.preparer.run)
             base = PreparedReference.load(path)
         self.audio_cache[audio_hash] = base
         if len(self.audio_cache) > 8:
@@ -94,6 +101,9 @@ class ReferenceCache:
 
     def prepare_audio(self, path):
         self._audio(path)
+
+    def close(self):
+        self.preparer.close()
 
     def resolve(self, path, text, language):
         profile = language_profile(language)

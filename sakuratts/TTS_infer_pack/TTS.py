@@ -225,6 +225,7 @@ class Inference:
             split_bucket=request["split_bucket"],
             collect_audio=on_fragment is None, cancel_requested=cancel_requested)
         result.report["reference_ms"] = reference_ms
+        result.report["reference_cache"] = self.references.cache_status
         result.report["native_inference_ms"] = result.report["request_ms"]
         result.report["request_ms"] = (time.perf_counter() - started) * 1000
         return result
@@ -240,6 +241,10 @@ class Inference:
 
     def close(self):
         engine, self.engine = self.engine, None
-        self.references = None
-        if engine is not None:
-            engine.close()
+        references, self.references = self.references, None
+        try:
+            if references is not None:
+                references.close()
+        finally:
+            if engine is not None:
+                engine.close()

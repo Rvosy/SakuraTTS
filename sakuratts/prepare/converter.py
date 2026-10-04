@@ -190,7 +190,7 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
         return model
 
 
-def prepare_reference(*, gpt, sovits, audio, text, frontend, official_source, python, output, cnhubert=None):
+def prepare_reference(*, gpt, sovits, audio, text, frontend, official_source, python, output, cnhubert=None, runner=None):
     """Encode raw reference audio in the separate preparation interpreter."""
     output = _destination(output)
     frontend = Path(frontend).resolve(strict=True)
@@ -208,9 +208,10 @@ def prepare_reference(*, gpt, sovits, audio, text, frontend, official_source, py
         command = [str(python), "-B", str(script), "--official-source", str(source),
             "--inputs", str(inputs), "--output", str(root / "prepared"), "--frontend", str(frontend),
             "--language-model", str(frontend / "lid.176.bin"), "--python", str(python)]
+        command += ["--cache-dir", str(output.parent / ".preparation-cache")]
         if cnhubert:
             command += ["--cnhubert", str(Path(cnhubert).resolve(strict=True))]
-        run_conversion(command, env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1"))
+        (runner or run_conversion)(command, env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1"))
         (root / "prepared/references/reference").rename(output)
     return output
 
