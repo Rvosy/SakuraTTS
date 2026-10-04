@@ -1,4 +1,4 @@
-"""Protect source resources and existing output when preparing Windows packages."""
+"""Protect source resources and existing output when preparing reference and frontend packages."""
 import hashlib
 import importlib.util
 import io
@@ -10,13 +10,13 @@ import subprocess
 import sys
 from unittest.mock import Mock, patch
 
-SCRIPT = Path(__file__).resolve().parents[1] / "sakuratts/prepare/prepare_windows_resources.py"
-spec = importlib.util.spec_from_file_location("windows_resource_preparation", SCRIPT)
+SCRIPT = Path(__file__).resolve().parents[1] / "sakuratts/prepare/prepare_resources.py"
+spec = importlib.util.spec_from_file_location("resource_preparation", SCRIPT)
 prepare = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(prepare)
 
 
-class WindowsResourcePreparationTests(unittest.TestCase):
+class ResourcePreparationTests(unittest.TestCase):
     def test_new_reference_preparation_reuses_english_frontend_without_rewriting_it(self):
         with tempfile.TemporaryDirectory() as directory:
             root, _, language = self.fixture(directory)

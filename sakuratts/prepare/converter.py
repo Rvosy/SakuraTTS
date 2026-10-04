@@ -24,7 +24,7 @@ def _preparation_identity(backend, experimental=None):
     from ..module.reference_condition import sha256_file
     _, options = resolve_profile(backend, None, experimental)
     identity = {"backend": backend}
-    scripts = []
+    scripts = ["sovits_checkpoint.py"]
     if backend in ("cpu", "directml"):
         scripts += ["prepare_backend.py", "export_gpt_onnx.py"]
     if backend == "directml":
@@ -141,7 +141,7 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
         inputs.write_text(json.dumps({"gpt": str(paths["gpt"]), "sovits": str(paths["sovits"]),
             "references": refs}, ensure_ascii=False), encoding="utf-8")
         prepared = temporary / "prepared"
-        command = [interpreter, "-B", str(tools / "prepare_windows_resources.py"),
+        command = [interpreter, "-B", str(tools / "prepare_resources.py"),
                    "--official-source", str(paths["source"]), "--inputs", str(inputs),
                    "--output", str(prepared), "--python", interpreter]
         if not refs:
@@ -204,7 +204,7 @@ def prepare_reference(*, gpt, sovits, audio, text, frontend, official_source, py
             "sovits": str(Path(sovits).resolve(strict=True)), "references": [{
                 "audio": str(Path(audio).resolve(strict=True)), "text": text,
                 "language": "ja", "tone": "reference"}]}, ensure_ascii=False), encoding="utf-8")
-        script = Path(__file__).parent / "prepare_windows_resources.py"
+        script = Path(__file__).parent / "prepare_resources.py"
         command = [str(python), "-B", str(script), "--official-source", str(source),
             "--inputs", str(inputs), "--output", str(root / "prepared"), "--frontend", str(frontend),
             "--language-model", str(frontend / "lid.176.bin"), "--python", str(python)]

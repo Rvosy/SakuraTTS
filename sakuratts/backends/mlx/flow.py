@@ -1,4 +1,4 @@
-"""V2Pro reverse residual coupling flow using MLX only.
+"""V2Pro/V2ProPlus reverse residual coupling flow using MLX only.
 
 Graph semantics follow GPT-SoVITS commit 48b1a016 (MIT, Copyright 2024
 RVC-Boss; see docs/third-party/GPT-SoVITS-LICENSE.txt), specifically WN,

@@ -1,4 +1,4 @@
-"""Read a V2Pro acoustic weight archive once, independently of its backend."""
+"""Read a V2Pro/V2ProPlus native acoustic weight archive once."""
 
 from contextlib import contextmanager
 import json
@@ -14,8 +14,8 @@ from sakuratts.module.weight_storage import read_fp32
 def validate_manifest(manifest):
     if manifest.get("dtype") != "float32":
         raise ValueError("MLX acoustic execution requires FP32; FP16 is not implemented")
-    if manifest.get("config", {}).get("model", {}).get("version") != "v2Pro":
-        raise ValueError("MLX acoustic execution supports only V2Pro; V2ProPlus is not implemented")
+    if manifest.get("config", {}).get("model", {}).get("version") not in ("v2Pro", "v2ProPlus"):
+        raise ValueError("MLX acoustic execution supports V2Pro and V2ProPlus")
     if manifest.get("format") != "sakuratts-sovits-decode-fp32-v1":
         raise ValueError("MLX requires a native sakuratts-sovits-decode-fp32-v1 package, not ONNX")
 

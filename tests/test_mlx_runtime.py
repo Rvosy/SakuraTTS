@@ -120,6 +120,23 @@ class MLXRuntimeTests(unittest.TestCase):
             restored = inference.tts(request)
             np.testing.assert_array_equal(audio.pcm, restored.pcm)
 
+    def test_v2proplus_synthesis_reports_the_loaded_family(self):
+        self.manifest["config"]["model"]["version"] = "v2ProPlus"
+        self.reference.manifest["model_family"] = "v2ProPlus"
+        self.write_manifest(self.manifest)
+        with Engine.load(self.config, backend="mlx") as engine:
+            audio = engine.synthesize("test", fragment_interval=0.)
+            self.assertEqual(audio.report["model_family"], "v2ProPlus")
+            self.assertEqual(audio.sample_rate, 32000)
+            np.testing.assert_array_equal(audio.pcm, [0, 16384, -16384, 0])
+
+    def test_v2proplus_rejects_a_v2pro_reference(self):
+        self.manifest["config"]["model"]["version"] = "v2ProPlus"
+        self.write_manifest(self.manifest)
+        with Engine.load(self.config, backend="mlx") as engine:
+            with self.assertRaisesRegex(ValueError, "family"):
+                engine.synthesize("test")
+
     def test_release_state_reuses_weights_and_reclaims_allocator_cache(self):
         with Engine.load(self.config, backend="mlx", experimental={"policy": "release-state"}) as engine:
             first = engine.synthesize("first", fragment_interval=0.)
@@ -181,7 +198,7 @@ class MLXRuntimeTests(unittest.TestCase):
 
     def test_unsupported_packages_and_precision_fail_before_frontend(self):
         for change, message in (({"dtype": "float16"}, "FP16"),
-                                ({"config": {"model": {"version": "v2ProPlus"}}}, "V2ProPlus"),
+                                ({"config": {"model": {"version": "v3"}}}, "V2Pro"),
                                 ({"format": "sakuratts-sovits-onnx-v1"}, "native")):
             with self.subTest(change=change):
                 self.write_manifest(dict(self.manifest, **change))

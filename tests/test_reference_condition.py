@@ -16,7 +16,8 @@ from sakuratts.module.reference_condition import BoundAcousticReference, Prepare
 class BoundReferenceTests(unittest.TestCase):
     def setUp(self):
         self.model = dict(source=dict(checkpoint_sha256="sovits", official_commit="official"),
-                          config=dict(model=dict(version="v2Pro")))
+                          config=dict(model=dict(version="v2Pro")),
+                          inputs={"ge": {"shape": [1, 1024, 1]}, "ge512": {"shape": [1, 512, 1]}})
         self.reference = PreparedReference(
             dict(model_family="v2Pro", identity=dict(reference_language="ja",
                  sovits_checkpoint_sha256="sovits", gpt_checkpoint_sha256="gpt",
@@ -70,6 +71,19 @@ class BoundReferenceTests(unittest.TestCase):
                     other = replace(self.reference, **{name: invalid})
                     with self.assertRaises(ValueError):
                         bound.validate_conditions(other.ge, other.ge512)
+
+    def test_v2proplus_binding_preserves_conditions_and_rejects_other_families(self):
+        self.model["config"]["model"]["version"] = "v2ProPlus"
+        with self.assertRaisesRegex(ValueError, "family"):
+            BoundAcousticReference.from_reference(self.reference, self.model)
+        reference = replace(self.reference, manifest=dict(self.reference.manifest, model_family="v2ProPlus"))
+        bound = BoundAcousticReference.from_reference(reference, self.model)
+        bound.validate_reference(reference)
+        np.testing.assert_array_equal(bound.ge, reference.ge)
+        np.testing.assert_array_equal(bound.ge512, reference.ge512)
+        self.model["inputs"]["ge"]["shape"] = [1, 512, 1]
+        with self.assertRaisesRegex(ValueError, "shape"):
+            BoundAcousticReference.from_reference(reference, self.model)
 
 if __name__ == "__main__":
     unittest.main()

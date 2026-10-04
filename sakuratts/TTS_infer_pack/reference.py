@@ -45,7 +45,7 @@ class ReferenceCache:
         if base is None:
             from ..prepare.converter import prepare_reference
             from ..runtime.portable import bundle_root
-            script = Path(__file__).resolve().parents[1] / "prepare/prepare_windows_resources.py"
+            script = Path(__file__).resolve().parents[1] / "prepare/prepare_resources.py"
             resources = {"frontend": sha256_file(self.engine._runtime.packages["frontend"] / "manifest.json")}
             portable_root = bundle_root()
             bundled_preparation = (portable_root is not None

@@ -52,5 +52,14 @@ class SoVITSPackageTests(unittest.TestCase):
         self.assertEqual(set(selected), {'flow.other'})
         self.assertEqual([call.args[-1] for call in read.call_args_list], ['flow.other'])
 
+    def test_opens_v2proplus_without_changing_its_architecture(self):
+        manifest = self.package({'dec.cond.weight': np.ones((768, 1024, 1), dtype=np.float32)})
+        manifest['config']['model'].update(version='v2ProPlus', upsample_initial_channel=768)
+        self.write_manifest(manifest)
+        with SoVITSPackage.open(self.path) as source:
+            self.assertEqual(source.manifest['config']['model']['version'], 'v2ProPlus')
+            weights = dict(source.tensors('dec.'))
+        self.assertEqual(weights['dec.cond.weight'].shape, (768, 1024, 1))
+
 if __name__ == '__main__':
     unittest.main()

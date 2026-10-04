@@ -23,6 +23,7 @@ def check_packages(config_path):
     checked_file(paths["gpt"], gpt["weights"]["file"])
     with SoVITSPackage.open(paths["sovits"]) as package:
         acoustic = package.manifest
+    family = acoustic["config"]["model"]["version"]
     if (frontend.get("format") != "sakuratts-japanese-frontend-resources-v1"
             or not {"symbols-v2.json", "user.dict", "lid.176.bin"}.issubset(frontend["files"])):
         raise ValueError("Incomplete Japanese frontend resource package")
@@ -31,8 +32,8 @@ def check_packages(config_path):
     references = config.get("references", {})
     for path in references.values():
         reference = PreparedReference.load(root / path)
-        if reference.manifest["model_family"] != "v2Pro":
-            raise ValueError("MLX requires a prepared V2Pro reference")
+        if reference.manifest["model_family"] != family:
+            raise ValueError(f"Reference family must match the {family} acoustic model")
     profile = frontend.get("japanese_g2p", {"implementation": "pyopenjtalk-plus"})
     frontend_worker = None
     if profile["implementation"] == "pyopenjtalk-classic":
@@ -46,7 +47,7 @@ def check_packages(config_path):
         frontend_worker = check_worker_imports((root / python).resolve(strict=True), directories, acoustic=False)
     elif profile["implementation"] != "pyopenjtalk-plus":
         raise ValueError("Unsupported Japanese frontend implementation")
-    return {"status": "passed", "config": str(model.path), "backend": "mlx", "model_family": "v2Pro",
+    return {"status": "passed", "config": str(model.path), "backend": "mlx", "model_family": family,
             "packages": {name: str(path) for name, path in paths.items()}, "references": list(references),
             "japanese_g2p": profile, "frontend_worker": frontend_worker,
             "scope": "Native package paths, reference shapes and configured frontend worker; no TTS or Metal execution"}

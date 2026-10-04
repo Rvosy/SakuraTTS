@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export the selected V2Pro non-streaming decoder as an FP32 NPZ package.
+"""Export a V2Pro/V2ProPlus non-streaming decoder as an FP32 NPZ package.
 
 PyTorch and official source are conversion dependencies. The package requires
 prepared ge/ge512 from the same checkpoint; the original model remains the
@@ -21,6 +21,13 @@ import numpy as np
 import torch
 
 
+if __package__:
+    from .sovits_checkpoint import load_checkpoint, plain
+else:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from sovits_checkpoint import load_checkpoint, plain
+
+
 OFFICIAL_COMMIT = "48b1a0169a28582a8984402f82cf438d3bfa6aca"
 CODEBOOK = "quantizer.vq.layers.0._codebook.embed"
 TRAINING_BUFFERS = {f"quantizer.vq.layers.0._codebook.{name}" for name in ("inited", "cluster_size", "embed_avg")}
@@ -40,16 +47,6 @@ def sha256(path):
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
-
-
-def plain(value):
-    if type(value).__name__ == "HParams":
-        return plain(vars(value))
-    if isinstance(value, dict):
-        return {key: plain(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [plain(item) for item in value]
-    return value
 
 
 def exported_key(key):
@@ -92,25 +89,8 @@ def convert(checkpoint: Path, references: Path | None = None, *,
     else:
         commit = "source-sha256:" + sha256(source / "GPT_SoVITS/TTS_infer_pack/TTS.py")
     checkpoint_hash = sha256(checkpoint)
-    sys.path[:0] = [str(source / "GPT_SoVITS"), str(source)]
-    from process_ckpt import get_sovits_version_from_path_fast, load_sovits_new
-    from module.models import SynthesizerTrn
-
-    _, version, lora = get_sovits_version_from_path_fast(str(checkpoint))
-    if version != "v2Pro" or lora:
-        raise ValueError("This candidate only covers the selected non-LoRA V2Pro architecture")
-    original = load_sovits_new(str(checkpoint))
-    config = plain(original["config"])
-    model_config = dict(config["model"], version=version, semantic_frame_rate="25hz")
-    model = SynthesizerTrn(config["data"]["filter_length"] // 2 + 1,
-                           config["train"]["segment_size"] // config["data"]["hop_length"],
-                           n_speakers=config["data"]["n_speakers"], **model_config).eval()
-    state = original["weight"]
-    incompatible = model.load_state_dict(state, strict=False)
-    if incompatible.unexpected_keys or any(not key.startswith("enc_q.") for key in incompatible.missing_keys):
-        raise ValueError(f"Unsupported checkpoint schema: {incompatible}")
-    if len(model.quantizer.vq.layers) != 1 or not isinstance(model.quantizer.vq.layers[0].project_out, torch.nn.Identity):
-        raise ValueError("Expected a single codebook with identity output projection")
+    loaded = load_checkpoint(checkpoint, source)
+    model, config, model_config, state = loaded.model, loaded.config, loaded.model_config, loaded.state
     expected_keys = {key for key in model.state_dict() if exported_key(key)}
     selected = {key for key in state if exported_key(key)}
     if selected != expected_keys:
@@ -158,12 +138,13 @@ def convert(checkpoint: Path, references: Path | None = None, *,
             if restored[key].tobytes() != arrays[key].tobytes():
                 raise AssertionError(f"Exported bytes differ after archive roundtrip: {key}")
     shutil.copy2(__file__, destination / "convert_sovits.py")
+    shutil.copy2(Path(__file__).with_name("sovits_checkpoint.py"), destination / "sovits_checkpoint.py")
     shutil.copy2(source / "LICENSE", destination / "GPT-SoVITS-LICENSE")
     source_files = ["GPT_SoVITS/process_ckpt.py", "GPT_SoVITS/module/models.py", "GPT_SoVITS/text/symbols2.py"]
     source_files += [f"GPT_SoVITS/module/{name}.py" for name in ("modules", "attentions", "mrte_model", "quantize", "core_vq", "commons")]
     manifest = {
         "format": "sakuratts-sovits-decode-fp32-v1", "created_at_utc": timestamp,
-        "architecture": "gpt-sovits-v2pro-prepared-nonstreaming-decode", "dtype": "float32",
+        "architecture": "gpt-sovits-prepared-nonstreaming-decode", "dtype": "float32",
         "config": {"model": model_config, "sample_rate": config["data"]["sampling_rate"],
                    "semantic_hz": 25, "semantic_upsample_mode": "nearest", "semantic_upsample_factor": 2,
                    "semantic_vocabulary": list(arrays[CODEBOOK].shape)[0],
@@ -189,13 +170,14 @@ def convert(checkpoint: Path, references: Path | None = None, *,
         "source": {"checkpoint": str(checkpoint), "checkpoint_sha256": checkpoint_hash,
                    "checkpoint_bytes": checkpoint.stat().st_size, "checkpoint_config": config,
                    "official_commit": commit, "source_sha256": {name: sha256(source/name) for name in source_files},
-                   "constructor_missing_keys": list(incompatible.missing_keys)},
+                   "constructor_missing_keys": loaded.missing_keys},
         "conversion": {"torch": torch.__version__, "numpy": np.__version__,
                        "script_sha256": sha256(destination / "convert_sovits.py"),
+                       "checkpoint_loader_sha256": sha256(Path(__file__).with_name("sovits_checkpoint.py")),
                        "command_argv": [sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]],
                        "layout": "Original keys, tensor axes and weight_norm g/v retained; float16 to float32 is exact",
                        "archive_roundtrip": "All exported FP32 bytes checked equal"},
-        "scope": "Selected V2Pro acoustic decoder candidate; runtime and other weights/families unverified; no new audio-quality acceptance",
+        "scope": "Prepared FP32 V2Pro/V2ProPlus decoder; conversion does not establish audio-quality acceptance",
         "licenses": {"official_source": "MIT; see GPT-SoVITS-LICENSE",
                      "model_weights": "User-provided; redistribution rights not established by source code license"},
     }

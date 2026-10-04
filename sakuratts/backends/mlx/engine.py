@@ -1,8 +1,8 @@
-"""Experimental native V2Pro runtime for Apple silicon.
+"""Experimental native V2Pro/V2ProPlus runtime for Apple silicon.
 
 Use the numerically screened CPU FP64 GPT prefill and CPU acoustic encoder.
 Autoregressive decode, acoustic flow and waveform decode execute on Metal in
-FP32. This adapter does not add FP16 or V2ProPlus acoustic support.
+FP32.
 """
 
 from importlib import import_module
@@ -81,11 +81,12 @@ class MLXEngine(InferenceRuntime):
                     failure.add_note(f"MLX allocator cleanup failed: {cleanup_error!r}")
         report["precision"] = (
             "GPT CPU FP64 prefill, Metal FP32 decode; acoustic CPU FP32 encoder, "
-            "Metal FP32 flow and decoder; experimental native V2Pro runtime")
+            "Metal FP32 flow and decoder; experimental native MLX runtime")
         return pcm, report
 
     def _execution_report(self):
         return {"backend": self.name, "experimental_backend": True,
+                "model_family": self.manifests["sovits"]["config"]["model"]["version"],
                 "gpt_device": "metal", "gpt_prefill_device": "cpu",
                 "gpt_prefill_precision": "fp64", "acoustic_device": "metal",
                 "acoustic_encoder_device": "cpu", "acoustic_encoder_softmax": "fp32",

@@ -177,7 +177,7 @@ Windows CUDA 的 `Engine` / `NVIDIAEngine` 及共用该链路的 CLI、HTTP 入�
 
 切换模型先释放旧计算资源，再加载候选，避免两套权重同时驻留。候选加载失败时先回收候选，再重新加载旧模型，保留原参考选择并返回原切换错误；旧模型也无法恢复时明确报告未加载，不能继续宣称就绪。
 
-`MLXSoVITS.load(..., reference=prepared_reference)` 可显式绑定一个 V2Pro 参考：先按原 FP32 运算准备五项声学投影，再加载不含这 14 个条件权重的实例。绑定保存独立的 `ge/ge512` 快照；条件改变时需新建实例，防止复用错误的缓存投影。来源标签和参考转写不参与声学缓存匹配。省略 `reference` 继续加载完整权重；WeightNorm 折叠与 softmax 精度仍是独立选项。
+`MLXSoVITS.load(..., reference=prepared_reference)` 可显式绑定与声学模型家族相同的 V2Pro / V2ProPlus 参考：先按原 FP32 运算准备五项声学投影，再加载不含这 14 个条件权重的实例。绑定保存独立的 `ge/ge512` 快照，维度须匹配模型输入；条件改变时需新建实例，防止复用错误的缓存投影。来源标签和参考转写不参与声学缓存匹配。省略 `reference` 继续加载完整权重；WeightNorm 折叠与 softmax 精度仍是独立选项。
 
 非流式 Python 可分两阶段调用：`generate_prepared_semantic` 返回包含目标音素、参考条件和随机数状态的 CPU 数据，随后由 `synthesize_acoustic` 生成音频。阶段结果不持有 GPT 模型、KV 或回调，调用方可在两个阶段之间卸载 GPT，再加载 SoVITS。声学阶段直接使用请求中的参考，检查实际模型家族与输入形状；来源元数据的变化不会阻止合成。`synthesize_prepared` 组合入口继续可用。
 

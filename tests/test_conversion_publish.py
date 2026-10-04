@@ -20,7 +20,7 @@ class ConversionPublishTests(unittest.TestCase):
     def run_conversion(self, command, **_kwargs):
         output = Path(command[command.index("--output") + 1])
         script = Path(command[2]).name
-        if script == "prepare_windows_resources.py":
+        if script == "prepare_resources.py":
             (output / "frontend").mkdir(parents=True)
             (output / "frontend/manifest.json").write_text('{"japanese_g2p":{"implementation":"pyopenjtalk-classic"}}')
             if "--frontend-only" not in command:
@@ -102,8 +102,8 @@ class ConversionPublishTests(unittest.TestCase):
             root = Path(temporary).resolve()
             options = self.inputs(root)
             with patch("sakuratts.prepare.converter.run_conversion", side_effect=self.run_conversion), \
-                 patch("sakuratts.backends.mlx.diagnostics.check_packages", side_effect=ValueError("Unsupported V2ProPlus")), \
-                 self.assertRaisesRegex(ValueError, "V2ProPlus"):
+                 patch("sakuratts.backends.mlx.diagnostics.check_packages", side_effect=ValueError("Unsupported acoustic format")), \
+                 self.assertRaisesRegex(ValueError, "acoustic format"):
                 convert(**options, backend="mlx")
             self.assertFalse(options["output"].exists())
             self.assertTrue(options["sovits"].is_file())

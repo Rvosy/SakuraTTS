@@ -8,7 +8,7 @@
 
 | 维度 | 当前差距与验收要求 |
 | --- | --- |
-| 模型与资源 | Windows 公共转换和推理集中在 V2ProPlus，MLX 为原生 V2Pro；V1、V2、V3、V4 及其他组合仍须逐一完成权重识别、加载、转换、参考编码和音频对照 |
+| 模型与资源 | 公共转换支持 V2Pro / V2ProPlus，MLX 使用原生权重，Windows 后端使用 ONNX 声学资源；V1、V2、V3、V4 及其他组合仍须逐一完成权重识别、加载、转换、参考编码和音频对照 |
 | 语言 | 日文、英文及日英混合已接入；中文组件尚未贯通公共入口，粤语、韩语及其混合模式待补齐；同时验证目标文本与参考转写 |
 | 推理参数 | 多参考、无转写、语速、真正的批量/并行、语义 Token 流式 2/3 与超采样仍有缺口；Top-p 的 HTTP 字段与采样函数已存在，但生成循环仍要求 `top_p=1`，不能标成已贯通 |
 | 配置 | 当前读取部分上游 YAML 字段；上游 `is_half`、模型版本分支、设备切换与全部资源字段尚未完全映射；不能用 SakuraTTS 的独立 profile 宣称上游配置已兼容 |
@@ -23,7 +23,7 @@
 
 | 项目 | 公共入口的范围 |
 | --- | --- |
-| 设备与模型 | Windows CUDA、CPU、DirectML，V2ProPlus；CPU 的 GPT 与声学均在 CPU，DirectML 的 GPT Transformer 与声学均使用 GPU。Apple MLX 提供实验性原生 V2Pro 适配器，支持原始权重转换与新参考准备 |
+| 设备与模型 | Windows CUDA、CPU、DirectML，V2ProPlus；CPU 的 GPT 与声学均在 CPU，DirectML 的 GPT Transformer 与声学均使用 GPU。Apple MLX 提供实验性原生 V2Pro / V2ProPlus 适配器，支持原始权重转换与新参考准备 |
 | 语言 | `ja`、`all_ja`、`en`、`auto`；英文段需要[英文依赖与资源包](../english-frontend.md)，`auto` 检测到其他语言时明确报错 |
 | HTTP | CPU / CUDA / DirectML / MLX 共用 GPT-SoVITS 固定版本 API V2；单活动请求，完整音频及按句流式 |
 | 精度 | CPU 默认选择 INT8 GPT + FP32 声学；DirectML 默认选择 FP16，KV 容量 1280。CUDA / MLX 保持原有档位，资源与验证要求见[推理档位](../inference-profiles.md) |
@@ -44,7 +44,7 @@
 | CPU / AMD 准备与恢复 | [原始权重到生成及切换恢复](../../research/notes/backend-preparation-recovery-20260927.md)：CPU ORT 1.30.0、DirectML ORT 1.24.4；公开转换自动补齐资源，缺少 GPT sidecar 的切换失败后旧模型恢复，PCM 一致 | AMD 独显、多卡、真机显存不足和设备丢失；CPU / AMD 仍分别发布模型目录，未制作对应整合包 |
 | CPU / AMD 候选历史 | [独立精度与容量实验](../../research/notes/cpu-amd-precision-listening-20260927.md)、[首轮设备实测](../../research/notes/cpu-directml-780m-20260927.md)：保留未选候选、实际 GPU 算子、误差与 HTTP 睡醒 | 默认预设保持当前配置，显式选项可覆盖；降精度可能改变采样、语速与完整性 |
 | CPU GPT / AMD 混合设备历史 | [完整请求对照](../../research/notes/cpu-amd-performance-20260927.md)、[GPT 线程与数值](../../research/notes/cpu-gpt-ort-20260927.md)、[声学精度筛查](../../research/notes/directml-mixed-vocoder-780m-20260927.md) | 严格 FP32 波形等价与音质是不同验收项；历史设备组合不能代替当前独立 GPU 路径 |
-| Apple MLX 适配器与完整包 | [M4 原始权重、HTTP 与生命周期验收](../../research/notes/macos-portable-20261004.md)；[公共入口测试](../../tests/test_mlx_runtime.py)覆盖装配、取消、切换失败恢复、错峰与精度拒绝 | macOS 14 / 15、其他 Apple 芯片、长期运行与人工听音；FP16、V2ProPlus 尚未实现 |
+| Apple MLX 适配器与完整包 | [M4 V2Pro 完整包验收](../../research/notes/macos-portable-20261004.md)、[V2ProPlus 官方声学对照与生命周期验收](../../research/notes/mlx-v2proplus-20261004.md)；[公共入口测试](../../tests/test_mlx_runtime.py)覆盖装配、取消、切换失败恢复、错峰与精度拒绝 | macOS 14 / 15、其他 Apple 芯片、长期运行与人工听音；FP16 尚未实现；Plus 定制声线和完整官方 TTS 音频对照尚未验收 |
 | Windows / Linux 跨平台回归 | [2026-10-04 检查记录](../../research/notes/cross-platform-portability-20261004.md)：Windows 10 x64 与 Linux x86_64 运行依赖、CPU ONNX 运算和产品测试；Windows Unicode 启动与包组件检查 | Linux 完整模型、原始权重准备与整合包；当前 Windows 包的完整模型、新参考与更多设备；小图运算不代表语音验收 |
 | FP16 与显存策略 | [低显存对照](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/low-vram-20260921.md)、[声学 Session 错峰](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/acoustic-session-staging-20260921.md) | FP16 对官方 FP32 的严格波形容差仍有失败，长句完整性和听感未完成验收 |
 | HTTP 字段与调度 | [服务测试](../../tests/test_server.py)覆盖音频响应、错误、按句流式和分桶编排 | 分桶变更后的 CUDA 音频复验、实际客户端播放与取消 |

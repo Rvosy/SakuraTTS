@@ -1,7 +1,7 @@
-"""Prepared V2Pro FP32 acoustic decode composed from independent MLX modules.
+"""Prepared V2Pro/V2ProPlus FP32 acoustic decode using MLX modules.
 
 The caller supplies checkpoint-bound reference conditions and explicit noise.
-Reference preparation and text processing are outside this research runtime.
+Reference preparation and text processing are separate from acoustic execution.
 Graph order follows the pinned GPT-SoVITS decode (MIT; see bundled license).
 """
 
@@ -23,7 +23,7 @@ def _prepare_reference_projections(source, ge):
     names = {name for name in source.manifest["tensor_sources"]
              if any(name.startswith(prefix + ".") for prefix in prefixes)}
     if len(names) != 14:
-        raise ValueError("Expected the fourteen V2Pro acoustic condition weights")
+        raise ValueError("Expected the fourteen acoustic condition weights")
     weights = {name: mx.array(array) for name, array in source.tensors(names=names)}
     mx.eval(*weights.values())
     flow = MLXSoVITSFlow(source.manifest, {name: value for name, value in weights.items()

@@ -44,7 +44,7 @@ class CPUConversionTests(unittest.TestCase):
             return
         output = Path(command[command.index("--output") + 1])
         source = {"official_commit": "test-source", "checkpoint_sha256": "test-checkpoint"}
-        if script == "prepare_windows_resources.py":
+        if script == "prepare_resources.py":
             output = output / "frontend"
             output.mkdir(parents=True)
             files = {}

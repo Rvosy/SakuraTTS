@@ -7,6 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+import numpy as np
+
 from sakuratts.runtime.diagnostics import check_windows_packages
 from sakuratts.module.reference_condition import sha256_file
 from test_nvidia_package_startup import fixture
@@ -64,6 +66,42 @@ class DiagnosticsCompositionTests(unittest.TestCase):
 
     def test_legacy_shared_interpreter_is_checked_once(self):
         self.check()
+
+
+class MLXDiagnosticsTests(unittest.TestCase):
+    def test_native_diagnostics_follow_acoustic_family_and_reference_compatibility(self):
+        from sakuratts.backends.mlx.diagnostics import check_packages
+        from sakuratts.module.reference_condition import FORMAT
+
+        for family in ("v2Pro", "v2ProPlus"):
+            with self.subTest(family=family), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                config_path, _, _ = fixture(root)
+                (root / "python.exe").touch()
+                gpt = root / "gpt"
+                (gpt / "weights.npz").touch()
+                (gpt / "manifest.json").write_text(json.dumps({
+                    "format": "sakuratts-gpt-fp32-v1", "dtype": "float32",
+                    "architecture": "gpt-sovits-ar-postnorm-relu", "weights": {"file": "weights.npz"}}))
+                acoustic = root / "sovits"
+                np.savez(acoustic / "weights.npz", weight=np.zeros(1, np.float32))
+                (acoustic / "manifest.json").write_text(json.dumps({
+                    "format": "sakuratts-sovits-decode-fp32-v1", "dtype": "float32",
+                    "config": {"model": {"version": family}}, "weights": {"file": "weights.npz"}}))
+                reference = root / "reference"
+                np.savez(reference / "arrays.npz", reference_phones=np.array([1], np.int64),
+                    prompt_semantic=np.array([2], np.int64), reference_bert=np.zeros((1024, 1), np.float32),
+                    ge=np.zeros((1, 1024, 1), np.float32), ge512=np.zeros((1, 512, 1), np.float32))
+                manifest = {"format": FORMAT, "model_family": family, "archive": {"file": "arrays.npz"}}
+                (reference / "manifest.json").write_text(json.dumps(manifest))
+                with patch("sakuratts.backends.mlx.diagnostics.check_worker_imports", return_value={}):
+                    result = check_packages(config_path)
+                self.assertEqual(result["status"], "passed")
+                self.assertEqual(result["model_family"], family)
+                manifest["model_family"] = "v2ProPlus" if family == "v2Pro" else "v2Pro"
+                (reference / "manifest.json").write_text(json.dumps(manifest))
+                with self.assertRaisesRegex(ValueError, "family must match"):
+                    check_packages(config_path)
 
 
 if __name__ == "__main__":

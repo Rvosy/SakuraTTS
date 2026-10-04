@@ -54,7 +54,7 @@ python scripts/build_portable.py --recipe packaging/recipes/macos-mlx-ja.toml \
 
 ```sh
 python scripts/verify_portable_first_use.py --bundle dist/SakuraTTS-macOS-AppleSilicon \
-  --backend mlx --gpt LOCAL_V2PRO_CKPT --sovits LOCAL_V2PRO_PTH \
+  --backend mlx --gpt LOCAL_GPT_CKPT --sovits LOCAL_SOVITS_PTH \
   --reference LOCAL_REFERENCE_AUDIO --prompt-text '参考音声です。' \
   --output outputs/macos-first-use
 ```
@@ -68,4 +68,4 @@ python scripts/archive_portable.py --bundle dist/SakuraTTS-macOS-AppleSilicon \
   --format tar.gz --output dist/macos-release
 ```
 
-压缩仅包含发行清单的文件，先核对输入哈希，压缩后逐文件核对内容。测试生成的模型缓存、日志和音频不会进入归档。产物包含压缩包、SHA256 和压缩报告。实际构建、验收与未验证范围见 [2026-10-04 记录](../research/notes/macos-portable-20261004.md)。
+压缩仅包含发行清单的文件，先核对输入哈希，压缩后逐文件核对内容。测试生成的模型缓存、日志和音频不会进入归档。产物包含压缩包、SHA256 和压缩报告。实际构建、验收与未验证范围分别见 [V2Pro 记录](../research/notes/macos-portable-20261004.md)和 [V2ProPlus 记录](../research/notes/mlx-v2proplus-20261004.md)。

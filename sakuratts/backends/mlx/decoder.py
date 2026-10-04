@@ -1,4 +1,4 @@
-"""MLX V2Pro waveform generator with optional load-time FP32 weight folding.
+"""MLX V2Pro/V2ProPlus waveform generator with optional FP32 weight folding.
 
 Follows GPT-SoVITS 48b1a016 Generator and ResBlock1 (MIT, Copyright 2024
 RVC-Boss; see docs/third-party/GPT-SoVITS-LICENSE.txt). Runtime dependencies

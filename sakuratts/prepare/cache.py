@@ -37,7 +37,7 @@ def prepare_initial_model(settings, experimental=None):
     else:
         identity["preparation"] = sha256_file(portable_root / "runtime/preparation/preparation-manifest.json")
     identity["converter"] = sha256_file(Path(__file__).with_name("converter.py"))
-    for script in ("convert_gpt.py", acoustic_converter(backend), "prepare_windows_resources.py"):
+    for script in ("convert_gpt.py", acoustic_converter(backend), "prepare_resources.py"):
         identity[script] = sha256_file(Path(__file__).parent / script)
     key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
     output = Path(settings.get("cache_dir", ".cache/sakuratts")) / "models" / key

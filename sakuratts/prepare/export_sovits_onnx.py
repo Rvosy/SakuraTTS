@@ -25,6 +25,14 @@ from torch import nn
 from torch.nn import functional as F
 
 
+# Exporters are also executed directly by the isolated preparation interpreter.
+if __package__:
+    from .sovits_checkpoint import load_checkpoint
+else:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from sovits_checkpoint import load_checkpoint
+
+
 sys.dont_write_bytecode = True
 CODEBOOK = "quantizer.vq.layers.0._codebook.embed"
 STAGES = ("waveform", "quantized", "ssl_encoded", "text_encoded", "mrte",
@@ -45,16 +53,6 @@ def sha256(path):
     return digest.hexdigest()
 
 
-def plain(value):
-    if type(value).__name__ == "HParams":
-        return plain(vars(value))
-    if isinstance(value, dict):
-        return {key: plain(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [plain(item) for item in value]
-    return value
-
-
 def source_revision(source):
     """A copied source folder must not inherit an unrelated parent Git revision."""
     try:
@@ -68,35 +66,9 @@ def source_revision(source):
 
 
 def load_official(checkpoint, source):
-    """Construct the actual architecture and require every inference tensor."""
-    sys.dont_write_bytecode = True
-    source = Path(source).resolve()
-    sys.path[:0] = [str(source / "GPT_SoVITS"), str(source)]
-    from process_ckpt import get_sovits_version_from_path_fast, load_sovits_new
-    from module.models import SynthesizerTrn
-
-    _, family, lora = get_sovits_version_from_path_fast(str(checkpoint))
-    if family not in ("v2Pro", "v2ProPlus") or lora:
-        raise ValueError("Only non-LoRA V2Pro and V2ProPlus checkpoints are supported")
-    original = load_sovits_new(str(checkpoint))
-    config = plain(original["config"])
-    if config["model"].get("version", family) != family:
-        raise ValueError("Checkpoint header and model configuration disagree")
-    model_config = dict(config["model"], version=family, semantic_frame_rate="25hz")
-    model = SynthesizerTrn(config["data"]["filter_length"] // 2 + 1,
-                           config["train"]["segment_size"] // config["data"]["hop_length"],
-                           n_speakers=config["data"]["n_speakers"], **model_config).float().eval()
-    incompatible = model.load_state_dict(original["weight"], strict=False)
-    if incompatible.unexpected_keys or any(not k.startswith("enc_q.") for k in incompatible.missing_keys):
-        raise ValueError(f"Unsupported checkpoint schema: {incompatible}")
-    if len(model.quantizer.vq.layers) != 1 or not isinstance(model.quantizer.vq.layers[0].project_out, nn.Identity):
-        raise ValueError("Require a single codebook with identity output projection")
-    for name, tensor in original["weight"].items():
-        if not torch.isfinite(tensor).all():
-            raise ValueError(f"Non-finite checkpoint tensor: {name}")
-    if model.gin_channels != 1024 or model.ge_to512.out_features != 512:
-        raise ValueError("Prepared reference schema requires ge=1024 and ge512=512")
-    return model, config, model_config, list(incompatible.missing_keys)
+    """Keep the validation harness entry point on the shared checkpoint loader."""
+    loaded = load_checkpoint(checkpoint, source)
+    return loaded.model, loaded.config, loaded.model_config, loaded.missing_keys
 
 
 def dynamic_relative_embeddings(self, embeddings, length):
@@ -270,6 +242,7 @@ def export(checkpoint, source, output, *, validation_cases=((1, 1), (2, 2), (7, 
                    "checkpoint_config": source_config, "constructor_missing_keys": missing},
         "conversion": {"torch": torch.__version__, "onnx": onnx.__version__, "onnxruntime": ort.__version__,
                        "opset": 17, "script_sha256": sha256(__file__),
+                       "checkpoint_loader_sha256": sha256(Path(__file__).with_name("sovits_checkpoint.py")),
                        "relative_embedding_dynamic_rewrite": patched,
                        "excluded_modules": ["enc_q", "ref_enc", "sv_emb", "prelu", "ge_to512", "ssl_proj"],
                        "weight_norm": "FP32 constant folding during export; no precision conversion",

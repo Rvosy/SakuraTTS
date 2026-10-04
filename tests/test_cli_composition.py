@@ -16,6 +16,19 @@ from sakuratts.cli import main
 
 
 class CliCompositionTests(unittest.TestCase):
+    def test_convert_routes_mlx_checkpoints_to_converter(self):
+        model = SimpleNamespace(path=Path("converted/model.json"), info=lambda: {"backend": "mlx"})
+        output = io.StringIO()
+        with patch("sakuratts.prepare.converter.convert", return_value=model) as convert, \
+                contextlib.redirect_stdout(output):
+            result = main(["convert", "--gpt", "voice.ckpt", "--sovits", "voice.pth",
+                           "--official-source", "official", "--output", "converted", "--backend", "mlx"])
+        self.assertEqual(result, 0)
+        self.assertEqual(convert.call_args.kwargs["backend"], "mlx")
+        self.assertEqual(convert.call_args.kwargs["gpt"], Path("voice.ckpt"))
+        self.assertEqual(convert.call_args.kwargs["sovits"], Path("voice.pth"))
+        self.assertEqual(json.loads(output.getvalue())["model"], str(model.path))
+
     def test_serve_preserves_the_server_import_failure(self):
         original_import = builtins.__import__
         failure = "cannot import name 'MissingRuntime' from 'sakuratts.engine'"

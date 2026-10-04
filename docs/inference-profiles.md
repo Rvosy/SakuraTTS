@@ -10,7 +10,7 @@
 | `low-memory` | 不提供 | 不提供 | FP16，声学 Session 错峰 | FP32，释放 GPT 请求状态 |
 | `minimum-memory` | 不提供 | 不提供 | FP16，GPT / 声学及声学 Session 错峰 | FP32，GPT / 声学错峰 |
 
-预设的具体选项由 [profiles.py](../sakuratts/profiles.py) 定义。CPU / DirectML 的详细参数见[设备指南](cpu-amd.md)。MLX 使用原生 V2Pro 包，公共转换可从原始权重生成；声学 encoder 在 CPU 执行，flow / decoder 在 Metal 执行。Apple 真机与整合包验收见 [Apple 指南](apple.md)。
+预设的具体选项由 [profiles.py](../sakuratts/profiles.py) 定义。CPU / DirectML 的详细参数见[设备指南](cpu-amd.md)。MLX 使用原生 V2Pro / V2ProPlus 包，公共转换可从原始权重生成；声学 encoder 在 CPU 执行，flow / decoder 在 Metal 执行。Apple 真机与整合包验收见 [Apple 指南](apple.md)。
 
 ```powershell
 sakuratts tts MODEL_AMD --backend directml --profile fp16 --text "こんにちは。" --output outputs/hello.wav

@@ -14,6 +14,8 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
+from sakuratts.TTS_infer_pack.config import read_inference_configuration
+
 SPEC = importlib.util.spec_from_file_location("portable_builder", Path(__file__).resolve().parents[1] / "scripts/build_portable.py")
 builder = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(builder)
@@ -121,9 +123,13 @@ class PortableBuilderTests(unittest.TestCase):
             self.assertTrue((args.output / "runtime/main/python312._pth").exists())
             self.assertEqual(json.loads((args.output / "runtime/portable.json").read_text())["workers"], {})
             for backend in ("cpu", "directml"):
-                config = (args.output / ("configs/tts_infer." + backend + ".example.yaml")).read_text()
-                self.assertIn("backend: " + backend, config)
-                self.assertNotIn("cuda", config)
+                config_path = args.output / ("configs/tts_infer." + backend + ".example.yaml")
+                model, settings = read_inference_configuration(tts_config=config_path)
+                self.assertIsNone(model)
+                self.assertEqual(settings["backend"], backend)
+                self.assertEqual(settings["gpt_checkpoint"], "models/your-gpt.ckpt")
+                self.assertEqual(settings["sovits_checkpoint"], "models/your-sovits.pth")
+                self.assertNotIn("version:", config_path.read_text())
 
     def test_library_assembly_records_workers_and_omits_http_launcher(self):
         root = Path(__file__).resolve().parents[1]

@@ -100,6 +100,40 @@ class InitialConversionCacheTests(unittest.TestCase):
                                  ["cuda", "cpu", "directml", "directml"])
                 self.assertEqual(convert.call_args.kwargs["experimental"], {"capacity": 1024})
 
+    def test_shared_checkpoint_loader_updates_invalidate_model_and_weight_caches(self):
+        from sakuratts.prepare.cache import prepare_checkpoint, prepare_initial_model
+
+        for backend in ("cuda", "mlx"):
+            with self.subTest(backend=backend), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                self.fixture(root)
+                settings = dict(self.inference(root).settings, backend=backend)
+                loader_revision = "initial-loader"
+
+                def digest(path):
+                    return loader_revision if Path(path).name == "sovits_checkpoint.py" else sha256_file(path)
+
+                def prepare_weight(_kind, _path, output, **_kwargs):
+                    output.mkdir(parents=True)
+
+                def cached_paths():
+                    return (prepare_initial_model(settings),
+                            prepare_checkpoint("sovits", root / "sovits.pth", "same-weights", settings,
+                                               backend=backend))
+
+                with patch.dict(os.environ, SAKURATTS_BUNDLE_ROOT=str(root)), \
+                        patch("sakuratts.module.reference_condition.sha256_file", side_effect=digest), \
+                        patch("sakuratts.prepare.converter.convert", side_effect=lambda **kwargs: kwargs["output"].mkdir(parents=True)) as convert, \
+                        patch("sakuratts.prepare.converter.convert_checkpoint", side_effect=prepare_weight) as convert_weight, \
+                        patch("sakuratts.engine.Model.load", side_effect=lambda path: path):
+                    original = cached_paths()
+                    self.assertEqual(cached_paths(), original)
+                    self.assertEqual((convert.call_count, convert_weight.call_count), (1, 1))
+                    loader_revision = "updated-loader"
+                    updated = cached_paths()
+                    self.assertTrue(all(new != old for new, old in zip(updated, original)))
+                    self.assertEqual((convert.call_count, convert_weight.call_count), (2, 2))
+
     def test_weight_cache_prepares_for_model_backend_and_explicit_override(self):
         from sakuratts.model import Model
         with tempfile.TemporaryDirectory() as temporary:

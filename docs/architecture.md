@@ -33,6 +33,8 @@ docs/              使用说明、Spec 与 ADR
 | [model.py](../sakuratts/model.py) | 模型描述、资源路径和参考名称关系 |
 | [profiles.py](../sakuratts/profiles.py) | 后端执行预设、显式选项合并与精度包匹配 |
 | [prepare/converter.py](../sakuratts/prepare/converter.py)、[cache.py](../sakuratts/prepare/cache.py) | 模型转换、转换缓存身份与产物发布 |
+| [prepare/sovits_checkpoint.py](../sakuratts/prepare/sovits_checkpoint.py) | MLX 与 ONNX 导出共用的官方声学权重加载、模型构造及张量校验 |
+| [prepare/prepare_resources.py](../sakuratts/prepare/prepare_resources.py) | 各后端共用的日文前端资源准备与参考音频编码 |
 | [TTS_infer_pack/reference.py](../sakuratts/TTS_infer_pack/reference.py) | 请求参考解析、音频条件缓存与转写特征 |
 | [text/](../sakuratts/text) | 语言模式、语言分段、规范化、音素和文本特征组件 |
 | [AR/](../sakuratts/AR) | 语义生成循环、采样、EOS 与长度停止规则 |
@@ -49,6 +51,8 @@ docs/              使用说明、Spec 与 ADR
 
 `backends.require_backend` 检查已实现的后端，`create_runtime` 导入对应实现。各后端解释自己的执行选项并校验实际使用的资源，`TTS_infer_pack.runtime.InferenceRuntime` 共享模型生命周期和合成流程。公共 Engine 负责请求互斥、输出与关闭。`sakuratts capabilities` 查询源码中实现的能力，依赖与设备检查使用 `sakuratts doctor`。
 
+模型家族由声学 checkpoint 和转换产物描述，设备后端负责执行方式。V2Pro 与 V2ProPlus 共用官方模型加载入口；MLX 和 ONNX 转换器分别输出各自需要的权重包和计算图。MLX 按产物配置读取层数、通道和卷积参数，参考条件必须匹配声学模型家族。整合包示例只选择后端，不根据操作系统指定模型家族。具体支持范围及验证结果由兼容矩阵维护。
+
 `text.profiles` 定义已实现的语言模式，`TextPreprocessor.TextFrontend` 负责共享请求准备，语言处理器生成音素和特征，`TTS_infer_pack.frontend.FrontendRuntime` 装配资源并管理前端进程。`text.LangSegmenter` 只负责语言分段。日文沿用原版零 BERT 特征；中文研究代码尚未接入公共前端。
 
 `SpeechRequest` 负责 HTTP 字段、默认值及请求能力校验。通过检查后，HTTP 调用同一个 `Inference` 和 Engine。参考缓存复用音频条件，转写与语言特征按请求生成。
@@ -57,7 +61,7 @@ docs/              使用说明、Spec 与 ADR
 
 CUDA 声学和经典日文前端使用私有工作进程。`acoustic_python`、`frontend_python` 可以共享解释器；旧配置省略后者时沿用前者。工作进程通过 `runtime/worker.py` 绑定 SakuraTTS 包，保持主环境与私有 Python 的 ABI 隔离。CPU / DirectML 的 GPT 与声学 Session 在推理主解释器中运行；CPU 使用 ORT INT8 GPT 与 FP32 声学，DirectML 使用 GPU FP16 GPT 与全图 FP16 声学。精度、KV 所在设备和验证边界见 [CPU 与 AMD 推理](cpu-amd.md)。MLX 的 CPU / Metal 分工与模型限制见 [Apple 指南](apple.md)。
 
-完整整合包另带 CPU 准备环境，按需转换权重或编码参考，完成后退出。执行适配器从 `runtime/portable.json` 绑定安装位置；模型文件保存资源描述。发行组合与依赖来源见[整合包](portable-bundle.md)。
+完整整合包另带 CPU 准备环境，按需转换权重或编码参考，完成后退出。前端与参考准备使用同一套 `prepare_resources.py`，由安装配置选择准备解释器。执行适配器从 `runtime/portable.json` 绑定安装位置；模型文件保存资源描述。发行组合与依赖来源见[整合包](portable-bundle.md)。
 
 HTTP 默认 `direct` 模式在专用线程中创建、调用、切换和关闭 Inference。显式选择 `managed` 后，`ManagedRuntime` 在事件循环中管理唤醒与休眠，`ProcessInference` 经有界 IPC 调用独立进程内的同一个 Inference。`process_tree.py` 回收自有进程树，Windows 使用 Job Object。两种模式的适用场景见[后台运行](background-runtime.md)，所有权与取消要求见[推理契约](specs/inference-contract.md)。
 
@@ -67,4 +71,4 @@ HTTP 默认 `direct` 模式在专用线程中创建、调用、切换和关闭 I
 
 公开过的 `Engine`、`Model`、`Audio`、`sakuratts.converter`、`sakuratts.nvidia` 与 CLI 保留调用方式。`api.py` 仍是现有 API V2 启动入口，旧版协议的补齐情况见[兼容矩阵](specs/compatibility-matrix.md)。内部模块的迁移对应关系见[开发指南](development.md)。
 
-上游职责映射与目录取舍见 [ADR 0007](adr/0007-upstream-layout.md)；模型、后端、语言与发行组合的边界见 [ADR 0004](adr/0004-composable-components.md)。扩展顺序见[路线图](roadmap.md)。
+上游职责映射与目录取舍见 [ADR 0007](adr/0007-upstream-layout.md)；模型、后端、语言与发行组合的边界见 [ADR 0004](adr/0004-composable-components.md)。V2ProPlus 适配涉及的重复实现、平台耦合和同类项目对照保存在[2026-10-04 架构核查记录](../research/notes/mlx-v2proplus-architecture-20261004.md)。扩展顺序见[路线图](roadmap.md)。

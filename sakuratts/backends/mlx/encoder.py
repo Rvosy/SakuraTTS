@@ -1,4 +1,4 @@
-"""V2Pro codebook and acoustic encoder candidate using MLX only.
+"""V2Pro/V2ProPlus codebook and acoustic encoder using MLX only.
 
 Graph semantics follow GPT-SoVITS commit 48b1a016 (MIT, Copyright 2024
 RVC-Boss; see docs/third-party/GPT-SoVITS-LICENSE.txt), specifically its
@@ -153,7 +153,7 @@ class MLXSoVITSEncoder:
         if not np.issubdtype(codes.dtype, np.integer) or codes.min() < 0 or codes.max() >= self.config["semantic_vocabulary"]:
             raise ValueError("Semantic codes are outside the codebook")
         if not np.issubdtype(phones.dtype, np.integer) or phones.min() < 0 or phones.max() >= self.config["phoneme_vocabulary"]:
-            raise ValueError("Phones are outside the V2Pro vocabulary")
+            raise ValueError("Phones are outside the model vocabulary")
         stages = {}
 
         def save(name, value):

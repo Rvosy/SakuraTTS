@@ -56,7 +56,7 @@ def doctor(*, japanese=False, cuda=False, nvidia=False, config=None, backend=Non
     descriptions = {"cuda": "CuPy CUDA GPT + ONNX Runtime CUDA SoVITS",
                     "cpu": "ONNX Runtime CPU INT8 GPT + CPU FP32 SoVITS",
                     "directml": "DirectML FP16 GPT with GPU KV cache + full FP16 acoustic graph",
-                    "mlx": "Experimental native V2Pro: CPU FP64 GPT prefill, Metal FP32 decode; CPU FP32 acoustic encoder, Metal FP32 flow/decoder"}
+                    "mlx": "Experimental native V2Pro/V2ProPlus: CPU FP64 GPT prefill, Metal FP32 decode; CPU FP32 acoustic encoder, Metal FP32 flow/decoder"}
     report = {
         "python": {"version": platform.python_version(), "executable": sys.executable},
         "platform": {"system": platform.system(), "machine": platform.machine()},
@@ -118,7 +118,7 @@ def doctor(*, japanese=False, cuda=False, nvidia=False, config=None, backend=Non
         report["synthesis"]["platform_supported"] = (
             platform.system() == "Darwin" and platform.machine().lower() in ("arm64", "aarch64"))
         report["synthesis"]["limitations"] = (
-            "Native V2Pro and FP32 only; FP16 and V2ProPlus are not supported")
+            "Native V2Pro/V2ProPlus with FP32; FP16 is not supported")
         try:
             from sakuratts.backends.mlx.engine import _load_mlx
             _load_mlx()
@@ -303,7 +303,8 @@ def main(argv=None):
     conversion.add_argument("--config", type=Path, help="Package an existing prepared runtime.json")
     for name in ("gpt", "sovits", "reference", "official-source", "python", "acoustic-python", "frontend-python", "language-model"):
         conversion.add_argument("--" + name, type=Path)
-    conversion.add_argument("--backend", choices=("cpu", "directml", "cuda"),
+    from .backends import SUPPORTED_BACKENDS
+    conversion.add_argument("--backend", choices=SUPPORTED_BACKENDS,
                             help="Prepare execution resources for this backend; defaults to cuda")
     conversion.add_argument("--experimental", type=Path,
                             help="JSON runtime options; DirectML preparation uses capacity and device_id")
@@ -317,7 +318,7 @@ def main(argv=None):
         from .text.profiles import SUPPORTED_LANGUAGES
         print(json.dumps({"backends": available_backends(), "languages": list(SUPPORTED_LANGUAGES),
             "profiles": available_profiles(),
-            "experimental_backends": {"mlx": "Apple silicon; native V2Pro FP32 with conversion and HTTP; FP16 and V2ProPlus are not implemented"},
+            "experimental_backends": {"mlx": "Apple silicon; native V2Pro/V2ProPlus FP32 with conversion and HTTP; FP16 is not implemented"},
             "language_modes": list(SUPPORTED_LANGUAGE_MODES),
             "scope": "Implemented components; driver availability and model compatibility are checked when loading."}))
         return 0

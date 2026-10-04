@@ -405,7 +405,7 @@ def assemble(args, plan):
         write(output / directory / ".keep", "")
     backends = plan.release.get("backends", [plan.release["backend"]])
     for backend in backends:
-        config = ("custom:\n  version: " + ("v2Pro" if apple else "v2ProPlus") + "\n  device: " + backend + "\n  is_half: false\n"
+        config = ("custom:\n  device: " + backend + "\n  is_half: false\n"
                   "  t2s_weights_path: models/your-gpt.ckpt\n  vits_weights_path: models/your-sovits.pth\n"
                   "sakuratts:\n  backend: " + backend + "\n")
         write(output / ("configs/tts_infer." + backend + ".example.yaml"), config)

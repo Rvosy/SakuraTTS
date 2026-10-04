@@ -14,6 +14,7 @@ from unittest.mock import patch
 import zipfile
 
 from test_portable_builder import builder
+from sakuratts.TTS_infer_pack.config import read_inference_configuration
 
 
 class MacPortableTests(unittest.TestCase):
@@ -94,7 +95,13 @@ class MacPortableTests(unittest.TestCase):
                     self.assertTrue((args.output / name).stat().st_mode & 0o111)
             self.assertFalse(list(args.output.rglob('pyvenv.cfg')))
             self.assertFalse(list(args.output.rglob('*._pth')))
-            self.assertIn('v2Pro\n', (args.output / 'configs/tts_infer.example.yaml').read_text())
+            config_path = args.output / 'configs/tts_infer.example.yaml'
+            model, settings = read_inference_configuration(tts_config=config_path)
+            self.assertIsNone(model)
+            self.assertEqual(settings['backend'], 'mlx')
+            self.assertEqual(settings['gpt_checkpoint'], 'models/your-gpt.ckpt')
+            self.assertEqual(settings['sovits_checkpoint'], 'models/your-sovits.pth')
+            self.assertNotIn('version:', config_path.read_text())
 
     def test_launcher_uses_unicode_bundle_and_clears_external_paths(self):
         import importlib.util

@@ -1,4 +1,4 @@
-"""Portable single-reference V2Pro conditions; NumPy only, no model loading.
+"""Portable single-reference V2Pro/V2ProPlus conditions; NumPy only.
 
 This reader supports original target text with an offline prepared reference.
 It cannot prepare a new reference from raw audio or rebuild missing conditions.
@@ -46,7 +46,7 @@ def validate_arrays(arrays):
     if arrays["reference_bert"].shape != (1024, phones.size):
         raise ValueError("Reference BERT and phone alignment mismatch")
     if arrays["ge"].shape != (1, 1024, 1) or arrays["ge512"].shape != (1, 512, 1):
-        raise ValueError("Expected the selected V2Pro ge/ge512 dimensions")
+        raise ValueError("Expected ge [1,1024,1] and ge512 [1,512,1]")
 
 
 @dataclass(frozen=True)
@@ -94,11 +94,12 @@ class BoundAcousticReference:
     def from_reference(cls, reference, model_manifest):
         if not isinstance(reference, PreparedReference):
             raise TypeError("Binding requires a PreparedReference")
-        if (reference.manifest["model_family"] != "v2Pro"
-                or model_manifest["config"]["model"]["version"] != "v2Pro"):
-            raise ValueError("Binding requires a V2Pro reference")
+        family = model_manifest["config"]["model"]["version"]
+        if family not in ("v2Pro", "v2ProPlus") or reference.manifest["model_family"] != family:
+            raise ValueError("Reference family and acoustic architecture must match (V2Pro/V2ProPlus)")
         snapshots = {}
-        for name, shape in (("ge", (1, 1024, 1)), ("ge512", (1, 512, 1))):
+        for name in ("ge", "ge512"):
+            shape = tuple(model_manifest["inputs"][name]["shape"])
             value = cls._condition(getattr(reference, name), name, shape)
             snapshots[name] = np.frombuffer(value.tobytes(order="C"), dtype=np.float32).reshape(shape)
         return cls(snapshots["ge"], snapshots["ge512"])
