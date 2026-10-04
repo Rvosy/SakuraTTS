@@ -70,6 +70,27 @@ class PortableRuntimeTests(unittest.TestCase):
                         self.assertEqual(os.environ["TEMP"], external_temp)
                         self.assertEqual(os.environ["TMP"], external_tmp)
 
+    def test_unified_cpu_bundle_configures_cuda_libraries_and_external_cache(self):
+        path = Path(__file__).resolve().parents[1] / "scripts/portable/launcher.py"
+        spec = importlib.util.spec_from_file_location("unified_launcher", path)
+        launcher = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(launcher)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve() / "bundle"
+            cache = Path(temporary).resolve() / "shared-cache"
+            (root / "runtime").mkdir(parents=True)
+            (root / "runtime/portable.json").write_text(json.dumps({"release": {
+                "backend": "cpu", "backends": ["cpu", "directml", "cuda"]}}))
+            with patch.object(launcher, "ROOT", root), patch.object(sys, "argv", ["launcher.py"]), \
+                 patch.object(sys, "executable", str(root / "runtime/main/python.exe")), \
+                 patch.dict(os.environ, {"SAKURATTS_CACHE_DIR": str(cache)}, clear=True), \
+                 patch.object(launcher.os, "chdir"):
+                launcher.configure()
+                self.assertIn(str(root / "runtime/acoustic/cuda"), os.environ["PATH"])
+                self.assertEqual(os.environ["CUPY_CACHE_DIR"], str(cache / "cupy"))
+                self.assertEqual(os.environ["TEMP"], str(cache / "tmp"))
+                self.assertFalse((root / "cache").exists())
+
     def test_in_process_bundle_drops_exporter_workers(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
@@ -106,6 +127,14 @@ class PortableRuntimeTests(unittest.TestCase):
             self.assertEqual(result["gpt_checkpoint"], "models/chosen.ckpt")
             self.assertEqual(result["sovits_checkpoint"], "D:/Models/chosen.pth")
             self.assertEqual(result["cnhubert"], "D:/Models/custom-hubert")
+
+    def test_plugin_cache_stays_outside_replaced_bundle(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve() / "version-one"
+            cache = Path(temporary).resolve() / "plugin-cache"
+            self.preparation_bundle(root)
+            with patch.dict(os.environ, SAKURATTS_BUNDLE_ROOT=str(root), SAKURATTS_CACHE_DIR=str(cache)):
+                self.assertEqual(preparation_settings({})["cache_dir"], str(cache))
 
     def test_incomplete_preparation_does_not_fall_back(self):
         with tempfile.TemporaryDirectory() as temporary:

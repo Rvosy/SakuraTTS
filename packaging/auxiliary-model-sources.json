@@ -7,7 +7,8 @@
       "bytes": 1449,
       "sha256": "c3e5060a1277e0f078cc6be9da4528a605dba6ece93018981fe2c820e5c7b103",
       "license_declaration": "MIT in GPT-SoVITS model repository card",
-      "redistribution_status": "upstream declaration recorded; weight-specific attribution review pending"
+      "original_model_license": "MIT",
+      "original_model_url": "https://huggingface.co/TencentGameMate/chinese-hubert-base/tree/fce0375452b1dd6c080ac3248d423d4d037bc831"
     },
     {
       "name": "hubert-preprocessor",
@@ -15,7 +16,8 @@
       "bytes": 212,
       "sha256": "dcd684124d06722947939d41ea6ae58dbf10968c60a11a29f23ddc602c64a29b",
       "license_declaration": "MIT in GPT-SoVITS model repository card",
-      "redistribution_status": "upstream declaration recorded; weight-specific attribution review pending"
+      "original_model_license": "MIT",
+      "original_model_url": "https://huggingface.co/TencentGameMate/chinese-hubert-base/tree/fce0375452b1dd6c080ac3248d423d4d037bc831"
     },
     {
       "name": "hubert",
@@ -23,7 +25,8 @@
       "bytes": 188811417,
       "sha256": "24164f129c66499d1346e2aa55f183250c223161ec2770c0da3d3b08cf432d3c",
       "license_declaration": "MIT in GPT-SoVITS model repository card",
-      "redistribution_status": "upstream declaration recorded; weight-specific attribution review pending"
+      "original_model_license": "MIT",
+      "original_model_url": "https://huggingface.co/TencentGameMate/chinese-hubert-base/tree/fce0375452b1dd6c080ac3248d423d4d037bc831"
     },
     {
       "name": "sv",
@@ -31,7 +34,8 @@
       "bytes": 107528697,
       "sha256": "4f5a0bf73c61eb41b174e1bb54e7ee3c83233892be8e0af1f187024e8e581a35",
       "license_declaration": "MIT in GPT-SoVITS model repository card",
-      "redistribution_status": "upstream declaration recorded; weight-specific attribution review pending"
+      "original_model_license": "Apache-2.0",
+      "original_model_url": "https://modelscope.cn/models/iic/speech_eres2netv2w24s4ep4_sv_zh-cn_16k-common"
     },
     {
       "name": "fasttext",

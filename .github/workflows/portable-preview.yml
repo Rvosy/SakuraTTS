@@ -1,0 +1,132 @@
+name: 构建并发布整合包预览
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/portable-modelscope]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sakuratts-modelscope-preview
+  cancel-in-progress: false
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: windows-x64
+            runner: windows-2022
+          - target: macos-arm64
+            runner: macos-14
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    env:
+      PYTHONUTF8: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+      RELEASE_ID: preview-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: 设置构建目录
+        shell: bash
+        run: echo "WORK=$RUNNER_TEMP/sakuratts-release" >> "$GITHUB_ENV"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: 安装构建工具
+        run: python -m pip install build==1.3.0 packaging==25.0 modelscope-hub==0.4.5
+      - name: 验证打包与发布契约
+        env:
+          PYTHONPATH: tests
+        run: python -m unittest test_portable_builder test_preparation_builder test_portable_runtime test_macos_portable test_ci_release -q
+      - name: 获取固定运行环境
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: python scripts/fetch_ci_base.py --target '${{ matrix.target }}' --directory "$WORK/base"
+      - name: 获取 FFmpeg 源码
+        shell: bash
+        run: |
+          curl --fail --location --output "$WORK/ffmpeg-7.1.2.tar.xz" https://ffmpeg.org/releases/ffmpeg-7.1.2.tar.xz
+          curl --fail --location --output "$WORK/libogg-1.3.5.tar.xz" https://downloads.xiph.org/releases/ogg/libogg-1.3.5.tar.xz
+          curl --fail --location --output "$WORK/libvorbis-1.3.7.tar.xz" https://downloads.xiph.org/releases/vorbis/libvorbis-1.3.7.tar.xz
+      - name: Windows 编译工具
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2
+        with:
+          msystem: MINGW64
+          update: false
+          install: make mingw-w64-x86_64-gcc mingw-w64-x86_64-pkgconf
+      - name: 构建 Windows 音频工具
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: bash scripts/build_ffmpeg.sh "$(cygpath -u "$WORK")/ffmpeg-7.1.2.tar.xz" "$(cygpath -u "$WORK")/ffmpeg"
+      - name: macOS 编译工具
+        if: runner.os == 'macOS'
+        run: brew install pkg-config
+      - name: 构建 macOS 音频工具
+        if: runner.os == 'macOS'
+        shell: bash
+        run: bash scripts/build_ffmpeg.sh "$WORK/ffmpeg-7.1.2.tar.xz" "$WORK/ffmpeg"
+      - name: 构建产品并装配整合包
+        shell: bash
+        run: |
+          python -m build --wheel --outdir "$WORK/wheel"
+          if [[ '${{ runner.os }}' == Windows ]]; then ffmpeg="$WORK/ffmpeg/ffmpeg.exe"; else ffmpeg="$WORK/ffmpeg/ffmpeg"; fi
+          python scripts/rebuild_portable.py --bundle "$WORK/base/bundle" --wheel "$WORK"/wheel/*.whl \
+            --ffmpeg "$ffmpeg" --ffmpeg-source "$WORK/ffmpeg-7.1.2.tar.xz" \
+            --output "$WORK/SakuraTTS-${{ matrix.target }}"
+      - name: 验证包内运行环境
+        shell: bash
+        run: python scripts/ci_portable_smoke.py --bundle "$WORK/SakuraTTS-${{ matrix.target }}" --output "$WORK/verification"
+      - name: 归档与内容检查
+        shell: bash
+        run: python scripts/archive_portable.py --bundle "$WORK/SakuraTTS-${{ matrix.target }}" --format tar.gz --output "$WORK/release"
+      - name: 上传至魔搭版本目录
+        env:
+          MODELSCOPE_TOKEN: ${{ secrets.MODELSCOPE_TOKEN }}
+        shell: bash
+        run: |
+          python scripts/publish_modelscope.py platform --directory "$WORK/release" \
+            --target '${{ matrix.target }}' --release-id "$RELEASE_ID" --commit "$GITHUB_SHA" \
+            --output "$WORK/published/${{ matrix.target }}.json"
+      - name: 保存平台发布结果
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: published-${{ matrix.target }}
+          path: ${{ env.WORK }}/published/*.json
+          if-no-files-found: error
+      - name: 保存验收日志
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: verification-${{ matrix.target }}
+          path: |
+            ${{ env.WORK }}/verification/*.json
+            ${{ env.WORK }}/verification/*.log
+            ${{ env.WORK }}/SakuraTTS-${{ matrix.target }}/logs/*.log
+            ${{ env.WORK }}/ffmpeg/ffbuild/config.log
+          if-no-files-found: ignore
+
+  publish-index:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: published-*
+          path: published
+          merge-multiple: true
+      - run: python -m pip install modelscope-hub==0.4.5
+      - name: 更新预览版入口
+        env:
+          MODELSCOPE_TOKEN: ${{ secrets.MODELSCOPE_TOKEN }}
+        run: python scripts/publish_modelscope.py index --directory published --release-id 'preview-${{ github.run_id }}-${{ github.run_attempt }}' --commit '${{ github.sha }}'

@@ -88,6 +88,17 @@ class PortableBuilderTests(unittest.TestCase):
         self.assertFalse({"onnxruntime", "onnxruntime-gpu", "cupy-cuda12x", "torch"} & names)
         self.assertEqual(recipe["workers"], {})
 
+    def test_windows_unified_dependencies_do_not_mix_ort_distributions(self):
+        root = Path(__file__).resolve().parents[1]
+        recipe = builder.read_recipe(root / "packaging/recipes/windows-x64.toml")
+        project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+        names = {builder.Requirement(value).name for value in builder.main_requirements(project, recipe)}
+        self.assertTrue({"onnxruntime-directml", "cupy-cuda12x", "pyopenjtalk-plus", "fastapi"} <= names)
+        self.assertFalse({"onnxruntime", "onnxruntime-gpu", "torch", "mlx"} & names)
+        self.assertEqual(recipe["backend"], "cpu")
+        self.assertEqual(set(recipe["backends"]), {"cpu", "directml", "cuda"})
+        self.assertIn("acoustic", recipe["workers"])
+
     def test_python312_and_redistributable_crt_are_copied_without_base_packages(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

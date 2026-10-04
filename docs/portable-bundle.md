@@ -4,9 +4,9 @@ Apple silicon 的独立运行组件、构建与验收见 [Mac 整合包指南](p
 
 整合包可以只用本地文件构建。默认发行组合包含 HTTP、CLI、日文推理及私有 Python 和所选后端的运行库；完整包另外带独立准备组件，让用户提供原始权重和新参考音频后直接调用 HTTP。PyTorch、原版准备源码和公共辅助模型放在准备组件中，按需启动 CPU 进程，完成后退出。HTTP 和准备组件可以分别省略。
 
-提供两个主要发行组合：CPU/AMD 共用 DirectML ONNX Runtime，可用配置或 `--backend cpu|directml` 切换；NVIDIA 使用独立 CUDA 组合。无需按显卡代际拆包。带准备组件的完整包可处理原始权重和新参考；精简包仅适合已有转换资源，按实际分发需求选择，不必同时发布两种大小。
+默认使用 Windows x64 统一组合，同包提供 CPU、NVIDIA CUDA 与 DirectML，通过配置或 `--backend cpu|cuda|directml` 选择。主环境使用包含 CPU provider 的 DirectML ONNX Runtime，CUDA 声学使用私有 ORT GPU worker，避免多个 ORT 分发包覆盖同一模块。无需按显卡代际拆包。带准备组件的完整包可处理原始权重和新参考；精简包仅适合已有转换资源，按实际分发需求选择，不必同时发布两种大小。
 
-解压后使用 `check-runtime.bat` 检查默认设备，再用 `start-server.bat` 启动服务。CPU/AMD 包默认检查 CPU，AMD 另运行 `sakuratts.bat check-runtime --backend directml`。无需系统 Python、Git、编译器或 CUDA Toolkit；GPU 模式仍需要系统驱动。NVIDIA 包要求 ASCII 安装路径（可含空格），CPU/AMD 包不限制中文目录，须对最终解压位置做验收。CPU 首次 INT8 转换支持安装目录和 TEMP/TMP 同时包含中文，无需手动修改系统临时目录。完整安装路径为 ASCII 时，启动器沿用包内 cache/tmp；中文安装路径保留外部 TEMP/TMP。没有模型时服务保持未加载状态，不选择默认角色。
+解压后使用 `check-runtime.bat` 检查默认设备，再用 `start-server.bat` 启动服务。统一包默认检查 CPU，DirectML 另运行 `sakuratts.bat check-runtime --backend directml`。无需系统 Python、Git、编译器或 CUDA Toolkit；GPU 模式仍需要系统驱动。CUDA 模式要求 ASCII 安装路径（可含空格），CPU/DirectML 模式不限制中文目录，须对最终解压位置做验收。CPU 首次 INT8 转换支持安装目录和 TEMP/TMP 同时包含中文，无需手动修改系统临时目录。完整安装路径为 ASCII 时，启动器沿用包内 cache/tmp；中文安装路径保留外部 TEMP/TMP。没有模型时服务保持未加载状态，不选择默认角色。
 
 目标系统为 Windows 10/11 x64。当前 NumPy 2.4.6 轮子的 CPU 基线是 x86-64-v2，见 [NumPy 2.4 发布说明](https://numpy.org/doc/2.4/release/2.4.0-notes.html#modulate-dispatched-x86-cpu-features)；不能将“x64”视为所有旧 CPU 均可运行，也不要求为此拆出一个相同依赖的 CPU 包。准备组件的 PyTorch/MKL 完整链路尚未在旧 CPU 验收。DirectML 官方 Windows 10 1903 / DirectX 12 要求只是执行提供程序的基础条件，不等于整个包的最低系统验收结论。
 
@@ -50,7 +50,7 @@ NVIDIA 包的 `configs/low-vram.json` 和 `configs/minimum-vram.json` 保留低�
 
 后台应用可加 `--runtime-mode managed`。首次转换也计入唤醒等待，慢机器可显式设置 `--wake-timeout-seconds 900`；普通重启命中缓存后不需要再次导出。第一次处理参考的时间也包含在请求时限内。准备默认使用 CPU FP32，主推理默认模式和精度不变。
 
-模型转换缓存和参考缓存保存在 `cache/`。整包搬迁会绑定新位置的内部资源；准备组件或转换器改变时会生成相应的新缓存。升级时先解压到新目录，再复制自己的模型、参考、配置及需要保留的缓存，不用模板覆盖个人配置。
+模型转换缓存和参考缓存默认保存在 `cache/`。宿主管理版本更新时，可设置绝对路径环境变量 `SAKURATTS_CACHE_DIR`，把模型、参考及第三方运行缓存放在版本目录之外；启动器和准备组件使用同一目录。整包搬迁会绑定新位置的内部资源；准备组件或转换器改变时会生成相应的新缓存。升级时先解压到新目录，再复制自己的模型、参考、配置及需要保留的缓存，不用模板覆盖个人配置。
 
 ## 原版带的模型与本项目的边界
 
@@ -68,11 +68,12 @@ NVIDIA 包的 `configs/low-vram.json` 和 `configs/minimum-vram.json` 保留低�
 
 ## 离线构建
 
-发行组合在 [packaging/recipes/windows-nvidia-ja.toml](../packaging/recipes/windows-nvidia-ja.toml) 中声明：
+发行组合在 [packaging/recipes/windows-x64.toml](../packaging/recipes/windows-x64.toml) 中声明：
 
 ```toml
 target = "windows-x64"
-backend = "cuda"
+backend = "cpu"
+backends = ["cpu", "directml", "cuda"]
 languages = ["ja"]
 services = ["http"]
 
@@ -81,7 +82,7 @@ acoustic = "runtime/acoustic/python.exe"
 frontend = "runtime/acoustic/python.exe"
 ```
 
-`--recipe` 选择发行组合，省略时使用上面的 CUDA recipe。推理档位与 direct/managed 仍由运行时选择：CPU 默认 INT8 GPT / FP32 声学，DirectML 默认 FP16，CUDA 默认 FP32；默认生命周期仍是 direct。
+`--recipe` 选择发行组合，省略时使用上面的统一 recipe。推理档位与 direct/managed 仍由运行时选择：CPU 默认 INT8 GPT / FP32 声学，DirectML 默认 FP16，CUDA 默认 FP32；默认生命周期仍是 direct。
 
 | 选择 | 构建结果 |
 | --- | --- |
@@ -90,7 +91,7 @@ frontend = "runtime/acoustic/python.exe"
 | 提供 `--preparation LOCAL_COMPONENT` | 带原始权重转换、新参考编码所需的独立 CPU 准备组件 |
 | 省略 `--preparation` | 使用已有转换结果和已准备的参考条件 |
 
-CPU/AMD 使用 [windows-cpu-amd-ja.toml](../packaging/recipes/windows-cpu-amd-ja.toml)，`backend = "directml"` 表示装入 DirectML ORT 及其 CPU provider。它仅选择 `japanese-text`，不会混装 CPU ORT，也没有独立前端或声学 worker。NVIDIA 继续使用上面的 recipe。`languages` 支持 `ja` 和可选的 `en`；这只是依赖选择，首次转换当前生成日文前端，英文需另行准备并验收资源。
+仅构建 CPU/AMD 子集时可使用 [windows-cpu-amd-ja.toml](../packaging/recipes/windows-cpu-amd-ja.toml)，`backend = "directml"` 表示装入 DirectML ORT 及其 CPU provider。它仅选择 `japanese-text`，不会混装 CPU ORT，也没有独立前端或声学 worker。仅构建 NVIDIA 子集时可使用 `windows-nvidia-ja.toml`；这两个子集配方保留给开发与单后端验收，默认分发使用统一包。`languages` 支持 `ja` 和可选的 `en`；这只是依赖选择，首次转换当前生成日文前端，英文需另行准备并验收资源。
 
 `workers` 分别描述前端和声学运行角色，路径相对于包根目录，必须属于所选发行内容。CUDA 组合中二者共享一套 Python 3.9，配置为两个角色不会多复制一套环境。CPU/AMD 留空，在主环境执行。构建器把角色路径写入 `runtime/portable.json`，推理时再绑定到当前安装位置；模型本身不负责选择安装目录。
 
@@ -110,14 +111,15 @@ python scripts/build_preparation.py `
   --output dist/preparation `
   --audit tmp/preparation-inputs.json
 python scripts/build_portable.py `
-  --recipe packaging/recipes/windows-cpu-amd-ja.toml `
+  --recipe packaging/recipes/windows-x64.toml `
   --python-base LOCAL_CPYTHON_BASE `
   --vc-runtime LOCAL_MICROSOFT_VC143_CRT `
   --main-site LOCAL_RUNTIME_SITE_PACKAGES `
   --ffmpeg LOCAL_FFMPEG_EXE `
   --wheel dist/portable-wheel/sakuratts-0.1.0a1-py3-none-any.whl `
+  --worker LOCAL_ORT_CUDA_WORKER `
   --preparation dist/preparation `
-  --output dist/SakuraTTS-Windows-CPU-AMD `
+  --output dist/SakuraTTS-Windows-x64 `
   --audit tmp/portable-inputs.json
 ```
 
@@ -125,11 +127,11 @@ python scripts/build_portable.py `
 
 省略 `--preparation` 可构建精简包。解释器版本从输入中的 `python3X.dll` 读取，主环境与准备环境分别选择，并与各自依赖的 ABI 匹配；支持标准和嵌入式布局。前端扩展模块使用所选环境对应的 Python ABI，不单独限制版本号。准备组件只使用 CPU PyTorch / torchaudio；`--runtime-site` 可覆盖来源目录中的对应包，不修改原环境。源环境本身就是 CPU 版时可省略该参数。构建器不会联网补装依赖。
 
-构建器检查主环境和准备环境的 wheel 标签，拒绝不同系统、架构或 Python ABI 的依赖。准备组件的目标平台也必须与主包一致；旧版未记录目标字段的准备清单按 Windows 处理。平台检查不能代替目标设备上的启动与模型验收。
+构建器检查主环境和准备环境的 wheel 标签，拒绝不同系统、架构或 Python ABI 的依赖。准备组件的目标平台也必须与主包一致；旧版未记录目标字段的准备清单按 Windows 处理。准备环境的 ONNX 最低版本由 `scripts/build_preparation.py` 的 `ROOT_REQUIREMENTS` 定义，需支持 GPT 导出器生成的 IR 10；较旧版本会在首次模型转换时失败。平台检查不能代替目标设备上的启动与模型验收。
 
 准备组件不带头文件、静态链接库和依赖的测试目录。若本地只有 GPU 版 ORT，保留其 CPU 核心，排除准备阶段不会使用的 CUDA / TensorRT provider。原版 TTS 导入时仍会加载部分训练相关库，目前保留这些实际依赖。主推理环境保留 NVRTC 所需的 NVIDIA、CuPy 和 NumPy 头文件，不能套用准备环境的裁剪规则。
 
-准备组件分别生成 `preparation.json`、`preparation-manifest.json` 和 `licenses.json`。源码及辅助资源采用白名单，开发者配置不复制；官方发声底模、用户角色和参考均排除。`licenses.json` 会标明本地输入缺少的辅助权重许可信息，不能用上游代码的 MIT 许可代替权重许可。公开分发前仍需补齐这些来源声明。
+准备组件分别生成 `preparation.json`、`preparation-manifest.json` 和 `licenses.json`。源码及辅助资源采用白名单，开发者配置不复制；官方发声底模、用户角色和参考均排除。`licenses.json` 记录辅助模型的分发声明与原始模型卡，详见[辅助资源声明](third-party/portable-resources.md)。不同来源的权重需要核对对应声明。
 
 构建使用当前本地文件，允许打包修改过的依赖；RECORD 用于确定文件范围，不比对原始校验和。发行清单记录实际产物的哈希。
 
@@ -143,7 +145,7 @@ CPU/AMD 主环境使用 `.[directml,japanese-text,server]`，仅包含 `onnxrunt
 
 `--vc-runtime` 指向已获准再分发的 Microsoft VC CRT x64 目录，例如 Visual Studio 的 `VC/Redist/MSVC/<版本>/x64/Microsoft.VC143.CRT`。构建器将其 DLL 放到主解释器和准备解释器旁，不依赖开发机的 MSVCP140 安装。CPython 自带的 VCRUNTIME140 不能代替完整 C++ 运行库。目录和解释器均是明确本地输入，不搜索系统、不下载。
 
-`--language-model` 允许从已有缓存选择 `lid.176.bin`；省略时使用上游预训练目录。OpenJTalk 字典按实际安装的 classic 或 plus 前端选择。准备组件携带固定来源、哈希、上游许可声明和 fastText CC-BY-SA 3.0 正文；HuBERT/ERes2Net 的权重归属材料及 FFmpeg 对应源码提供方式仍须在公开分发前核对。来源清单见 [auxiliary-model-sources.json](../packaging/auxiliary-model-sources.json)，不同本地权重不能沿用这份归属结论。
+`--language-model` 允许从已有缓存选择 `lid.176.bin`；省略时使用上游预训练目录。OpenJTalk 字典按实际安装的 classic 或 plus 前端选择。准备组件携带固定来源、哈希、上游许可声明和 fastText CC-BY-SA 3.0 正文；HuBERT/ERes2Net 原始模型卡已收录。CI 发行包携带所编译 FFmpeg 的源码与构建脚本；其他本地 FFmpeg 输入仍需单独提供对应材料。来源清单见 [auxiliary-model-sources.json](../packaging/auxiliary-model-sources.json)，不同本地权重不能沿用这份归属结论。
 
 `bundle-manifest.json` 的 `release` 记录产品版本、源码提交、工作树是否有改动、Python 版本和可用后端，`components` 记录实际依赖版本，wheel 与所有文件均有哈希。正式发布应从确定的提交重新构建；工作树试验包会明确标为 `source_dirty: true`。
 
@@ -189,3 +191,5 @@ AMD 验收改用 `--backend directml --profile fp16`，使用独立的空缓存�
 这些记录中的体积、路径和设备对应当时的构建。查询手头产物应读取 `bundle-manifest.json`、压缩报告及 SHA256 文件。构建和本机验证结果与实际发布状态分别记录。
 
 硬件记录集中于 RTX 5060。其他 Windows 设备、干净机器、最低驱动、长句、多轮请求、取消恢复、完整显存测量和人工听音仍需验收。
+
+自动预览发布见 [GitHub Actions 整合包发布](ci-release.md)。该流程从固定运行环境输入装配当前源码，公开产物的 FFmpeg 与资源声明见对应指南。
