@@ -80,6 +80,30 @@ class InitialConversionCacheTests(unittest.TestCase):
         data["files"]["python.exe"]["sha256"] = "updated-interpreter"
         manifest.write_text(json.dumps(data))
 
+    def test_cuda_precision_changes_resources_but_memory_profiles_reuse_them(self):
+        from sakuratts.prepare.cache import prepare_checkpoint, prepare_initial_model
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.fixture(root)
+            settings = dict(self.inference(root).settings, backend="cuda")
+            def prepare_weight(_kind, _path, output, **_kwargs):
+                output.mkdir(parents=True)
+            with patch("sakuratts.prepare.converter.convert", side_effect=lambda **kw: kw["output"].mkdir(parents=True)) as convert, \
+                 patch("sakuratts.prepare.converter.convert_checkpoint", side_effect=prepare_weight) as weight, \
+                 patch("sakuratts.engine.Model.load", side_effect=lambda path: path):
+                paths = {}
+                for profile in ("fp32", "fp16", "low-memory", "minimum-memory"):
+                    settings["profile"] = profile
+                    paths[profile] = (prepare_initial_model(settings),
+                        prepare_checkpoint("sovits", root / "sovits.pth", "same-weights", settings, backend="cuda"))
+                self.assertNotEqual(paths["fp32"], paths["fp16"])
+                self.assertEqual(paths["fp16"], paths["low-memory"])
+                self.assertEqual(paths["fp16"], paths["minimum-memory"])
+                self.assertEqual((convert.call_count, weight.call_count), (2, 2))
+                for call in (convert.call_args, weight.call_args):
+                    self.assertEqual(call.kwargs["experimental"]["gpt_precision"], "fp16")
+                    self.assertEqual(call.kwargs["experimental"]["acoustic_chunk_frames"], 256)
+
     def test_initial_cache_separates_backends_and_directml_capacity_only(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -197,6 +221,25 @@ class InitialConversionCacheTests(unittest.TestCase):
                 (custom / "weights.bin").write_bytes(b"new custom hubert")
                 ReferenceCache(engine, settings).prepare_audio(root / "audio.wav")
                 self.assertEqual(prepare.call_count, 3)
+
+    def test_weight_switch_accepts_prepared_cuda_fp16_chunks(self):
+        from sakuratts.model import Model
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.fixture(root)
+            inference = self.inference(root)
+            inference.settings.update(backend="cuda", profile="fp16")
+            inference.engine = None
+            inference._log_weights = Mock()
+            inference.model = Model(root / "model.json", {"gpt": "gpt", "sovits": "sovits", "frontend": "frontend"})
+            def prepare(kind, checkpoint, output, **kwargs):
+                self.assertEqual(kwargs["experimental"]["acoustic_chunk_frames"], 256)
+                output.mkdir(parents=True)
+                (output / "manifest.json").write_text('{"format":"sakuratts-sovits-chunked-v1"}')
+            with patch("sakuratts.prepare.converter.convert_checkpoint", side_effect=prepare):
+                inference.set_weights("sovits", root / "sovits.pth")
+            selected = inference._activate.call_args.args[0]
+            self.assertTrue(Path(selected.runtime_config["sovits"]).is_dir())
 
 
 if __name__ == "__main__":

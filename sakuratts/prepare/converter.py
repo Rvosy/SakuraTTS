@@ -31,6 +31,10 @@ def _preparation_identity(backend, experimental=None):
         identity["capacity"] = options["capacity"]
         scripts += ["export_gpt_directml.py", "export_sovits_fp16.py",
                     "conv_transpose_polyphase.py"]
+    if backend == "cuda" and (experimental or {}).get("acoustic_chunk_frames") is not None:
+        identity["acoustic"] = "fp16-chunked"
+        scripts += ["export_sovits_chunks.py", "export_sovits_fp16.py",
+                    "conv_transpose_polyphase.py", "split_sovits_vocoder.py", "vocoder_receptive_field.py"]
     root = Path(__file__).parent
     identity["scripts"] = {name: sha256_file(root / name) for name in scripts}
     return identity
@@ -38,6 +42,13 @@ def _preparation_identity(backend, experimental=None):
 
 def _prepare_backend(kind, package, *, backend, python, experimental=None):
     """Finish target resources inside the caller's unpublished staging directory."""
+    if backend == "cuda" and kind == "sovits" and (experimental or {}).get("acoustic_chunk_frames") is not None:
+        logger.info("准备 NVIDIA FP16 分块声学资源")
+        candidate = package.with_name(package.name + "-fp16-chunked")
+        run_conversion([str(python), "-B", str(Path(__file__).with_name("export_sovits_chunks.py")),
+                        "--source", str(package), "--output", str(candidate)],
+                       env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1"))
+        return candidate
     if backend not in ("cpu", "directml"):
         return package
     from ..profiles import resolve_profile
@@ -180,7 +191,7 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
         if backend == "mlx":
             from ..diagnostics.mlx import check_packages
             check_packages(staged)
-        elif backend in ("cpu", "directml"):
+        elif backend in ("cpu", "directml") or (experimental or {}).get("acoustic_chunk_frames") is not None:
             check_runtime_packages(staged, experimental=experimental)
         else:
             check_prepared_packages(staged)

@@ -158,7 +158,10 @@ class Inference:
         expected = "sakuratts-gpt-fp32-v1" if kind == "gpt" else "sakuratts-sovits-onnx-v1"
         if kind == "sovits" and self.engine is not None and self.engine._runtime.name == "mlx":
             expected = "sakuratts-sovits-decode-fp32-v1"
-        if manifest.get("format") != expected:
+        accepted = {expected}
+        if kind == "sovits" and self.settings.get("backend", self.model.backend if self.model else "cuda") == "cuda":
+            accepted.add("sakuratts-sovits-chunked-v1")
+        if manifest.get("format") not in accepted:
             raise ValueError("Wrong model type for " + kind)
         if self.model is None:
             raise ValueError("Configure both initial model weights and frontend resources in --tts-config first")

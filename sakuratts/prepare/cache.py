@@ -28,6 +28,9 @@ def prepare_initial_model(settings, experimental=None):
     from ..module.reference_condition import sha256_file
     options = conversion_settings(settings)
     backend = settings.get("backend", "cuda")
+    if settings.get("profile") is not None:
+        from ..profiles import resolve_profile
+        _, experimental = resolve_profile(backend, settings["profile"], experimental)
     identity = {kind: sha256_file(settings[kind + "_checkpoint"]) for kind in ("gpt", "sovits")}
     identity["target"] = _preparation_identity(backend, experimental)
     identity["source"] = sha256_file(Path(options["official_source"]) / "GPT_SoVITS/TTS_infer_pack/TTS.py")
@@ -60,6 +63,9 @@ def prepare_checkpoint(kind, path, digest, settings, *, backend, experimental=No
     from ..runtime.portable import bundle_root
     from ..module.reference_condition import sha256_file
     options = conversion_settings(settings)
+    if settings.get("profile") is not None:
+        from ..profiles import resolve_profile
+        _, experimental = resolve_profile(backend, settings["profile"], experimental)
     source_hash = sha256_file(Path(options["official_source"]) / "GPT_SoVITS/TTS_infer_pack/TTS.py")
     script = "convert_gpt.py" if kind == "gpt" else acoustic_converter(backend)
     converter_hash = sha256_file(Path(__file__).parent / script)
