@@ -92,7 +92,7 @@ class CPUConversionTests(unittest.TestCase):
                 with patch("sakuratts.prepare.converter.run_conversion", side_effect=self.run_conversion) as exported, \
                         patch("sakuratts.module.sovits.read_manifest", side_effect=lambda path, **kwargs:
                               (json.loads((path / "manifest.json").read_text(encoding="utf-8")), None)), \
-                        patch("sakuratts.runtime.diagnostics.check_worker_imports", side_effect=probe) as checked, \
+                        patch("sakuratts.diagnostics.resources.check_worker_imports", side_effect=probe) as checked, \
                         patch("sakuratts.backends.cpu.onnx_gpt.read_sidecar", side_effect=self.read_gpt), \
                         patch("sakuratts.backends.directml.static_gpt.read_static_sidecar", side_effect=self.read_gpt), \
                         patch("sakuratts.backends.cuda.runtime.configure_cuda",

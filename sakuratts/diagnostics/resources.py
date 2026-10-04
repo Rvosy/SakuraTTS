@@ -8,13 +8,13 @@ import sys
 
 if not __package__:
     from runpy import run_path
-    run_path(str(Path(__file__).with_name("worker.py")))["load_package"](Path(__file__).resolve().parents[1])
+    run_path(str(Path(__file__).resolve().parents[1] / "runtime/worker.py"))["load_package"](Path(__file__).resolve().parents[1])
 from sakuratts.module.reference_condition import PreparedReference
 
 
-def read_windows_config(config_path):
+def read_cuda_config(config_path):
     from sakuratts.model import Model
-    from .portable import model_config
+    from ..runtime.portable import model_config
     model = Model.load(config_path)
     if model.backend != "cuda":
         raise NotImplementedError("Windows CUDA diagnostics cannot check backend: " + model.backend)
@@ -28,26 +28,26 @@ def checked_file(root, name):
     return path
 
 
-def check_windows_packages(config_path, *, backend=None, profile=None,
+def check_runtime_packages(config_path, *, backend=None, profile=None,
                            experimental=None):
-    return _check_windows_packages(config_path, backend=backend,
+    return _check_runtime_packages(config_path, backend=backend,
         profile=profile, runtime_selection=True,
         experimental=experimental)
 
 
 def check_prepared_packages(config_path):
     """Check conversion/repackaging output before runtime sidecars are selected."""
-    return _check_windows_packages(config_path, runtime_selection=False)
+    return _check_runtime_packages(config_path, runtime_selection=False)
 
 
-def _check_windows_packages(config_path, *, backend=None, profile=None,
+def _check_runtime_packages(config_path, *, backend=None, profile=None,
                             runtime_selection, experimental=None):
     """Check resource paths and interpreter imports without allocating weights."""
     from sakuratts.module.sovits import read_manifest
 
     from sakuratts.model import Model
     from sakuratts.backends import require_backend
-    from .portable import model_config
+    from ..runtime.portable import model_config
     model = Model.load(config_path)
     backend = require_backend(model.backend if backend is None else backend)
     from sakuratts.profiles import resolve_profile, validate_runtime_precision

@@ -46,7 +46,7 @@ class NvidiaPackageStartupTests(unittest.TestCase):
                     with patch("sakuratts.text.classic_japanese.ClassicJapaneseG2P"), \
                             patch("sakuratts.text.LangSegmenter.LanguageSegmenter"), \
                             patch("sakuratts.TTS_infer_pack.TextPreprocessor.TextFrontend"), \
-                            patch("sakuratts.module.process.ORTProcessSoVITS") as process, \
+                            patch("sakuratts.runtime.ort_process.ORTProcessSoVITS") as process, \
                             patch("sakuratts.module.sovits.ORTSoVITS.load") as direct:
                         with Engine.load(config, experimental=options, load_references=False) as engine:
                             runtime = engine._runtime

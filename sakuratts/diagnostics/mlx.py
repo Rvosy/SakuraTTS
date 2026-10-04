@@ -2,11 +2,11 @@
 
 import json
 
-from sakuratts.runtime.diagnostics import checked_file, check_worker_imports
+from sakuratts.diagnostics.resources import checked_file, check_worker_imports
 from sakuratts.runtime.portable import model_config
 from sakuratts.module.reference_condition import PreparedReference
 from sakuratts.model import Model
-from .sovits_package import SoVITSPackage
+from ..backends.mlx.sovits_package import SoVITSPackage
 
 
 def check_packages(config_path):

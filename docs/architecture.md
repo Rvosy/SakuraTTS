@@ -9,10 +9,11 @@ sakuratts/
   text/            语言分段、规范化、G2P 与语言资源
   AR/              自回归语义生成、采样与停止规则
   module/          共用声学执行、参考条件与权重存储
-  backends/        CPU / CUDA / DirectML / MLX 设备实现
+  backends/        CPU / CUDA / DirectML / MLX 设备实现，共用 ORT 装配在 ort.py
   prepare/         离线转换、资源准备与转换缓存
   runtime/         进程、IPC、取消、日志与安装位置
-  engine.py / model.py / profiles.py / server.py / cli.py
+  diagnostics/     环境依赖、设备与模型资源检查
+  engine.py / model.py / profiles.py / server.py / cli.py / benchmark.py
 tools/             可独立运行的模型和语言资源工具
 scripts/           环境安装、构建与整合包验收
 packaging/          发行组合及资源来源清单
@@ -39,11 +40,21 @@ docs/              使用说明、Spec 与 ADR
 | [text/](../sakuratts/text) | 语言模式、语言分段、规范化、音素和文本特征组件 |
 | [AR/](../sakuratts/AR) | 语义生成循环、采样、EOS 与长度停止规则 |
 | [module/](../sakuratts/module) | ONNX 声学、分块、参考条件及共享权重读取 |
-| [backends/](../sakuratts/backends) | 静态后端选择、CUDA / CPU / DirectML / MLX GPT 与声学 |
-| [runtime/](../sakuratts/runtime) | 私有工作进程、IPC、取消、休眠、日志与安装绑定 |
+| [backends/](../sakuratts/backends) | 静态后端选择、CUDA / CPU / DirectML / MLX GPT 与声学；CPU 与 DirectML 共用 `ort.py` 的装配 |
+| [runtime/](../sakuratts/runtime) | 私有工作进程、IPC、取消、休眠、日志与安装绑定；`ort_process.py` 与 `ort_worker.py` 分别是声学进程的客户端和服务端 |
+| [diagnostics/](../sakuratts/diagnostics) | `environment.py` 检查依赖与设备，`resources.py` 检查 ONNX 资源和私有解释器，`mlx.py` 检查原生 Apple 资源 |
+| [cli.py](../sakuratts/cli.py)、[benchmark.py](../sakuratts/benchmark.py) | 命令行参数与操作分发、公共 Engine 完整请求测量 |
 | [prepare/](../sakuratts/prepare) | 独立准备环境中的导出与参考编码 |
 | [server.py](../sakuratts/server.py) | HTTP 请求边界、响应与服务生命周期 |
 | [packaging/recipes/](../packaging/recipes)、[build_portable.py](../scripts/build_portable.py) | 发行组合与本地运行组件装配 |
+
+## 如何定位代码
+
+一次 HTTP 请求从 `server.py` 进入 `TTS_infer_pack/TTS.py`，经公共 `Engine` 调用所选后端。各后端继承共享的 `InferenceRuntime`，复用文本准备与逐片合成流程；具体计算实现放在各自设备目录。CPU 与 DirectML 的配置和 ORT 声学装配由 `backends/ort.py` 共用，设备目录中的 `engine.py` 声明各自引擎。
+
+`TTS_infer_pack/runtime.py` 管理模型与合成生命周期；`runtime/` 管理解释器、工作进程及通信。模型和参考音频的转换进入 `prepare/`，环境及资源问题从 `diagnostics/` 查起。发行包如何组合这些组件由 `packaging/recipes/` 描述，构建入口在 `scripts/`。
+
+文件按职责和依赖边界拆分。文本资源装配与文本处理、模型生命周期与合成算法分别保留；PCM 编解码和取消类型的小模块供多个入口使用，控制进程可以在不导入数值库的情况下使用它们。`converter.py` 和 `nvidia.py` 保留已公开的导入方式，实现分别归入 `prepare/` 和 `backends/cuda/`。
 
 ## 配置与校验所有权
 

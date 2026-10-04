@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sakuratts.runtime.portable import model_config, preparation_settings
-from sakuratts.runtime.diagnostics import read_windows_config
+from sakuratts.diagnostics.resources import read_cuda_config
 
 
 class PortableRuntimeTests(unittest.TestCase):
@@ -151,7 +151,7 @@ class PortableRuntimeTests(unittest.TestCase):
                 legacy = root / "legacy.json"
                 legacy.write_text(json.dumps({"format": "sakuratts-windows-config-v1", "gpt": "gpt",
                     "sovits": "sovits", "frontend": "frontend", "acoustic_python": "Z:/old/python.exe"}))
-                self.assertEqual(read_windows_config(legacy)[1]["acoustic_python"], str(root / "runtime/acoustic/python.exe"))
+                self.assertEqual(read_cuda_config(legacy)[1]["acoustic_python"], str(root / "runtime/acoustic/python.exe"))
 
     def test_portable_marker_binds_frontend_and_acoustic_workers_independently(self):
         with tempfile.TemporaryDirectory() as temporary:

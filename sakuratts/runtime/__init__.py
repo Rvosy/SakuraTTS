@@ -1,1 +1,1 @@
-"""Process ownership, private IPC, installation paths and diagnostics."""
+"""Process ownership, private IPC, cancellation, logging and installation paths."""

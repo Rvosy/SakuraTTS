@@ -45,7 +45,7 @@ CUDA 引擎默认在每片声学计算结束后收缩 ORT 显存池，释放不�
 
 需要对照旧策略时，可用 `Engine.load(path, experimental={"acoustic_arena_shrink": False})` 关闭收缩。CLI 的 `tts`、`serve`、`benchmark` 可通过 `--experimental` 读取同样的 JSON；旧 `synthesize` 命令可用 `--no-acoustic-arena-shrink`。实际策略记录在合成报告的 `acoustic_arena_shrink` 字段中。内部 `ORTSoVITS` / `ORTProcessSoVITS` 的直接调用仍需显式选择收缩，研究脚本应记录自己的选项。
 
-后端选项通过 `Engine.load(path, experimental={...})` 显式传入。CUDA 的键与默认值由 [NVIDIAEngine](../sakuratts/backends/cuda/engine.py) 定义，CPU / DirectML 由 [CPUEngine](../sakuratts/backends/cpu/engine.py) 定义；常用组合分别见[CUDA 推理档位](inference-profiles.md)和 [CPU / DirectML 指南](cpu-amd.md)。
+后端选项通过 `Engine.load(path, experimental={...})` 显式传入。CUDA 的键与默认值由 [NVIDIAEngine](../sakuratts/backends/cuda/engine.py) 定义，CPU / DirectML 由 [ORTEngine](../sakuratts/backends/ort.py) 定义；常用组合分别见[CUDA 推理档位](inference-profiles.md)和 [CPU / DirectML 指南](cpu-amd.md)。
 
 `acoustic_session_policy` 默认 `"resident"`，保留 latent 和 vocoder 两个 Session。设为 `"staged"` 时，先加载 latent Session 并取回完整 CPU latent，再释放它、加载一次 vocoder Session 处理该片段的所有块，最后释放 vocoder。它只支持已经验证的分块声学包，必须同时指定 `acoustic_chunk_frames` 并开启 `acoustic_arena_shrink`；每个片段会重建 Session，增加加载时间。模型图、块长、完整上下文和输入噪声保持不变。此选项控制声学内部的驻留方式，与控制 GPT／声学模型驻留的 `policy` 分开设置。私有 worker 的 `session_initialization="deferred"` 表示模型包与进程已准备，CUDA Session 将在执行时创建并检查。
 

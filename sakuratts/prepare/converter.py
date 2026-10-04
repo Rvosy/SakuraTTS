@@ -91,9 +91,9 @@ def package_model(config, output, *, name=None):
     if any(source == output or source in output.parents for source in sources):
         raise ValueError("Output must be outside the input resource directories")
     if model.backend == "mlx":
-        from ..backends.mlx.diagnostics import check_packages
+        from ..diagnostics.mlx import check_packages
     else:
-        from ..runtime.diagnostics import check_prepared_packages as check_packages
+        from ..diagnostics.resources import check_prepared_packages as check_packages
     output = _destination(output)
     with tempfile.TemporaryDirectory(prefix=".sakuratts-", dir=output.parent) as temporary:
         staged = Path(temporary) / "model"
@@ -176,12 +176,12 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
             (staged / "references").mkdir()
             (prepared / "references/reference").rename(staged / "references/000")
         _write_manifest(staged, config, name=name or output.name)
-        from ..runtime.diagnostics import check_prepared_packages, check_windows_packages
+        from ..diagnostics.resources import check_prepared_packages, check_runtime_packages
         if backend == "mlx":
-            from ..backends.mlx.diagnostics import check_packages
+            from ..diagnostics.mlx import check_packages
             check_packages(staged)
         elif backend in ("cpu", "directml"):
-            check_windows_packages(staged, experimental=experimental)
+            check_runtime_packages(staged, experimental=experimental)
         else:
             check_prepared_packages(staged)
         staged.rename(output)

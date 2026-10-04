@@ -15,6 +15,7 @@ import warnings
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 cli = importlib.import_module("sakuratts.cli")
+environment = importlib.import_module("sakuratts.diagnostics.environment")
 cuda_runtime = importlib.import_module("sakuratts.backends.cuda.runtime")
 
 
@@ -90,9 +91,9 @@ class CudaIncludePathTests(unittest.TestCase):
         configured.assert_not_called()
 
     def test_doctor_nvidia_reports_header_failure_without_claiming_dependencies_ready(self):
-        with patch.object(cli, "JAPANESE_MODULES", {}), patch.object(cli, "import_module"), \
-                patch.object(cli.metadata, "version", return_value="test"), \
-                patch.object(cli.platform, "system", return_value="Windows"), \
+        with patch.object(environment, "JAPANESE_MODULES", {}), patch.object(environment, "import_module"), \
+                patch.object(environment.metadata, "version", return_value="test"), \
+                patch.object(environment.platform, "system", return_value="Windows"), \
                 patch.object(cuda_runtime, "configure_cuda"), \
                 patch.object(cuda_runtime, "import_cupy"), \
                 patch.object(cuda_runtime, "validate_gpt_cuda_include_paths", side_effect=RuntimeError("ASCII-only fixture")):

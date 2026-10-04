@@ -144,7 +144,7 @@ CLI 可在 `--experimental FILE` 指定的 JSON 中写入 `{"device_id": 1}`；P
 
 ## 调整资源与休眠
 
-默认资源参数由 [profiles.py](../sakuratts/profiles.py) 与 [CPUEngine](../sakuratts/backends/cpu/engine.py) 定义。可以显式调整 `threads`、`gpt_threads`、`capacity` 和 `policy`，但应重新测量完整请求与占用。
+默认资源参数由 [profiles.py](../sakuratts/profiles.py) 与 [ORTEngine](../sakuratts/backends/ort.py) 定义。可以显式调整 `threads`、`gpt_threads`、`capacity` 和 `policy`，但应重新测量完整请求与占用。
 
 `capacity` 包含文本、参考语义和已生成语义。AMD 修改容量后必须重新导出匹配容量的静态 decode 资源；缺包或超过容量时明确报错，不截断输入、不自动换设备。更长文本也可以通过公共分句选项减少每片长度。
 

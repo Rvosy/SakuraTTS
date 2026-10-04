@@ -22,7 +22,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(ROOT), str(ROOT / "research/tools")]
 from sakuratts.runtime.protocol import read_message, write_message
-from sakuratts.module.process import ORTProcessSoVITS
+from sakuratts.runtime.ort_process import ORTProcessSoVITS
 from sakuratts.module.reference_condition import sha256_file
 from windows_chunked_synthesis import _finalize_experiment, verify_split
 from windows_chunked_worker import SOURCE_FILES
@@ -184,7 +184,7 @@ def main():
         "benchmark_arguments": remaining,
         "sources_sha256": {name: sha256_file(ROOT / name) for name in (*SOURCE_FILES,
             "research/tools/windows_chunked_process.py", "research/tools/windows_nvidia_benchmark.py",
-            "sakuratts/module/process.py", "sakuratts/backends/cuda/engine.py", "sakuratts/TTS_infer_pack/synthesis.py")},
+            "sakuratts/runtime/ort_process.py", "sakuratts/backends/cuda/engine.py", "sakuratts/TTS_infer_pack/synthesis.py")},
         "measurement": "Existing full-request benchmark including private worker startup/reload, framed IPC, HALF latent inside worker, chunk reconstruction and one PCM normalization. Process-tree sampling includes worker; sampled-run timings are ineligible."}
     from sakuratts.backends.cuda.engine import NVIDIAEngine
     import windows_nvidia_benchmark

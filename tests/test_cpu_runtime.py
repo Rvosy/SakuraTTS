@@ -52,7 +52,7 @@ class CPURuntimeTests(unittest.TestCase):
         self.real_acoustic_load = ORTSoVITS.load
         self.acoustic_loader = self.enterContext(patch("sakuratts.module.sovits.ORTSoVITS.load",
                                                        side_effect=self.make_acoustic))
-        self.process_loader = self.enterContext(patch("sakuratts.module.process.ORTProcessSoVITS"))
+        self.process_loader = self.enterContext(patch("sakuratts.runtime.ort_process.ORTProcessSoVITS"))
 
     def make_gpt(self, *args, **kwargs):
         value = GPT()

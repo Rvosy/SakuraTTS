@@ -32,7 +32,7 @@ class ORTProcessSoVITS:
         self.acoustic_arena_shrink=acoustic_arena_shrink
         self.acoustic_chunk_frames=acoustic_chunk_frames
         self.acoustic_session_policy=acoustic_session_policy
-        command=[str(python),"-B",str(Path(__file__).resolve().parents[1] / "runtime/ort_worker.py"),"--package",str(package)]
+        command=[str(python),"-B",str(Path(__file__).with_name("ort_worker.py")),"--package",str(package)]
         if diagnostic:
             command.append("--diagnostic")
         if allow_experimental_fp16:

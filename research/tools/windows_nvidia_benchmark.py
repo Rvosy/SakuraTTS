@@ -289,7 +289,7 @@ def main():
     write_json(output / "run-config.json", preparation)
     source_names = ("research/tools/windows_nvidia_benchmark.py", "tools/windows_official_baseline.py",
                     "sakuratts/backends/cuda/engine.py", "sakuratts/backends/cuda/gpt.py", "sakuratts/module/sovits.py",
-                    "sakuratts/module/process.py", "sakuratts/runtime/ort_worker.py", "sakuratts/TTS_infer_pack/synthesis.py",
+                    "sakuratts/runtime/ort_process.py", "sakuratts/runtime/ort_worker.py", "sakuratts/TTS_infer_pack/synthesis.py",
                     "sakuratts/AR/generation.py", "sakuratts/AR/sampling.py",
                     "sakuratts/TTS_infer_pack/TextPreprocessor.py", "sakuratts/text/japanese.py",
                     "sakuratts/text/classic_japanese.py", "sakuratts/runtime/classic_japanese_worker.py",

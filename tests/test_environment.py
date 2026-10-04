@@ -17,7 +17,7 @@ from sakuratts.cli import doctor, main
 class EnvironmentTests(unittest.TestCase):
     def test_missing_dependency_fails_with_a_report(self):
         output = io.StringIO()
-        with patch("sakuratts.cli.import_module", side_effect=ImportError("missing numpy")):
+        with patch("sakuratts.diagnostics.environment.import_module", side_effect=ImportError("missing numpy")):
             with contextlib.redirect_stdout(output):
                 code = main(["doctor"])
         report = json.loads(output.getvalue())
@@ -30,13 +30,13 @@ class EnvironmentTests(unittest.TestCase):
         def import_selected(module):
             if module in ("pyopenjtalk", "onnxruntime", "sudachipy", "sudachidict_core"):
                 raise ImportError("This dependency belongs to another configured worker")
-        with patch("sakuratts.cli.import_module", side_effect=import_selected) as imported, \
+        with patch("sakuratts.diagnostics.environment.import_module", side_effect=import_selected) as imported, \
                 patch("sakuratts.cli.metadata.version", return_value="test"), \
-                patch("sakuratts.cli.platform.system", return_value="Windows"), \
+                patch("sakuratts.diagnostics.environment.platform.system", return_value="Windows"), \
                 patch("sakuratts.backends.cuda.runtime.configure_cuda"), \
                 patch("sakuratts.backends.cuda.runtime.import_cupy"), \
                 patch("sakuratts.backends.cuda.runtime.validate_gpt_cuda_include_paths", return_value={}), \
-                patch("sakuratts.runtime.diagnostics.check_windows_packages", return_value=resource_check):
+                patch("sakuratts.diagnostics.resources.check_runtime_packages", return_value=resource_check):
             report = doctor(config="runtime.json")
         self.assertTrue(report["checks_passed"])
         self.assertTrue(report["synthesis"]["dependencies_ready"])

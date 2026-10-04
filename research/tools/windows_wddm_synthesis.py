@@ -61,7 +61,7 @@ def main():
     try:
         report["config_sha256"] = sha256_file(args.config)
         for name in ("research/tools/windows_wddm_synthesis.py", "research/tools/windows_wddm_memory.py", "sakuratts/backends/cuda/engine.py",
-                     "sakuratts/backends/cuda/gpt.py", "sakuratts/module/sovits.py", "sakuratts/module/process.py"):
+                     "sakuratts/backends/cuda/gpt.py", "sakuratts/module/sovits.py", "sakuratts/runtime/ort_process.py"):
             report["source_sha256"][name] = sha256_file(ROOT/name)
         if args.ort_root:
             ort_root, cuda_dir = args.ort_root.resolve(strict=True), args.cuda_dir.resolve(strict=True)

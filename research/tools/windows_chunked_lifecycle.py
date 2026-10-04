@@ -36,7 +36,7 @@ SOURCE_FILES = tuple(dict.fromkeys((*WORKER_SOURCE_FILES,
     "research/tools/windows_chunked_lifecycle.py", "research/tools/windows_chunked_process.py",
     "research/tools/windows_failure_lifecycle.py", "tools/windows_official_baseline.py",
     "sakuratts/backends/cuda/engine.py", "sakuratts/backends/cuda/gpt.py", "sakuratts/AR/generation.py",
-    "sakuratts/TTS_infer_pack/synthesis.py", "sakuratts/module/process.py")))
+    "sakuratts/TTS_infer_pack/synthesis.py", "sakuratts/runtime/ort_process.py")))
 PUBLIC_SOURCE_FILES = tuple(dict.fromkeys((*SOURCE_FILES, "sakuratts/runtime/ort_worker.py",
     "sakuratts/module/chunked.py", "sakuratts/module/chunked_package.py",
     "sakuratts/module/vocoder_receptive_field.py", "sakuratts/backends/cuda/runtime.py",

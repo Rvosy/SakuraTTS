@@ -41,7 +41,7 @@ def main():
     def load_in_process(engine):
         if engine.sovits is None:
             if args.acoustic_python:
-                from sakuratts.module.process import ORTProcessSoVITS
+                from sakuratts.runtime.ort_process import ORTProcessSoVITS
                 engine.sovits = ORTProcessSoVITS(engine.packages["sovits"], args.acoustic_python,
                     allow_experimental_fp16=engine.allow_experimental_acoustic_fp16,
                     acoustic_arena_shrink=engine.acoustic_arena_shrink)

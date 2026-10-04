@@ -60,7 +60,7 @@ class NVIDIAEngine(InferenceRuntime):
     def _load_sovits(self):
         if self.sovits is None:
             if self.config.get("acoustic_python"):
-                from sakuratts.module.process import ORTProcessSoVITS
+                from sakuratts.runtime.ort_process import ORTProcessSoVITS
                 self.sovits = ORTProcessSoVITS(self.packages["sovits"],
                     self.config_path.parent / self.config["acoustic_python"],
                     allow_experimental_fp16=self.allow_experimental_acoustic_fp16,

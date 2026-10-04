@@ -85,7 +85,11 @@ uv --offline pip install --python .venv/bin/python --no-deps -e .
 | `backends/onnx/`、`_internal/reference_condition.py`、`weight_storage.py` | `module/` |
 | `reference.py` | `TTS_infer_pack/reference.py` |
 | `converter.py`、`_internal/conversion/` | `prepare/`；原公开转换函数保留导入入口，缓存逻辑归入 `prepare/cache.py` |
-| 其余 `_internal/` | `runtime/`，只保留运行设施 |
+| 其余 `_internal/` | `runtime/`，只保留运行设施；诊断归入 `diagnostics/`，完整请求测量归入 `benchmark.py` |
+| `backends/cpu/engine.py` 中的共用装配 | `backends/ort.py`；CPU 与 DirectML 各自的 `engine.py` 选择设备 |
+| `module/process.py` | `runtime/ort_process.py`，与 `ort_worker.py` 相邻 |
+| `cli.py` 中的环境检查、`runtime/diagnostics.py`、`backends/mlx/diagnostics.py` | `diagnostics/environment.py`、`resources.py`、`mlx.py` |
+| `runtime/benchmark.py` | `benchmark.py`；命令行及 `benchmarks/run.py` 用法不变 |
 | `nvidia.py` 的实现 | `backends/cuda/engine.py`；原导入保留兼容入口 |
 | `harness/` | `research/tools/`，常用入口提到 `benchmarks/` |
 | `docs/experiments/` | `research/experiments/` |

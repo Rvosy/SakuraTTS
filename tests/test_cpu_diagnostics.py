@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch
 
 sys.path[:0] = [str(Path(__file__).resolve().parents[1]), str(Path(__file__).resolve().parent)]
 from sakuratts import cli
-from sakuratts.runtime.diagnostics import check_windows_packages, check_prepared_packages, check_worker_imports
+from sakuratts.diagnostics.resources import check_runtime_packages, check_prepared_packages, check_worker_imports
 from sakuratts.module.reference_condition import sha256_file
 from test_nvidia_package_startup import fixture
 
@@ -27,10 +27,10 @@ class CPUDoctorTests(unittest.TestCase):
                               "onnxruntime-directml": "1.24.4"}
         self.ort = SimpleNamespace(get_available_providers=lambda: self.available,
                                    InferenceSession=Mock(side_effect=AssertionError("No model execution in doctor")))
-        self.imports = self.enterContext(patch("sakuratts.cli.import_module", side_effect=self.import_module))
+        self.imports = self.enterContext(patch("sakuratts.diagnostics.environment.import_module", side_effect=self.import_module))
         self.enterContext(patch("sakuratts.cli.metadata.version", side_effect=self.version))
-        self.enterContext(patch("sakuratts.cli.platform.system", return_value="Windows"))
-        self.resource_check = self.enterContext(patch("sakuratts.runtime.diagnostics.check_windows_packages",
+        self.enterContext(patch("sakuratts.diagnostics.environment.platform.system", return_value="Windows"))
+        self.resource_check = self.enterContext(patch("sakuratts.diagnostics.resources.check_runtime_packages",
             side_effect=lambda *args, backend, profile=None: {
                 "status": "passed", "profile": profile or {"cpu": "int8", "directml": "fp16"}[backend]}))
         self.cuda = self.enterContext(patch("sakuratts.backends.cuda.runtime.configure_cuda",
@@ -66,7 +66,7 @@ class CPUDoctorTests(unittest.TestCase):
         config.update(format="sakuratts-model-v1", name="test", languages=["ja"],
                       backend={"preferred": "cpu"}, acoustic="missing-acoustics")
         (self.root / "model.json").write_text(json.dumps(config), encoding="utf-8")
-        self.resource_check.side_effect = check_windows_packages
+        self.resource_check.side_effect = check_runtime_packages
         report = cli.doctor(config=self.root)
         self.assertEqual(report["synthesis"]["backend"], "cpu")
         self.assertFalse(report["synthesis"]["packages_ready"])
@@ -123,7 +123,7 @@ sys.modules['sakuratts.backends.cuda.runtime']=cuda
             command[3] = prelude + command[3]
             return actual_run(command, **kwargs)
 
-        with patch("sakuratts.runtime.diagnostics.subprocess.run", side_effect=run_with_stubs):
+        with patch("sakuratts.diagnostics.resources.subprocess.run", side_effect=run_with_stubs):
             for backend in ("cpu", "directml"):
                 report = check_worker_imports(Path(sys.executable), {}, backend=backend)
                 self.assertEqual(report["available_providers"], providers)
@@ -153,7 +153,7 @@ sys.modules['sakuratts.backends.cuda.runtime']=cuda
                 manifest_path.write_text(json.dumps(gpt), encoding="utf-8")
                 acoustic = {"source": gpt["source"], "config": {"model": {"version": "v2ProPlus"}}}
                 with patch("sakuratts.module.sovits.read_manifest", return_value=(acoustic, None)), \
-                        patch("sakuratts.runtime.diagnostics.check_worker_imports",
+                        patch("sakuratts.diagnostics.resources.check_worker_imports",
                               side_effect=lambda python, profile, **kwargs: {"executable": str(python)}) as probe:
                     report = check_prepared_packages(config_path)
                 self.assertEqual(report["backend"], backend)
@@ -184,7 +184,7 @@ class GPTPackageDiagnosticsTests(unittest.TestCase):
             "config": {"model": {"version": "v2ProPlus"}}}
         self.acoustic_reader = self.enterContext(patch("sakuratts.module.sovits.read_manifest",
             side_effect=lambda *args, **kwargs: (self.acoustic, None)))
-        self.probe = self.enterContext(patch("sakuratts.runtime.diagnostics.check_worker_imports", return_value={}))
+        self.probe = self.enterContext(patch("sakuratts.diagnostics.resources.check_worker_imports", return_value={}))
         self.compute = self.enterContext(patch("sakuratts.backends.cpu.onnx_gpt.ONNXCPUGPT.load",
             side_effect=AssertionError("Diagnostics must not load model sessions")))
 
@@ -196,7 +196,7 @@ class GPTPackageDiagnosticsTests(unittest.TestCase):
     def test_missing_selected_sidecar_fails_instead_of_checking_only_original_weights(self):
         for backend, precision in (("cpu", "int8"), ("directml", "fp16")):
             with self.subTest(backend=backend), self.assertRaisesRegex(FileNotFoundError, "onnx-" + precision):
-                check_windows_packages(self.config, backend=backend)
+                check_runtime_packages(self.config, backend=backend)
         self.probe.assert_not_called()
         self.compute.assert_not_called()
 

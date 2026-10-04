@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from sakuratts.runtime.diagnostics import check_windows_packages
+from sakuratts.diagnostics.resources import check_runtime_packages
 from sakuratts.module.reference_condition import sha256_file
 from test_nvidia_package_startup import fixture
 
@@ -43,9 +43,9 @@ class DiagnosticsCompositionTests(unittest.TestCase):
             gpt_path.write_text(json.dumps(gpt))
             acoustic = {"source": gpt["source"], "config": {"model": {"version": "v2ProPlus"}}}
             with patch("sakuratts.module.sovits.read_manifest", return_value=(acoustic, None)), \
-                    patch("sakuratts.runtime.diagnostics.check_worker_imports",
+                    patch("sakuratts.diagnostics.resources.check_worker_imports",
                           side_effect=lambda python, profile, **kwargs: {"executable": str(python)}) as probe:
-                result = check_windows_packages(config_path)
+                result = check_runtime_packages(config_path)
             self.assertEqual(result["worker"]["executable"], str(acoustic_python))
             self.assertEqual(result["frontend_worker"]["executable"], str(frontend_python))
             if separate or frontend_only:
@@ -70,7 +70,7 @@ class DiagnosticsCompositionTests(unittest.TestCase):
 
 class MLXDiagnosticsTests(unittest.TestCase):
     def test_native_diagnostics_follow_acoustic_family_and_reference_compatibility(self):
-        from sakuratts.backends.mlx.diagnostics import check_packages
+        from sakuratts.diagnostics.mlx import check_packages
         from sakuratts.module.reference_condition import FORMAT
 
         for family in ("v2Pro", "v2ProPlus"):
@@ -94,7 +94,7 @@ class MLXDiagnosticsTests(unittest.TestCase):
                     ge=np.zeros((1, 1024, 1), np.float32), ge512=np.zeros((1, 512, 1), np.float32))
                 manifest = {"format": FORMAT, "model_family": family, "archive": {"file": "arrays.npz"}}
                 (reference / "manifest.json").write_text(json.dumps(manifest))
-                with patch("sakuratts.backends.mlx.diagnostics.check_worker_imports", return_value={}):
+                with patch("sakuratts.diagnostics.mlx.check_worker_imports", return_value={}):
                     result = check_packages(config_path)
                 self.assertEqual(result["status"], "passed")
                 self.assertEqual(result["model_family"], family)

@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-import sakuratts.runtime.diagnostics as diagnostics
+import sakuratts.diagnostics.resources as diagnostics
 
 
 class WorkerBootstrapTests(unittest.TestCase):
@@ -55,9 +55,9 @@ assert str(Path(sys.argv[1]).resolve().parents[2]) not in sys.path
 assert Path(sys.argv[1]).resolve().parents[2] not in Path(numpy.__file__).resolve().parents
 print(json.dumps({'package':sakuratts.__file__,'numpy':numpy.__file__,'origin':sakuratts.witness.ORIGIN}))
 """
-        for name in ("ort_worker.py", "classic_japanese_worker.py", "diagnostics.py"):
+        for name in ("runtime/ort_worker.py", "runtime/classic_japanese_worker.py", "diagnostics/resources.py"):
             with self.subTest(entry=name):
-                report = self.isolated(code, self.package / "runtime" / name, self.other_site)
+                report = self.isolated(code, self.package / name, self.other_site)
                 self.assertEqual(report["origin"], "selected")
 
     def test_ordinary_module_imports_preserve_package_and_search_path(self):
@@ -66,8 +66,8 @@ from pathlib import Path
 before=list(sys.path)
 load=runpy.run_path(str(Path(sys.argv[1])/'runtime/worker.py'))['load_package']
 package=load(sys.argv[1])
-for name in ('ort_worker','classic_japanese_worker','diagnostics'):
-    importlib.import_module('sakuratts.runtime.'+name)
+for name in ('runtime.ort_worker','runtime.classic_japanese_worker','diagnostics.resources'):
+    importlib.import_module('sakuratts.'+name)
 assert load(sys.argv[1]) is package
 assert sys.modules['sakuratts'] is package
 assert sys.path==before
@@ -123,7 +123,7 @@ print(json.dumps({'restored':True}))
             code = "import sys\nsys.path.insert(0," + repr(str(worker_site)) + ")\n" + command[3]
             return actual_run([command[0], "-I", *command[1:3], code, *command[4:]], **kwargs)
 
-        with patch.object(diagnostics, "__file__", str(self.package / "runtime/diagnostics.py")), \
+        with patch.object(diagnostics, "__file__", str(self.package / "diagnostics/resources.py")), \
                 patch.object(diagnostics.subprocess, "run", side_effect=isolated_child):
             report = diagnostics.check_worker_imports(Path(sys.executable), {})
         self.assertEqual(report["onnxruntime"], "worker-ort-test")
@@ -142,7 +142,7 @@ print(json.dumps({'restored':True}))
             code = command[3] + "\nassert not set(('onnxruntime', 'cupy', 'torch', 'sakuratts.backends.cuda.runtime')) & sys.modules.keys()\n"
             return actual_run([command[0], "-I", *command[1:3], code, *command[4:]], **kwargs)
 
-        with patch.object(diagnostics, "__file__", str(self.package / "runtime/diagnostics.py")), \
+        with patch.object(diagnostics, "__file__", str(self.package / "diagnostics/resources.py")), \
                 patch.object(diagnostics.subprocess, "run", side_effect=isolated_child):
             report = diagnostics.check_worker_imports(Path(sys.executable),
                 {"module_directory": str(worker_site), "main_dictionary": str(dictionary)}, acoustic=False)
