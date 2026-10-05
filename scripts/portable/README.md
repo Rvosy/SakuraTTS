@@ -1,6 +1,6 @@
 # SakuraTTS Windows 整合包
 
-本包提供后台语音服务、CLI 和私有 Python。模型目录为空，请自行准备有权使用的 GPT-SoVITS V2ProPlus 权重和参考音频。当前首次准备流程以日文为验收范围；硬件和音质范围见[兼容矩阵](https://github.com/Rvosy/SakuraTTS/blob/main/docs/specs/compatibility-matrix.md)。
+本包提供后台语音服务、CLI 和私有 Python。模型目录为空，请自行准备有权使用的 GPT-SoVITS V2ProPlus 权重和参考音频。默认包含日语和英语文本处理资源，支持日英混合朗读；硬件和音质范围见[兼容矩阵](https://github.com/Rvosy/SakuraTTS/blob/main/docs/specs/compatibility-matrix.md)。
 
 发行组合记录在 `runtime/portable.json`：CPU/AMD 包共用 DirectML ONNX Runtime，由配置或启动参数选择 CPU INT8 或 AMD FP16；NVIDIA 包使用独立 CUDA 运行环境。无需预装 Python、Git、编译器或 CUDA Toolkit。GPU 模式需要兼容的系统驱动。NVIDIA 包的 CuPy/NVRTC 要求英文安装目录（可含空格）；CPU/AMD 包允许中文和空格目录，具体路径仍需通过随包检查。CPU 首次 INT8 转换支持安装目录和 TEMP/TMP 同时包含中文，无需手动修改系统临时目录。完整安装路径为 ASCII 时，启动器沿用包内 cache/tmp；中文安装路径保留外部 TEMP/TMP。
 

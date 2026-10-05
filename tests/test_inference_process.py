@@ -398,6 +398,14 @@ class InferenceProcessTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             write_frame(io.BytesIO(), {"x": float("nan")})
 
+    def test_worker_failure_preserves_text_processing_stage(self):
+        from sakuratts.runtime.logging import request_scope, stage
+        proxy = self.proxy()
+        with request_scope():
+            with self.assertRaisesRegex(ValueError, "Invalid fake request"):
+                proxy.tts({"error": True})
+            self.assertEqual(stage.get(), "文本处理")
+
     def test_sleep_releases_transport_threads_without_cyclic_gc(self):
         proxy = self.proxy()
         dispose = proxy._dispose

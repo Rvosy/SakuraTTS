@@ -60,6 +60,8 @@ class FakeInference:
         if request.get("hang"):
             time.sleep(120)
         if request.get("error"):
+            from sakuratts.runtime.logging import set_stage
+            set_stage("文本处理")
             raise ValueError("Invalid fake request")
         count = request.get("chunks", 3)
         pcm = np.arange(request.get("samples", 16), dtype=np.int16)

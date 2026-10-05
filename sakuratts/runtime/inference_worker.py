@@ -108,8 +108,9 @@ def main(inference_factory=None):
         while True:
             message, cancellation = commands.get()
             operation, serial = message.get("operation"), message.get("id")
-            from .logging import request_id
+            from .logging import request_id, stage
             request_id.set(message.get("request_id", "-"))
+            stage.set("推理")
             try:
                 if operation == "initialize":
                     if inference is not None:
@@ -167,7 +168,7 @@ def main(inference_factory=None):
                 logging.getLogger("sakuratts.engine").debug("Inference operation failed", exc_info=True)
                 info = inference.info() if inference is not None else None
                 reply = {"id": serial, "type": "error", "error_type": type(error).__name__,
-                    "message": str(error), "info": info}
+                    "message": str(error), "info": info, "stage": stage.get()}
                 if info is not None:
                     reply["snapshot"] = snapshot()
                 send(reply)

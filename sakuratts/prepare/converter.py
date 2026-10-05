@@ -160,7 +160,7 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
             command.append("--frontend-only")
         if language_model:
             command += ["--language-model", str(Path(language_model).resolve(strict=True))]
-        logger.info("准备日文前端与参考资源")
+        logger.info("准备日英文本处理与参考资源")
         run_conversion(command, env=env)
         for script, checkpoint, target in (("convert_gpt.py", paths["gpt"], "gpt"),
                                            (acoustic_converter(backend), paths["sovits"], "sovits")):
@@ -172,7 +172,7 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
                                     python=interpreter, experimental=experimental)
         config = {"format": "sakuratts-windows-config-v1", "gpt": "gpt", "sovits": "sovits",
                   "frontend": "frontend", "references": {"reference": "references/000"} if refs else {},
-                  "backend": {"preferred": backend}}
+                  "backend": {"preferred": backend}, "languages": ["ja", "en"]}
         if worker:
             config["acoustic_python"] = worker
         elif not frontend_python and json.loads((prepared / "frontend/manifest.json").read_text(encoding="utf-8")).get(

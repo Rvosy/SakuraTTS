@@ -57,10 +57,10 @@ class PortableBuilderTests(unittest.TestCase):
         self.assertNotIn("uvicorn", library)
         self.assertTrue({"cupy-cuda12x", "pyopenjtalk-plus", "onnxruntime"} <= library)
         self.assertFalse({"torch", "mlx", "pypinyin", "sakuratts"} & full)
-        bilingual = {builder.Requirement(value).name for value in
-                     builder.main_requirements(project, dict(recipe, languages=["ja", "en"]))}
-        self.assertTrue({"nltk", "wordsegment", "inflect"} <= bilingual)
-        self.assertFalse({"nltk", "wordsegment", "inflect"} & full)
+        self.assertTrue({"nltk", "wordsegment", "inflect"} <= full)
+        japanese = {builder.Requirement(value).name for value in
+                    builder.main_requirements(project, dict(recipe, languages=["ja"]))}
+        self.assertFalse({"nltk", "wordsegment", "inflect"} & japanese)
 
     def test_recipe_rejects_unimplemented_combinations_before_building(self):
         root = Path(__file__).resolve().parents[1]
@@ -70,7 +70,7 @@ class PortableBuilderTests(unittest.TestCase):
             for original, replacement, error in (
                 ('"windows-x64"', '"macos-arm64"', "windows-x64"),
                 ('"cuda"', '"unknown"', "backend cuda"),
-                ('["ja"]', '["ja", "zh"]', "language components"),
+                ('["ja", "en"]', '["ja", "zh"]', "language components"),
                 ('["http"]', '["webui"]', "service component"),
             ):
                 with self.subTest(replacement=replacement):

@@ -27,7 +27,7 @@ SakuraTTS 是面向 AI 桌宠的 GPT-SoVITS 推理引擎，以完全兼容原版
 
 已有的 GPT `.ckpt`、SoVITS `.pth` 和参考音频可以继续使用，无需重新训练。完整整合包会在首次使用时自动转换并缓存支持的模型；客户端继续通过 `/tts` 请求语音，也可以使用 Python 或命令行接口。
 
-> 当前为开发者预览版，提供 Windows CUDA、CPU 与 DirectML 后端，支持 V2ProPlus、日文，以及配置[英文资源](docs/english-frontend.md)后的英文与日英混合。HTTP 兼容范围见 [API V2 文档](docs/api-v2-guide.md)，模型与设备验证情况见[兼容矩阵](docs/specs/compatibility-matrix.md)。
+> 当前为开发者预览版，提供 Windows CUDA、CPU 与 DirectML 后端，支持 V2ProPlus、日文、英文与日英混合。默认整合包包含[日英文本处理资源](docs/english-frontend.md)。HTTP 兼容范围见 [API V2 文档](docs/api-v2-guide.md)，模型与设备验证情况见[兼容矩阵](docs/specs/compatibility-matrix.md)。
 
 设备通过 `backend` 选择：CPU 默认使用 INT8 GPT、8 线程声学；AMD DirectML 默认使用 FP16、KV 容量 1280。两个设备各保留这一套配置，具体资源要求见[CPU / AMD 指南](docs/cpu-amd.md)。CUDA 与 Apple MLX 的[推理档位](docs/inference-profiles.md)保持独立；Apple silicon 的 V2Pro / V2ProPlus／FP32 转换、HTTP 与整合包用法见 [Apple 指南](docs/apple.md)。
 

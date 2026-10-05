@@ -22,13 +22,10 @@ class ResourcePreparationTests(unittest.TestCase):
             root, _, language = self.fixture(directory)
             output = Path(directory).resolve() / "frontend"
             manifest = prepare.prepare_frontend(root, output)
-            (output / "english").mkdir()
+            self.assertEqual(manifest["english_g2p"]["directory"], "english")
             for name in ("g2p.json", "checkpoint.npz"):
-                path = output / "english" / name
-                path.write_bytes(b"english fixture")
-                manifest["files"]["english/" + name] = {"bytes": path.stat().st_size, "sha256": prepare.digest(path)}
-            manifest["english_g2p"] = {"implementation": "gpt-sovits-english-v1", "directory": "english"}
-            prepare.write_json(output / "manifest.json", manifest)
+                self.assertEqual((output / "english" / name).read_bytes(),
+                                 (root / "english" / name).read_bytes())
             before = (output / "manifest.json").read_bytes()
             self.assertEqual(prepare.prepare_frontend(root, output), manifest)
             self.assertEqual((output / "manifest.json").read_bytes(), before)
@@ -55,6 +52,9 @@ class ResourcePreparationTests(unittest.TestCase):
         language = root / "GPT_SoVITS/pretrained_models/fast_langdetect/lid.176.bin"
         language.parent.mkdir(parents=True)
         language.write_bytes(b"full language model fixture")
+        (root / "english").mkdir()
+        for name in ("g2p.json", "checkpoint.npz"):
+            (root / "english" / name).write_bytes(b"english fixture")
         return root, user, language
 
     def test_custom_language_model_and_dictionary_are_copied_without_hash_gates(self):
