@@ -152,18 +152,14 @@ CPU/AMD 主环境使用 `.[directml,japanese-text,server]`，仅包含 `onnxrunt
 
 ```powershell
 python scripts/archive_portable.py --bundle dist/SakuraTTS-Windows-CPU-AMD `
-  --output tmp/7z-benchmark --benchmark
+  --sevenzip "C:/Program Files/7-Zip/7z.exe" --output tmp/7z-benchmark --benchmark
 python scripts/archive_portable.py --bundle dist/SakuraTTS-Windows-CPU-AMD `
-  --output dist/portable-release --profile extreme
+  --sevenzip "C:/Program Files/7-Zip/7z.exe" --output dist/portable-release --profile maximum
 ```
 
-脚本从 PATH 查找 `7zz` 或 `7z`，Windows 也会查找 Program Files 下的 7-Zip。其他安装位置可用 `--sevenzip "C:/Tools/7-Zip/7z.exe"` 指定。输出目录必须尚不存在。
+采样比较 LZMA2 solid 的 `mx=5/7/9`、32/64/128 MiB 字典，固定 2 个压缩线程，记录压缩大小、耗时、校验和解压耗时。样本取自体积最大的 12 个文件的多个位置，结果只用于选参，不代表完整包的压缩率。正式压缩只读取发行清单中的文件；验收产生的缓存、日志、音频及用户后来放入的模型都不会收录。输出 `.7z`、SHA256 和压缩报告。
 
-压缩选项由 [archive_portable.py](../scripts/archive_portable.py) 的 `PROFILES` 定义。`balanced` 适合开发打包，默认的 `maximum` 控制内存成本；`extreme` 使用更大字典、较长匹配和按扩展名排序，供体积优先的发行物使用。各档位均使用 LZMA2 solid 和 2 个压缩线程，避免增加线程后分块压缩损失跨块匹配。大字典主要增加压缩内存，解压时也需要容纳字典；solid 压缩适合整包解压，单独提取后部文件可能较慢。
-
-`--benchmark` 比较所有档位，记录大小、压缩耗时、校验和解压耗时。样本取自最大的 12 个文件，读取头部、中间和尾部互不重叠的片段，小文件只读取一次。样本不能反映完整文件和跨目录重复内容的全部收益，不能据此宣称整包压缩率或全局最优参数。发行前应对同一完整包比较候选档位。
-
-正式压缩只读取发行清单中的文件；验收产生的缓存、日志、音频及用户后来放入的模型都不会收录。输出 `.7z`、SHA256 和压缩报告，并运行 `7z t` 校验。压缩不改变模型精度或解压后的文件内容。
+压缩选项由 [archive_portable.py](../scripts/archive_portable.py) 的 `PROFILES` 定义。`balanced` 适合开发打包，`maximum` 用于体积优先的发行物；本机样本比较与完整压缩结果分别保存，具体结果见下方记录。
 
 ## 验证范围
 
