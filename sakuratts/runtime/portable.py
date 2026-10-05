@@ -50,7 +50,7 @@ def preparation_settings(settings):
     # Installation paths cannot silently fall back to the machine that exported a model.
     for name in ("official_source", "python", "acoustic_python", "frontend_python", "language_model"):
         settings.pop(name, None)
-    settings["cache_dir"] = str(root / "cache")
+    settings["cache_dir"] = str(Path(os.environ.get("SAKURATTS_CACHE_DIR", root / "cache")).resolve())
     for role, path in worker_paths(root, required=False).items():
         settings[role + "_python"] = str(path)
     preparation = root / "runtime/preparation"

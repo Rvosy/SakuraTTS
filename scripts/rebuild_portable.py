@@ -1,0 +1,127 @@
+"""从固定运行环境基包和当前源码 wheel 装配预览版。"""
+import argparse
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import tomllib
+import zipfile
+
+import build_portable as builder
+
+
+def install_product(bundle, site, wheel, inventory):
+    # 旧 wheel 的模块必须整体替换，避免已删除源码残留在下一版。
+    for directory in [site / 'sakuratts', *site.glob('sakuratts-*.dist-info')]:
+        if directory.exists():
+            prefix = directory.relative_to(bundle).as_posix() + '/'
+            for name in list(inventory):
+                if name.startswith(prefix):
+                    del inventory[name]
+            shutil.rmtree(directory)
+    with zipfile.ZipFile(wheel) as archive:
+        for item in archive.infolist():
+            if item.is_dir():
+                continue
+            path = Path(item.filename)
+            if path.is_absolute() or '..' in path.parts or '\\' in item.filename or ':' in item.filename or path.suffix == '.pth':
+                raise ValueError('Unsafe product wheel entry: ' + item.filename)
+            target = site / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(archive.read(item))
+            record(bundle, target, inventory, 'product-or-generated')
+
+
+def record(bundle, path, inventory, component='product-or-generated'):
+    inventory[path.relative_to(bundle).as_posix()] = {
+        'bytes': path.stat().st_size, 'sha256': builder.digest(path), 'component': component}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    for name in ('bundle', 'wheel', 'ffmpeg', 'ffmpeg-source', 'output'):
+        parser.add_argument('--' + name, required=True, type=Path)
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    bundle = args.bundle.resolve()
+    manifest = json.loads((bundle / 'bundle-manifest.json').read_text())
+    release = manifest['release']
+    apple = release['target'] == 'macos-arm64'
+    recipe = builder.read_recipe(root / 'packaging/recipes' / ('macos-mlx-ja.toml' if apple else 'windows-x64.toml'))
+    project = tomllib.loads((root / 'pyproject.toml').read_text())['project']
+    if release['backends'] != recipe['backends'] or not release['preparation']:
+        raise ValueError('运行环境基包与当前发行组合不匹配')
+    site = bundle / ('runtime/main/lib/python3.11/site-packages' if apple else 'runtime/main/Lib/site-packages')
+    # 依赖声明变更时要求升级基包，不静默沿用不匹配的运行库。
+    builder.dependency_names(builder.distributions(site), builder.main_requirements(project, recipe),
+                             release['python'], release['target'])
+    inventory = manifest['files']
+    install_product(bundle, site, args.wheel, inventory)
+    for name in builder.launch_files(recipe):
+        target = bundle / ('README.md' if name == 'README-macos.md' else name)
+        shutil.copy2(root / 'scripts/portable' / name, target)
+        if target.suffix == '.command':
+            target.chmod(0o755)
+        record(bundle, target, inventory)
+    ffmpeg = bundle / ('runtime/bin/ffmpeg' if apple else 'runtime/bin/ffmpeg.exe')
+    shutil.copy2(args.ffmpeg, ffmpeg)
+    ffmpeg.chmod(0o755)
+    record(bundle, ffmpeg, inventory, 'ffmpeg-source-build')
+    license_root = bundle / 'licenses/ffmpeg'
+    license_root.mkdir(exist_ok=True)
+    for source, name in ((args.ffmpeg_source, 'ffmpeg-7.1.2.tar.xz'),
+                         (root / 'scripts/build_ffmpeg.sh', 'build_ffmpeg.sh'),
+                         (args.ffmpeg_source.parent / 'libogg-1.3.5.tar.xz', 'libogg-1.3.5.tar.xz'),
+                         (args.ffmpeg_source.parent / 'libvorbis-1.3.7.tar.xz', 'libvorbis-1.3.7.tar.xz')):
+        target = license_root / name
+        shutil.copy2(source, target)
+        record(bundle, target, inventory, 'ffmpeg-corresponding-source')
+    result = subprocess.run([str(ffmpeg), '-L'], capture_output=True, text=True, check=True)
+    notice = bundle / 'licenses/FFmpeg-build-and-license.txt'
+    notice.write_text(result.stdout + result.stderr, encoding='utf-8')
+    record(bundle, notice, inventory, 'ffmpeg-license')
+    # 辅助权重保持原字节，补入对应上游模型卡和分发说明。
+    for source in (root / 'docs/third-party').glob('*'):
+        if source.is_file():
+            target = bundle / 'licenses/sakuratts' / source.name
+            target.parent.mkdir(exist_ok=True)
+            shutil.copy2(source, target)
+            record(bundle, target, inventory, 'third-party-notices')
+    prep = bundle / 'runtime/preparation'
+    license_file = prep / 'licenses.json'
+    licenses = json.loads(license_file.read_text())
+    analysis = licenses['components']['public-analysis-resource']
+    analysis['license_status'] = 'GPT-SoVITS distribution declaration and original model cards are included; see licenses/sakuratts/portable-resources.md at the bundle root.'
+    license_file.write_text(json.dumps(licenses, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    prep_manifest_file = prep / 'preparation-manifest.json'
+    prep_manifest = json.loads(prep_manifest_file.read_text())
+    auxiliary = prep / 'auxiliary-model-sources.json'
+    shutil.copy2(root / 'packaging/auxiliary-model-sources.json', auxiliary)
+    record(bundle, auxiliary, inventory, 'preparation-inventory')
+    for path in (license_file, auxiliary):
+        prep_manifest['files'][path.name].update(bytes=path.stat().st_size, sha256=builder.digest(path))
+    prep_manifest['bytes'] = sum(row['bytes'] for row in prep_manifest['files'].values())
+    prep_manifest_file.write_text(json.dumps(prep_manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    for path in (license_file, prep_manifest_file):
+        record(bundle, path, inventory, 'preparation-inventory')
+    commit = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
+    dirty = subprocess.check_output(['git', '-C', str(root), 'status', '--porcelain'], text=True).strip()
+    if dirty:
+        raise ValueError('CI 发行必须使用干净的源码提交')
+    release.update(version=project['version'], source_commit=commit, source_dirty=False)
+    marker = bundle / 'runtime/portable.json'
+    value = json.loads(marker.read_text())
+    value['release'] = release
+    marker.write_text(json.dumps(value, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    record(bundle, marker, inventory)
+    manifest.update(wheel_sha256=builder.digest(args.wheel), bytes=sum(row['bytes'] for row in inventory.values()))
+    (bundle / 'bundle-manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    if args.output.exists():
+        raise FileExistsError(args.output)
+    bundle.rename(args.output)
+    print(args.output)
+
+
+if __name__ == '__main__':
+    main()

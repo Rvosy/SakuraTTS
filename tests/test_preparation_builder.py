@@ -37,6 +37,16 @@ class PreparationBuilderTests(unittest.TestCase):
             self.assertEqual(origins, {"numpy": original, "torch": cpu})
             self.assertIn("12.8", (original / "torch/version.py").read_text())
 
+    def test_onnx_preparation_dependency_rejects_checker_without_ir10_support(self):
+        requirement = next(item for item in builder.ROOT_REQUIREMENTS if item.startswith("onnx>"))
+        for version in ("1.14.1", "1.16.2"):
+            installed = {"onnx": (Path("onnx.dist-info"), Parser().parsestr(f"Name: onnx\nVersion: {version}\n"))}
+            if version == "1.14.1":
+                with self.assertRaisesRegex(ValueError, "onnx"):
+                    builder._helpers.dependency_names(installed, [requirement], "3.9", "windows-x64")
+            else:
+                self.assertEqual(builder._helpers.dependency_names(installed, [requirement], "3.9", "windows-x64"), ["onnx"])
+
     def test_package_omits_build_files_tests_and_optional_onnx_gpu_providers(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -33,12 +33,12 @@ SakuraTTS 是面向 AI 桌宠的 GPT-SoVITS 推理引擎，以完全兼容原版
 
 ## 快速开始
 
-CPU 与 AMD 核显可通过源码安装并切换后端，见 [CPU / DirectML 指南](docs/cpu-amd.md)；CPU/AMD 共用一个运行包，NVIDIA 使用独立 CUDA 组合。构建与验收范围见整合包指南。
+CPU 与 AMD 核显可通过源码安装并切换后端，见 [CPU / DirectML 指南](docs/cpu-amd.md)；Windows 默认构建同包提供 CPU、NVIDIA CUDA 和 DirectML 的统一运行环境，通过后端设置切换。构建与验收范围见整合包指南。
 
 [Windows 整合包](docs/portable-bundle.md)自带 Python 与运行依赖，完整包还带有模型转换和参考准备组件。模型与参考音频由使用者提供。解压后：
 
 1. 复制 `configs/tts_infer.example.yaml` 为 `configs/tts_infer.yaml`，填写自己的 GPT / SoVITS 权重路径。
-2. 运行 `check-runtime.bat` 检查默认设备（CPU/AMD 包默认 CPU；检查 AMD 使用 `sakuratts.bat check-runtime --backend directml`），再运行 `start-server.bat`。需要空闲自动释放资源时，按下文启用[休眠与唤醒](#休眠与唤醒)。
+2. 运行 `check-runtime.bat` 检查默认设备（统一包默认 CPU；检查 DirectML 使用 `sakuratts.bat check-runtime --backend directml`），再运行 `start-server.bat`。需要空闲自动释放资源时，按下文启用[休眠与唤醒](#休眠与唤醒)。
 3. 向默认地址 `http://127.0.0.1:9880/tts` 提交合成请求，或打开 `/docs` 查看接口。
 
 将参考音频路径和转写替换为自己的内容：

@@ -2,13 +2,13 @@
 
 本包提供后台语音服务、CLI 和私有 Python。模型目录为空，请自行准备有权使用的 GPT-SoVITS V2ProPlus 权重和参考音频。当前首次准备流程以日文为验收范围；硬件和音质范围见[兼容矩阵](https://github.com/Rvosy/SakuraTTS/blob/main/docs/specs/compatibility-matrix.md)。
 
-发行组合记录在 `runtime/portable.json`：CPU/AMD 包共用 DirectML ONNX Runtime，由配置或启动参数选择 CPU INT8 或 AMD FP16；NVIDIA 包使用独立 CUDA 运行环境。无需预装 Python、Git、编译器或 CUDA Toolkit。GPU 模式需要兼容的系统驱动。NVIDIA 包的 CuPy/NVRTC 要求英文安装目录（可含空格）；CPU/AMD 包允许中文和空格目录，具体路径仍需通过随包检查。CPU 首次 INT8 转换支持安装目录和 TEMP/TMP 同时包含中文，无需手动修改系统临时目录。完整安装路径为 ASCII 时，启动器沿用包内 cache/tmp；中文安装路径保留外部 TEMP/TMP。
+发行组合记录在 `runtime/portable.json`：Windows 统一包由配置或启动参数选择 CPU、DirectML 或 NVIDIA CUDA；CPU/DirectML 共用主环境的 ORT，CUDA ORT 保留在私有 worker。无需预装 Python、Git、编译器或 CUDA Toolkit。GPU 模式需要兼容的系统驱动。CUDA 模式的 CuPy/NVRTC 要求英文安装目录（可含空格）；CPU/DirectML 模式允许中文和空格目录，具体路径仍需通过随包检查。CPU 首次 INT8 转换支持安装目录和 TEMP/TMP 同时包含中文，无需手动修改系统临时目录。完整安装路径为 ASCII 时，启动器沿用包内 cache/tmp；中文安装路径保留外部 TEMP/TMP。
 
 本包面向 Windows 10/11 x64；随包 NumPy 2.4.6 要求 x86-64-v2 指令集，不能视为所有 x64 CPU 通用包。旧 CPU 的完整模型转换链尚未实测。DirectML 的官方基础条件是 Windows 10 1903 及 DirectX 12，这不代表整包已在该最低系统版本验收。代码不按 AMD/Intel 厂商限制硬件；目前真实 GPU 验收仅覆盖 Radeon 780M，Intel 与其他显卡仍需设备测试。
 
 ## 检查与启动
 
-双击 `check-runtime.bat` 检查本包默认设备：CPU/AMD 包默认检查 CPU，NVIDIA 包检查 CUDA。AMD 用户另运行：
+双击 `check-runtime.bat` 检查本包默认设备：统一包默认检查 CPU。GPU 用户可运行 `sakuratts.bat check-runtime --backend cuda` 或以下 DirectML 检查：
 
 ```bat
 sakuratts.bat check-runtime --backend directml
@@ -23,7 +23,7 @@ sakuratts.bat check-runtime --backend directml
 带 `runtime/preparation/` 的完整包可离线转换原始权重和编码新参考：
 
 1. 将自己的 GPT `.ckpt` 和 SoVITS `.pth` 放进 `models/`。
-2. 复制 `configs/tts_infer.example.yaml` 为 `configs/tts_infer.yaml`，填写两项权重路径。CPU/AMD 包的这个模板默认 CPU；也提供 `tts_infer.directml.example.yaml`。
+2. 复制 `configs/tts_infer.example.yaml` 为 `configs/tts_infer.yaml`，填写两项权重路径。统一包的默认模板使用 CPU；另有 `tts_infer.directml.example.yaml` 和 `tts_infer.cuda.example.yaml`。
 3. 启动 `start-server.bat`，首次转换会显示进度；结果保存在 `cache/`，后续复用。
 
 同一套原始权重可通过启动参数选择模式：
@@ -59,6 +59,6 @@ curl.exe -X POST http://127.0.0.1:9880/tts -H "Content-Type: application/json" -
 
 ## 更新与许可证
 
-更新时解压到新目录，再复制自己的模型、配置、参考音频及所需缓存。不要用模板覆盖个人配置。日志在 `logs/`，版本、源码提交和文件哈希在 `bundle-manifest.json`。
+宿主可以用 `SAKURATTS_CACHE_DIR` 指定版本目录之外的缓存。手动更新时解压到新目录，再复制自己的模型、配置、参考音频及所需缓存。不要用模板覆盖个人配置。日志在 `logs/`，版本、源码提交和文件哈希在 `bundle-manifest.json`。
 
 各依赖的许可证保留在 `.dist-info`、组件目录和 `licenses/`。准备组件的 `licenses.json` 与 `auxiliary-model-sources.json` 记录辅助模型来源和仍待核对的材料；用户角色和个人录音不属于发行内容。FFmpeg 的实际构建许可见 `licenses/FFmpeg-build-and-license.txt`，不能一概视为 LGPL。

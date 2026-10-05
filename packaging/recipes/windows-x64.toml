@@ -1,0 +1,9 @@
+target = "windows-x64"
+backend = "cpu"
+backends = ["cpu", "directml", "cuda"]
+languages = ["ja"]
+services = ["http"]
+
+[workers]
+acoustic = "runtime/acoustic/python.exe"
+frontend = "runtime/acoustic/python.exe"

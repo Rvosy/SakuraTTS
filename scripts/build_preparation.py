@@ -55,7 +55,7 @@ class PreparationPlan(Plan):
 # These imports are required by the upstream reference-only TTS constructor,
 # including modules imported eagerly even when their synthesis branch is unused.
 ROOT_REQUIREMENTS = (
-    "torch", "torchaudio", "transformers", "onnx", "soundfile", "librosa",
+    "torch", "torchaudio", "transformers", "onnx>=1.16", "soundfile", "librosa",
     "x-transformers", "fast-langdetect", "split-lang", "pytorch-lightning",
     "peft", "ffmpeg-python", "cn2an", "pypinyin", "jieba-fast", "jieba",
     "PyYAML", "tqdm", "matplotlib",
@@ -194,7 +194,8 @@ def make_plan(args):
     for path in tree(dictionary):
         plan.add(path, site_target + "/" + path.relative_to(frontend_site).as_posix(), "openjtalk-dictionary")
     add_official_sources(plan, args.official_source, args.language_model)
-    for name in ("GPT-SoVITS-model-card.md", "fasttext-language-identification.html", "fasttext-CC-BY-SA-3.0.txt"):
+    for name in ("GPT-SoVITS-model-card.md", "fasttext-language-identification.html", "fasttext-CC-BY-SA-3.0.txt",
+                 "HuBERT-model-card.md", "ERes2NetV2-model-card.md", "Apache-2.0.txt", "portable-resources.md"):
         plan.add(Path(__file__).resolve().parents[1] / "docs/third-party" / name, "licenses/" + name, "auxiliary-model-notices")
     if apple:
         # Numba's optional OpenMP/TBB pools require external runtimes. Its
@@ -222,11 +223,9 @@ def license_inventory(plan):
     result["cpython"] = {"notices": ["LICENSE.txt"]}
     result["gpt-sovits-source"] = {"notices": sorted(path for path in plan.files if path.startswith("official/") and Path(path).name.upper().startswith(("LICENSE", "NOTICE", "COPYING")))}
     result["openjtalk-dictionary"] = {"notices": sorted(path for path in plan.files if "/pyopenjtalk/" in path and Path(path).name == "COPYING")}
-    # The local upstream bundle does not supply weight license texts. Record the
-    # gap rather than attributing the upstream source's MIT license to weights.
     result["public-analysis-resource"] = {
-        "files": list(AUXILIARY_FILES), "notices": ["auxiliary-model-sources.json", "licenses/GPT-SoVITS-model-card.md", "licenses/fasttext-language-identification.html", "licenses/fasttext-CC-BY-SA-3.0.txt"],
-        "license_status": "Source declarations and fastText attribution are recorded; HuBERT/ERes2Net weight-specific attribution review remains pending.",
+        "files": list(AUXILIARY_FILES), "notices": ["auxiliary-model-sources.json", "licenses/GPT-SoVITS-model-card.md", "licenses/fasttext-language-identification.html", "licenses/fasttext-CC-BY-SA-3.0.txt", "licenses/HuBERT-model-card.md", "licenses/ERes2NetV2-model-card.md", "licenses/Apache-2.0.txt", "licenses/portable-resources.md"],
+        "license_status": "Distribution declarations, original model cards and fastText attribution are included; see licenses/portable-resources.md.",
     }
     return {"format": "sakuratts-preparation-licenses-v1", "components": result}
 

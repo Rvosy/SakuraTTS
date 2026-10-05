@@ -41,6 +41,12 @@ def read_recipe(path):
     if set(recipe["services"]) - SERVICE_EXTRAS.keys():
         raise ValueError("Unknown service component; supported services: http")
     selected = {key: recipe[key] for key in ("target", "backend", "languages", "services")}
+    backends = recipe.get("backends", ["cpu", "directml"] if recipe["backend"] == "directml" else [recipe["backend"]])
+    if (not isinstance(backends, list) or not backends or recipe["backend"] not in backends
+            or len(set(backends)) != len(backends)
+            or any((recipe["target"], backend) not in BACKEND_EXTRAS for backend in backends)):
+        raise ValueError("Bundle backends must include the default and match the target platform")
+    selected["backends"] = backends
     if recipe["target"] == "macos-arm64":
         selected["minimum_macos"] = recipe["minimum_macos"]
     return selected | {"workers": recipe.get("workers", {})}
@@ -48,8 +54,12 @@ def read_recipe(path):
 
 def main_requirements(project, recipe):
     """Platform, language and service extras are independent package choices."""
-    extras = [BACKEND_EXTRAS[recipe["target"], recipe["backend"]],
-              *("japanese-text" if name == "ja" and recipe["backend"] in ("cpu", "directml") else LANGUAGE_EXTRAS[name]
+    backends = recipe["backends"]
+    # DirectML supplies the CPU provider too. Never install two ORT distributions
+    # over the same onnxruntime module; CUDA acoustics keep their private worker.
+    extras = [*(BACKEND_EXTRAS[recipe["target"], backend] for backend in backends
+                if not (backend == "cpu" and "directml" in backends)),
+              *("japanese-text" if name == "ja" and "directml" in backends else LANGUAGE_EXTRAS[name]
                 for name in recipe["languages"]),
               *(SERVICE_EXTRAS[name] for name in recipe["services"])]
     requirements = list(project["dependencies"])
@@ -253,10 +263,10 @@ def add_interpreter(plan, base, target="", vc_runtime=None):
 
 def make_plan(args):
     plan = Plan()
-    recipe = read_recipe(args.recipe or args.root / "packaging/recipes/windows-nvidia-ja.toml")
+    recipe = read_recipe(args.recipe or args.root / "packaging/recipes/windows-x64.toml")
     plan.release = {key: recipe[key] for key in ("target", "backend", "languages", "services")}
     plan.release["preparation"] = args.preparation is not None
-    plan.release["backends"] = ["cpu", "directml"] if recipe["backend"] == "directml" else [recipe["backend"]]
+    plan.release["backends"] = recipe["backends"]
     plan.workers = recipe["workers"]
     apple = recipe["target"] == "macos-arm64"
     if apple:
@@ -304,8 +314,13 @@ def make_plan(args):
                  "pyopenjtalk-LICENSE.md", "SudachiDict-LEGAL.txt", "VITS-LICENSE.txt", "LGPL-3.0.txt", "GPL-3.0.txt"):
         plan.add(args.root / "docs/third-party" / name, "licenses/sakuratts/" + name, "third-party-notices")
     plan.add(args.root / "LICENSE", "licenses/SakuraTTS-LICENSE.txt", "sakuratts")
-    profiles = (() if apple else ("fp32.json", "fp16.json", "low-vram.json", "minimum-vram.json")
-                if recipe["backend"] == "cuda" else ("cpu.json", "directml.json"))
+    profiles = []
+    if "cuda" in recipe["backends"]:
+        profiles.extend(("fp32.json", "fp16.json", "low-vram.json", "minimum-vram.json"))
+    if "cpu" in recipe["backends"]:
+        profiles.append("cpu.json")
+    if "directml" in recipe["backends"]:
+        profiles.append("directml.json")
     for name in profiles:
         plan.add(args.root / "examples" / name, "configs/" + name, "inference-profiles")
     if apple:
@@ -439,7 +454,7 @@ def main():
     parser.add_argument("--preparation", type=Path,
                         help="Optional verified offline component built by build_preparation.py")
     parser.add_argument("--recipe", type=Path,
-                        help="Release recipe TOML (default: packaging/recipes/windows-nvidia-ja.toml)")
+                        help="Release recipe TOML (default: packaging/recipes/windows-x64.toml)")
     parser.add_argument("--plan-only", action="store_true")
     args = parser.parse_args()
     args.root = Path(__file__).resolve().parents[1]
