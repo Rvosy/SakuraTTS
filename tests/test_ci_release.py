@@ -46,7 +46,8 @@ class ReleaseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);api=Api()
             for target in ('windows-x64','macos-arm64'):
-                row={'platform':target,'path':f'previews/run/{target}.tar.gz','bytes':12,
+                extension = '7z' if target == 'windows-x64' else 'tar.gz'
+                row={'platform':target,'path':f'previews/run/{target}.{extension}','bytes':12,
                      'url':'https://example.invalid/'+target,'releaseId':'run','sourceCommit':'commit'}
                 (root/(target+'.json')).write_text(json.dumps(row))
                 if target == 'windows-x64':api.files[row['path']]=12
@@ -70,12 +71,32 @@ class ReleaseTests(unittest.TestCase):
     def test_existing_release_archive_is_not_overwritten(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp)
-            (root/'SakuraTTS.tar.gz').write_bytes(b'archive')
+            (root/'SakuraTTS.7z').write_bytes(b'archive')
             (root/'compression-report.json').write_text('{"unpacked_bytes":20}')
-            api=Api([('previews/run/SakuraTTS.tar.gz',7)])
+            api=Api([('previews/run/SakuraTTS.7z',7)])
             with self.assertRaisesRegex(ValueError,'已存在'):
                 publish_modelscope.publish_platform(api,root,'windows-x64','run','commit',root/'result.json')
             self.assertEqual(api.uploads,[])
+
+    def test_platform_uploads_archive_and_checksum_for_its_format(self):
+        for target, extension in (('windows-x64', '7z'), ('macos-arm64', 'tar.gz')):
+            with self.subTest(target=target), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                name = f'SakuraTTS-{target}.{extension}'
+                (root/name).write_bytes(b'archive')
+                (root/(name+'.sha256')).write_text('checksum')
+                other = 'tar.gz' if extension == '7z' else '7z'
+                (root/f'unrelated.{other}').write_bytes(b'not for this platform')
+                (root/'compression-report.json').write_text('{"unpacked_bytes":20}')
+                api = Api()
+                output = root/'published'/f'{target}.json'
+                publish_modelscope.publish_platform(api,root,target,'run','commit',output)
+                path = 'previews/run/'+name
+                self.assertEqual(api.uploads, [path, path+'.sha256'])
+                record = json.loads(output.read_text(encoding='utf-8'))
+                self.assertEqual(record['path'], path)
+                self.assertEqual(record['url'], publish_modelscope.download_url(path))
+                self.assertEqual(record['bytes'], 7)
 
 
 if __name__ == '__main__':

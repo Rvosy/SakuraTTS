@@ -4,6 +4,8 @@
 
 当前支持 Windows x64 统一包和 macOS arm64 包。两平台分别执行打包测试、构建产品 wheel、装配、运行检查、归档与上传，全部成功后更新 `latest-preview.json` 和下载说明。失败保留已上传候选文件与 Actions 日志，不覆盖旧版入口、不自动重跑失败测试。
 
+Windows 产物为 `SakuraTTS-windows-x64.7z`，使用 Windows runner 自带的 7-Zip 和 [归档脚本](../scripts/archive_portable.py) 的 `maximum` 档位，压缩后运行 `7z t`。macOS 继续生成 `SakuraTTS-macos-arm64.tar.gz`，保留可执行权限。两平台均上传对应的 `.sha256`；下载入口使用实际上传的文件名。
+
 ## 运行环境输入
 
 `runtime-base-20261004` GitHub Release 草稿保存固定运行环境输入，来源是已完成本机联调的完整包。它不是用户发行版；Windows 输入分成两段，构建时顺序拼接。下载脚本见 [fetch_ci_base.py](../scripts/fetch_ci_base.py)。GitHub 的 Release 草稿仅向具备推送权限的调用者可见，因此构建任务使用自身令牌的 `contents: write` 权限访问草稿；任务不写入 GitHub 仓库，不公开草稿下载地址。

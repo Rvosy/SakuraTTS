@@ -2,7 +2,9 @@
 
 import hashlib
 import json
+import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -11,6 +13,7 @@ import unittest
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/archive_portable.py"
+SEVENZIP = shutil.which("7z") or str(Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "7-Zip/7z.exe")
 
 
 class PortableArchiveTests(unittest.TestCase):
@@ -56,3 +59,23 @@ class PortableArchiveTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Bundle file changed", result.stderr)
         self.assertFalse((self.root / "release").exists())
+
+    @unittest.skipUnless(Path(SEVENZIP).is_file(), "7-Zip is not installed")
+    def test_7z_release_roundtrip_excludes_user_files(self):
+        (self.bundle / "personal.txt").write_text("not in the release")
+        release = self.root / "release"
+        result = subprocess.run([sys.executable, str(SCRIPT), "--bundle", str(self.bundle),
+            "--format", "7z", "--profile", "maximum", "--sevenzip", SEVENZIP,
+            "--output", str(release)], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        archive = release / (self.bundle.name + ".7z")
+        destination = self.root / "解压 目录"
+        result = subprocess.run([SEVENZIP, "x", str(archive), "-o" + str(destination)],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        extracted = destination / self.bundle.name
+        self.assertEqual({p.name for p in extracted.iterdir()}, {"start.command", "bundle-manifest.json"})
+        for name in ("start.command", "bundle-manifest.json"):
+            self.assertEqual((extracted / name).read_bytes(), (self.bundle / name).read_bytes())
+        recorded = archive.with_name(archive.name + ".sha256").read_text(encoding="utf-8").split()[0]
+        self.assertEqual(recorded, hashlib.sha256(archive.read_bytes()).hexdigest())

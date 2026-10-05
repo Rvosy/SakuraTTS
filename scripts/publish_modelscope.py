@@ -21,7 +21,8 @@ def verify_files(api, records):
 
 
 def publish_platform(api, folder, target, release_id, commit, output):
-    archive, = folder.glob('*.tar.gz')
+    extension = '7z' if target == 'windows-x64' else 'tar.gz'
+    archive, = folder.glob('*.' + extension)
     report = json.loads((folder / 'compression-report.json').read_text())
     path = f'previews/{release_id}/{archive.name}'
     existing = {row.path for row in api.list_repo_files(REPO, 'model')}
@@ -63,6 +64,7 @@ license: other
 {rows}
 
 Windows x64 同包包含 CPU、NVIDIA CUDA 和 DirectML；macOS 包适用于 Apple silicon。
+Windows 压缩包使用 7z；macOS 使用保留可执行权限的 tar.gz。
 整合包包含 Python、推理运行库和模型准备组件，不包含角色 GPT / SoVITS 权重及个人参考音频。
 在 SakuraTTS 插件设置中导入对应平台的压缩包；再次导入可更新。
 

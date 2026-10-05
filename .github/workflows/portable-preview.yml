@@ -44,7 +44,7 @@ jobs:
       - name: 验证打包与发布契约
         env:
           PYTHONPATH: tests
-        run: python -m unittest test_portable_builder test_preparation_builder test_portable_runtime test_macos_portable test_ci_release -q
+        run: python -m unittest test_portable_builder test_preparation_builder test_portable_runtime test_macos_portable test_portable_archive test_ci_release -q
       - name: 获取固定运行环境
         env:
           GH_TOKEN: ${{ github.token }}
@@ -85,7 +85,15 @@ jobs:
       - name: 验证包内运行环境
         shell: bash
         run: python scripts/ci_portable_smoke.py --bundle "$WORK/SakuraTTS-${{ matrix.target }}" --output "$WORK/verification"
-      - name: 归档与内容检查
+      - name: Windows 7z 归档与内容检查
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: >-
+          python scripts/archive_portable.py --bundle "$env:WORK/SakuraTTS-${{ matrix.target }}"
+          --format 7z --profile maximum --sevenzip "$env:ProgramFiles/7-Zip/7z.exe"
+          --output "$env:WORK/release"
+      - name: macOS 归档与内容检查
+        if: runner.os == 'macOS'
         shell: bash
         run: python scripts/archive_portable.py --bundle "$WORK/SakuraTTS-${{ matrix.target }}" --format tar.gz --output "$WORK/release"
       - name: 上传至魔搭版本目录
