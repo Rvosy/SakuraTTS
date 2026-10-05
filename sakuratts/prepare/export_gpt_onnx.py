@@ -12,11 +12,12 @@ import shutil
 import sys
 import tempfile
 
-import numpy as np
-
 if not __package__:
     from runpy import run_path
     run_path(str(Path(__file__).resolve().parents[1] / "runtime/worker.py"))["load_package"](Path(__file__).resolve().parents[1])
+
+import numpy as np
+
 from sakuratts.backends.cpu.gpt import CPUGPT
 from sakuratts.backends.cpu.onnx_gpt import read_sidecar, sidecar_directory
 from sakuratts.module.reference_condition import sha256_file

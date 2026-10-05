@@ -10,6 +10,48 @@ import zipfile
 import build_portable as builder
 
 
+def upgrade_preparation_threadpoolctl(bundle, wheel, inventory, components):
+    """Replace the base bundle's pure Python controller, including its inventories."""
+    if builder.digest(wheel) != '43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb':
+        raise ValueError('Expected the pinned threadpoolctl 3.6.0 wheel (SHA256 mismatch)')
+    prep = bundle / 'runtime/preparation'
+    manifest_path = prep / 'preparation-manifest.json'
+    manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    license_path = prep / 'licenses.json'
+    licenses = json.loads(license_path.read_text(encoding='utf-8'))
+    with zipfile.ZipFile(wheel) as archive:
+        payload = {item.filename: archive.read(item) for item in archive.infolist() if not item.is_dir()}
+    old = next(name for name, row in manifest['components'].items() if row.get('name') == 'threadpoolctl')
+    site = old.rsplit(':', 1)[0]
+    # The old RECORD owns both the module and its versioned metadata.
+    for name in list(manifest['files']):
+        if manifest['files'][name]['component'] == old:
+            target = (prep / name).resolve()
+            if prep.resolve() not in target.parents:
+                raise ValueError('Preparation inventory input escaped its root: ' + name)
+            target.unlink()
+            del manifest['files'][name]
+            inventory.pop('runtime/preparation/' + name, None)
+    component = {'name': 'threadpoolctl', 'version': '3.6.0', 'source': 'wheel',
+                 'wheel_sha256': builder.digest(wheel)}
+    manifest['components'][old] = component
+    components['preparation:' + old] = component
+    for name, data in payload.items():
+        target = prep / site / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        record(prep, target, manifest['files'], old)
+        record(bundle, target, inventory, 'preparation:' + old)
+    licenses['components'][old] = {**component, 'notices': [site + '/threadpoolctl-3.6.0.dist-info/' + name
+                                                          for name in ('LICENSE', 'METADATA')]}
+    license_path.write_text(json.dumps(licenses, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    record(prep, license_path, manifest['files'], manifest['files']['licenses.json']['component'])
+    manifest['bytes'] = sum(row['bytes'] for row in manifest['files'].values())
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    for target in (license_path, manifest_path):
+        record(bundle, target, inventory, 'preparation-inventory')
+
+
 def install_product(bundle, site, wheel, inventory):
     # 旧 wheel 的模块必须整体替换，避免已删除源码残留在下一版。
     for directory in [site / 'sakuratts', *site.glob('sakuratts-*.dist-info')]:
@@ -39,7 +81,7 @@ def record(bundle, path, inventory, component='product-or-generated'):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ('bundle', 'wheel', 'ffmpeg', 'ffmpeg-source', 'output'):
+    for name in ('bundle', 'wheel', 'threadpoolctl-wheel', 'ffmpeg', 'ffmpeg-source', 'output'):
         parser.add_argument('--' + name, required=True, type=Path)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
@@ -56,6 +98,7 @@ def main():
     builder.dependency_names(builder.distributions(site), builder.main_requirements(project, recipe),
                              release['python'], release['target'])
     inventory = manifest['files']
+    upgrade_preparation_threadpoolctl(bundle, args.threadpoolctl_wheel, inventory, manifest['components'])
     install_product(bundle, site, args.wheel, inventory)
     for name in builder.launch_files(recipe):
         target = bundle / ('README.md' if name == 'README-macos.md' else name)

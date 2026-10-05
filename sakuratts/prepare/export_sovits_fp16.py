@@ -14,15 +14,16 @@ import json
 from pathlib import Path
 import shutil
 
+if not __package__:
+    from runpy import run_path
+    run_path(str(Path(__file__).resolve().parents[1] / "runtime/worker.py"))["load_package"](Path(__file__).resolve().parents[1])
+
 import numpy as np
 import onnx
 import onnxruntime as ort
 from onnxruntime.transformers.float16 import DEFAULT_OP_BLOCK_LIST, convert_float_to_float16
 from onnxruntime.transformers.onnx_model import OnnxModel
 
-if not __package__:
-    from runpy import run_path
-    run_path(str(Path(__file__).resolve().parents[1] / "runtime/worker.py"))["load_package"](Path(__file__).resolve().parents[1])
 from sakuratts.module.sovits import read_manifest
 from sakuratts.module.reference_condition import sha256_file
 

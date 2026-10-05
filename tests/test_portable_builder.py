@@ -191,7 +191,8 @@ class PortableBuilderTests(unittest.TestCase):
                           language_model="official/lid.bin", cnhubert="official/hubert")
             (root / "preparation.json").write_text(json.dumps(marker))
             names = ("python.exe", "official/lid.bin", "official/hubert/config.json", "preparation.json")
-            manifest = dict(format="sakuratts-preparation-bundle-v1", components={},
+            manifest = dict(format="sakuratts-preparation-bundle-v1",
+                            components={"site:threadpoolctl": {"name": "threadpoolctl", "version": "3.6.0"}},
                             files={name: {"sha256": builder.digest(root / name)} for name in names})
             (root / "preparation-manifest.json").write_text(json.dumps(manifest))
             (root / "personal.ckpt").write_bytes(b"never ship")
@@ -201,6 +202,10 @@ class PortableBuilderTests(unittest.TestCase):
                 for name in (*names, "preparation-manifest.json")})
             (root / "python.exe").write_bytes(b"modified")
             builder.add_preparation(builder.Plan(), root)
+            manifest["components"]["site:threadpoolctl"]["version"] = "3.1.0"
+            (root / "preparation-manifest.json").write_text(json.dumps(manifest))
+            with self.assertRaisesRegex(ValueError, "threadpoolctl"):
+                builder.add_preparation(builder.Plan(), root)
 
     def test_preparation_rejects_cross_platform_components_before_assembly(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -1,5 +1,9 @@
 """SakuraTTS public API. Importing the package loads no optional backend."""
 
+from .runtime.worker import enable_windows_long_import_paths
+
+enable_windows_long_import_paths()
+
 __all__ = ["Engine", "Audio", "Model", "BusyError", "load", "start_server"]
 
 

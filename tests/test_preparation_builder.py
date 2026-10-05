@@ -22,6 +22,18 @@ def put(root, name, content="fixture"):
 
 
 class PreparationBuilderTests(unittest.TestCase):
+    def test_preparation_rejects_threadpoolctl_with_truncated_windows_dll_paths(self):
+        requirement = next(item for item in builder.ROOT_REQUIREMENTS if item.startswith("threadpoolctl>"))
+        for version in ("3.1.0", "3.6.0"):
+            installed = {"threadpoolctl": (Path("threadpoolctl.dist-info"),
+                Parser().parsestr(f"Name: threadpoolctl\nVersion: {version}\n"))}
+            if version == "3.1.0":
+                with self.assertRaisesRegex(ValueError, "threadpoolctl"):
+                    builder._helpers.dependency_names(installed, [requirement], "3.9", "windows-x64")
+            else:
+                self.assertEqual(builder._helpers.dependency_names(installed, [requirement], "3.9", "windows-x64"),
+                                 ["threadpoolctl"])
+
     def test_cpu_site_replaces_gpu_packages_without_modifying_original_environment(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

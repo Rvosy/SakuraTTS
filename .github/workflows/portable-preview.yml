@@ -76,8 +76,10 @@ jobs:
         shell: bash
         run: |
           python -m build --wheel --outdir "$WORK/wheel"
+          python -m pip download --only-binary=:all: --no-deps threadpoolctl==3.6.0 --dest "$WORK/threadpoolctl"
           if [[ '${{ runner.os }}' == Windows ]]; then ffmpeg="$WORK/ffmpeg/ffmpeg.exe"; else ffmpeg="$WORK/ffmpeg/ffmpeg"; fi
           python scripts/rebuild_portable.py --bundle "$WORK/base/bundle" --wheel "$WORK"/wheel/*.whl \
+            --threadpoolctl-wheel "$WORK"/threadpoolctl/*.whl \
             --ffmpeg "$ffmpeg" --ffmpeg-source "$WORK/ffmpeg-7.1.2.tar.xz" \
             --output "$WORK/SakuraTTS-${{ matrix.target }}"
       - name: 验证包内运行环境

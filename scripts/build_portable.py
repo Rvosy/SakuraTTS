@@ -29,6 +29,7 @@ BACKEND_EXTRAS = {("windows-x64", "cuda"): "nvidia",
                   ("macos-arm64", "mlx"): "mlx"}
 LANGUAGE_EXTRAS = {"ja": "japanese", "en": "english"}
 SERVICE_EXTRAS = {"http": "server"}
+PREPARATION_THREADPOOLCTL = "threadpoolctl>=3.6.0"
 
 
 def read_recipe(path):
@@ -345,6 +346,11 @@ def add_preparation(plan, source):
     preparation_target = release.get("target", "windows-x64")
     if preparation_target != target:
         raise ValueError("Preparation component target " + preparation_target + " does not match bundle target " + target)
+    requirement = Requirement(PREPARATION_THREADPOOLCTL)
+    controller = next((row for row in manifest.get("components", {}).values()
+                       if row.get("name") == requirement.name), None)
+    if controller is None or not requirement.specifier.contains(controller["version"]):
+        raise ValueError("Preparation component requires " + PREPARATION_THREADPOOLCTL)
     if target == "macos-arm64":
         if tuple(map(int, release["minimum_macos"].split("."))) > tuple(map(int, plan.release["minimum_macos"].split("."))):
             raise ValueError("Preparation requires a newer macOS version than the main runtime")

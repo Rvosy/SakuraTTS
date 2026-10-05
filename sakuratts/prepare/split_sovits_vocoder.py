@@ -14,13 +14,12 @@ import math
 from pathlib import Path
 import sys
 
-import numpy as np
-import onnx
-
-
 if not __package__:
     from runpy import run_path
     run_path(str(Path(__file__).resolve().parents[1] / "runtime/worker.py"))["load_package"](Path(__file__).resolve().parents[1])
+
+import numpy as np
+import onnx
 
 from sakuratts.module.sovits import FP16_EXECUTION_OPTIONS, INPUT_NAMES, read_manifest
 from sakuratts.module.reference_condition import sha256_file

@@ -58,7 +58,7 @@ ROOT_REQUIREMENTS = (
     "torch", "torchaudio", "transformers", "onnx>=1.16", "soundfile", "librosa",
     "x-transformers", "fast-langdetect", "split-lang", "pytorch-lightning",
     "peft", "ffmpeg-python", "cn2an", "pypinyin", "jieba-fast", "jieba",
-    "PyYAML", "tqdm", "matplotlib",
+    "PyYAML", "tqdm", "matplotlib", _helpers.PREPARATION_THREADPOOLCTL,
 )
 SOURCE_DIRECTORIES = (
     "GPT_SoVITS/AR", "GPT_SoVITS/BigVGAN", "GPT_SoVITS/eres2net",

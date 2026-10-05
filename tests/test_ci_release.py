@@ -28,6 +28,57 @@ class Api:
 
 
 class ReleaseTests(unittest.TestCase):
+    def test_preparation_controller_upgrade_updates_both_inventories_and_notices(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            prep = root / 'runtime/preparation'
+            component = 'Lib/site-packages:threadpoolctl'
+            files, inventory = {}, {}
+            for name in ('Lib/site-packages/threadpoolctl.py',
+                         'Lib/site-packages/threadpoolctl-3.1.0.dist-info/METADATA',
+                         'Lib/site-packages/threadpoolctl-3.1.0.dist-info/LICENSE'):
+                path = prep / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text('old')
+                rebuild_portable.record(prep, path, files, component)
+                rebuild_portable.record(root, path, inventory, 'preparation:' + component)
+            untouched = prep / 'Lib/site-packages/numpy.py'
+            untouched.write_text('preserved')
+            rebuild_portable.record(prep, untouched, files, 'numpy')
+            rebuild_portable.record(root, untouched, inventory, 'preparation:numpy')
+            licenses = prep / 'licenses.json'
+            licenses.write_text(json.dumps({'components': {component: {'version': '3.1.0'}}}))
+            rebuild_portable.record(prep, licenses, files, 'generated')
+            manifest = prep / 'preparation-manifest.json'
+            manifest.write_text(json.dumps({'files': files, 'components': {component: {'name': 'threadpoolctl'}}}))
+            wheel = root / 'threadpoolctl.whl'
+            with zipfile.ZipFile(wheel, 'w') as archive:
+                archive.writestr('threadpoolctl.py', 'new')
+                archive.writestr('threadpoolctl-3.6.0.dist-info/METADATA', 'Name: threadpoolctl\nVersion: 3.6.0\n')
+                archive.writestr('threadpoolctl-3.6.0.dist-info/LICENSE', 'license')
+            with self.assertRaisesRegex(ValueError, 'SHA256'):
+                rebuild_portable.upgrade_preparation_threadpoolctl(root, wheel, inventory, {})
+            digest = rebuild_portable.builder.digest
+            def fixture_digest(path):
+                return ('43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb'
+                        if path == wheel else digest(path))
+            components = {}
+            with patch.object(rebuild_portable.builder, 'digest', side_effect=fixture_digest):
+                rebuild_portable.upgrade_preparation_threadpoolctl(root, wheel, inventory, components)
+            updated = json.loads(manifest.read_text())
+            self.assertEqual(components['preparation:' + component]['version'], '3.6.0')
+            self.assertEqual(untouched.read_text(), 'preserved')
+            self.assertEqual((prep / 'Lib/site-packages/threadpoolctl.py').read_text(), 'new')
+            self.assertFalse((prep / 'Lib/site-packages/threadpoolctl-3.1.0.dist-info/METADATA').exists())
+            self.assertFalse(any('3.1.0' in name for name in inventory))
+            self.assertEqual(updated['bytes'], sum(row['bytes'] for row in updated['files'].values()))
+            for base, rows in ((prep, updated['files']), (root, inventory)):
+                for name, row in rows.items():
+                    self.assertEqual(row['sha256'], digest(base / name))
+                    self.assertEqual(row['bytes'], (base / name).stat().st_size)
+            for name in json.loads(licenses.read_text())['components'][component]['notices']:
+                self.assertTrue((prep / name).is_file())
+
     def test_published_names_include_date_and_daily_sequence(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

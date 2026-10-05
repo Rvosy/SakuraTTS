@@ -17,6 +17,47 @@ import sakuratts.diagnostics.resources as diagnostics
 
 class WorkerBootstrapTests(unittest.TestCase):
     @unittest.skipUnless(sys.platform == 'win32', 'Windows native DLL path boundary')
+    def test_long_numpy_dll_paths_support_direct_exports_and_blas_control(self):
+        directory = self.root / ('安装目录 with spaces-' * 5) / ('private-runtime-' * 7)
+        directory.mkdir(parents=True)
+        numpy = Path(importlib.util.find_spec('numpy').origin).parent
+        for source in (numpy, numpy.with_name('numpy.libs')):
+            if source.exists():
+                shutil.copytree(source, directory / source.name, ignore=shutil.ignore_patterns('__pycache__'))
+        code = """import contextlib,io,json,runpy,sys
+from pathlib import Path
+sys.path.insert(0,sys.argv[2])
+if sys.argv[3]=='package':
+    runpy.run_path(sys.argv[1])['load_package'](Path(sys.argv[1]).parents[1])
+else:
+    entry=sys.argv[1]
+    sys.argv=[entry,'--help']
+    with contextlib.redirect_stdout(io.StringIO()):
+        try:
+            runpy.run_path(entry,run_name='__main__')
+        except SystemExit as error:
+            assert error.code==0
+import numpy as np
+from threadpoolctl import ThreadpoolController
+controller=ThreadpoolController()
+blas=[item for item in controller.info() if item['user_api']=='blas']
+assert blas, controller.info()
+assert all(len(item['filepath'])>260 and Path(item['filepath']).is_file() for item in blas), blas
+before=[item['num_threads'] for item in controller.info()]
+with controller.limit(limits=1,user_api='blas'):
+    assert all(item['num_threads']==1 for item in controller.info() if item['user_api']=='blas')
+    np.testing.assert_array_equal(np.ones((2,2))@np.ones((2,2)),np.full((2,2),2.))
+assert [item['num_threads'] for item in controller.info()]==before
+print(json.dumps({'long_blas_paths':True}))
+"""
+        for name in ('runtime/worker.py', 'prepare/export_gpt_onnx.py', 'prepare/export_sovits_fp16.py',
+                     'prepare/validate_sovits_directml.py', 'prepare/split_sovits_vocoder.py'):
+            with self.subTest(entry=name):
+                result = self.isolated(code, self.package / name, directory,
+                                       'package' if name == 'runtime/worker.py' else 'script')
+                self.assertTrue(result['long_blas_paths'])
+
+    @unittest.skipUnless(sys.platform == 'win32', 'Windows native DLL path boundary')
     def test_native_extension_import_from_long_installation_path(self):
         directory = self.root / ('deep-installation-' * 6) / ('private-runtime-' * 6)
         directory.mkdir(parents=True)

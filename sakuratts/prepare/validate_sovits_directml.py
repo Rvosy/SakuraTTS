@@ -9,12 +9,13 @@ from pathlib import Path
 import statistics
 import time
 
-import numpy as np
-import onnxruntime as ort
-
 if not __package__:
     from runpy import run_path
     run_path(str(Path(__file__).resolve().parents[1] / "runtime/worker.py"))["load_package"](Path(__file__).resolve().parents[1])
+
+import numpy as np
+import onnxruntime as ort
+
 from sakuratts.module.sovits import INPUT_NAMES, STAGES, _package_file, read_manifest, DIRECTML_FP16_EXECUTION_OPTIONS, DIRECTML_FP16_KIND, DIRECTML_FP16_SCREEN_VERSION
 from sakuratts.module.reference_condition import sha256_file
 from sakuratts.prepare.acoustic_precision import compare, waveform_metrics, SCREEN_LIMITS

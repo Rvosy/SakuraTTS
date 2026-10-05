@@ -6,11 +6,53 @@ import math
 import os
 from pathlib import Path
 import socket
+import shutil
 import struct
 import subprocess
+import tempfile
 import time
 from urllib.request import Request, build_opener, ProxyHandler
 import wave
+
+
+def check_windows_long_paths(bundle, output):
+    """Exercise each bundled NumPy ABI and its BLAS controller beyond MAX_PATH."""
+    package = bundle / 'runtime/main/Lib/site-packages/sakuratts'
+    code = '''import json,runpy,sys
+from pathlib import Path
+sys.path.insert(0,sys.argv[1])
+runpy.run_path(str(Path(sys.argv[2])/'runtime/worker.py'))['load_package'](sys.argv[2])
+import numpy as np
+from threadpoolctl import ThreadpoolController
+controller=ThreadpoolController()
+blas=[row for row in controller.info() if row['user_api']=='blas']
+assert blas, controller.info()
+assert all(len(row['filepath'])>260 and Path(row['filepath']).is_file() for row in blas), blas
+before=[row['num_threads'] for row in controller.info()]
+with controller.limit(limits=1,user_api='blas'):
+    assert all(row['num_threads']==1 for row in controller.info() if row['user_api']=='blas')
+    np.testing.assert_array_equal(np.ones((2,2))@np.ones((2,2)),np.full((2,2),2.))
+assert [row['num_threads'] for row in controller.info()]==before
+print(json.dumps({'numpy':np.__version__,'blas':blas}))
+'''
+    reports = {}
+    with tempfile.TemporaryDirectory(dir=output) as temporary:
+        for name in ('main', 'preparation'):
+            runtime = bundle / 'runtime' / name
+            site = runtime / 'Lib/site-packages'
+            destination = Path(temporary) / ('long-installation-' * 7) / ('中文 path-' * 12) / name
+            destination.mkdir(parents=True)
+            for folder in ('numpy', 'numpy.libs'):
+                source = site / folder
+                if source.exists():
+                    shutil.copytree(source, destination / folder, ignore=shutil.ignore_patterns('__pycache__'))
+            result = subprocess.run([str(runtime / 'python.exe'), '-I', '-X', 'utf8', '-c', code,
+                                     str(destination), str(package)], capture_output=True,
+                                    text=True, encoding='utf-8', timeout=60)
+            (output / (name + '-long-path.log')).write_text(result.stdout + result.stderr, encoding='utf-8')
+            result.check_returncode()
+            reports[name] = json.loads(result.stdout)
+    return reports
 
 
 def main():
@@ -31,6 +73,8 @@ def main():
             while block := response.read(1024*1024):
                 stream.write(block)
     report = {'platform': release['target'], 'gpuSynthesis': False, 'listeningQuality': False}
+    if not apple:
+        report['longPaths'] = check_windows_long_paths(bundle, output)
     ffmpeg = bundle / ('runtime/bin/ffmpeg' if apple else 'runtime/bin/ffmpeg.exe')
     pcm = b''.join(struct.pack('<h', int(6000 * math.sin(i*2*math.pi*220/32000))) for i in range(32000))
     for codec, container in [('libvorbis','ogg'),('aac','adts')]:
