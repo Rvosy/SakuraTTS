@@ -1,10 +1,9 @@
 """Archive only verified release files and preserve executable permissions."""
 
 import hashlib
+import importlib.util
 import json
-import os
 from pathlib import Path
-import shutil
 import subprocess
 import sys
 import tarfile
@@ -13,7 +12,9 @@ import unittest
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/archive_portable.py"
-SEVENZIP = shutil.which("7z") or str(Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "7-Zip/7z.exe")
+SPEC = importlib.util.spec_from_file_location("archive_portable", SCRIPT)
+ARCHIVER = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(ARCHIVER)
 
 
 class PortableArchiveTests(unittest.TestCase):
@@ -31,9 +32,25 @@ class PortableArchiveTests(unittest.TestCase):
             "bytes": self.launcher.stat().st_size}}, "bytes": self.launcher.stat().st_size}
         (self.bundle / "bundle-manifest.json").write_text(json.dumps(manifest))
 
-    def archive(self):
+    def archive(self, format="tar.gz"):
         return subprocess.run([sys.executable, str(SCRIPT), "--bundle", str(self.bundle),
-            "--format", "tar.gz", "--output", str(self.root / "release")], capture_output=True, text=True)
+            "--format", format, "--output", str(self.root / "release")], capture_output=True, text=True)
+
+    @unittest.skipUnless(ARCHIVER.find_sevenzip(), "7-Zip is not installed")
+    def test_7z_roundtrip_excludes_unlisted_files(self):
+        (self.bundle / "personal.txt").write_text("not part of the release")
+        result = self.archive("7z")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        archive = self.root / "release" / (self.bundle.name + ".7z")
+        destination = self.root / "解压 目录"
+        ARCHIVER.run(ARCHIVER.find_sevenzip(), ["x", str(archive), "-o" + str(destination)], self.root)
+        extracted = destination / self.bundle.name
+        self.assertEqual({p.name for p in extracted.iterdir()}, {"start.command", "bundle-manifest.json"})
+        self.assertEqual((extracted / "start.command").read_bytes(), self.launcher.read_bytes())
+        self.assertEqual((extracted / "bundle-manifest.json").read_bytes(),
+                         (self.bundle / "bundle-manifest.json").read_bytes())
+        report = json.loads((archive.parent / "compression-report.json").read_text())
+        self.assertEqual(report["sha256"], ARCHIVER.digest(archive))
 
     def test_archive_excludes_user_data_and_preserves_files_and_modes(self):
         (self.bundle / "cache").mkdir()
@@ -50,7 +67,7 @@ class PortableArchiveTests(unittest.TestCase):
             stream.extractall(self.root / "解压 目录", filter="data")
         self.assertEqual((self.root / "解压 目录" / self.bundle.name / "start.command").read_bytes(),
                          self.launcher.read_bytes())
-        recorded = archive.with_name(archive.name + ".sha256").read_text().split()[0]
+        recorded = archive.with_name(archive.name + ".sha256").read_text(encoding="utf-8").split()[0]
         self.assertEqual(recorded, hashlib.sha256(archive.read_bytes()).hexdigest())
 
     def test_tampered_input_is_rejected_before_creating_archive(self):
@@ -60,22 +77,18 @@ class PortableArchiveTests(unittest.TestCase):
         self.assertIn("Bundle file changed", result.stderr)
         self.assertFalse((self.root / "release").exists())
 
-    @unittest.skipUnless(Path(SEVENZIP).is_file(), "7-Zip is not installed")
-    def test_7z_release_roundtrip_excludes_user_files(self):
-        (self.bundle / "personal.txt").write_text("not in the release")
-        release = self.root / "release"
-        result = subprocess.run([sys.executable, str(SCRIPT), "--bundle", str(self.bundle),
-            "--format", "7z", "--profile", "maximum", "--sevenzip", SEVENZIP,
-            "--output", str(release)], capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        archive = release / (self.bundle.name + ".7z")
-        destination = self.root / "解压 目录"
-        result = subprocess.run([SEVENZIP, "x", str(archive), "-o" + str(destination)],
-                                capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        extracted = destination / self.bundle.name
-        self.assertEqual({p.name for p in extracted.iterdir()}, {"start.command", "bundle-manifest.json"})
-        for name in ("start.command", "bundle-manifest.json"):
-            self.assertEqual((extracted / name).read_bytes(), (self.bundle / name).read_bytes())
-        recorded = archive.with_name(archive.name + ".sha256").read_text(encoding="utf-8").split()[0]
-        self.assertEqual(recorded, hashlib.sha256(archive.read_bytes()).hexdigest())
+
+class CompressionSampleTests(unittest.TestCase):
+    def test_small_files_are_read_once_and_large_windows_do_not_overlap(self):
+        for size in (0, 1, 8, 23, 24, 25, 100):
+            with self.subTest(size=size):
+                source = bytes(range(size))
+                ranges = ARCHIVER.sample_ranges(size, chunk=8)
+                offsets = [i for start, length in ranges for i in range(start, start + length)]
+                self.assertEqual(len(offsets), len(set(offsets)))
+                self.assertTrue(all(0 <= i < size for i in offsets))
+                if size <= 24:
+                    self.assertEqual(b"".join(source[s:s+n] for s, n in ranges), source)
+                else:
+                    self.assertEqual(len(offsets), 24)
+                    self.assertEqual(offsets[-1], size - 1)

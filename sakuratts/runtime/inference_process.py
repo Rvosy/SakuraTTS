@@ -299,6 +299,8 @@ class ProcessInference:
                 return None
         except _RemoteError as error:
             metadata = error.metadata
+            from .logging import set_stage
+            set_stage(metadata.get("stage", "推理"))
             kind = metadata.get("error_type")
             self._info = metadata.get("info")
             if self._info is not None:

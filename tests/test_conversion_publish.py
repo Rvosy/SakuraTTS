@@ -45,6 +45,7 @@ class ConversionPublishTests(unittest.TestCase):
                     model = convert(**options)
                 check.assert_called_once()
                 self.assertEqual(model.path, root / "model/model.json")
+                self.assertEqual(model.manifest["languages"], ["ja", "en"])
                 self.assertEqual(model.manifest["acoustic"], "acoustic")
                 self.assertEqual(model.manifest["acoustic_python"], str(root / "python.exe"))
                 self.assertEqual((root / "model/acoustic/weights.bin").read_bytes(), b"export_sovits_onnx.py")

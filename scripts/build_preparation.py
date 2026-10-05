@@ -194,6 +194,9 @@ def make_plan(args):
     for path in tree(dictionary):
         plan.add(path, site_target + "/" + path.relative_to(frontend_site).as_posix(), "openjtalk-dictionary")
     add_official_sources(plan, args.official_source, args.language_model)
+    for path in tree(args.english_resources):
+        plan.add(path, "official/english/" + path.relative_to(args.english_resources).as_posix(),
+                 "english-frontend-resources")
     for name in ("GPT-SoVITS-model-card.md", "fasttext-language-identification.html", "fasttext-CC-BY-SA-3.0.txt",
                  "HuBERT-model-card.md", "ERes2NetV2-model-card.md", "Apache-2.0.txt", "portable-resources.md"):
         plan.add(Path(__file__).resolve().parents[1] / "docs/third-party" / name, "licenses/" + name, "auxiliary-model-notices")
@@ -280,6 +283,8 @@ def main():
     parser.add_argument("--language-model", type=Path, help="Local lid.176.bin; defaults to the upstream pretrained_models directory")
     parser.add_argument("--runtime-site", type=Path,
                         help="CPU torch, torchaudio and onnxruntime site-packages overriding --site")
+    parser.add_argument("--english-resources", type=Path, required=True,
+                        help="Offline English data exported by tools/prepare_english_frontend.py --export")
     args = parser.parse_args()
     plan, stem, paths = make_plan(args)
     write(args.audit, json.dumps({"files": plan.files, "components": plan.components}, ensure_ascii=False, indent=2) + "\n")

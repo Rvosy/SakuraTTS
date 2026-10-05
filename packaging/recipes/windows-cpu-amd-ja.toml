@@ -2,7 +2,7 @@
 # Select cpu/int8 or directml/fp16 in the normal config or CLI.
 target = "windows-x64"
 backend = "directml"
-languages = ["ja"]
+languages = ["ja", "en"]
 services = ["http"]
 
 [workers]

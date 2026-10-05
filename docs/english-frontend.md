@@ -6,29 +6,22 @@ Windows / NVIDIA、V2ProPlus 路径支持 `en`，以及含英文段的 `ja`、`a
 
 ## 准备资源
 
-旧日文资源包可以继续使用；遇到英文段会明确报错。启用英文需要额外依赖和带英文数据的新前端包，不会自动下载 NLTK 数据或修改旧包。
+默认整合包包含日语和英语运行依赖。准备组件内置导出的英语词典、词性模型和发音预测权重；首次转换原始模型时会一起生成日英文本处理资源，无需转换后手动追加，也不会下载 NLTK 数据。
 
-在 SakuraTTS 运行环境中安装 `sakuratts[english]`；源码环境使用：
-
-```powershell
-python -m pip install -e ".[english]"
-```
-
-用原版 GPT-SoVITS 的可信准备环境导出资源。这个环境须已有可用的英文 G2P、词典缓存、NLTK POS 与 CMUdict 数据，源文件版本由工具核对。运行下列命令的主 Python 也须安装英文可选依赖，以便在生成后核对音素：
+构建准备组件前，用已有的 GPT-SoVITS 环境离线导出一次英语资源：
 
 ```powershell
-python tools/prepare_english_frontend.py `
-  --frontend models/my-voice/frontend `
-  --output models/my-voice/frontend-ja-en `
-  --official-source D:/GPT-SoVITS `
-  --python D:/GPT-SoVITS/runtime/python.exe
+$env:NLTK_DATA = "LOCAL_NLTK_DATA"
+LOCAL_PREPARATION_PYTHON tools/prepare_english_frontend.py --export `
+  --official-source LOCAL_SUPPORTED_GPT_SOVITS_SOURCE `
+  --output LOCAL_ENGLISH_RESOURCES
 ```
 
-工具复制已校验的日文资源，增加英文词典、词性模型和发音预测权重。它对照原版检查规范化文本与音素序列，通过后才生成目标目录；不会覆盖已有输出。导出阶段读取原版环境中的可信 pickle 数据，推理端只加载 JSON 和 NPZ。
+输出目录的父目录须已存在。准备环境须已有英文 G2P、词典缓存、NLTK POS 与 CMUdict 数据。导出读取可信准备环境中的 pickle 数据，推理只加载 JSON 和 NPZ。
 
-把模型配置中的 `frontend` 改为新目录；若模型声明了 `languages`，可设为 `["ja", "en"]`。路径格式见[模型目录](model-format.md)。新参考音频准备仍可复用该前端包。原始权重首次转换生成的前端目前只有日文，转换后按上述步骤增加英文资源。
+运行 `scripts/build_preparation.py` 时传入 `--english-resources LOCAL_ENGLISH_RESOURCES`，构建器将其放到准备组件的 `official/english/`。完整构建命令见[整合包构建](portable-bundle.md)。源码环境直接转换时，在所用 GPT-SoVITS 源码根目录的 `english/` 放置同一份导出资源，并安装 `sakuratts[english]`。
 
-整合包构建时，在自用 recipe 的 `languages` 中加入 `en`，以包含英文运行依赖，并使用上述前端包。默认日文 recipe 和已构建的旧包不会自动获得英文能力。
+模型配置的 `frontend` 指向生成的目录；若声明 `languages`，使用 `["ja", "en"]`。旧缓存不自动迁移，调试时使用新的缓存目录重新转换。
 
 ## 请求
 

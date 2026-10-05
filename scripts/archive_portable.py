@@ -3,14 +3,35 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath
+import shutil
 import subprocess
 import tarfile
 import time
 
 PROFILES = {"balanced": ["-mx=5", "-md=32m"],
             "compact": ["-mx=7", "-md=64m"],
-            "maximum": ["-mx=9", "-md=128m"]}
+            "maximum": ["-mx=9", "-md=128m"],
+            "extreme": ["-mx=9", "-md=512m", "-mfb=273", "-mqs=on"]}
+
+
+def find_sevenzip():
+    for name in ("7zz", "7z"):
+        if executable := shutil.which(name):
+            return Path(executable)
+    if directory := os.environ.get("ProgramFiles"):
+        executable = Path(directory) / "7-Zip/7z.exe"
+        if executable.is_file():
+            return executable
+    return None
+
+
+def sample_ranges(size, chunk=8 * 1024 * 1024):
+    """Read small files once; take disjoint beginning/middle/end windows otherwise."""
+    if size <= 3 * chunk:
+        return [(0, size)]
+    return [(0, chunk), ((size - chunk) // 2, chunk), (size - chunk, chunk)]
 
 
 def digest(path):
@@ -23,7 +44,8 @@ def digest(path):
 
 def run(sevenzip, arguments, cwd):
     start = time.perf_counter()
-    result = subprocess.run([str(sevenzip), *arguments], cwd=cwd, capture_output=True, text=True)
+    result = subprocess.run([str(sevenzip), "-sccUTF-8", *arguments], cwd=cwd,
+                            capture_output=True, text=True, encoding="utf-8")
     if result.returncode:
         raise RuntimeError(result.stdout + result.stderr)
     return round(time.perf_counter() - start, 3)
@@ -43,7 +65,7 @@ def compress(sevenzip, source, listing, archive, profile):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bundle", type=Path, required=True)
-    parser.add_argument("--sevenzip", type=Path)
+    parser.add_argument("--sevenzip", type=Path, default=find_sevenzip())
     parser.add_argument("--format", choices=("7z", "tar.gz"), default="7z")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--benchmark", action="store_true")
@@ -68,14 +90,14 @@ def main():
     if args.benchmark:
         sample = output / "sample"
         sample.mkdir()
-        # Sample DLL/code and dictionary data across each large payload, not just its header.
+        # Keep windows disjoint so repeated sample bytes cannot inflate compression gains.
         largest = sorted(manifest["files"], key=lambda n: -manifest["files"][n]["bytes"])[:12]
         for index, name in enumerate(largest):
             path = root / name
             with path.open("rb") as src, (sample / (str(index) + path.suffix)).open("wb") as dst:
-                for fraction in (0, .33, .66):
-                    src.seek(int(max(0, path.stat().st_size - 8 * 1024 * 1024) * fraction))
-                    dst.write(src.read(8 * 1024 * 1024))
+                for offset, length in sample_ranges(path.stat().st_size):
+                    src.seek(offset)
+                    dst.write(src.read(length))
         listing = output / "sample-files.txt"
         listing.write_text("\n".join(p.name for p in sample.iterdir()), encoding="utf-8")
         for profile in PROFILES:

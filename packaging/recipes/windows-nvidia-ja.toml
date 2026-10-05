@@ -2,7 +2,7 @@
 # in the normal runtime configuration. Set services = [] for an SDK/CLI bundle.
 target = "windows-x64"
 backend = "cuda"
-languages = ["ja"]
+languages = ["ja", "en"]
 services = ["http"]
 
 [workers]

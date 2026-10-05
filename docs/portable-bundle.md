@@ -2,7 +2,7 @@
 
 Apple silicon 的独立运行组件、构建与验收见 [Mac 整合包指南](portable-macos.md)。
 
-整合包可以只用本地文件构建。默认发行组合包含 HTTP、CLI、日文推理及私有 Python 和所选后端的运行库；完整包另外带独立准备组件，让用户提供原始权重和新参考音频后直接调用 HTTP。PyTorch、原版准备源码和公共辅助模型放在准备组件中，按需启动 CPU 进程，完成后退出。HTTP 和准备组件可以分别省略。
+整合包可以只用本地文件构建。默认发行组合包含 HTTP、CLI、日英混合推理及私有 Python 和所选后端的运行库；完整包另外带独立准备组件，让用户提供原始权重和新参考音频后直接调用 HTTP。PyTorch、原版准备源码和公共辅助模型放在准备组件中，按需启动 CPU 进程，完成后退出。HTTP 和准备组件可以分别省略。
 
 默认使用 Windows x64 统一组合，同包提供 CPU、NVIDIA CUDA 与 DirectML，通过配置或 `--backend cpu|cuda|directml` 选择。主环境使用包含 CPU provider 的 DirectML ONNX Runtime，CUDA 声学使用私有 ORT GPU worker，避免多个 ORT 分发包覆盖同一模块。无需按显卡代际拆包。带准备组件的完整包可处理原始权重和新参考；精简包仅适合已有转换资源，按实际分发需求选择，不必同时发布两种大小。
 
@@ -35,7 +35,7 @@ SakuraTTS-Windows/
 
 发声模型全部排除：开发机角色、GPT/SoVITS 官方底模、转换结果、参考音频、参考条件、生成音频和个人配置均不进入整合包。“模型包”是用户明确选择的 GPT 语义模型与 SoVITS 声学模型转换后的部署目录，可来自官方底模或用户微调权重，不是 Python/CUDA 运行环境。
 
-完整包的 `runtime/preparation/` 携带 HuBERT、Pro 说话人编码器、语言识别模型、日文字典和必要的原版源码。用户不需要配置内部解释器或源码路径。精简包省略该目录，支持已有转换模型和预先准备的参考条件；尝试转换原始权重或处理新参考时，会提示缺少准备组件。
+完整包的 `runtime/preparation/` 携带 HuBERT、Pro 说话人编码器、语言识别模型、日文字典、离线英语资源和必要的原版源码。用户不需要配置内部解释器或源码路径。精简包省略该目录，支持已有转换模型和预先准备的参考条件；尝试转换原始权重或处理新参考时，会提示缺少准备组件。
 
 NVIDIA 包的 `configs/low-vram.json` 和 `configs/minimum-vram.json` 保留低显存选择，需要匹配的 FP16 chunk256 声学包，不能通过切换配置自动转换模型。极限档支持 CLI/Python 和 managed HTTP；FP16 听感验收未完成，默认仍保持 FP32。详见[推理档位](inference-profiles.md)。
 
@@ -108,6 +108,7 @@ python scripts/build_preparation.py `
   --runtime-site LOCAL_CPU_TORCH_SITE_PACKAGES `
   --official-source LOCAL_SUPPORTED_GPT_SOVITS_SOURCE `
   --language-model LOCAL_LID_176_BIN `
+  --english-resources LOCAL_ENGLISH_RESOURCES `
   --output dist/preparation `
   --audit tmp/preparation-inputs.json
 python scripts/build_portable.py `
@@ -153,14 +154,18 @@ CPU/AMD 主环境使用 `.[directml,japanese-text,server]`，仅包含 `onnxrunt
 
 ```powershell
 python scripts/archive_portable.py --bundle dist/SakuraTTS-Windows-CPU-AMD `
-  --sevenzip "C:/Program Files/7-Zip/7z.exe" --output tmp/7z-benchmark --benchmark
+  --output tmp/7z-benchmark --benchmark
 python scripts/archive_portable.py --bundle dist/SakuraTTS-Windows-CPU-AMD `
-  --sevenzip "C:/Program Files/7-Zip/7z.exe" --output dist/portable-release --profile maximum
+  --output dist/portable-release --profile extreme
 ```
 
-采样比较 LZMA2 solid 的 `mx=5/7/9`、32/64/128 MiB 字典，固定 2 个压缩线程，记录压缩大小、耗时、校验和解压耗时。样本取自体积最大的 12 个文件的多个位置，结果只用于选参，不代表完整包的压缩率。正式压缩只读取发行清单中的文件；验收产生的缓存、日志、音频及用户后来放入的模型都不会收录。输出 `.7z`、SHA256 和压缩报告。
+脚本从 PATH 查找 `7zz` 或 `7z`，Windows 也会查找 Program Files 下的 7-Zip。其他安装位置可用 `--sevenzip "C:/Tools/7-Zip/7z.exe"` 指定。输出目录必须尚不存在。
 
-压缩选项由 [archive_portable.py](../scripts/archive_portable.py) 的 `PROFILES` 定义。`balanced` 适合开发打包，`maximum` 用于体积优先的发行物；本机样本比较与完整压缩结果分别保存，具体结果见下方记录。
+压缩选项由 [archive_portable.py](../scripts/archive_portable.py) 的 `PROFILES` 定义。`balanced` 适合开发打包，默认的 `maximum` 控制内存成本；`extreme` 使用更大字典、较长匹配和按扩展名排序，供体积优先的发行物使用。各档位均使用 LZMA2 solid 和 2 个压缩线程，避免增加线程后分块压缩损失跨块匹配。大字典主要增加压缩内存，解压时也需要容纳字典；solid 压缩适合整包解压，单独提取后部文件可能较慢。
+
+`--benchmark` 比较所有档位，记录大小、压缩耗时、校验和解压耗时。样本取自最大的 12 个文件，读取头部、中间和尾部互不重叠的片段，小文件只读取一次。样本不能反映完整文件和跨目录重复内容的全部收益，不能据此宣称整包压缩率或全局最优参数。发行前应对同一完整包比较候选档位。
+
+正式压缩只读取发行清单中的文件；验收产生的缓存、日志、音频及用户后来放入的模型都不会收录。输出 `.7z`、SHA256 和压缩报告，并运行 `7z t` 校验。压缩不改变模型精度或解压后的文件内容。
 
 ## 验证范围
 
@@ -185,6 +190,7 @@ AMD 验收改用 `--backend directml --profile fp16`，使用独立的空缓存�
 
 | 产物与日期 | 记录 |
 | --- | --- |
+| 2026-10-05 压缩实验 | [7z 参数对照与完整包校验](../research/notes/portable-7z-20261005.md) |
 | 2026-09-22 完整包 | [缩减、首次使用、搬迁与解压验收](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/portable-compact-20260922.md) |
 | 早期精简推理包 | [压缩、解压与单机运行检查](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/portable-runtime-bundle-20260922.md) |
 

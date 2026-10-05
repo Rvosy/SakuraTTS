@@ -1,0 +1,460 @@
+{
+  "input_bytes": 402653184,
+  "inventory": [
+    {
+      "source": "runtime/main/Lib/site-packages/nvidia/cublas/bin/cublasLt64_12.dll",
+      "ranges": [
+        [
+          0,
+          8388608
+        ],
+        [
+          330142464,
+          8388608
+        ],
+        [
+          660284928,
+          8388608
+        ]
+      ],
+      "sample": "00.dll",
+      "sha256": "9b4901e1f477b1eb4bce641ea94aab082394497bd05a906ea97a8ce1675c83a3"
+    },
+    {
+      "source": "runtime/acoustic/Lib/site-packages/onnxruntime/capi/onnxruntime_providers_cuda.dll",
+      "ranges": [
+        [
+          0,
+          8388608
+        ],
+        [
+          299534352,
+          8388608
+        ],
+        [
+          599068704,
+          8388608
+        ]
+      ],
+      "sample": "01.dll",
+      "sha256": "2bf1cc1524fa75baa2b7e4c71b6fa3eae260942a8f4bc61a1f86b40f860ba940"
+    },
+    {
+      "source": "runtime/acoustic/cuda/cudnn_engines_precompiled64_9.dll",
+      "ranges": [
+        [
+          0,
+          8388608
+        ],
+        [
+          271799352,
+          8388608
+        ],
+        [
+          543598704,
+          8388608
+        ]
+      ],
+      "sample": "02.dll",
+      "sha256": "750d74a435a7bb20ef900bb5e63003bb4ffdb17938c24bafe52faa1473330aad"
+    },
+    {
+      "source": "runtime/acoustic/cuda/cufft64_11.dll",
+      "ranges": [
+        [
+          0,
+          8388608
+        ],
+        [
+          133866240,
+          8388608
+        ],
+        [
+          267732480,
+          8388608
+        ]
+      ],
+      "sample": "03.dll",
+      "sha256": "34db632dfe0fe5c39f19d38bad9764ffa82da2493079caa09b0714e4b8c13eed"
+    },
+    {
+      "source": "runtime/acoustic/cuda/cudnn_adv64_9.dll",
+      "ranges": [
+        [
+          0,
+          8388608
+        ],
+        [
+          131297592,
+          8388608
+        ],
+        [
+          262595184,
+          8388608
+        ]
+      ],
+      "sample": "04.dll",
+      "sha256": "8b553aa05e25abef383c49f1edb7303d02910b74b3228c9792ff23cf40f5ee88"
+    },
+    {
+      "source": "runtime/preparation/Lib/site-packages/torch/lib/torch_cpu.dll",
+      "ranges": [
+        [
+          0,
+          8388608
+        ],
+        [
+          122135808,
+          8388608
+        ],
+        [
+          244271616,
+          8388608
+        ]
+      ],
+      "sample": "05.dll",
+      "sha256": "9ba5da1d639d8998f7d3cdc6038dae968a00f15cacde3e7a073c3fd2e435e38a"
+    },
+    {
+      "source": "runtime/main/Lib/site-packages/sudachidict_core/resources/system.dic",
+      "ranges": [
+        [
+          0,
+          8388608
+        ],
+        [
+          104538715,
+          8388608
+        ],
+        [
+          209077431,
+          8388608
+        ]
+      ],
+      "sample": "06.dic",
+      "sha256": "975775b6337fd6b99b69c6bd6c47046553f08a4cdd274278a250529ddfa8c0a4"
+    },
+    {
+      "source": "runtime/preparation/official/GPT_SoVITS/pretrained_models/chinese-hubert-base/pytorch_model.bin",
+      "ranges": [
+        [
+          0,
+          8388608
+        ],
+        [
+          90211404,
+          8388608
+        ],
+        [
+          180422809,
+          8388608
+        ]
+      ],
+      "sample": "07.bin",
+      "sha256": "c8c8bcbbd5cb1824633ff13a2e2d05ae40ea45adbb3a21980f396593c69f4c25"
+    },
+    {
+      "source": "runtime/preparation/official/GPT_SoVITS/pretrained_models/fast_langdetect/lid.176.bin",
+      "ranges": [
+        [
+          0,
+          8388608
+        ],
+        [
+          61438795,
+          8388608
+        ],
+        [
+          122877590,
+          8388608
+        ]
+      ],
+      "sample": "08.bin",
+      "sha256": "61b688857804d683edb2b97471d92acc0e85651267d81239aa8ba7650d5e20b5"
+    },
+    {
+      "source": "runtime/preparation/official/GPT_SoVITS/pretrained_models/sv/pretrained_eres2netv2w24s4ep4.ckpt",
+      "ranges": [
+        [
+          0,
+          8388608
+        ],
+        [
+          49570044,
+          8388608
+        ],
+        [
+          99140089,
+          8388608
+        ]
+      ],
+      "sample": "09.ckpt",
+      "sha256": "74b85db5074497404b9f784a0c42b0bf513911b1076fde856ec8db8e2ff95807"
+    },
+    {
+      "source": "runtime/acoustic/cuda/cudnn_ops64_9.dll",
+      "ranges": [
+        [
+          0,
+          8388608
+        ],
+        [
+          48649016,
+          8388608
+        ],
+        [
+          97298032,
+          8388608
+        ]
+      ],
+      "sample": "10.dll",
+      "sha256": "5cf7deca97ed96644a68d4b7805c79b5d688a34039cd08c45e1dcc0127f40312"
+    },
+    {
+      "source": "runtime/main/Lib/site-packages/pyopenjtalk/dictionary/sys.dic",
+      "ranges": [
+        [
+          0,
+          8388608
+        ],
+        [
+          47371401,
+          8388608
+        ],
+        [
+          94742802,
+          8388608
+        ]
+      ],
+      "sample": "11.dic",
+      "sha256": "35b6fdd7e55e78679f8d4ac54ea7e7c6047f7e7e27712c34f3f3174ebbfcbec8"
+    },
+    {
+      "source": "runtime/preparation/Lib/site-packages/pyopenjtalk/open_jtalk_dic_utf_8-1.11/sys.dic",
+      "ranges": [
+        [
+          0,
+          8388608
+        ],
+        [
+          47342584,
+          8388608
+        ],
+        [
+          94685168,
+          8388608
+        ]
+      ],
+      "sample": "12.dic",
+      "sha256": "a69ca36cc5891bc7aeee33b59b7b77376271ae586b9be174dbbb9b06c0ee11db"
+    },
+    {
+      "source": "runtime/main/Lib/site-packages/nvidia/cublas/bin/cublas64_12.dll",
+      "ranges": [
+        [
+          0,
+          8388608
+        ],
+        [
+          47064832,
+          8388608
+        ],
+        [
+          94129664,
+          8388608
+        ]
+      ],
+      "sample": "13.dll",
+      "sha256": "72b79f3d8f0cb4ee8754340b3b46af010a7d1c2efb2a3cfe6382260f93a1fa20"
+    },
+    {
+      "source": "runtime/acoustic/cuda/cudnn_graph64_9.dll",
+      "ranges": [
+        [
+          0,
+          8388608
+        ],
+        [
+          45754936,
+          8388608
+        ],
+        [
+          91509872,
+          8388608
+        ]
+      ],
+      "sample": "14.dll",
+      "sha256": "f847b3d5f38e54a4a6294f8a0e5988593cd3d60e444011baab7a4ebe9c60a22f"
+    },
+    {
+      "source": "runtime/main/Lib/site-packages/nvidia/cuda_nvrtc/bin/nvrtc64_120_0.alt.dll",
+      "ranges": [
+        [
+          0,
+          8388608
+        ],
+        [
+          40755456,
+          8388608
+        ],
+        [
+          81510912,
+          8388608
+        ]
+      ],
+      "sample": "15.dll",
+      "sha256": "39585d94199bd65693d5f9268cbc125753e633482d72ebbd7418947952898c1f"
+    }
+  ],
+  "results": [
+    {
+      "profile": "baseline128",
+      "bytes": 167899291,
+      "compression_seconds": 46.792,
+      "test_seconds": 3.681,
+      "parameters": [
+        "-m0=LZMA2",
+        "-mx=9",
+        "-md=128m",
+        "-ms=on",
+        "-mmt=2"
+      ],
+      "extraction_seconds": 3.586,
+      "sha256_verified": true
+    },
+    {
+      "profile": "sorted128",
+      "bytes": 167908155,
+      "compression_seconds": 40.076,
+      "test_seconds": 3.313,
+      "parameters": [
+        "-m0=LZMA2",
+        "-mx=9",
+        "-md=128m",
+        "-mqs=on",
+        "-ms=on",
+        "-mmt=2"
+      ],
+      "extraction_seconds": 3.531,
+      "sha256_verified": true
+    },
+    {
+      "profile": "dense256",
+      "bytes": 167679680,
+      "compression_seconds": 50.282,
+      "test_seconds": 3.405,
+      "parameters": [
+        "-m0=LZMA2",
+        "-mx=9",
+        "-md=256m",
+        "-mqs=on",
+        "-mfb=273",
+        "-ms=on",
+        "-mmt=2"
+      ],
+      "extraction_seconds": 3.528,
+      "sha256_verified": true
+    },
+    {
+      "profile": "dense512",
+      "bytes": 167679680,
+      "compression_seconds": 58.361,
+      "test_seconds": 3.641,
+      "parameters": [
+        "-m0=LZMA2",
+        "-mx=9",
+        "-md=512m",
+        "-mqs=on",
+        "-mfb=273",
+        "-ms=on",
+        "-mmt=2"
+      ],
+      "extraction_seconds": 3.703,
+      "sha256_verified": true
+    },
+    {
+      "profile": "deep256",
+      "bytes": 167663547,
+      "compression_seconds": 97.997,
+      "test_seconds": 3.484,
+      "parameters": [
+        "-m0=LZMA2",
+        "-mx=9",
+        "-md=256m",
+        "-mqs=on",
+        "-mfb=273",
+        "-mmc=1000",
+        "-ms=on",
+        "-mmt=2"
+      ],
+      "extraction_seconds": 3.501,
+      "sha256_verified": true
+    }
+  ],
+  "zip_control": {
+    "profile": "zip-deflate9",
+    "bytes": 215735528,
+    "compression_seconds": 53.29,
+    "parameters": [
+      "-tzip",
+      "-mx=9",
+      "-mmt=2"
+    ],
+    "sha256_verified": true
+  },
+  "environment": {
+    "date": "2026-10-05",
+    "sevenzip": "25.01 x64",
+    "cpu": "AMD Ryzen 7 9700X",
+    "memory_kib": 49402880,
+    "timing_note": "Concurrent local work; wall-clock times are not isolated benchmarks."
+  },
+  "full_bundle": [
+    {
+      "profile": "maximum",
+      "bytes": 1960849296,
+      "compression_seconds": 839.138,
+      "test_seconds": 37.678,
+      "parameters": [
+        "-m0=LZMA2",
+        "-mx=9",
+        "-md=128m",
+        "-ms=on",
+        "-mmt=2"
+      ],
+      "sha256": "cc47441f0442de5ac8377826d5080ba2676039df195d5d56b16b61cde1e6d6b6",
+      "unpacked_bytes": 5512352446,
+      "files": 18576,
+      "verification": {
+        "files": 18576,
+        "extraction_seconds": 54.187,
+        "all_sha256_match": true,
+        "manifest_sha256": "c566f3cc866a096e8b59e4ca6968659f3952926bfc872cdde764e8093bd9b749"
+      }
+    },
+    {
+      "profile": "extreme",
+      "bytes": 1899321527,
+      "compression_seconds": 1171.319,
+      "test_seconds": 35.066,
+      "parameters": [
+        "-m0=LZMA2",
+        "-mx=9",
+        "-md=512m",
+        "-mfb=273",
+        "-mqs=on",
+        "-ms=on",
+        "-mmt=2"
+      ],
+      "sha256": "616dba350df69045c68b2d756b155e9e6166e64dbfab6fb47b7ea4f5ae0ae849",
+      "unpacked_bytes": 5512352446,
+      "files": 18576,
+      "verification": {
+        "files": 18576,
+        "extraction_seconds": 48.447,
+        "all_sha256_match": true,
+        "manifest_sha256": "c566f3cc866a096e8b59e4ca6968659f3952926bfc872cdde764e8093bd9b749"
+      }
+    }
+  ]
+}

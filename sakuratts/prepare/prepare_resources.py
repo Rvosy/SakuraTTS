@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare portable Japanese frontend and V2Pro/V2ProPlus reference packages.
+"""Prepare portable Japanese/English frontend and V2Pro/V2ProPlus references.
 
 Preparation alone needs PyTorch and an explicit GPT-SoVITS source distribution.
 The resulting packages do not need that distribution for ordinary inference.
@@ -172,6 +172,7 @@ def prepare_frontend(root, output, language_model=None, preflight=None):
     write_json(output / "symbols-v2.json", symbols)
     shutil.copy2(user / "user.dict", output / "user.dict")
     shutil.copy2(language, output / "lid.176.bin")
+    shutil.copytree(root / "english", output / "english")
     classic_identities = {name: identity(path) for name, path in classic_files.items()}
     for name, source_path in classic_files.items():
         target = output / name
@@ -187,6 +188,9 @@ def prepare_frontend(root, output, language_model=None, preflight=None):
         manifest["sources"]["japanese_g2p_preflight"] = preflight
     if classic_files:
         manifest["sources"]["classic_files"] = classic_identities
+    manifest["english_g2p"] = {"implementation": "gpt-sovits-english-v1", "directory": "english"}
+    manifest["files"].update({"english/" + path.name: {"bytes": path.stat().st_size}
+                              for path in (output / "english").iterdir() if path.is_file()})
     write_json(output / "manifest.json", manifest)
     return manifest
 

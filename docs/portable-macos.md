@@ -33,6 +33,7 @@ python scripts/build_preparation.py --target macos-arm64 --minimum-macos 14.0 \
   --site LOCAL_PREPARATION_SITE_PACKAGES \
   --official-source LOCAL_SUPPORTED_GPT_SOVITS_SOURCE \
   --language-model LOCAL_LID_176_BIN \
+  --english-resources LOCAL_ENGLISH_RESOURCES \
   --output dist/macos-preparation --audit outputs/macos-preparation-inputs.json
 python scripts/build_portable.py --recipe packaging/recipes/macos-mlx-ja.toml \
   --python-base LOCAL_STANDALONE_CPYTHON \
