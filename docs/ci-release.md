@@ -4,7 +4,7 @@
 
 当前支持 Windows x64 统一包和 macOS arm64 包。两平台分别执行打包测试、构建产品 wheel、装配、运行检查、归档与上传，全部成功后更新 `latest-preview.json` 和下载说明。失败保留已上传候选文件与 Actions 日志，不覆盖旧版入口、不自动重跑失败测试。
 
-Windows 产物为 `SakuraTTS-windows-x64.7z`，使用 Windows runner 自带的 7-Zip 和 [归档脚本](../scripts/archive_portable.py) 的 `maximum` 档位，压缩后运行 `7z t`。macOS 继续生成 `SakuraTTS-macos-arm64.tar.gz`，保留可执行权限。两平台均上传对应的 `.sha256`；下载入口使用实际上传的文件名。
+Windows 使用 Windows runner 自带的 7-Zip 和 [归档脚本](../scripts/archive_portable.py) 的 `maximum` 档位，压缩后运行 `7z t`。macOS 继续使用 tar.gz，保留可执行权限。上传文件名追加北京时间日期，例如 `SakuraTTS-windows-x64-20261005.7z` 和 `SakuraTTS-macos-arm64-20261005.tar.gz`；同日后续版本在日期后追加 `-1`、`-2`。两平台均上传对应的 `.sha256`，其中的文件名与下载文件一致。
 
 ## 运行环境输入
 
@@ -18,7 +18,11 @@ FFmpeg 单独从固定的 7.1.2 源码编译，保留音频解码、PCM、AAC �
 
 ## 触发与验收
 
-推送到 `chore/modelscope-*` 发布分支或原有的 `codex/portable-modelscope` 分支会触发构建；工作流进入默认分支后可从 Actions 页面手动运行。发布分支合入需要发布的源码后推送，`main` 推送不自动发布。发布过程串行执行，平台构建并行执行。发布编号使用 GitHub run ID 与 attempt，重跑不会覆盖上一轮候选文件。
+项目统一在 `main` 维护。提交、推送代码都不会构建或上传整合包；发布只由 Actions 的手动入口触发。
+
+发布步骤：推送需要发布的代码到 `main`，打开仓库 **Actions → 构建并发布整合包预览 → Run workflow**，选择 `main` 并运行。该操作会构建 Windows 和 macOS 包、执行检查并上传魔搭；两平台均成功后更新下载入口。未点击运行时，魔搭保持上一版。
+
+发布过程串行执行，平台构建并行执行。发布编号使用 GitHub run ID 与 attempt，重跑不会覆盖上一轮候选文件。
 
 - Windows 在 CPU 上检查矩阵运算、原始模型转换、合成、空闲卸载和进程退出。公共测试权重与合成参考音频仅用于验收，不进入整合包。
 - macOS 在托管 runner 检查包内导入、MLX CPU 运算及 managed HTTP 未加载模型启动。Metal 合成仍需具备相应硬件加速的 Mac 验收。

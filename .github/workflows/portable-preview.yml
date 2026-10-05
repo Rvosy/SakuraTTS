@@ -2,8 +2,6 @@ name: 构建并发布整合包预览
 
 on:
   workflow_dispatch:
-  push:
-    branches: [codex/portable-modelscope, 'chore/modelscope-*']
 
 permissions:
   contents: read

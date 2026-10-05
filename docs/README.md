@@ -19,6 +19,7 @@
 | 行为约束 | [推理契约](specs/inference-contract.md)、[基准协议](specs/benchmark-protocol.md) |
 | 修改代码与运行测试 | [开发指南](development.md)、[架构](architecture.md) |
 | 打包与安装发布产物 | [预览版说明](preview-release.md) |
+| 从 main 手动构建并上传魔搭整合包 | [CI 发布指南](ci-release.md) |
 | 整合包使用、离线构建与验收 | [Windows 整合包](portable-bundle.md)、[Mac 整合包](portable-macos.md) |
 | 后续开发顺序 | [路线图](roadmap.md) |
 

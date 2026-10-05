@@ -32,11 +32,11 @@ def publish_platform(api, folder, target, release_id, commit, output):
     stamp = datetime.now(timezone(timedelta(hours=8))).strftime('%Y%m%d')
     stem = f'SakuraTTS-{target}-{stamp}'
     names = {Path(name).name for name in existing}
-    name = stem + '.tar.gz'
+    name = stem + '.' + extension
     number = 0
     while name in names:
         number += 1
-        name = f'{stem}-{number}.tar.gz'
+        name = f'{stem}-{number}.{extension}'
     path = f'previews/{release_id}/{name}'
     api.upload_file(REPO, 'model', archive, path, commit_message=f'上传 {release_id} {target}', disable_tqdm=True)
     checksum = archive.with_name(archive.name + '.sha256').read_text().split()[0]
