@@ -6,6 +6,8 @@ import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
+from datetime import datetime
 import zipfile
 
 SCRIPTS = Path(__file__).resolve().parents[1] / 'scripts'
@@ -26,6 +28,25 @@ class Api:
 
 
 class ReleaseTests(unittest.TestCase):
+    def test_published_names_include_date_and_daily_sequence(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            archive = root / 'SakuraTTS-windows-x64.tar.gz'
+            archive.write_bytes(b'archive')
+            archive.with_name(archive.name + '.sha256').write_text('abc  ' + archive.name)
+            (root / 'compression-report.json').write_text('{"unpacked_bytes":20}')
+            api = Api()
+            with patch.object(publish_modelscope, 'datetime') as clock:
+                clock.now.return_value = datetime(2026, 10, 5)
+                for index, suffix in enumerate(('', '-1', '-2')):
+                    output = root / 'result.json'
+                    publish_modelscope.publish_platform(api, root, 'windows-x64', str(index), 'commit', output)
+                    name = f'SakuraTTS-windows-x64-20261005{suffix}.tar.gz'
+                    record = json.loads(output.read_text())
+                    self.assertEqual(record['path'], f'previews/{index}/{name}')
+                    self.assertEqual(api.uploads[-1], record['path'] + '.sha256')
+                    self.assertEqual(api.files[api.uploads[-1]], len(f'abc  {name}\n'.encode()))
+
     def test_new_wheel_removes_deleted_product_files_and_preserves_runtime(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
