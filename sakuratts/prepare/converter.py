@@ -18,20 +18,21 @@ def acoustic_converter(backend):
     return "convert_sovits_mlx.py" if backend == "mlx" else "export_sovits_onnx.py"
 
 
-def _preparation_identity(backend, experimental=None):
+def _preparation_identity(backend, experimental=None, *, kind=None):
     """Cache the selected artifacts, independently of execution tuning."""
     from ..profiles import resolve_profile
     from ..module.reference_condition import sha256_file
     _, options = resolve_profile(backend, None, experimental)
     identity = {"backend": backend}
-    scripts = ["sovits_checkpoint.py"]
-    if backend in ("cpu", "directml"):
+    scripts = ["sovits_checkpoint.py"] if kind != "gpt" else []
+    if kind != "sovits" and backend in ("cpu", "directml"):
         scripts += ["prepare_backend.py", "export_gpt_onnx.py"]
-    if backend == "directml":
+    if kind != "sovits" and backend == "directml":
         identity["capacity"] = options["capacity"]
-        scripts += ["export_gpt_directml.py", "export_sovits_fp16.py",
-                    "conv_transpose_polyphase.py"]
-    if backend == "cuda" and (experimental or {}).get("acoustic_chunk_frames") is not None:
+        scripts += ["export_gpt_directml.py"]
+    if kind != "gpt" and backend == "directml":
+        scripts += ["export_sovits_fp16.py", "conv_transpose_polyphase.py"]
+    if kind != "gpt" and backend == "cuda" and (experimental or {}).get("acoustic_chunk_frames") is not None:
         identity["acoustic"] = "fp16-chunked"
         scripts += ["export_sovits_chunks.py", "export_sovits_fp16.py",
                     "conv_transpose_polyphase.py", "split_sovits_vocoder.py", "vocoder_receptive_field.py"]

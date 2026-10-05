@@ -145,11 +145,8 @@ class VocoderReceptiveField(RuntimeVocoderReceptiveField):
                                                      kernel, dilation, stride, pad_left))
         if output_name not in scales:
             raise ValueError("The output must depend on decoder_input")
-        source = {"graph_sha256": hashlib.sha256(model.SerializeToString()).hexdigest(),
-                  "identity": "serialized_onnx_model",
-                  "weights": "Kernel/channel dimensions checked from initializers; coefficients are not used to prune dependencies."}
         return cls(operations, scales, input_name=input_name, output_name=output_name,
-                   condition_name=condition_name, source=source)
+                   condition_name=condition_name, source={})
 
 
 

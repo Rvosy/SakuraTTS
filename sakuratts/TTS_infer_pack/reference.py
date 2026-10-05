@@ -7,7 +7,7 @@ import json
 import logging
 from pathlib import Path
 
-from ..module.reference_condition import PreparedReference, sha256_array, sha256_file
+from ..module.reference_condition import PreparedReference, sha256_file
 from ..text.profiles import language_profile
 
 logger = logging.getLogger("sakuratts.TTS_infer_pack.reference")
@@ -129,8 +129,5 @@ class ReferenceCache:
         manifest = dict(base.manifest, identity=dict(base.manifest["identity"],
             reference_text=text, reference_language=language),
             reference={"prompt_text": prompt, "normalized_text": target["norm_text"]})
-        manifest["arrays"] = dict(base.manifest.get("arrays", {}))
-        for name, array in (("reference_phones", phones), ("reference_bert", bert)):
-            manifest["arrays"][name] = {"dtype": str(array.dtype), "shape": list(array.shape),
-                "bytes": array.nbytes, "sha256_raw_c_order": sha256_array(array)}
+        manifest.pop("arrays", None)
         return replace(base, manifest=manifest, reference_phones=phones, reference_bert=bert)

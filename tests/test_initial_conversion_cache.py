@@ -91,15 +91,17 @@ class InitialConversionCacheTests(unittest.TestCase):
             with patch("sakuratts.prepare.converter.convert", side_effect=lambda **kw: kw["output"].mkdir(parents=True)) as convert, \
                  patch("sakuratts.prepare.converter.convert_checkpoint", side_effect=prepare_weight) as weight, \
                  patch("sakuratts.engine.Model.load", side_effect=lambda path: path):
-                paths = {}
+                paths, gpt_paths = {}, []
                 for profile in ("fp32", "fp16", "low-memory", "minimum-memory"):
                     settings["profile"] = profile
+                    gpt_paths.append(prepare_checkpoint("gpt", root / "gpt.ckpt", "same-gpt", settings, backend="cuda"))
                     paths[profile] = (prepare_initial_model(settings),
                         prepare_checkpoint("sovits", root / "sovits.pth", "same-weights", settings, backend="cuda"))
                 self.assertNotEqual(paths["fp32"], paths["fp16"])
                 self.assertEqual(paths["fp16"], paths["low-memory"])
                 self.assertEqual(paths["fp16"], paths["minimum-memory"])
-                self.assertEqual((convert.call_count, weight.call_count), (2, 2))
+                self.assertEqual(len(set(gpt_paths)), 1)
+                self.assertEqual((convert.call_count, weight.call_count), (2, 3))
                 for call in (convert.call_args, weight.call_args):
                     self.assertEqual(call.kwargs["experimental"]["gpt_precision"], "fp16")
                     self.assertEqual(call.kwargs["experimental"]["acoustic_chunk_frames"], 256)

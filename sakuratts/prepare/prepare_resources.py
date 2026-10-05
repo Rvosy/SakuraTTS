@@ -211,7 +211,7 @@ def disable_network():
     sys.addaudithook(check)
 
 
-def worker(job_file, engine_holder=None):
+def worker(job_file, session=None):
     job = read_json(job_file)
     root, run = Path(job["official_source"]), Path(job_file).parent
     cache = Path(job.get("cache_dir", run))
@@ -227,7 +227,7 @@ def worker(job_file, engine_holder=None):
     result = {"status": "running", "prepare_only": True, "target_synthesis_calls": 0, "references": []}
     started = time.perf_counter()
     try:
-        if engine_holder is None:
+        if session is None:
             disable_network()
         try:
             import numpy as np
@@ -267,9 +267,11 @@ def worker(job_file, engine_holder=None):
         config = TTS_Config(config_data)
         config.configs_path = str(run / "tts-prepare.yaml")
         os.chdir(root)
-        engine = engine_holder[0] if engine_holder else ReferenceOnlyTTS(config)
-        if engine_holder is not None and not engine_holder:
-            engine_holder.append(engine)
+        engine = session.get("engine") if session is not None else None
+        if engine is None:
+            engine = ReferenceOnlyTTS(config)
+            if session is not None:
+                session["engine"] = engine
         if (engine.configs.version != family or str(engine.configs.device) != job["device"]
                 or engine.t2s_model is not None or engine.bert_model is not None):
             raise RuntimeError("Reference-only initialization differs from the requested model family or device")
@@ -335,12 +337,13 @@ def serve():
     run_path(str(PACKAGE / 'runtime/worker.py'))['load_package'](PACKAGE)
     from sakuratts.runtime.protocol import read_message, write_message
     disable_network()
-    engine_holder = []
+    # The owning inference session fixes the model and preparation interpreter.
+    session = {}
     try:
         while True:
             request, _ = read_message(sys.stdin.buffer)
             try:
-                main(request['arguments'], engine_holder)
+                main(request['arguments'], session)
                 write_message(output, {'status': 'ok'})
             except Exception:
                 write_message(output, {'status': 'error', 'error': traceback.format_exc()})
@@ -348,7 +351,7 @@ def serve():
         return 0
 
 
-def main(argv=None, engine_holder=None):
+def main(argv=None, session=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--official-source", type=Path)
     parser.add_argument("--character", type=Path)
@@ -399,7 +402,12 @@ def main(argv=None, engine_holder=None):
             if ref.get("tone") != "reference":
                 raise ValueError("Direct reference preparation uses the internal name 'reference'")
             ref["audio"] = str(Path(ref["audio"]).resolve(strict=True))
-    preflight = inspect_frontend(args.python)
+    if session is None:
+        preflight = inspect_frontend(args.python)
+    else:
+        if "preflight" not in session:
+            session["preflight"] = inspect_frontend(args.python)
+        preflight = session["preflight"]
     frontend_path = args.frontend.resolve(strict=True) if args.frontend else output / "frontend"
     frontend = prepare_frontend(root, frontend_path, args.language_model, preflight)
     print("PREPARED_FRONTEND", frontend_path, flush=True)
@@ -408,20 +416,26 @@ def main(argv=None, engine_holder=None):
     for ref in references:
         if (output / "references" / ref["tone"]).exists():
             raise FileExistsError("Reference output already exists; choose a new output directory: " + ref["tone"])
-    source_paths = [*inputs.values(), *(Path(ref["audio"]) for ref in references)]
+    if session is None:
+        source_hashes = {str(p): digest(p) for p in inputs.values()}
+    else:
+        if "model_hashes" not in session:
+            session["model_hashes"] = {str(p): digest(p) for p in inputs.values()}
+        source_hashes = dict(session["model_hashes"])
+    source_hashes.update({ref["audio"]: digest(ref["audio"]) for ref in references})
     cnhubert = args.cnhubert.resolve(strict=True) if args.cnhubert else root / "GPT_SoVITS/pretrained_models/chinese-hubert-base"
     job = {"official_source": str(root), "output": str(output), "frontend": str(frontend_path), "gpt": str(inputs["gpt"]), "sovits": str(inputs["sovits"]),
            "source_id": frontend["official_commit"], "cnhubert": str(cnhubert), "device": args.device, "precision": args.precision,
            "frontend_preflight": preflight,
            "references": references, "cpu_threads": args.cpu_threads,
            "cache_dir": str((args.cache_dir or output / "cache").resolve()),
-           "source_hashes": {str(p): digest(p) for p in source_paths}}
+           "source_hashes": source_hashes}
     run = output / ("prepare-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ"))
     run.mkdir(parents=True, exist_ok=False)
     job_file = run / "job.json"
     write_json(job_file, job)
-    if engine_holder is not None:
-        if worker(job_file, engine_holder):
+    if session is not None:
+        if worker(job_file, session):
             raise RuntimeError(read_json(run / 'result.json')['error'])
         return 0
     env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONIOENCODING="utf-8")

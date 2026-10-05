@@ -70,7 +70,7 @@ def prepare_checkpoint(kind, path, digest, settings, *, backend, experimental=No
     script = "convert_gpt.py" if kind == "gpt" else acoustic_converter(backend)
     converter_hash = sha256_file(Path(__file__).parent / script)
     identity = digest + source_hash + kind + converter_hash
-    identity += json.dumps(_preparation_identity(backend, experimental), sort_keys=True)
+    identity += json.dumps(_preparation_identity(backend, experimental, kind=kind), sort_keys=True)
     portable_root = bundle_root()
     if portable_root is not None:
         identity += sha256_file(portable_root / "runtime/preparation/preparation-manifest.json")
