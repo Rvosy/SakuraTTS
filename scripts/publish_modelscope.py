@@ -1,5 +1,6 @@
 """发布平台产物；全部平台到齐后再更新预览入口。"""
 import argparse
+from datetime import datetime, timedelta, timezone
 import json
 import os
 from pathlib import Path
@@ -27,8 +28,18 @@ def publish_platform(api, folder, target, release_id, commit, output):
     existing = {row.path for row in api.list_repo_files(REPO, 'model')}
     if path in existing:
         raise ValueError('发行文件已存在，请使用新的发布编号：' + path)
+    stamp = datetime.now(timezone(timedelta(hours=8))).strftime('%Y%m%d')
+    stem = f'SakuraTTS-{target}-{stamp}'
+    names = {Path(name).name for name in existing}
+    name = stem + '.tar.gz'
+    number = 0
+    while name in names:
+        number += 1
+        name = f'{stem}-{number}.tar.gz'
+    path = f'previews/{release_id}/{name}'
     api.upload_file(REPO, 'model', archive, path, commit_message=f'上传 {release_id} {target}', disable_tqdm=True)
-    api.upload_file(REPO, 'model', archive.with_name(archive.name + '.sha256'), path + '.sha256',
+    checksum = archive.with_name(archive.name + '.sha256').read_text().split()[0]
+    api.upload_file(REPO, 'model', f'{checksum}  {name}\n'.encode(), path + '.sha256',
                     commit_message=f'上传 {release_id} {target} 校验文件', disable_tqdm=True)
     record = {'platform': target, 'path': path, 'url': download_url(path), 'bytes': archive.stat().st_size,
               'unpackedBytes': report['unpacked_bytes'], 'sourceCommit': commit, 'releaseId': release_id,
