@@ -77,9 +77,14 @@ jobs:
         run: |
           python -m build --wheel --outdir "$WORK/wheel"
           python -m pip download --only-binary=:all: --no-deps threadpoolctl==3.6.0 --dest "$WORK/threadpoolctl"
+          if [[ '${{ runner.os }}' == Windows ]]; then platform=win_amd64; version=3.12; else platform=macosx_14_0_arm64; version=3.11; fi
+          python -c 'import tomllib; print("\n".join(tomllib.load(open("pyproject.toml", "rb"))["project"]["optional-dependencies"]["english"]))' > "$WORK/english-requirements.txt"
+          python -m pip install --only-binary=:all: --platform "$platform" --python-version "$version" \
+            --target "$WORK/english-dependencies" -r "$WORK/english-requirements.txt"
           if [[ '${{ runner.os }}' == Windows ]]; then ffmpeg="$WORK/ffmpeg/ffmpeg.exe"; else ffmpeg="$WORK/ffmpeg/ffmpeg"; fi
           python scripts/rebuild_portable.py --bundle "$WORK/base/bundle" --wheel "$WORK"/wheel/*.whl \
             --threadpoolctl-wheel "$WORK"/threadpoolctl/*.whl \
+            --english-dependencies "$WORK/english-dependencies" --english-resources "$WORK/base/english" \
             --ffmpeg "$ffmpeg" --ffmpeg-source "$WORK/ffmpeg-7.1.2.tar.xz" \
             --output "$WORK/SakuraTTS-${{ matrix.target }}"
       - name: 验证包内运行环境

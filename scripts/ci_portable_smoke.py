@@ -12,6 +12,7 @@ import subprocess
 import tempfile
 import time
 from urllib.request import Request, build_opener, ProxyHandler
+from urllib.error import HTTPError
 import wave
 
 
@@ -67,12 +68,30 @@ def main():
     apple = release['target'] == 'macos-arm64'
     python = bundle / release.get('python_executable', 'runtime/main/python.exe')
     command = [str(python), '-I', str(bundle / 'launcher.py')]
+    english_probe = '''import json,runpy,sys
+from pathlib import Path
+from sakuratts.text.english import EnglishG2P
+official=Path(sys.argv[1])/'runtime/preparation/official'
+symbols=runpy.run_path(str(official/'GPT_SoVITS/text/symbols2.py'))['symbols']
+frontend=EnglishG2P(official/'english',symbols)
+probes=json.loads((official/'english/probes.json').read_text(encoding='utf-8'))
+for row in probes:
+    normalized=frontend.normalize(row['text'])
+    assert normalized==row['normalized'], row
+    assert frontend.g2p(normalized)==row['phones'], row
+print(json.dumps({'probes':len(probes),'passed':True}))
+'''
+    english = subprocess.run([str(python), '-I', '-c', english_probe, str(bundle)],
+                             capture_output=True, text=True, encoding='utf-8')
+    (output / 'english.log').write_text(english.stdout + english.stderr, encoding='utf-8')
+    english.check_returncode()
     opener = build_opener(ProxyHandler({}))
     def fetch(url, destination):
         with opener.open(url, timeout=120) as response, destination.open('wb') as stream:
             while block := response.read(1024*1024):
                 stream.write(block)
     report = {'platform': release['target'], 'gpuSynthesis': False, 'listeningQuality': False}
+    report['english'] = json.loads(english.stdout)
     if not apple:
         report['longPaths'] = check_windows_long_paths(bundle, output)
     ffmpeg = bundle / ('runtime/bin/ffmpeg' if apple else 'runtime/bin/ffmpeg.exe')
@@ -96,8 +115,12 @@ def main():
     def request(path, payload=None):
         request = Request(f'http://127.0.0.1:{port}' + path, data=None if payload is None else json.dumps(payload).encode(),
                           headers={'Content-Type':'application/json'})
-        with opener.open(request, timeout=300) as response:
-            return response.read()
+        try:
+            with opener.open(request, timeout=300) as response:
+                return response.read()
+        except HTTPError as error:
+            print(error.read().decode('utf-8', errors='replace'), flush=True)
+            raise
     launch = [*command, 'serve', '--runtime-mode', 'managed', '--idle-sleep-seconds', '2', '-p', str(port)]
     if not apple:
         model_url = 'https://huggingface.co/lj1995/GPT-SoVITS/resolve/336b2ec4e8d4ac74740798dd40af44e74659ecaf/'

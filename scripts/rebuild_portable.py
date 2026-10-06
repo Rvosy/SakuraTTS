@@ -10,6 +10,55 @@ import zipfile
 import build_portable as builder
 
 
+def install_english_dependencies(bundle, site, source, project, recipe, release, manifest):
+    installed = builder.distributions(site)
+    available = builder.distributions(source)
+    selected = builder.dependency_names(dict(available, **installed),
+        builder.main_requirements(project, recipe), release['python'], release['target'])
+    plan = builder.Plan()
+    for name in selected:
+        if name in installed:
+            continue
+        directory, metadata = available[name]
+        if release['target'] == 'macos-arm64':
+            builder.macos.wheel_compatible(directory, recipe['minimum_macos'], release['python'])
+        else:
+            builder.windows_wheel_compatible(directory, release['python'])
+        plan.package(source, directory, metadata, site.relative_to(bundle).as_posix())
+    for name, row in plan.files.items():
+        target = bundle / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(row['source'], target)
+        record(bundle, target, manifest['files'], row['component'])
+    manifest['components'].update(plan.components)
+
+
+def install_english_resources(bundle, source, inventory, components):
+    prep = bundle / 'runtime/preparation'
+    manifest_path = prep / 'preparation-manifest.json'
+    manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    component = 'english-frontend-resources'
+    provenance = json.loads((source / 'source.json').read_text(encoding='utf-8'))
+    manifest['components'][component] = provenance
+    components['preparation:' + component] = provenance
+    for path in builder.tree(source):
+        target = prep / 'official/english' / path.relative_to(source)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, target)
+        record(prep, target, manifest['files'], component)
+        record(bundle, target, inventory, 'preparation:' + component)
+    licenses_path = prep / 'licenses.json'
+    licenses = json.loads(licenses_path.read_text(encoding='utf-8'))
+    licenses['components'][component] = {'notices': ['official/english/' + name for name in
+        ('english.md', 'CMUdict-README.txt', 'GPT-SoVITS-LICENSE.txt', 'Apache-2.0.txt')]}
+    licenses_path.write_text(json.dumps(licenses, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    record(prep, licenses_path, manifest['files'], manifest['files']['licenses.json']['component'])
+    manifest['bytes'] = sum(row['bytes'] for row in manifest['files'].values())
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    for path in (licenses_path, manifest_path):
+        record(bundle, path, inventory, 'preparation-inventory')
+
+
 def upgrade_preparation_threadpoolctl(bundle, wheel, inventory, components):
     """Replace the base bundle's pure Python controller, including its inventories."""
     if builder.digest(wheel) != '43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb':
@@ -81,7 +130,7 @@ def record(bundle, path, inventory, component='product-or-generated'):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ('bundle', 'wheel', 'threadpoolctl-wheel', 'ffmpeg', 'ffmpeg-source', 'output'):
+    for name in ('bundle', 'wheel', 'threadpoolctl-wheel', 'english-dependencies', 'english-resources', 'ffmpeg', 'ffmpeg-source', 'output'):
         parser.add_argument('--' + name, required=True, type=Path)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
@@ -94,10 +143,11 @@ def main():
     if release['backends'] != recipe['backends'] or not release['preparation']:
         raise ValueError('运行环境基包与当前发行组合不匹配')
     site = bundle / ('runtime/main/lib/python3.11/site-packages' if apple else 'runtime/main/Lib/site-packages')
-    # 依赖声明变更时要求升级基包，不静默沿用不匹配的运行库。
+    install_english_dependencies(bundle, site, args.english_dependencies, project, recipe, release, manifest)
     builder.dependency_names(builder.distributions(site), builder.main_requirements(project, recipe),
                              release['python'], release['target'])
     inventory = manifest['files']
+    install_english_resources(bundle, args.english_resources, inventory, manifest['components'])
     upgrade_preparation_threadpoolctl(bundle, args.threadpoolctl_wheel, inventory, manifest['components'])
     install_product(bundle, site, args.wheel, inventory)
     for name in builder.launch_files(recipe):
@@ -151,7 +201,7 @@ def main():
     dirty = subprocess.check_output(['git', '-C', str(root), 'status', '--porcelain'], text=True).strip()
     if dirty:
         raise ValueError('CI 发行必须使用干净的源码提交')
-    release.update(version=project['version'], source_commit=commit, source_dirty=False)
+    release.update(version=project['version'], source_commit=commit, source_dirty=False, languages=recipe['languages'])
     marker = bundle / 'runtime/portable.json'
     value = json.loads(marker.read_text())
     value['release'] = release
