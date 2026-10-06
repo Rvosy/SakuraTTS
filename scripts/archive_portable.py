@@ -44,10 +44,7 @@ def digest(path):
 
 def run(sevenzip, arguments, cwd):
     start = time.perf_counter()
-    result = subprocess.run([str(sevenzip), "-sccUTF-8", *arguments], cwd=cwd,
-                            capture_output=True, text=True, encoding="utf-8")
-    if result.returncode:
-        raise RuntimeError(result.stdout + result.stderr)
+    subprocess.run([str(sevenzip), "-sccUTF-8", *arguments], cwd=cwd, check=True)
     return round(time.perf_counter() - start, 3)
 
 
@@ -55,7 +52,7 @@ def compress(sevenzip, source, listing, archive, profile):
     if archive.exists():
         raise FileExistsError(archive)
     seconds = run(sevenzip, ["a", "-t7z", "-m0=LZMA2", *PROFILES[profile],
-                           "-ms=on", "-mmt=2", "-mtc=off", "-mta=off", "-scsUTF-8",
+                           "-ms=on", "-mmt=2", "-mtc=off", "-mta=off", "-scsUTF-8", "-bsp1",
                            str(archive), "@" + str(listing)], source)
     tested = run(sevenzip, ["t", str(archive)], source)
     return {"profile": profile, "bytes": archive.stat().st_size, "compression_seconds": seconds,
@@ -69,7 +66,7 @@ def main():
     parser.add_argument("--format", choices=("7z", "tar.gz"), default="7z")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--benchmark", action="store_true")
-    parser.add_argument("--profile", choices=PROFILES, default="maximum")
+    parser.add_argument("--profile", choices=PROFILES, default="balanced")
     args = parser.parse_args()
     if (args.format == "7z" or args.benchmark) and args.sevenzip is None:
         parser.error("7z compression requires --sevenzip")
@@ -114,20 +111,23 @@ def main():
         archive = output / (root.name + "." + args.format)
         if args.format == "tar.gz":
             started = time.perf_counter()
-            with tarfile.open(archive, "w:gz", dereference=True) as compressed:
+            with tarfile.open(archive, "w:gz", dereference=True, compresslevel=6) as compressed:
                 for name in names:
                     compressed.add(root.parent / name, arcname=name, recursive=False)
             result = {"format": "tar.gz", "bytes": archive.stat().st_size,
                       "compression_seconds": round(time.perf_counter() - started, 3)}
-            with tarfile.open(archive, "r:gz") as compressed:
-                if compressed.getnames() != names:
-                    raise ValueError("Archive inventory differs from the bundle")
-                for member in compressed:
+            with tarfile.open(archive, "r|gz") as compressed:
+                for expected_name in names:
+                    member = compressed.next()
+                    if member is None or member.name != expected_name:
+                        raise ValueError("Archive inventory differs from the bundle")
                     name = Path(member.name).relative_to(root.name).as_posix()
                     expected = manifest["files"][name]["sha256"] if name in manifest["files"] else digest(root / name)
                     checksum = hashlib.file_digest(compressed.extractfile(member), "sha256").hexdigest()
                     if checksum != expected:
                         raise ValueError("Archive checksum mismatch: " + name)
+                if compressed.next() is not None:
+                    raise ValueError("Archive inventory differs from the bundle")
         else:
             result = compress(args.sevenzip, root.parent, listing, archive, args.profile)
         result["sha256"] = digest(archive)
