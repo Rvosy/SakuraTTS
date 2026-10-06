@@ -144,8 +144,6 @@ def main():
         raise ValueError('运行环境基包与当前发行组合不匹配')
     site = bundle / ('runtime/main/lib/python3.11/site-packages' if apple else 'runtime/main/Lib/site-packages')
     install_english_dependencies(bundle, site, args.english_dependencies, project, recipe, release, manifest)
-    builder.dependency_names(builder.distributions(site), builder.main_requirements(project, recipe),
-                             release['python'], release['target'])
     inventory = manifest['files']
     install_english_resources(bundle, args.english_resources, inventory, manifest['components'])
     upgrade_preparation_threadpoolctl(bundle, args.threadpoolctl_wheel, inventory, manifest['components'])
