@@ -22,6 +22,15 @@ SPEC.loader.exec_module(builder)
 
 
 class PortableBuilderTests(unittest.TestCase):
+    def test_preview_recipes_include_english_frontend_dependencies(self):
+        root = Path(__file__).resolve().parents[1]
+        project = tomllib.loads((root / 'pyproject.toml').read_text(encoding='utf-8'))['project']
+        for name in ('windows-x64.toml', 'macos-mlx-ja.toml'):
+            with self.subTest(recipe=name):
+                recipe = builder.read_recipe(root / 'packaging/recipes' / name)
+                names = {builder.Requirement(value).name for value in builder.main_requirements(project, recipe)}
+                self.assertTrue({'nltk', 'wordsegment', 'inflect'} <= names)
+
     def test_windows_wheels_match_target_python_and_architecture(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary) / "example.dist-info"
