@@ -28,6 +28,62 @@ class Api:
 
 
 class ReleaseTests(unittest.TestCase):
+    def test_english_resources_update_both_inventories_and_licenses(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            prep = root / 'runtime/preparation'
+            prep.mkdir(parents=True)
+            licenses = prep / 'licenses.json'
+            licenses.write_text('{"components": {}}')
+            files, inventory, components = {}, {}, {}
+            rebuild_portable.record(prep, licenses, files, 'generated')
+            manifest = prep / 'preparation-manifest.json'
+            manifest.write_text(json.dumps({'files': files, 'components': {}}))
+            source = root / 'english'
+            source.mkdir()
+            for name in ('g2p.json', 'checkpoint.npz', 'probes.json', 'english.md',
+                         'CMUdict-README.txt', 'GPT-SoVITS-LICENSE.txt', 'Apache-2.0.txt'):
+                (source / name).write_bytes(b'fixture')
+            (source / 'source.json').write_text('{"sources": {"upstream": "sha256"}}')
+            rebuild_portable.install_english_resources(root, source, inventory, components)
+            updated = json.loads(manifest.read_text())
+            self.assertEqual((prep / 'official/english/checkpoint.npz').read_bytes(), b'fixture')
+            self.assertEqual(components['preparation:english-frontend-resources']['sources'],
+                             {'upstream': 'sha256'})
+            self.assertEqual(updated['bytes'], sum(row['bytes'] for row in updated['files'].values()))
+            for base, rows in ((prep, updated['files']), (root, inventory)):
+                for name, row in rows.items():
+                    self.assertEqual(row['sha256'], rebuild_portable.builder.digest(base / name))
+            for name in json.loads(licenses.read_text())['components']['english-frontend-resources']['notices']:
+                self.assertTrue((prep / name).is_file())
+
+    def test_missing_dependencies_are_added_without_overwriting_base_packages(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            site, source = root / 'runtime/main/site', root / 'dependencies'
+            for directory, version in ((site, '1'), (source, '2')):
+                metadata = directory / ('existing-' + version + '.dist-info')
+                metadata.mkdir(parents=True)
+                (metadata / 'METADATA').write_text('Name: existing\nVersion: ' + version + '\n')
+            metadata = source / 'added-1.dist-info'
+            metadata.mkdir()
+            (metadata / 'METADATA').write_text('Name: added\nVersion: 1\nRequires-Dist: existing>=1\n')
+            (metadata / 'WHEEL').write_text('Tag: py3-none-any\n')
+            (metadata / 'LICENSE').write_text('license')
+            (source / 'added.py').write_text('added')
+            names = ['added.py', *['added-1.dist-info/' + name for name in ('METADATA', 'WHEEL', 'LICENSE', 'RECORD')]]
+            (metadata / 'RECORD').write_text(''.join(name + ',,\n' for name in names))
+            manifest = {'files': {}, 'components': {}}
+            with patch.object(rebuild_portable.builder, 'main_requirements', return_value=['added==1']):
+                rebuild_portable.install_english_dependencies(root, site, source, {}, {},
+                    {'python': '3.12', 'target': 'windows-x64'}, manifest)
+            self.assertEqual((site / 'added.py').read_text(), 'added')
+            self.assertTrue((site / 'existing-1.dist-info').exists())
+            self.assertFalse((site / 'existing-2.dist-info').exists())
+            self.assertIn('runtime/main/site/added-1.dist-info/LICENSE', manifest['files'])
+            for name, row in manifest['files'].items():
+                self.assertEqual(row['sha256'], rebuild_portable.builder.digest(root / name))
+
     def test_preparation_controller_upgrade_updates_both_inventories_and_notices(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
