@@ -66,6 +66,53 @@ OPEN_JTALK_DICT_DIR = str(Path(__file__).parent / 'dictionary')
         self.assertEqual(Path(result["module_directory"]), module)
         self.assertEqual(result["executable"], str(self.python))
 
+    def test_english_preparation_keeps_environment_and_nltk_data_selection(self):
+        from tools import prepare_english_frontend as english
+
+        frontend, source = self.root / "frontend", self.root / "official"
+        frontend.mkdir()
+        source.mkdir()
+        (frontend / "symbols-v2.json").write_text('["a"]')
+        (frontend / "manifest.json").write_text(json.dumps({
+            "format": "sakuratts-japanese-frontend-resources-v1", "files": {"symbols-v2.json": {}}}))
+        default_data = self.python.parent / "nltk_data"
+        custom_data = self.root / "custom nltk data"
+        for directory in (default_data, custom_data):
+            directory.mkdir()
+            (directory / "resource.txt").write_text(directory.name)
+        run = subprocess.run
+
+        def export_probe(command, **kwargs):
+            code = """import json,os,sys
+from pathlib import Path
+from selected_environment import VALUE
+output = Path(sys.argv[1])
+output.mkdir()
+nltk_data = os.environ['NLTK_DATA']
+resource = Path(nltk_data.split(os.pathsep)[0]) / 'resource.txt'
+(output / 'environment.json').write_text(json.dumps({
+    'prefix': sys.prefix, 'module': VALUE, 'nltk_data': nltk_data, 'resource': resource.read_text()}))
+"""
+            return run([command[0], "-B", "-c", code, command[-1]], **kwargs)
+
+        for explicit in (False, True):
+            with self.subTest(explicit=explicit), patch.dict(os.environ):
+                expected_data = str(default_data)
+                if explicit:
+                    expected_data = os.pathsep.join((str(custom_data), str(self.root / "another nltk path")))
+                    os.environ["NLTK_DATA"] = expected_data
+                else:
+                    os.environ.pop("NLTK_DATA", None)
+                output = self.root / ("english-explicit" if explicit else "english-default")
+                with patch.object(english.subprocess, "run", side_effect=export_probe), \
+                        patch.object(english, "verify"):
+                    english.prepare(frontend, output, source, Path(os.path.relpath(self.python)))
+                report = json.loads((output / "english/environment.json").read_text())
+                self.assertEqual(report["prefix"], str(self.environment))
+                self.assertEqual(report["module"], "selected environment")
+                self.assertEqual(report["nltk_data"], expected_data)
+                self.assertEqual(report["resource"], "custom nltk data" if explicit else "nltk_data")
+
     def test_preparation_worker_runs_in_selected_environment(self):
         source, frontend = self.root / "official", self.root / "frontend"
         source.mkdir()
