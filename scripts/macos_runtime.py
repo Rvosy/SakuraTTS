@@ -2,10 +2,9 @@
 
 from pathlib import Path, PurePosixPath
 import posixpath
-import re
 import struct
 
-from packaging.tags import parse_tag
+from packaging.tags import compatible_tags, cpython_tags, mac_platforms, parse_tag
 
 
 def add_interpreter(plan, base, target):
@@ -43,21 +42,13 @@ def wheel_compatible(directory, minimum_version, python_version):
         raise ValueError('macOS runtime input requires wheel metadata: ' + str(directory))
     tags = {tag for line in wheel.read_text().splitlines() if line.startswith('Tag: ')
             for tag in parse_tag(line[5:])}
-    target = tuple(map(int, minimum_version.split('.')))[:2]
+    platforms = list(mac_platforms(tuple(map(int, minimum_version.split('.')))[:2], arch='arm64'))
+    version = tuple(map(int, python_version.split('.')))
     interpreter = 'cp' + python_version.replace('.', '')
-    for tag in tags:
-        if not (tag.interpreter in ('py3', 'py' + python_version.replace('.', ''), interpreter)
-                or (tag.abi == 'abi3' and tag.interpreter.startswith('cp3')
-                    and int(tag.interpreter[3:]) <= int(python_version.split('.')[1]))):
-            continue
-        if tag.abi not in ('none', 'abi3', interpreter):
-            continue
-        if tag.platform == 'any':
-            return
-        match = re.fullmatch(r'macosx_(\d+)_(\d+)_(arm64|universal2)', tag.platform)
-        if match and (int(match[1]), int(match[2])) <= target:
-            return
-    raise ValueError(f'{directory.name} has no Apple silicon wheel compatible with Python {python_version} / macOS {minimum_version}')
+    supported = set(cpython_tags(version, abis=[interpreter], platforms=platforms))
+    supported.update(compatible_tags(version, interpreter=interpreter, platforms=platforms))
+    if not tags & supported:
+        raise ValueError(f'{directory.name} has no Apple silicon wheel compatible with Python {python_version} / macOS {minimum_version}')
 
 
 def macho(path):

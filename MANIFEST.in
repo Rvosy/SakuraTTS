@@ -3,11 +3,11 @@ include uv.lock
 recursive-include requirements *.txt
 recursive-include packaging *.toml *.json
 recursive-include sakuratts *.py
-recursive-include scripts *.py *.ps1 *.bat *.command *.md
+recursive-include scripts *.py *.ps1 *.sh *.bat *.command *.md
 recursive-include benchmarks *.py *.json *.md
 recursive-include tools *.py *.ps1 *.md
 recursive-include tests *.py *.json
-recursive-include docs *.md *.txt *.json
+recursive-include docs *.md *.txt *.json *.html
 recursive-include examples *.py *.json *.md *.yaml
 global-exclude *.pyc *.pyo
 prune data

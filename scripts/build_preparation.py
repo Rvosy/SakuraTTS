@@ -7,7 +7,6 @@ the original environment, user voices and synthesis base models are excluded.
 
 import argparse
 import ast
-import csv
 from email.parser import Parser
 import importlib.util
 import json
@@ -33,23 +32,7 @@ def runtime_file(relative):
 
 class PreparationPlan(Plan):
     def package(self, site, directory, metadata, target):
-        component = target + ":" + metadata["Name"]
-        self.components[component] = {"name": metadata["Name"], "version": metadata["Version"], "source": "local-installed-RECORD"}
-        with (directory / "RECORD").open(encoding="utf-8", newline="") as stream:
-            for relative, _, _ in csv.reader(stream):
-                parts = PurePosixPath(relative).parts
-                if not relative or "\\" in relative or PurePosixPath(relative).is_absolute() or ":" in relative:
-                    raise ValueError("Unsafe RECORD entry: " + relative)
-                if ".." in parts or "__pycache__" in parts or relative.endswith((".pyc", ".pyo", ".pth")):
-                    continue
-                if parts[-1] in ("direct_url.json", "uv_cache.json", "uv_build.json"):
-                    continue
-                if not runtime_file(relative):
-                    continue
-                path = site.joinpath(*parts)
-                if site.resolve() not in path.resolve(strict=True).parents:
-                    raise ValueError("RECORD input escaped site-packages: " + relative)
-                self.add(path, target + "/" + relative, component)
+        super().package(site, directory, metadata, target, include=runtime_file)
 
 
 # These imports are required by the upstream reference-only TTS constructor,

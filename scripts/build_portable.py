@@ -198,7 +198,7 @@ class Plan:
             raise ValueError("Conflicting bundle files: " + key)
         self.files[key] = row
 
-    def package(self, site, directory, metadata, target):
+    def package(self, site, directory, metadata, target, *, include=None):
         name, version = metadata["Name"], metadata["Version"]
         component = target + ":" + name
         self.components[component] = {"name": name, "version": version, "source": "local-installed-RECORD"}
@@ -211,6 +211,8 @@ class Plan:
                     continue  # Environment Scripts/include are not library payloads.
                 if (relative.endswith((".pyc", ".pyo", ".pth")) or "__pycache__" in parts
                         or parts[-1] in ("direct_url.json", "uv_cache.json", "uv_build.json")):
+                    continue
+                if include is not None and not include(relative):
                     continue
                 path = site.joinpath(*parts)
                 if site.resolve() not in path.resolve(strict=True).parents:

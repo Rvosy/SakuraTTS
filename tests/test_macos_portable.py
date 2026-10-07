@@ -34,8 +34,12 @@ class MacPortableTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             for tag, valid in [('cp311-cp311-macosx_14_0_arm64', True), ('py3-none-any', True),
+                               ('py310-none-any', True), ('py2.py3-none-any', True),
+                               ('cp311-cp311-macosx_10_9_universal2', True),
                                ('cp311-cp311-macosx_26_0_arm64', False), ('cp311-cp311-macosx_14_0_x86_64', False),
-                               ('cp312-cp312-macosx_14_0_arm64', False), ('cp310-abi3-macosx_14_0_arm64', True)]:
+                               ('cp312-cp312-macosx_14_0_arm64', False), ('cp310-abi3-macosx_14_0_arm64', True),
+                               ('py3-abi3-macosx_14_0_arm64', False), ('cp311-cp311-any', False),
+                               ('cp312-abi3-macosx_14_0_arm64', False)]:
                 (root / 'WHEEL').write_text('Tag: ' + tag + '\n')
                 with self.subTest(tag=tag):
                     if valid:
