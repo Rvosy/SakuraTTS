@@ -298,17 +298,17 @@ def run_process(command, output, *, interval, timeout):
                     break
                 time.sleep(interval)
         finally:
-            # Reap only this run's observed processes, including orphaned workers.
+            # Kill only this run's observed processes, including orphaned workers.
             surviving = [child for child in reversed(list(observed.values())) if child.is_running()]
             for child in surviving:
                 try:
                     child.kill()
                 except psutil.NoSuchProcess:
                     pass
-            psutil.wait_procs(surviving, timeout=5)
-            process.wait()
+            # Popen owns the root's exit status; psutil must not reap it first.
+            psutil.wait_procs([child for child in surviving if child.pid != process.pid], timeout=5)
+            returncode = process.wait()
             write_json(output / "memory-samples.json", samples)
-        returncode = process.wait()
     return {"exit_code": returncode, "timed_out": timed_out,
             "terminated_pids": [child.pid for child in surviving],
             "process_wall_s": time.perf_counter() - started,

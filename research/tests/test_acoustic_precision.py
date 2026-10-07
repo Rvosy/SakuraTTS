@@ -1,4 +1,4 @@
-"""Explicit experimental-package admission and acoustic regression screening."""
+"""Acoustic runtime configuration and independent regression screening."""
 import json
 from copy import deepcopy
 from pathlib import Path
@@ -79,30 +79,30 @@ class AcousticPrecisionTests(unittest.TestCase):
                 self.assertFalse(row["repeat_checks"][0][changed_stage]["passed"])
                 self.assertTrue(row["repeat_checks"][1][changed_stage]["passed"])
 
-    def test_fp16_rejects_untested_execution_options(self):
-        for name, value in (("device_id", 1), ("arena_extend_strategy", "kNextPowerOfTwo"),
-                ("cudnn_conv_algo_search", "EXHAUSTIVE"), ("cudnn_conv_use_max_workspace", True),
-                ("enable_mem_pattern", True), ("intra_op_num_threads", 8)):
-            with self.subTest(name=name), patch("sakuratts.module.sovits.read_manifest", return_value=({"dtype": "float16"}, Path("unused"))):
-                with self.assertRaisesRegex(ValueError, "screened CUDA/session options"):
-                    ORTSoVITS.load("unused", allow_experimental_fp16=True, **{name: value})
-
-    def test_fp32_execution_options_remain_configurable(self):
+    def test_fp32_and_fp16_execution_options_remain_configurable(self):
         session = Mock()
         session.get_providers.return_value = ["CUDAExecutionProvider", "CPUExecutionProvider"]
-        session.get_inputs.return_value = [SimpleNamespace(name=name) for name in INPUT_NAMES]
-        session.get_outputs.return_value = [SimpleNamespace(name="waveform")]
+        session.get_inputs.return_value = [SimpleNamespace(name=name,
+            type="tensor(int64)" if index < 2 else "tensor(float)") for index, name in enumerate(INPUT_NAMES)]
+        session.get_outputs.return_value = [SimpleNamespace(name="waveform", type="tensor(float)")]
         ort = SimpleNamespace(SessionOptions=SimpleNamespace, GraphOptimizationLevel=SimpleNamespace(ORT_ENABLE_ALL=1),
             InferenceSession=Mock(return_value=session), get_available_providers=lambda: ["CUDAExecutionProvider"])
-        with patch("sakuratts.module.sovits.read_manifest", return_value=({"dtype": "float32", "config": {"sample_rate": 32000}}, Path("unused"))), \
-             patch.dict(sys.modules, {"onnxruntime": ort, "sakuratts.backends.cuda.runtime": SimpleNamespace(configure_cuda=Mock())}):
-            ORTSoVITS.load("unused", cudnn_conv_algo_search="EXHAUSTIVE", cudnn_conv_use_max_workspace=True,
-                          enable_mem_pattern=True, intra_op_num_threads=8)
-        options = ort.InferenceSession.call_args.kwargs
-        self.assertEqual(options["providers"][0][1]["cudnn_conv_algo_search"], "EXHAUSTIVE")
-        self.assertEqual(options["providers"][0][1]["cudnn_conv_use_max_workspace"], "1")
-        self.assertTrue(options["sess_options"].enable_mem_pattern)
-        self.assertEqual(options["sess_options"].intra_op_num_threads, 8)
+        for dtype in ("float32", "float16"):
+            with self.subTest(dtype=dtype), \
+                    patch("sakuratts.module.sovits.read_manifest",
+                        return_value=({"dtype": dtype, "config": {"sample_rate": 32000}}, Path("unused"))), \
+                    patch.dict(sys.modules, {"onnxruntime": ort,
+                        "sakuratts.backends.cuda.runtime": SimpleNamespace(configure_cuda=Mock())}):
+                ORTSoVITS.load("unused", device_id=1, arena_extend_strategy="kNextPowerOfTwo",
+                    cudnn_conv_algo_search="EXHAUSTIVE", cudnn_conv_use_max_workspace=True,
+                    enable_mem_pattern=True, intra_op_num_threads=8, allow_experimental_fp16=True)
+            options = ort.InferenceSession.call_args.kwargs
+            self.assertEqual(options["providers"][0][1]["device_id"], "1")
+            self.assertEqual(options["providers"][0][1]["arena_extend_strategy"], "kNextPowerOfTwo")
+            self.assertEqual(options["providers"][0][1]["cudnn_conv_algo_search"], "EXHAUSTIVE")
+            self.assertEqual(options["providers"][0][1]["cudnn_conv_use_max_workspace"], "1")
+            self.assertTrue(options["sess_options"].enable_mem_pattern)
+            self.assertEqual(options["sess_options"].intra_op_num_threads, 8)
 
     def test_engineering_screen_does_not_relabel_original_parity(self):
         original = (0.2 * np.sin(np.arange(8192) * 0.07)).astype(np.float32)
@@ -125,7 +125,7 @@ class AcousticPrecisionTests(unittest.TestCase):
         self.assertFalse(report["passed"])
         self.assertFalse(report["checks"]["spectral_convergence"])
 
-    def test_fp16_requires_opt_in_and_matching_screening_artifact(self):
+    def test_fp16_requires_opt_in_without_gating_on_historical_screening(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             def spec(name):
@@ -154,24 +154,15 @@ class AcousticPrecisionTests(unittest.TestCase):
                 read_manifest(root)
             read_manifest(root, allow_experimental_fp16=True)
             report["engineering_screen"]["version"] = FP16_SCREEN_VERSION - 1
-            save()
-            with self.assertRaisesRegex(ValueError, "does not match"):
-                read_manifest(root, allow_experimental_fp16=True)
-            report["engineering_screen"]["version"] = FP16_SCREEN_VERSION
             report["ort_execution_options"]["cudnn_conv_algo_search"] = "EXHAUSTIVE"
-            save()
-            with self.assertRaisesRegex(ValueError, "does not match"):
-                read_manifest(root, allow_experimental_fp16=True)
-            report["ort_execution_options"] = dict(FP16_EXECUTION_OPTIONS)
             report["candidate_graph_sha256"] = "different graph"
-            save()
-            with self.assertRaisesRegex(ValueError, "does not match"):
-                read_manifest(root, allow_experimental_fp16=True)
-            report["candidate_graph_sha256"] = metadata["graphs"]["decode"]["sha256"]
             report["engineering_screen"]["passed"] = False
             save()
-            with self.assertRaisesRegex(ValueError, "does not match"):
-                read_manifest(root, allow_experimental_fp16=True)
+            self.assertEqual(read_manifest(root, allow_experimental_fp16=True)[1], root.resolve() / "acoustic.onnx")
+            (root / "validation.json").unlink()
+            del metadata["validation"]
+            (root / "manifest.json").write_text(json.dumps(metadata), encoding="utf-8")
+            self.assertEqual(read_manifest(root, allow_experimental_fp16=True)[1], root.resolve() / "acoustic.onnx")
 
 
 if __name__ == "__main__":
