@@ -110,13 +110,13 @@ def _check_runtime_packages(config_path, *, backend=None, profile=None,
         selected = config.get("frontend_python", config.get("acoustic_python"))
         if not selected:
             raise ValueError("Classic frontend requires its prepared Python worker")
-        frontend_python = (root / selected).resolve(strict=True)
+        frontend_python = Path(os.path.abspath(root / selected))
         for key in ("module_directory", "main_dictionary"):
             path = (paths["frontend"] / frontend_profile[key]).resolve(strict=True)
             probe[key] = str(path)
     elif frontend_profile["implementation"] != "pyopenjtalk-plus":
         raise ValueError("Unsupported Japanese frontend implementation")
-    worker_python = ((root / config["acoustic_python"]).resolve(strict=True)
+    worker_python = (Path(os.path.abspath(root / config["acoustic_python"]))
                      if backend == "cuda" and config.get("acoustic_python") else Path(sys.executable))
     runtime_files = _check_runtime_files(worker_python)
     separate_frontend = frontend_python is not None and frontend_python != worker_python

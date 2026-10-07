@@ -16,7 +16,7 @@ class ClassicJapaneseG2P:
     normalize = staticmethod(JapaneseG2P.normalize)
 
     def __init__(self, python, module_directory, main_dictionary, user_dictionary):
-        self.python = Path(python).resolve(strict=True)
+        self.python = Path(os.path.abspath(python))
         self.module_directory = Path(module_directory).resolve(strict=True)
         self.main_dictionary = Path(main_dictionary).resolve(strict=True)
         self.user_dictionary = Path(user_dictionary).resolve(strict=True)

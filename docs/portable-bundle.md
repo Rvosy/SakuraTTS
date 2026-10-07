@@ -2,7 +2,7 @@
 
 Apple silicon 的独立运行组件、构建与验收见 [Mac 整合包指南](portable-macos.md)。
 
-整合包可以只用本地文件构建。默认发行组合包含 HTTP、CLI、日英混合推理及私有 Python 和所选后端的运行库；完整包另外带独立准备组件，让用户提供原始权重和新参考音频后直接调用 HTTP。PyTorch、原版准备源码和公共辅助模型放在准备组件中，按需启动 CPU 进程，完成后退出。HTTP 和准备组件可以分别省略。
+整合包可以只用本地文件构建。默认发行组合包含 HTTP、CLI、日英混合推理及私有 Python 和所选后端的运行库；完整包另外带独立准备组件，让用户提供原始权重和新参考音频后直接调用 HTTP。PyTorch、原版准备源码和公共辅助模型放在准备组件中，按需启动 CPU 进程；转换完成后退出，参考编码的短暂复用与回收见 [HTTP 指南](http-api.md#生命周期与输出)。HTTP 和准备组件可以分别省略。
 
 默认使用 Windows x64 统一组合，同包提供 CPU、NVIDIA CUDA 与 DirectML，通过配置或 `--backend cpu|cuda|directml` 选择。主环境使用包含 CPU provider 的 DirectML ONNX Runtime，CUDA 声学使用私有 ORT GPU worker，避免多个 ORT 分发包覆盖同一模块。无需按显卡代际拆包。带准备组件的完整包可处理原始权重和新参考；精简包仅适合已有转换资源，按实际分发需求选择，不必同时发布两种大小。
 

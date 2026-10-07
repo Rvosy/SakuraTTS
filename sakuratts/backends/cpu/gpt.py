@@ -100,7 +100,7 @@ class CPUGPT:
         spec = manifest["weights"]
         path = package / spec["file"]
         with np.load(path, allow_pickle=False) as archive:
-            weights = {name: read_fp32(archive, name) for name in shapes}
+            weights = {name: _runtime_weight(name, read_fp32(archive, name)) for name in shapes}
         return cls(manifest, weights, capacity, threads, prefill_query_chunk_size)
 
     def _allocate_state(self):

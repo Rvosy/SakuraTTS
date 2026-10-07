@@ -44,7 +44,7 @@ def check_packages(config_path):
         for key in ("module_directory", "main_dictionary"):
             path = (paths["frontend"] / profile[key]).resolve(strict=True)
             directories[key] = str(path)
-        frontend_worker = check_worker_imports((root / python).resolve(strict=True), directories, acoustic=False)
+        frontend_worker = check_worker_imports(root / python, directories, acoustic=False)
     elif profile["implementation"] != "pyopenjtalk-plus":
         raise ValueError("Unsupported Japanese frontend implementation")
     return {"status": "passed", "config": str(model.path), "backend": "mlx", "model_family": family,

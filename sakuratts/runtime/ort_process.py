@@ -19,7 +19,8 @@ class ORTProcessSoVITS:
         if not isinstance(acoustic_arena_shrink, bool):
             raise ValueError("acoustic_arena_shrink must be a bool")
         package=Path(package).resolve(strict=True)
-        python=Path(python).resolve(strict=True)
+        python=Path(os.path.abspath(python))
+        python.stat()
         manifest,_=read_manifest(package,diagnostic=diagnostic,
                                  allow_experimental_fp16=allow_experimental_fp16,
                                  acoustic_arena_shrink=acoustic_arena_shrink,

@@ -1,5 +1,6 @@
 """Model, reference and request orchestration shared by inference entry points."""
 
+import os
 from pathlib import Path
 from ..model import Model
 from ..engine import Engine
@@ -56,7 +57,7 @@ class Inference:
 
     def _activate(self, model):
         from .reference import ReferenceCache
-        workers = {name: str(Path(self.settings[name]).resolve()) for name in ("acoustic_python", "frontend_python")
+        workers = {name: os.path.abspath(self.settings[name]) for name in ("acoustic_python", "frontend_python")
                    if self.settings.get(name)}
         if workers:
             model = Model(model.path, dict(model.manifest, **workers))
@@ -169,7 +170,9 @@ class Inference:
         root = self.model.path.parent
         for field in ("gpt", "sovits", "frontend", "acoustic_python", "frontend_python", "main_dictionary"):
             if field in config:
-                config[field] = str((root / config[field]).resolve())
+                resource = root / config[field]
+                config[field] = (os.path.abspath(resource) if field.endswith("_python")
+                                 else str(resource.resolve()))
         config[kind] = str(path.resolve())
         config["references"] = {}
         config.pop("default_reference", None)

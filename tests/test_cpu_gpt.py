@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+import weakref
 
 import numpy as np
 from threadpoolctl import threadpool_info
@@ -15,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sakuratts.backends.cpu.gpt import CPUGPT
 from sakuratts.AR.generation import SynthesisCancelled, generate_semantic
 from sakuratts.module.reference_condition import sha256_file
+from sakuratts.module.weight_storage import read_fp32
 
 
 def model_data():
@@ -223,6 +225,34 @@ class CPUGPTTests(unittest.TestCase):
                 save_package(directory, self.manifest, dict(self.weights, **bad))
                 with self.assertRaisesRegex(ValueError, "finite FP32 with shape"):
                     CPUGPT.load(root)
+
+    def test_load_releases_row_major_matrices_while_reading_archive(self):
+        source_matrices = []
+        peak_live_matrices = 0
+
+        def track_source_matrix(archive, name):
+            nonlocal peak_live_matrices
+            value = read_fp32(archive, name)
+            if value.ndim == 2 and name.endswith(".weight"):
+                self.assertFalse(value.flags.f_contiguous)
+                source_matrices.append(weakref.ref(value))
+                peak_live_matrices = max(peak_live_matrices,
+                    sum(reference() is not None for reference in source_matrices))
+            return value
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = save_package(directory, self.manifest, self.weights)
+            with patch("sakuratts.backends.cpu.gpt.read_fp32", side_effect=track_source_matrix):
+                model = CPUGPT.load(root)
+            try:
+                self.assertGreater(len(source_matrices), 1)
+                self.assertEqual(peak_live_matrices, 1,
+                    "Loading must not retain a full row-major copy of dense weights")
+                np.testing.assert_allclose(model.prefill(self.phones, self.prompt, self.bert),
+                    full_prefix(self.manifest, self.weights, self.phones, self.prompt, self.bert),
+                    rtol=2e-5, atol=3e-6)
+            finally:
+                model.close()
 
     def test_shared_generation_keeps_limits_cancellation_and_retry(self):
         weights = dict(self.weights, **{"output.weight": np.zeros_like(self.weights["output.weight"])})

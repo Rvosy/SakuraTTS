@@ -102,7 +102,9 @@ def frontend_preflight():
 
 
 def inspect_frontend(python):
-    command = [str(Path(python).resolve(strict=True)), "-B", str(Path(__file__).resolve()), "--frontend-preflight"]
+    python = Path(os.path.abspath(python))
+    python.stat()
+    command = [str(python), "-B", str(Path(__file__).resolve()), "--frontend-preflight"]
     result = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding="utf-8", errors="replace",
                             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                             env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONIOENCODING="utf-8",
@@ -424,8 +426,9 @@ def main(argv=None, session=None):
         source_hashes = {str(p): digest(p) for p in inputs.values()}
     else:
         if "model_hashes" not in session:
-            session["model_hashes"] = {str(p): digest(p) for p in inputs.values()}
-        source_hashes = dict(session["model_hashes"])
+            session["model_hashes"] = {kind: digest(p) for kind, p in inputs.items()}
+        # The owner fixes model contents; equivalent checkpoints may move between requests.
+        source_hashes = {str(p): session["model_hashes"][kind] for kind, p in inputs.items()}
     source_hashes.update({ref["audio"]: digest(ref["audio"]) for ref in references})
     cnhubert = args.cnhubert.resolve(strict=True) if args.cnhubert else root / "GPT_SoVITS/pretrained_models/chinese-hubert-base"
     job = {"official_source": str(root), "output": str(output), "frontend": str(frontend_path), "gpt": str(inputs["gpt"]), "sovits": str(inputs["sovits"]),
@@ -443,7 +446,7 @@ def main(argv=None, session=None):
             raise RuntimeError(read_json(run / 'result.json')['error'])
         return 0
     env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONIOENCODING="utf-8")
-    command = [str(args.python.resolve(strict=True)), "-B", str(Path(__file__).resolve()), "--worker", str(job_file)]
+    command = [os.path.abspath(args.python), "-B", str(Path(__file__).resolve()), "--worker", str(job_file)]
     with (run / "worker.log").open("w", encoding="utf-8") as log:
         child = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                                  encoding="utf-8", errors="replace", env=env,

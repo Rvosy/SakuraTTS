@@ -109,13 +109,15 @@ class SoVITSCheckpointTests(unittest.TestCase):
                 load()
 
     def test_nonfinite_inference_weights_are_rejected(self):
-        for value in (float("nan"), float("inf")):
-            with self.subTest(value=value):
-                _, state, process, models = self.fixture()
-                state["input.weight"][0, 0] = value
-                with self.upstream(process, models) as load, \
-                        self.assertRaisesRegex(ValueError, "Non-finite checkpoint tensor: input.weight"):
-                    load()
+        for dtype in (torch.float16, torch.float32):
+            for value in (float("nan"), float("inf"), float("-inf")):
+                with self.subTest(dtype=dtype, value=value):
+                    _, state, process, models = self.fixture()
+                    state["input.weight"] = state["input.weight"].to(dtype)
+                    state["input.weight"][0, 0] = value
+                    with self.upstream(process, models) as load, \
+                            self.assertRaisesRegex(ValueError, "Non-finite checkpoint tensor: input.weight"):
+                        load()
 
 
 if __name__ == "__main__":

@@ -120,7 +120,9 @@ def package_model(config, output, *, name=None):
         config = dict(config, references=refs)
         for key in ("acoustic_python", "frontend_python", "main_dictionary"):
             if key in config:
-                config[key] = str((root / config[key]).resolve(strict=True))
+                path = root / config[key]
+                path.stat()
+                config[key] = str(path.resolve()) if key == "main_dictionary" else os.path.abspath(path)
         _write_manifest(staged, config, name=name or model.name)
         check_packages(staged)
         staged.rename(output)
@@ -141,8 +143,11 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
     if output == paths["source"] or paths["source"] in output.parents:
         raise ValueError("Output must be outside the official source")
     output = _destination(output)
-    interpreter = str(Path(python or sys.executable).resolve(strict=True))
-    worker = str(Path(acoustic_python).resolve(strict=True)) if acoustic_python else None
+    interpreter = os.path.abspath(python or sys.executable)
+    os.stat(interpreter)
+    worker = os.path.abspath(acoustic_python) if acoustic_python else None
+    if worker:
+        os.stat(worker)
     tools = Path(__file__).parent
     env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1")
     with tempfile.TemporaryDirectory(prefix=".sakuratts-convert-", dir=output.parent) as temporary:
@@ -179,7 +184,8 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
                 "japanese_g2p", {}).get("implementation") == "pyopenjtalk-classic":
             config["acoustic_python"] = interpreter
         if frontend_python:
-            config["frontend_python"] = str(Path(frontend_python).resolve(strict=True))
+            os.stat(frontend_python)
+            config["frontend_python"] = os.path.abspath(frontend_python)
         staged = temporary / "model"
         staged.mkdir()
         for source, target in ((prepared / "gpt", "gpt"), (acoustic, "acoustic"), (prepared / "frontend", "frontend")):
