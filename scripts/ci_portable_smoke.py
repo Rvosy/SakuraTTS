@@ -16,6 +16,32 @@ from urllib.error import HTTPError
 import wave
 
 
+def check_windows_i18n(bundle, output):
+    """检查扩展路径工作目录与深层语言资源目录。"""
+    runtime = bundle / 'runtime/preparation'
+    source = runtime / 'official/tools/i18n'
+    code = '''import json,os,runpy,sys
+module=runpy.run_path(sys.argv[1])
+os.chdir(os.path.splitdrive(os.getcwd())[0] + "\\\\")
+languages=module['scan_language_list']()
+assert 'en_US' in languages, languages
+for language in languages:
+    module['load_language_list'](language)
+print(json.dumps({'languages':len(languages),'pathLength':len(sys.argv[1])}))
+'''
+    reports = {}
+    with tempfile.TemporaryDirectory(dir='\\\\?\\' + str(output)) as temporary:
+        deep = Path(temporary) / ('long-installation-' * 7) / ('中文 path-' * 12) / 'i18n'
+        shutil.copytree(source, deep)
+        for name, module in (('prefixedCwd', source / 'i18n.py'), ('longResource', deep / 'i18n.py')):
+            result = subprocess.run([str(runtime / 'python.exe'), '-I', '-X', 'utf8', '-c', code, str(module)],
+                                    cwd='\\\\?\\' + str(bundle), capture_output=True, text=True, encoding='utf-8')
+            (output / ('i18n-' + name + '.log')).write_text(result.stdout + result.stderr, encoding='utf-8')
+            result.check_returncode()
+            reports[name] = json.loads(result.stdout)
+    return reports
+
+
 def check_windows_long_paths(bundle, output):
     """Exercise each bundled NumPy ABI and its BLAS controller beyond MAX_PATH."""
     package = bundle / 'runtime/main/Lib/site-packages/sakuratts'
@@ -93,6 +119,7 @@ print(json.dumps({'probes':len(probes),'passed':True}))
     report = {'platform': release['target'], 'gpuSynthesis': False, 'listeningQuality': False}
     report['english'] = json.loads(english.stdout)
     if not apple:
+        report['i18n'] = check_windows_i18n(bundle, output)
         report['longPaths'] = check_windows_long_paths(bundle, output)
     ffmpeg = bundle / ('runtime/bin/ffmpeg' if apple else 'runtime/bin/ffmpeg.exe')
     pcm = b''.join(struct.pack('<h', int(6000 * math.sin(i*2*math.pi*220/32000))) for i in range(32000))

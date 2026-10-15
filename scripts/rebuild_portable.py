@@ -8,6 +8,7 @@ import tomllib
 import zipfile
 
 import build_portable as builder
+from build_preparation import patch_i18n
 
 
 def install_english_dependencies(bundle, site, source, project, recipe, release, manifest):
@@ -101,6 +102,19 @@ def upgrade_preparation_threadpoolctl(bundle, wheel, inventory, components):
         record(bundle, target, inventory, 'preparation-inventory')
 
 
+def update_preparation_i18n(bundle, inventory):
+    prep = bundle / 'runtime/preparation'
+    path = patch_i18n(prep)
+    manifest_path = prep / 'preparation-manifest.json'
+    manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    component = manifest['files'][path.relative_to(prep).as_posix()]['component']
+    record(prep, path, manifest['files'], component)
+    record(bundle, path, inventory, 'preparation:' + component)
+    manifest['bytes'] = sum(row['bytes'] for row in manifest['files'].values())
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    record(bundle, manifest_path, inventory, 'preparation-inventory')
+
+
 def install_product(bundle, site, wheel, inventory):
     # 旧 wheel 的模块必须整体替换，避免已删除源码残留在下一版。
     for directory in [site / 'sakuratts', *site.glob('sakuratts-*.dist-info')]:
@@ -147,6 +161,7 @@ def main():
     inventory = manifest['files']
     install_english_resources(bundle, args.english_resources, inventory, manifest['components'])
     upgrade_preparation_threadpoolctl(bundle, args.threadpoolctl_wheel, inventory, manifest['components'])
+    update_preparation_i18n(bundle, inventory)
     install_product(bundle, site, args.wheel, inventory)
     for name in builder.launch_files(recipe):
         target = bundle / ('README.md' if name == 'README-macos.md' else name)

@@ -28,6 +28,29 @@ class Api:
 
 
 class ReleaseTests(unittest.TestCase):
+    def test_rebuild_updates_i18n_resources_and_both_inventories(self):
+        from test_preparation_builder import I18N_SOURCE, put
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            prep = root / 'runtime/preparation'
+            path = put(prep, 'official/tools/i18n/i18n.py', I18N_SOURCE)
+            put(prep, 'official/tools/i18n/locale/en_US.json', '{"hello":"Hello"}')
+            files, inventory = {}, {}
+            rebuild_portable.record(prep, path, files, 'official')
+            manifest = put(prep, 'preparation-manifest.json', json.dumps({'files': files}))
+            for _ in range(2):
+                rebuild_portable.update_preparation_i18n(root, inventory)
+                updated = json.loads(manifest.read_text())
+                self.assertEqual(updated['bytes'], sum(row['bytes'] for row in updated['files'].values()))
+                for base, rows in ((prep, updated['files']), (root, inventory)):
+                    for name, row in rows.items():
+                        self.assertEqual(row['sha256'], rebuild_portable.builder.digest(base / name))
+                        self.assertEqual(row['bytes'], (base / name).stat().st_size)
+                spec = importlib.util.spec_from_file_location('rebuilt_i18n', path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                self.assertEqual(module.load_language_list('en_US'), {'hello': 'Hello'})
+
     def test_english_resources_update_both_inventories_and_licenses(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
