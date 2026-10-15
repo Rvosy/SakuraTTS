@@ -4,6 +4,7 @@ import csv
 from email.parser import Parser
 import importlib.util
 import json
+import os
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -19,6 +20,14 @@ def put(root, name, content="fixture"):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
     return path
+
+
+I18N_SOURCE = '''import json, os
+I18N_JSON_DIR = os.path.join(os.path.dirname(os.path.relpath(__file__)), "locale")
+def load_language_list(language):
+    with open(os.path.join(I18N_JSON_DIR, language + ".json"), encoding="utf-8") as stream:
+        return json.load(stream)
+'''
 
 
 class PreparationBuilderTests(unittest.TestCase):
@@ -151,8 +160,24 @@ class PreparationBuilderTests(unittest.TestCase):
             output = root / "component"
             plan = builder.PreparationPlan()
             plan.add(payload, "Lib/site-packages/example.py", "fixture")
+            i18n = put(root, "upstream/tools/i18n/i18n.py", I18N_SOURCE)
+            language = put(root, "upstream/tools/i18n/locale/en_US.json", '{"hello":"Hello"}')
+            plan.add(i18n, "official/tools/i18n/i18n.py", "official")
+            plan.add(language, "official/tools/i18n/locale/en_US.json", "official")
             args = SimpleNamespace(output=output, official_source=root / "upstream")
             builder.assemble(args, plan, "python39", ["python39.zip", ".", "Lib/site-packages"])
+            self.assertEqual(i18n.read_text(encoding="utf-8"), I18N_SOURCE)
+            spec = importlib.util.spec_from_file_location("bundled_i18n", output / "official/tools/i18n/i18n.py")
+            module = importlib.util.module_from_spec(spec)
+            # 导入和读取资源时的工作目录可以不同。
+            previous = os.getcwd()
+            try:
+                os.chdir(root)
+                spec.loader.exec_module(module)
+                os.chdir(output)
+                self.assertEqual(module.load_language_list("en_US"), {"hello": "Hello"})
+            finally:
+                os.chdir(previous)
             manifest_text = (output / "preparation-manifest.json").read_text()
             manifest = json.loads(manifest_text)
             self.assertNotIn(str(root), manifest_text)

@@ -233,6 +233,14 @@ def license_inventory(plan):
     return {"format": "sakuratts-preparation-licenses-v1", "components": result}
 
 
+def patch_i18n(preparation):
+    """语言资源随模块定位，不依赖启动目录及其 Windows 路径前缀。"""
+    path = preparation / "official/tools/i18n/i18n.py"
+    source = path.read_text(encoding="utf-8")
+    path.write_text(source.replace("os.path.relpath(__file__)", "os.path.abspath(__file__)"), encoding="utf-8")
+    return path
+
+
 def assemble(args, plan, stem, paths):
     output = args.output.resolve()
     if output.exists():
@@ -246,6 +254,8 @@ def assemble(args, plan, stem, paths):
         inventory[name] = {key: row[key] for key in ("bytes", "sha256", "component")}
         if index % 2000 == 0:
             print(f"Copied {index}/{len(plan.files)} files", flush=True)
+    i18n = patch_i18n(output)
+    inventory[i18n.relative_to(output).as_posix()].update(bytes=i18n.stat().st_size, sha256=digest(i18n))
     # The local upstream config can contain personal checkpoint paths. The
     # preparer supplies its own explicit job config.
     marker = dict(MARKER)
