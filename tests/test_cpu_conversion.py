@@ -13,6 +13,7 @@ sys.path[:0] = [str(Path(__file__).resolve().parents[1]), str(Path(__file__).res
 from sakuratts import Model
 from sakuratts.cli import main
 from sakuratts.prepare.converter import convert, package_model
+from sakuratts.backends.directml import static_gpt
 from sakuratts.TTS_infer_pack.TTS import Inference
 from sakuratts.module.reference_condition import sha256_file
 from test_backend_selection import FakeRuntime
@@ -94,7 +95,7 @@ class CPUConversionTests(unittest.TestCase):
                               (json.loads((path / "manifest.json").read_text(encoding="utf-8")), None)), \
                         patch("sakuratts.diagnostics.resources.check_worker_imports", side_effect=probe) as checked, \
                         patch("sakuratts.backends.cpu.onnx_gpt.read_sidecar", side_effect=self.read_gpt), \
-                        patch("sakuratts.backends.directml.static_gpt.read_static_sidecar", side_effect=self.read_gpt), \
+                        patch.object(static_gpt, "read_static_sidecar", side_effect=self.read_gpt), \
                         patch("sakuratts.backends.cuda.runtime.configure_cuda",
                               side_effect=AssertionError("CPU/DirectML publication must not initialize CUDA")):
                     model = convert(**options, backend=backend)

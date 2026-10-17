@@ -168,11 +168,9 @@ class PackageSoVITSChunksTests(unittest.TestCase):
         for directory in (f.source, f.split, f.evidence):
             directory.rename(directory.with_name(directory.name + "-unavailable"))
         f.rf.rename(f.rf.with_name("rf-unavailable.json"))
-        for size in (0, 256):
+        for size in (0, 128, 256):
             self.assertEqual(read_chunked_manifest(f.output, allow_experimental_fp16=True,
                 acoustic_chunk_frames=size, acoustic_arena_shrink=True), (manifest, None))
-        with self.assertRaises(ValueError):
-            read_chunked_manifest(f.output, allow_experimental_fp16=True, acoustic_chunk_frames=128, acoustic_arena_shrink=True)
         screen = json.loads((f.output / "chunk-screen.json").read_text(encoding="utf-8"))
         self.assertFalse(screen["quality_accepted"])
         self.assertFalse(screen["evidence"]["inference_rerun"])

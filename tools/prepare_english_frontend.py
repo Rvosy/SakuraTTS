@@ -73,6 +73,8 @@ def export(root, output):
 
 
 def prepare(frontend, output, source, python):
+    python = Path(os.path.abspath(python))
+    python.stat()
     frontend, source = frontend.resolve(strict=True), source.resolve(strict=True)
     output = output.resolve()
     if output.exists() or output.is_relative_to(frontend) or output.is_relative_to(source):
@@ -91,11 +93,11 @@ def prepare(frontend, output, source, python):
             target = candidate / original.relative_to(frontend)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(original, target)
-        environment = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONIOENCODING="utf-8",
-                           NLTK_DATA=str(python.resolve().parent / "nltk_data"))
+        environment = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONIOENCODING="utf-8")
+        environment.setdefault("NLTK_DATA", str(python.parent / "nltk_data"))
         environment.pop("PYTHONPATH", None)
         environment.pop("PYTHONHOME", None)
-        subprocess.run([str(python.resolve(strict=True)), "-B", str(Path(__file__).resolve()),
+        subprocess.run([str(python), "-B", str(Path(__file__).resolve()),
             "--export", "--official-source", str(source), "--output", str(candidate / "english")],
             check=True, env=environment, cwd=source, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         notices = Path(__file__).resolve().parents[1] / "docs/third-party"

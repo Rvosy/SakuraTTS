@@ -1,6 +1,7 @@
 """Reuse converted checkpoints and model packages for inference entry points."""
 
 import logging
+import os
 from pathlib import Path
 
 from ..model import Model
@@ -36,7 +37,7 @@ def prepare_initial_model(settings, experimental=None):
     identity["source"] = sha256_file(Path(options["official_source"]) / "GPT_SoVITS/TTS_infer_pack/TTS.py")
     portable_root = bundle_root()
     if portable_root is None:
-        identity["python"] = str(Path(options["python"]).resolve())
+        identity["python"] = os.path.abspath(options["python"])
     else:
         identity["preparation"] = sha256_file(portable_root / "runtime/preparation/preparation-manifest.json")
     identity["converter"] = sha256_file(Path(__file__).with_name("converter.py"))

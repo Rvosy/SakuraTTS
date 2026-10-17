@@ -224,6 +224,40 @@ class InitialConversionCacheTests(unittest.TestCase):
                 ReferenceCache(engine, settings).prepare_audio(root / "audio.wav")
                 self.assertEqual(prepare.call_count, 3)
 
+    def test_reference_session_hashes_fixed_resources_once_but_refreshes_audio(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            self.fixture(root)
+            settings = self.inference(root).settings
+            (root / "frontend").mkdir()
+            (root / "frontend/manifest.json").write_text('{}')
+            audio = root / "audio.wav"
+            audio.write_bytes(b"first audio")
+            hubert = Path(settings["official_source"]) / "GPT_SoVITS/pretrained_models/chinese-hubert-base/weights.bin"
+            hubert.parent.mkdir(parents=True)
+            hubert.write_bytes(b"hubert fixture")
+            engine = SimpleNamespace(model=SimpleNamespace(path=root / "model.json", runtime_config={}),
+                _runtime=SimpleNamespace(manifests={kind: {"source": {
+                    "checkpoint_sha256": sha256_file(settings[kind + "_checkpoint"]),
+                    "official_commit": "same-source"}} for kind in ("gpt", "sovits")},
+                    packages={"frontend": root / "frontend"}))
+            with patch("sakuratts.runtime.portable.bundle_root", return_value=None), \
+                 patch("sakuratts.TTS_infer_pack.reference.sha256_file", wraps=sha256_file) as digest, \
+                 patch("sakuratts.prepare.converter.prepare_reference", side_effect=lambda **kwargs: kwargs["output"].mkdir(parents=True)) as prepare, \
+                 patch("sakuratts.TTS_infer_pack.reference.PreparedReference.load"):
+                cache = ReferenceCache(engine, settings)
+                cache.prepare_audio(audio)
+                audio.write_bytes(b"second audio")
+                cache.prepare_audio(audio)
+                self.assertEqual(prepare.call_count, 2)
+                self.assertNotEqual(prepare.call_args_list[0].kwargs["output"], prepare.call_args_list[1].kwargs["output"])
+                hashed = [Path(call.args[0]) for call in digest.call_args_list]
+                self.assertEqual((hashed.count(hubert), hashed.count(audio)), (1, 2))
+                hubert.write_bytes(b"updated hubert")
+                ReferenceCache(engine, settings).prepare_audio(audio)
+                self.assertEqual(prepare.call_count, 3)
+                self.assertNotEqual(prepare.call_args_list[1].kwargs["output"], prepare.call_args_list[2].kwargs["output"])
+
     def test_weight_switch_accepts_prepared_cuda_fp16_chunks(self):
         from sakuratts.model import Model
         with tempfile.TemporaryDirectory() as temporary:

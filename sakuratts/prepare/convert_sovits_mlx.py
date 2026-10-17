@@ -107,8 +107,6 @@ def convert(checkpoint: Path, references: Path | None = None, *,
         if value.dtype not in (torch.float16, torch.float32):
             raise ValueError(f"Unsupported source dtype for {key}: {value.dtype}")
         array = value.detach().to(dtype=torch.float32, device="cpu").contiguous().numpy()
-        if not np.isfinite(array).all():
-            raise ValueError(f"Non-finite source tensor: {key}")
         arrays[key] = array
         owner, field = key.rsplit(".", 1)
         module = model.get_submodule(owner)

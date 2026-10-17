@@ -35,8 +35,8 @@ def worker_paths(root, *, required=True):
                                      "frontend": "runtime/acoustic/python.exe"})
     result = {}
     for role, name in workers.items():
-        path = (root / name).resolve(strict=required)
-        if root not in path.parents:
+        path = Path(os.path.abspath(root / name))
+        if root not in path.resolve(strict=required).parents:
             raise ValueError("Worker paths must stay inside the portable bundle")
         result[role] = path
     return result
@@ -64,10 +64,11 @@ def preparation_settings(settings):
             if (relative.is_absolute() or ".." in relative.parts
                     or ":" in str(relative) or "\\" in str(relative)):
                 raise ValueError("Preparation paths must stay inside runtime/preparation")
-            path = (preparation / relative).resolve(strict=True)
-            if preparation.resolve() not in path.parents:
+            path = preparation / relative
+            resolved = path.resolve(strict=True)
+            if preparation.resolve() not in resolved.parents:
                 raise ValueError("Preparation path escaped runtime/preparation")
-            settings[name] = str(path)
+            settings[name] = os.path.abspath(path) if name == "python" else str(resolved)
     elif json.loads((root / "runtime/portable.json").read_text(encoding="utf-8")).get("has_preparation"):
         raise FileNotFoundError("The bundled preparation component is incomplete: " + str(marker))
     return settings

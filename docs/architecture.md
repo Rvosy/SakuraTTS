@@ -72,7 +72,7 @@ docs/              使用说明、Spec 与 ADR
 
 CUDA 声学和经典日文前端使用私有工作进程。`acoustic_python`、`frontend_python` 可以共享解释器；旧配置省略后者时沿用前者。工作进程通过 `runtime/worker.py` 绑定 SakuraTTS 包，保持主环境与私有 Python 的 ABI 隔离。CPU / DirectML 的 GPT 与声学 Session 在推理主解释器中运行；CPU 使用 ORT INT8 GPT 与 FP32 声学，DirectML 使用 GPU FP16 GPT 与全图 FP16 声学。精度、KV 所在设备和验证边界见 [CPU 与 AMD 推理](cpu-amd.md)。MLX 的 CPU / Metal 分工与模型限制见 [Apple 指南](apple.md)。
 
-完整整合包另带 CPU 准备环境，按需转换权重或编码参考，完成后退出。前端与参考准备使用同一套 `prepare_resources.py`，由安装配置选择准备解释器。执行适配器从 `runtime/portable.json` 绑定安装位置；模型文件保存资源描述。发行组合与依赖来源见[整合包](portable-bundle.md)。
+完整整合包另带 CPU 准备环境，按需转换权重或编码参考。转换完成后退出，参考编码的短暂复用与回收见 [HTTP 指南](http-api.md#生命周期与输出)。前端与参考准备使用同一套 `prepare_resources.py`，由安装配置选择准备解释器。执行适配器从 `runtime/portable.json` 绑定安装位置；模型文件保存资源描述。发行组合与依赖来源见[整合包](portable-bundle.md)。
 
 HTTP 默认 `direct` 模式在专用线程中创建、调用、切换和关闭 Inference。显式选择 `managed` 后，`ManagedRuntime` 在事件循环中管理唤醒与休眠，`ProcessInference` 经有界 IPC 调用独立进程内的同一个 Inference。`process_tree.py` 回收自有进程树，Windows 使用 Job Object。两种模式的适用场景见[后台运行](background-runtime.md)，所有权与取消要求见[推理契约](specs/inference-contract.md)。
 

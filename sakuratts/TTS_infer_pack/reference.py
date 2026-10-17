@@ -22,12 +22,39 @@ class ReferenceCache:
         from ..prepare.reference_process import ReferencePreparer
         self.preparer = ReferencePreparer()
         self.cache_status = None
+        self.resource_identity = None
         runtime = engine._runtime
         self.identity = {kind + "_checkpoint_sha256": runtime.manifests[kind]["source"]["checkpoint_sha256"]
                          for kind in ("gpt", "sovits")}
         self.identity["official_commit"] = runtime.manifests["gpt"]["source"]["official_commit"]
         self.paths = [] if settings.get("cnhubert") else [engine.model.path.parent / path
                       for path in engine.model.runtime_config.get("references", {}).values()]
+
+    def _resource_identity(self, portable_root):
+        if self.resource_identity is not None:
+            return self.resource_identity
+        resources = {"frontend": sha256_file(self.engine._runtime.packages["frontend"] / "manifest.json")}
+        bundled_preparation = (portable_root is not None
+                               and self.settings.get("official_source") and self.settings.get("python"))
+        if bundled_preparation:
+            resources["preparation"] = sha256_file(portable_root / "runtime/preparation/preparation-manifest.json")
+        directories = []
+        if self.settings.get("official_source") and not bundled_preparation:
+            source = Path(self.settings["official_source"]) / "GPT_SoVITS"
+            directories = [("hubert", Path(self.settings.get("cnhubert", source / "pretrained_models/chinese-hubert-base"))),
+                           ("speaker", source / "eres2net")]
+            speaker = source / "pretrained_models/sv/pretrained_eres2netv2w24s4ep4.ckpt"
+            if speaker.is_file():
+                resources[str(speaker.relative_to(source))] = sha256_file(speaker)
+        elif self.settings.get("cnhubert"):
+            directories = [("hubert", Path(self.settings["cnhubert"]))]
+        for prefix, directory in directories:
+            for resource in sorted(directory.rglob("*")):
+                if resource.is_file() and "__pycache__" not in resource.parts:
+                    resources[prefix + "/" + str(resource.relative_to(directory))] = sha256_file(resource)
+        script = Path(__file__).resolve().parents[1] / "prepare/prepare_resources.py"
+        self.resource_identity = {"resources": resources, "preparer": sha256_file(script)}
+        return self.resource_identity
 
     def _audio(self, audio_path):
         audio_path = Path(audio_path).resolve(strict=True)
@@ -50,28 +77,8 @@ class ReferenceCache:
         if base is None:
             from ..prepare.converter import prepare_reference
             from ..runtime.portable import bundle_root
-            script = Path(__file__).resolve().parents[1] / "prepare/prepare_resources.py"
-            resources = {"frontend": sha256_file(self.engine._runtime.packages["frontend"] / "manifest.json")}
             portable_root = bundle_root()
-            bundled_preparation = (portable_root is not None
-                                   and self.settings.get("official_source") and self.settings.get("python"))
-            if bundled_preparation:
-                resources["preparation"] = sha256_file(portable_root / "runtime/preparation/preparation-manifest.json")
-            directories = []
-            if self.settings.get("official_source") and not bundled_preparation:
-                source = Path(self.settings["official_source"]) / "GPT_SoVITS"
-                directories = [("hubert", Path(self.settings.get("cnhubert", source / "pretrained_models/chinese-hubert-base"))),
-                               ("speaker", source / "eres2net")]
-                speaker = source / "pretrained_models/sv/pretrained_eres2netv2w24s4ep4.ckpt"
-                if speaker.is_file():
-                    resources[str(speaker.relative_to(source))] = sha256_file(speaker)
-            elif self.settings.get("cnhubert"):
-                directories = [("hubert", Path(self.settings["cnhubert"]))]
-            for prefix, directory in directories:
-                for resource in sorted(directory.rglob("*")):
-                    if resource.is_file() and "__pycache__" not in resource.parts:
-                        resources[prefix + "/" + str(resource.relative_to(directory))] = sha256_file(resource)
-            key = hashlib.sha256(json.dumps({**expected, "resources": resources, "preparer": sha256_file(script)},
+            key = hashlib.sha256(json.dumps({**expected, **self._resource_identity(portable_root)},
                 sort_keys=True).encode("utf-8")).hexdigest()
             path = Path(self.settings.get("cache_dir", ".cache/sakuratts")) / "references" / key
             if path.exists():

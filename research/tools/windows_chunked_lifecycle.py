@@ -283,7 +283,7 @@ def main(argv=None):
             acoustic_session_policy=args.acoustic_session_policy)
         if graph is not None:
             raise ValueError("Public lifecycle checks require a self-contained chunk package")
-        provenance = {**deepcopy(manifest["provenance"]), "package": str(package),
+        provenance = {**deepcopy(manifest.get("provenance", {})), "package": str(package),
             "package_manifest_sha256": sha256_file(package / "manifest.json"),
             "package_format": manifest["format"], "source_identity": deepcopy(manifest["source"]),
             "sample_ratio": math.prod(manifest["config"]["model"]["upsample_rates"]),
