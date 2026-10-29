@@ -1,0 +1,23 @@
+--- a/src/chat/replyer/maisaka_generator_base.py
++++ b/src/chat/replyer/maisaka_generator_base.py
+@@ -31,6 +31,7 @@
+ from src.config.config import global_config
+ from src.maisaka.context.message_id_alias import to_display_message_id
+ from src.config.model_configs import ModelInfo
++from src.llm_models.payload_content.resp_format import RespFormat, RespFormatType
+ from src.core.types import ActionInfo
+ from src.llm_models.payload_content.context_item import (
+     AssistantMessageItem,
+@@ -1225,6 +1226,12 @@
+                         session_id=preview_chat_id,
+                     )
+                 generation_options = self._build_generation_options(active_model_name)
++                response_schema = before_request_kwargs.get("response_schema")
++                if response_schema is not None:
++                    generation_options = replace(
++                        generation_options,
++                        response_format=RespFormat(RespFormatType.JSON_SCHEMA, response_schema),
++                    )
+                 generation_result = await active_model.generate_response_with_context(
+                     context_factory=context_factory,
+                     options=generation_options,

@@ -1,0 +1,13 @@
+max_text_length = 300
+
+[plugin]
+config_version = "1.0.0"
+
+[engine]
+base_url = "http://127.0.0.1:9880"
+timeout_seconds = 300
+
+[voice]
+ref_audio_path = "/opt/sakuratts/shared/references/normal.ogg"
+prompt_text = "填写这份参考音频的真实日文转写"
+speed_factor = 1.0

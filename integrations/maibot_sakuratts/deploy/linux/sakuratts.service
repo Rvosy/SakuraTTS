@@ -1,0 +1,22 @@
+[Unit]
+Description=SakuraTTS HTTP service
+Wants=network-online.target
+After=network-online.target docker.service
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=sakuratts
+Group=sakuratts
+WorkingDirectory=/opt/sakuratts/current
+EnvironmentFile=/opt/sakuratts/shared/service.env
+ExecStart=/opt/sakuratts/current/.venv-linux-cpu/bin/python -m sakuratts serve --tts-config /opt/sakuratts/shared/service.yaml --host ${SAKURATTS_HOST} --port ${SAKURATTS_PORT} --runtime-mode managed --idle-sleep-seconds 60 --operation-timeout-seconds 110 --log-file /opt/sakuratts/shared/logs/sakuratts.log
+Restart=on-failure
+RestartSec=5
+KillMode=control-group
+TimeoutStopSec=30
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+# 2 vCPU 共用服务器的部署示例；引擎的通用默认档位仍为 balanced。
+sakuratts:
+  model: /opt/sakuratts/shared/models/voice-cpu/model.json
+  backend: cpu
+  profile: minimum-memory
+  cache_dir: /opt/sakuratts/shared/cache
+  runtime_options:
+    threads: 2
+    gpt_threads: 2
+    capacity: 2048
