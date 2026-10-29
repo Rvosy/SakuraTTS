@@ -279,7 +279,7 @@ def main(argv=None):
         package = (config_path.parent / config["sovits"]).resolve(strict=True)
         manifest, graph = read_manifest(package,
             allow_experimental_fp16=args.allow_experimental_acoustic_fp16,
-            acoustic_arena_shrink=True, acoustic_chunk_frames=256,
+            acoustic_chunk_frames=256,
             acoustic_session_policy=args.acoustic_session_policy)
         if graph is not None:
             raise ValueError("Public lifecycle checks require a self-contained chunk package")

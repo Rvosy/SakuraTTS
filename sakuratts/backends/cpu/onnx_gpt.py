@@ -47,7 +47,7 @@ def read_sidecar(package, precision="fp32"):
 
 
 class ONNXCPUGPT:
-    """Single-request CPU execution; lower precisions are explicit experiments."""
+    """Single-request execution with bounded, reusable KV storage."""
 
     precision = "fp32"
     device = "cpu"
@@ -97,6 +97,10 @@ class ONNXCPUGPT:
         options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
         options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
         options.enable_cpu_mem_arena = False
+        # Decode changes the history shape at every token. Retaining an ORT
+        # allocation plan for each length grows session memory without reusing
+        # a plan during that generation. KV storage is already owned below.
+        options.enable_mem_pattern = False
         options.add_session_config_entry("session.intra_op.allow_spinning", "0")
         options.add_session_config_entry("session.inter_op.allow_spinning", "0")
         self.session = None
@@ -139,7 +143,17 @@ class ONNXCPUGPT:
             # A masked zero slot avoids zero-length MatMul dimensions, which
             # crash the optimized Windows CPU kernel during empty-cache prefill.
             shape = (self.layers, self.capacity + 1, self.heads, self.head_dim)
-            self.keys, self.values = np.empty(shape, self.tensor_dtype), np.empty(shape, self.tensor_dtype)
+            def allocate():
+                if self.device == "cpu":
+                    import mmap
+                    # NumPy's huge-page advice can fault unused layer padding
+                    # into RAM. Reserve the same contiguous capacity without
+                    # that advice or growth copies; the array owns its mapping.
+                    size = self.layers * (self.capacity + 1) * self.width * np.dtype(self.tensor_dtype).itemsize
+                    return np.ndarray(shape, self.tensor_dtype,
+                        buffer=mmap.mmap(-1, size, access=mmap.ACCESS_COPY))
+                return np.empty(shape, self.tensor_dtype)
+            self.keys, self.values = allocate(), allocate()
             self.keys[:, 0] = 0
             self.values[:, 0] = 0
             self.decode_mask = np.zeros((1, 1, self.capacity + 1), self.tensor_dtype)
@@ -158,6 +172,9 @@ class ONNXCPUGPT:
             self.length = end
             return logits.astype(np.float32, copy=False)
         except BaseException:
+            # The ORT wrapper's retained traceback refers to this same mapping.
+            # Drop its views as well as the model's references on failure.
+            feeds.clear()
             self.release_request_state()
             raise
 
@@ -188,10 +205,10 @@ class ONNXCPUGPT:
             x_text += weights["text_alpha"] * weights["position_encoding"][:text]
             x_audio = weights["audio_embedding"][prompt[0]] + weights["audio_alpha"] * weights["position_encoding"][:audio]
             hidden = np.concatenate((x_text, x_audio))
-        rows, columns = np.arange(length)[:, None], np.arange(length)[None]
-        allowed = (columns < text) | ((rows >= text) & (columns <= rows))
-        mask = np.concatenate((np.full((length, 1), -np.inf, np.float32),
-                               np.where(allowed, np.float32(0), np.float32(-np.inf))), axis=1)[None]
+        mask = np.full((1, length, length + 1), -np.inf, self.tensor_dtype)
+        mask[:, :, 1:text + 1] = 0
+        for row in range(text, length):
+            mask[:, row, text + 1:row + 2] = 0
         return self._run(hidden, mask)
 
     def decode(self, token):

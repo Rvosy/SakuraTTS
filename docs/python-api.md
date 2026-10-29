@@ -14,7 +14,7 @@ with Engine.load(model) as engine:
 
 `Engine.load(model, backend="cpu")` 默认使用 CPU INT8 GPT 与 FP32 声学；`backend="directml"` 默认在 Windows GPU 上执行 FP16 GPT 与全图 FP16 声学，KV 容量为 1280。安装、资源要求和线程配置见 [CPU / DirectML 指南](cpu-amd.md)。省略 `backend` 时使用模型建议值。
 
-`profile` 显式选择后端预设，例如 `Engine.load(model, backend="cpu", profile="int8")`。CPU 只提供 `int8`，DirectML 只提供 `fp16`；省略时也选择各自默认档位。CLI 对应 `--profile`，服务 YAML 对应 `sakuratts.profile`。支持的组合、精度包要求和覆盖顺序见[推理档位](inference-profiles.md)；实际精度与策略继续写入音频报告。
+`profile` 显式选择后端预设，例如 `Engine.load(model, backend="cpu", profile="low-memory")`。CPU 默认选择 `balanced`，另提供 `low-memory` 和 `minimum-memory`，组合 KV 释放、声码器分块与模型错峰；DirectML 默认选择 `fp16`。CLI 对应 `--profile`，服务 YAML 对应 `sakuratts.profile`。支持的组合、精度包要求和覆盖顺序见[推理档位](inference-profiles.md)；实际精度与策略继续写入音频报告。
 
 `Audio` 包含单声道 int16 `pcm`、`sample_rate` 和 `report`。`wav_bytes()` 返回 WAV 字节；`save(path)` 写入新文件，拒绝覆盖。`report["status"]` 为 `completed` 或 `stopped_at_limit`，停止原因、片段、参数和计时继续保存在报告中。
 
@@ -47,7 +47,7 @@ CUDA 引擎默认在每片声学计算结束后收缩 ORT 显存池，释放不�
 
 后端选项通过 `Engine.load(path, experimental={...})` 显式传入。CUDA 的键与默认值由 [NVIDIAEngine](../sakuratts/backends/cuda/engine.py) 定义，CPU / DirectML 由 [ORTEngine](../sakuratts/backends/ort.py) 定义；常用组合分别见[CUDA 推理档位](inference-profiles.md)和 [CPU / DirectML 指南](cpu-amd.md)。
 
-`acoustic_session_policy` 默认 `"resident"`，保留 latent 和 vocoder 两个 Session。设为 `"staged"` 时，先加载 latent Session 并取回完整 CPU latent，再释放它、加载一次 vocoder Session 处理该片段的所有块，最后释放 vocoder。它只支持已经验证的分块声学包，必须同时指定 `acoustic_chunk_frames` 并开启 `acoustic_arena_shrink`；每个片段会重建 Session，增加加载时间。模型图、块长、完整上下文和输入噪声保持不变。此选项控制声学内部的驻留方式，与控制 GPT／声学模型驻留的 `policy` 分开设置。私有 worker 的 `session_initialization="deferred"` 表示模型包与进程已准备，CUDA Session 将在执行时创建并检查。
+`acoustic_session_policy` 默认 `"resident"`，保留 latent 和 vocoder 两个 Session。设为 `"staged"` 时，先加载 latent Session 并取回完整 CPU latent，再释放它、加载一次 vocoder Session 处理该片段的所有块，最后释放 vocoder。它支持 CPU 和 CUDA 的分块声学包，必须同时指定 `acoustic_chunk_frames`；CUDA 还需开启 `acoustic_arena_shrink`，CPU 不使用该选项。每个片段会重建 Session，增加加载时间。模型图、块长、完整上下文和输入噪声保持不变。此选项控制声学内部的驻留方式，与控制 GPT／声学模型驻留的 `policy` 分开设置。私有 worker 的 `session_initialization="deferred"` 表示模型包与进程已准备，CUDA Session 将在执行时创建并检查。CPU 的准备方法与显式组合见[声码器分块](cpu-amd.md#cpu-声码器分块)。
 
 `gpt_prefill_query_chunk_size` 在 CUDA 默认 `0`，CPU / DirectML 要求为 `0`，使用完整 Prefill 注意力矩阵。CUDA 可显式设置正整数，指定每次计算的 query 行数；每块仍读取全部 key，保留文本双向、音频因果的注意力关系。分块减少长前缀的临时分数矩阵，但 GEMM 形状变化可能改变浮点舍入和后续采样结果，需要单独验收；它不限制整条推理链的显存，也不改变 KV 容量。实际选项写入音频报告同名字段。
 

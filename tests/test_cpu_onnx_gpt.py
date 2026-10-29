@@ -5,6 +5,7 @@ from pathlib import Path
 import tempfile
 import sys
 import unittest
+import weakref
 from unittest.mock import patch
 from types import SimpleNamespace
 
@@ -70,15 +71,59 @@ class ONNXCPUGPTTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "integer"):
                 model.decode(True)
             model.prefill(self.phones, self.prompt, self.bert)
+            cache = weakref.ref(model.keys)
+            storage = weakref.ref(model.keys if model.keys.base is None else model.keys.base)
+            failure = None
             with patch.object(model.session, "run", side_effect=RuntimeError("kernel failed")):
-                with self.assertRaisesRegex(RuntimeError, "kernel failed"):
+                try:
                     model.decode(3)
+                except RuntimeError as error:
+                    failure = error
             self.assertIsNone(model.keys)
             self.assertEqual(model.length, 0)
+            # A caller retaining the error for diagnostics must not retain KV.
+            self.assertEqual(str(failure), "kernel failed")
+            self.assertIsNotNone(failure.__traceback__)
+            self.assertIsNone(cache())
+            self.assertIsNone(storage())
         finally:
             model.close()
         with self.assertRaisesRegex(RuntimeError, "unloaded"):
             model.prefill(self.phones, self.prompt, self.bert)
+
+    def test_prefill_preserves_bidirectional_text_and_causal_audio_at_capacity(self):
+        model = ONNXCPUGPT.load(self.root, capacity=12, threads=1)
+        try:
+            for text, audio in ((1, 11), (11, 1), (6, 6)):
+                phones = np.arange(text, dtype=np.int64)[None] % self.manifest["config"]["phoneme_vocab_size"]
+                prompt = np.arange(audio, dtype=np.int64)[None] % self.manifest["config"]["vocab_size"]
+                bert = np.zeros((1, text, 5), np.float32)
+                with self.subTest(text=text, audio=audio):
+                    np.testing.assert_allclose(model.prefill(phones, prompt, bert),
+                        full_prefix(self.manifest, self.weights, phones, prompt, bert), atol=1e-5, rtol=1e-5)
+        finally:
+            model.close()
+
+    def test_2048_token_limit_and_short_request_after_full_cache(self):
+        from sakuratts.prepare.export_gpt_onnx import export_sidecar
+        manifest, weights = model_data()
+        manifest["config"]["max_positions"] = 2048
+        weights["position_encoding"] = np.tile(weights["position_encoding"], (64, 1))
+        with tempfile.TemporaryDirectory() as directory:
+            package = save_package(directory, manifest, weights)
+            export_sidecar(package, package / "onnx")
+            model = ONNXCPUGPT.load(package, capacity=2048, threads=1)
+            try:
+                expected = model.prefill(self.phones, self.prompt, self.bert)
+                logits = model.prefill(np.array([[2]], np.int64),
+                    np.zeros((1, 2046), np.int64), np.zeros((1, 1, 5), np.float32))
+                self.assertTrue(np.isfinite(logits).all())
+                self.assertTrue(np.isfinite(model.decode(3)).all())
+                with self.assertRaisesRegex(ValueError, "capacity"):
+                    model.decode(3)
+                np.testing.assert_array_equal(model.prefill(self.phones, self.prompt, self.bert), expected)
+            finally:
+                model.close()
 
     def test_runtime_uses_checked_sidecar_without_unused_original_archive(self):
         path = self.root / "weights.npz"

@@ -4,17 +4,17 @@
 
 | 档位 | CPU | AMD DirectML | NVIDIA CUDA | Apple MLX（实验） |
 |---|---|---|---|---|
-| `int8` | 默认且唯一档位：ORT INT8 GPT，4 线程；FP32 声学，8 线程 | 不提供 | 不提供 | 不提供 |
+| `balanced`（均衡） | 默认档位：ORT INT8 GPT，4 线程；FP32 声学，8 线程，保留模型和 KV | 不提供 | 不提供 | 不提供 |
 | `fp16` | 不提供 | 默认且唯一档位：GPU GPT + 全图 FP16 声学，KV 容量 1280 | FP16 GPT + FP16 分块声学，释放 GPT 请求状态 | 尚未实现 |
 | `fp32` | 不提供 | 不提供 | FP32，保留模型 | FP32 decode / 声学，CPU FP64 Prefill |
-| `low-memory` | 不提供 | 不提供 | FP16，声学 Session 错峰 | FP32，释放 GPT 请求状态 |
-| `minimum-memory` | 不提供 | 不提供 | FP16，GPT / 声学及声学 Session 错峰 | FP32，GPT / 声学错峰 |
+| `low-memory`（省内存） | INT8 GPT + FP32 声学，释放 KV，保留模型；分块包默认 256 帧 | 不提供 | FP16，声学 Session 错峰 | FP32，释放 GPT 请求状态 |
+| `minimum-memory`（极限省内存） | INT8 GPT + FP32 声学，GPT / 声学错峰；分块包默认 128 帧，latent / vocoder 也错峰 | 不提供 | FP16，GPT / 声学及声学 Session 错峰 | FP32，GPT / 声学错峰 |
 
 预设的具体选项由 [profiles.py](../sakuratts/profiles.py) 定义。CPU / DirectML 的详细参数见[设备指南](cpu-amd.md)。MLX 使用原生 V2Pro / V2ProPlus 包，公共转换可从原始权重生成；声学 encoder 在 CPU 执行，flow / decoder 在 Metal 执行。Apple 真机与整合包验收见 [Apple 指南](apple.md)。
 
 ```powershell
 sakuratts tts MODEL_AMD --backend directml --profile fp16 --text "こんにちは。" --output outputs/hello.wav
-sakuratts serve MODEL_CPU --backend cpu --profile int8 --runtime-mode managed
+sakuratts serve MODEL_CPU --backend cpu --profile balanced --runtime-mode managed
 ```
 
 ```python
@@ -24,9 +24,9 @@ with Engine.load("MODEL_AMD", backend="directml") as engine:
     audio = engine.synthesize("こんにちは。")
 ```
 
-YAML 使用 `sakuratts.backend`、`sakuratts.profile` 和 `sakuratts.runtime_options`。命令行或 Python 显式参数覆盖 YAML 对应字段，`runtime_options` 覆盖预设，显式 `experimental` 再覆盖同名选项。省略 `profile` 时 CPU 选择 `int8`、DirectML 选择 `fp16`；CUDA 与 MLX 保持原有默认行为。加载按所选实现与资源执行，声学精度需符合显式预设。`minimum-memory` 用于低级 Engine、`tts` 或 `managed` HTTP，默认 `direct` HTTP 不接受错峰加载。
+YAML 使用 `sakuratts.backend`、`sakuratts.profile` 和 `sakuratts.runtime_options`。命令行或 Python 显式参数覆盖 YAML 对应字段，`runtime_options` 覆盖预设，显式 `experimental` 再覆盖同名选项。省略 `profile` 时 CPU 选择 `balanced`、DirectML 选择 `fp16`；CUDA 与 MLX 保持原有默认行为。CPU 旧名 `int8`、`compact` 分别映射到 `balanced`、`low-memory`，报告使用新名称。加载按所选实现与资源执行，声学精度需符合显式预设。`minimum-memory` 用于低级 Engine、`tts` 或 `managed` HTTP，默认 `direct` HTTP 不接受错峰加载。
 
-加载已有模型包时，选择档位不会改写包内模型。HTTP 配置提供原始 GPT / SoVITS 权重和准备环境时，首次加载及权重切换按所选档位自动准备资源。CUDA 的三个 FP16 档共用 FP16 分块声学缓存，与 FP32 分开保存；转换期间在临时目录内完成图检查，失败不发布缓存。CPU 默认需要 GPT INT8 附加资源与 FP32 整图声学包；DirectML 默认需要 FP16 GPT、对应容量的静态 Decode 图与 FP16 声学包。运行时不要求设备执行报告或哈希匹配。降精度可能改变采样序列和音频长度，准备和试听方法见[CPU / AMD 指南](cpu-amd.md)。
+加载已有模型包时，选择档位不会改写包内模型。HTTP 配置提供原始 GPT / SoVITS 权重和准备环境时，首次加载及权重切换按所选档位自动准备资源。CUDA 的三个 FP16 档共用 FP16 分块声学缓存，与 FP32 分开保存；转换期间在临时目录内完成图检查，失败不发布缓存。CPU 两个省内存档共用 FP32 分块包；旧整图包仍可加载，沿用对应的 KV 释放或 GPT / 声学错峰行为。块长依据、准备方式和兼容规则见 [CPU 省内存档位](cpu-amd.md#cpu-省内存档位)。DirectML 默认需要 FP16 GPT、对应容量的静态 Decode 图与 FP16 声学包。运行时不要求设备执行报告或哈希匹配。降精度可能改变采样序列和音频长度，准备和试听方法见[CPU / AMD 指南](cpu-amd.md)。
 
 CPU 模式不加载 GPU 执行器。DirectML 把 GPT Transformer 与声学模型放在 GPU，文本处理、embedding 和采样仍使用 CPU。默认 GPT 线程数为 4，DirectML 声学的 CPU 部分为 2 线程。两条路径都允许显式调整线程、容量和驻留策略；其他 CPU / AMD 候选仅保留在[历史实验](../research/notes/cpu-amd-precision-listening-20260927.md)，不再作为公开档位。
 

@@ -1,0 +1,5 @@
+{
+  "policy": "staged",
+  "acoustic_chunk_frames": "auto",
+  "acoustic_session_policy": "staged"
+}

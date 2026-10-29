@@ -76,7 +76,7 @@ def make_package(root):
     return manifest
 
 
-OPTIONS = {"allow_experimental_fp16": True, "acoustic_chunk_frames": 256, "acoustic_arena_shrink": True}
+OPTIONS = {"allow_experimental_fp16": True, "acoustic_chunk_frames": 256}
 
 
 class ChunkedPackageTests(unittest.TestCase):
@@ -88,12 +88,15 @@ class ChunkedPackageTests(unittest.TestCase):
 
     def test_selection_and_coverage_fail_before_any_runtime_import(self):
         invalid = [{"acoustic_chunk_frames": value} for value in (None, True, -1)]
-        invalid += [{"allow_experimental_fp16": False}, {"acoustic_arena_shrink": False}, {"diagnostic": True}]
+        invalid += [{"allow_experimental_fp16": False}, {"diagnostic": True},
+                    {"acoustic_session_policy": "unknown"}]
         for override in invalid:
             with self.subTest(override=override), self.assertRaises(ValueError):
                 read_manifest(self.root, **{**OPTIONS, **override})
         for size in (1, 128, 512):
             self.assertEqual(read_manifest(self.root, **{**OPTIONS, "acoustic_chunk_frames": size}), (self.manifest, None))
+        with self.assertRaisesRegex(ValueError, "CUDA.*arena shrinkage"):
+            ORTSoVITS.load(self.root, **OPTIONS)
 
     def test_chunk_loading_ignores_provenance_and_report_changes(self):
         self.manifest["source"]["checkpoint_sha256"] = "stale"
@@ -137,7 +140,7 @@ class ChunkedPackageTests(unittest.TestCase):
             RunOptions=lambda: SimpleNamespace(add_run_config_entry=lambda *args: None),
             get_available_providers=lambda: ["CUDAExecutionProvider"])
         with patch.dict(sys.modules, {"onnxruntime": runtime}), patch("sakuratts.backends.cuda.runtime.configure_cuda"):
-            model = ORTSoVITS.load(self.root, **OPTIONS)
+            model = ORTSoVITS.load(self.root, **OPTIONS, acoustic_arena_shrink=True)
         self.assertEqual([s.kind for s in sessions], ["latent", "vocoder"])
         self.assertEqual(model.runtime["package_format"], FORMAT)
         self.assertEqual(model.planner.samples_per_frame, 3)
@@ -184,7 +187,7 @@ class ChunkedPackageTests(unittest.TestCase):
         caught = None
         with patch.dict(sys.modules, {"onnxruntime": runtime}), patch("sakuratts.backends.cuda.runtime.configure_cuda"):
             try:
-                ORTSoVITS.load(self.root, **OPTIONS)
+                ORTSoVITS.load(self.root, **OPTIONS, acoustic_arena_shrink=True)
             except RuntimeError as error:
                 caught = error
         self.assertIs(caught, failure)

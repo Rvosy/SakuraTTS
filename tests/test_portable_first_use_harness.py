@@ -18,7 +18,7 @@ SPEC.loader.exec_module(harness)
 
 class PortableFirstUseHarnessTests(unittest.TestCase):
     def test_execution_check_uses_selected_backend_and_precision(self):
-        for backend, profile, description in (("cpu", "int8", "GPT INT8 / SoVITS FP32"),
+        for backend, profile, description in (("cpu", "balanced", "GPT INT8 / SoVITS FP32"),
                                                ("directml", "fp16", "GPT FP16 / SoVITS FP16"),
                                                ("cuda", "fp32", "GPT FP32 / SoVITS FP32")):
             service = object.__new__(harness.Service)

@@ -22,7 +22,6 @@ class ORTProcessSoVITS:
         python=Path(python).resolve(strict=True)
         manifest,_=read_manifest(package,diagnostic=diagnostic,
                                  allow_experimental_fp16=allow_experimental_fp16,
-                                 acoustic_arena_shrink=acoustic_arena_shrink,
                                  acoustic_chunk_frames=acoustic_chunk_frames,
                                  acoustic_session_policy=acoustic_session_policy)
         self.encoder=SimpleNamespace(manifest=manifest)

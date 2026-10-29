@@ -1,0 +1,4 @@
+{
+  "policy": "release-state",
+  "acoustic_chunk_frames": 256
+}

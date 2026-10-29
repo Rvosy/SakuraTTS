@@ -65,15 +65,15 @@ def _interfaces(manifest):
 
 
 def read_chunked_manifest(package, *, diagnostic=False, allow_experimental_fp16=False,
-                          acoustic_chunk_frames=None, acoustic_arena_shrink=False):
+                          acoustic_chunk_frames=None):
     root = Path(package).resolve(strict=True)
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
     if manifest.get("format") != FORMAT:
         raise ValueError("Expected a self-contained chunked acoustic package")
     if type(acoustic_chunk_frames) is not int or acoustic_chunk_frames < 0:
         raise ValueError("Chunk packages require an explicit nonnegative acoustic_chunk_frames")
-    if diagnostic or acoustic_arena_shrink is not True:
-        raise ValueError("Chunk packages require arena shrinkage and do not support intermediate capture")
+    if diagnostic:
+        raise ValueError("Chunk packages do not support intermediate capture")
     dtype, config = manifest["dtype"], manifest["config"]
     if dtype not in ("float16", "float32") or config["model"]["version"] not in ("v2Pro", "v2ProPlus"):
         raise ValueError("Expected V2Pro/V2ProPlus FP32 or experimental FP16 acoustics")

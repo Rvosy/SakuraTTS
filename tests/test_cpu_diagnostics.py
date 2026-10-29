@@ -32,7 +32,7 @@ class CPUDoctorTests(unittest.TestCase):
         self.enterContext(patch("sakuratts.diagnostics.environment.platform.system", return_value="Windows"))
         self.resource_check = self.enterContext(patch("sakuratts.diagnostics.resources.check_runtime_packages",
             side_effect=lambda *args, backend, profile=None: {
-                "status": "passed", "profile": profile or {"cpu": "int8", "directml": "fp16"}[backend]}))
+                "status": "passed", "profile": profile or {"cpu": "balanced", "directml": "fp16"}[backend]}))
         self.cuda = self.enterContext(patch("sakuratts.backends.cuda.runtime.configure_cuda",
                                             side_effect=AssertionError("CPU/DirectML must not initialize CUDA")))
         self.adapters = self.enterContext(patch("sakuratts.backends.directml.devices.list_adapters",
@@ -151,7 +151,8 @@ sys.modules['sakuratts.backends.cuda.runtime']=cuda
                 gpt.update(format="sakuratts-gpt-fp32-v1", architecture="gpt-sovits-ar-postnorm-relu",
                     weights={"file": weights.name, "bytes": weights.stat().st_size, "sha256": sha256_file(weights)})
                 manifest_path.write_text(json.dumps(gpt), encoding="utf-8")
-                acoustic = {"source": gpt["source"], "config": {"model": {"version": "v2ProPlus"}}}
+                acoustic = {"format": "sakuratts-sovits-onnx-v1", "source": gpt["source"],
+                            "config": {"model": {"version": "v2ProPlus"}}}
                 with patch("sakuratts.module.sovits.read_manifest", return_value=(acoustic, None)), \
                         patch("sakuratts.diagnostics.resources.check_worker_imports",
                               side_effect=lambda python, profile, **kwargs: {"executable": str(python)}) as probe:
@@ -180,7 +181,7 @@ class GPTPackageDiagnosticsTests(unittest.TestCase):
             "architecture": "gpt-sovits-ar-postnorm-relu", "weights": self.spec(weights),
             "source": {"checkpoint_sha256": "checkpoint", "official_commit": "source"}}
         (self.root / "gpt/manifest.json").write_text(json.dumps(self.gpt), encoding="utf-8")
-        self.acoustic = {"dtype": "float32", "source": self.gpt["source"],
+        self.acoustic = {"format": "sakuratts-sovits-onnx-v1", "dtype": "float32", "source": self.gpt["source"],
             "config": {"model": {"version": "v2ProPlus"}}}
         self.acoustic_reader = self.enterContext(patch("sakuratts.module.sovits.read_manifest",
             side_effect=lambda *args, **kwargs: (self.acoustic, None)))
@@ -198,6 +199,21 @@ class GPTPackageDiagnosticsTests(unittest.TestCase):
             with self.subTest(backend=backend), self.assertRaisesRegex(FileNotFoundError, "onnx-" + precision):
                 check_runtime_packages(self.config, backend=backend)
         self.probe.assert_not_called()
+        self.compute.assert_not_called()
+
+    def test_cpu_doctor_reports_effective_chunking_without_loading_sessions(self):
+        for chunked in (False, True):
+            self.acoustic["format"] = "sakuratts-sovits-chunked-v1" if chunked else "sakuratts-sovits-onnx-v1"
+            (self.root / "sovits/manifest.json").write_text(json.dumps(self.acoustic), encoding="utf-8")
+            with patch("sakuratts.backends.cpu.onnx_gpt.read_sidecar", return_value=(
+                    self.gpt, {"cache": "sentinel", "precision": "int8"}, self.root / "unused.onnx", None)):
+                for profile, frames, policy in (("balanced", 0, "resident"),
+                        ("low-memory", 256, "resident"), ("minimum-memory", 128, "staged")):
+                    with self.subTest(chunked=chunked, profile=profile):
+                        report = check_runtime_packages(self.config, backend="cpu", profile=profile)
+                        self.assertEqual(report["acoustic_execution"], {
+                            "format": self.acoustic["format"], "chunk_frames": frames if chunked else None,
+                            "session_policy": policy if chunked else "resident"})
         self.compute.assert_not_called()
 
 

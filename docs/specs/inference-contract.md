@@ -40,7 +40,7 @@ SakuraTTS 以完全兼容 GPT-SoVITS 为目标，接收原版模型，经转换�
 
 后端选择可以由调用方显式覆盖，覆盖不修改模型文件。执行选项由对应后端解释，公共生命周期不得硬编码设备依赖。服务配置 `sakuratts.runtime_options` 提供后端选项，显式 `experimental` 参数覆盖同名字段；direct 与 managed 使用同一合并结果。语言处理器与设备选择分开；改变语言必须同时提供对应的规范化、音素、特征和资源准备实现，中文不能复用日文的零 BERT 特征作为兼容实现。
 
-执行预设可由 Python `profile`、CLI `--profile` 或 YAML `sakuratts.profile` 显式选择。CPU 只提供 `int8`，DirectML 只提供 `fp16`，省略时也选择各自默认档位；CUDA 与 MLX 的现有组合及默认行为不变。优先级为显式后端选项、YAML `runtime_options`、预设默认值；显式 `profile` 覆盖 YAML 的预设名。线程、容量和驻留策略可以调整，设备与精度必须符合对应路径。预设不会转换权重或自动切换设备，不支持的组合和精度包错配必须报错。Managed 睡醒后保留本次服务会话的选择；总体错峰策略的准备状态与加载时机仍遵循既有生命周期契约。具体组合由 [profiles.py](../../sakuratts/profiles.py) 定义。
+执行预设可由 Python `profile`、CLI `--profile` 或 YAML `sakuratts.profile` 显式选择。CPU 默认选择 `balanced`，另提供保持相同精度的 `low-memory` 和 `minimum-memory`；DirectML 默认选择 `fp16`。CUDA 与 MLX 的现有组合及默认行为不变。优先级为显式后端选项、YAML `runtime_options`、预设默认值；显式 `profile` 覆盖 YAML 的预设名。线程、容量和驻留策略可以调整，设备与精度必须符合对应路径。预设不会转换权重或自动切换设备，不支持的组合和精度包错配必须报错。Managed 睡醒后保留本次服务会话的选择；总体错峰策略的准备状态与加载时机仍遵循既有生命周期契约。具体组合由 [profiles.py](../../sakuratts/profiles.py) 定义。
 
 DirectML 的公共 `device_id` 使用 DXGI 适配器索引，GPT Prefill、Decode、GPU KV 与声学必须归属同一选择。初始化失败保留原因，不整体重试 CPU 或自动改选显卡；图内 CPU 分区仍由 ORT 处理。`doctor --backend directml` 的设备枚举只提供诊断，查询失败不阻塞真实加载，查询成功也不代表推理通过。配置用法见[设备指南](../cpu-amd.md#选择-amd-显卡)，Session 内部设备序号与缓存分配原因见 [ADR 0006](../adr/0006-device-precision-and-directml-kv.md#显卡选择与-kv-分配)。
 
@@ -49,6 +49,8 @@ DirectML 的公共 `device_id` 使用 DXGI 适配器索引，GPT Prefill、Decod
 HTTP 以原版 api_v2 的 GET/POST 字段和默认值为准，保留一个活动模型、一个计算请求。忙碌返回 409；业务输入错误和不支持的功能返回 400，类型校验错误返回 422。客户端断开不能提前释放忙碌状态，模型创建、切换、计算和关闭发生在同一工作线程。完整响应以 `X-SakuraTTS-Status` 区分正常完成和达到长度限制。模式 1 在各片完成后发送音频，有界队列施加背压，不先聚合完整请求；模式 2/3 尚未实现。具体差异见 [HTTP API](../http-api.md)。
 
 当前 HTTP 实现覆盖原版 API V2 的部分能力，API 版本不等于模型家族版本。旧版 `api.py` 协议、Gradio 客户端和原版 Python 模块接口仍是待补齐的兼容项；自有 CLI / Python API 继续提供。已声明但未实现的计算功能返回 400，未知额外字段忽略。参数拒绝发生在推理或 managed 唤醒之前；未注册路径仍为 404，HTTP 方法不匹配仍为 405。
+
+HTTP 非流式调速在模型以原速生成完整 PCM 后执行，使用 FFmpeg `atempo` 保持音高；默认倍率 `1` 不经过该处理。输出采样率、文本及片段顺序不变，完整响应的时长反映调速后音频。流式调速仍拒绝，参数范围与依赖要求见 [API V2 使用说明](../api-v2-guide.md#音频与流式)。这不改变低级 Engine 或模型图内的语速契约。
 
 `batch_size=1` 时接收 `parallel_infer` 的原版默认值 `true`，按单项顺序执行；它不改变音频内容。`top_p` 支持 `(0, 1]`。`batch_threshold` 在单项批次下、`sample_steps` 在 V2ProPlus 下、`overlap_length` / `min_chunk_length` 在模式 0/1 下不影响计算。参数用法见 [API v2 使用指南](../api-v2-guide.md)。
 
@@ -127,7 +129,7 @@ Windows `CUDAGPT.load(..., precision="fp16")`、`NVIDIAEngine(..., gpt_precision
 
 不同后端的浮点顺序和随机数实现可能不同。同种子音频逐样本一致不是唯一标准：先对照固定历史下的中间张量和 logits，再验证采样分布和端到端语音。
 
-CPU 默认且唯一的公开路径为 ORT INT8 GPT 与 CPU FP32 声学，默认 GPT 4 线程、声学 8 线程。DirectML 默认且唯一的公开路径为 GPU FP16 GPT 与全图 FP16 声学，默认 GPT 的 CPU 部分 4 线程、声学的 CPU 部分 2 线程、KV 容量 1280。文本前端、embedding 与采样仍可使用 CPU。报告分别记录两阶段设备、精度与验证状态。provider 不可用、初始化失败或运行失败均须报错，不允许整体静默回退到 CPU。预设保持这些默认值；显式执行选项可以覆盖默认值，所选实现和资源须能完成对应计算。
+CPU 的公开精度组合为 ORT INT8 GPT 与 CPU FP32 声学，默认 GPT 4 线程、声学 8 线程。`low-memory` 和 `minimum-memory` 组合 KV 释放、模型错峰与 FP32 声码器分块；旧名 `int8` / `compact` 分别映射到 `balanced` / `low-memory`，报告使用新名称。旧整图包继续按原有驻留策略执行，显式整数块长仍要求分块包；分块执行保留完整 encoder / flow 上下文、输出长度和采样规则。DirectML 默认且唯一的公开路径为 GPU FP16 GPT 与全图 FP16 声学，默认 GPT 的 CPU 部分 4 线程、声学的 CPU 部分 2 线程、KV 容量 1280。文本前端、embedding 与采样仍可使用 CPU。报告分别记录两阶段设备、精度与验证状态。provider 不可用、初始化失败或运行失败均须报错，不允许整体静默回退到 CPU。预设保持这些默认值；显式执行选项可以覆盖默认值，所选实现和资源须能完成对应计算。
 
 INT8 单独记录量化范围和生成序列变化。DirectML FP16 路径使用实际半精度图与 KV，声学保留整数索引和 FP32 公共 I/O。精度筛查、有限输出和设备执行记录用于实验与质量评估，不是模型加载凭证。运行时按实际图、数组和 provider 执行，不要求报告存在、通过筛查或匹配历史硬件。线程、CPU arena 与适配器序号可显式选择。ONNX GPT 不支持 Prefill query 分块，选项见 [CPU / AMD 指南](../cpu-amd.md)。
 
@@ -195,7 +197,7 @@ Windows CUDA 的 `Engine` / `NVIDIAEngine` 及共用该链路的 CLI、HTTP 入�
 
 可选的 `sakuratts-sovits-chunked-v1` 声学包拥有 encoder/flow 和 vocoder 两张图、权重及纯 JSON 依赖规格。运行时按实际接口、RF 依赖和采样比例计算，不依赖原包、转换工具或筛查报告。
 
-分块由 `acoustic_chunk_frames` / `--acoustic-chunk-frames` 显式选择，默认 `None` 保留整图路径。`0` 表示两张图均整段执行，任意正整数表示每块中心部分的 latent 帧数，不受历史验收集合限制。分块当前只支持 CUDA 和显式 arena 回收，HALF 包需要 FP16 选项，不支持诊断中间量 capture。样本中的最大长度仅说明验证范围，不限制用户文本或 latent 长度。
+分块由 `acoustic_chunk_frames` 显式选择，默认 `None` 保留整图路径。`0` 表示两张图均整段执行，任意正整数表示每块中心部分的 latent 帧数，不受历史验收集合限制。分块支持 CPU 和 CUDA：CPU 沿用所选线程数与 CPU arena 策略，不使用 GPU arena 回收；CUDA 要求显式 arena 回收，旧 `synthesize` 入口也可用 `--acoustic-chunk-frames`。HALF 包需要 FP16 选项，不支持诊断中间量 capture。样本中的最大长度仅说明验证范围，不限制用户文本或 latent 长度。CPU 分块转换与整图缓存分开，块长和驻留策略不改变分块包身份。
 
 分块始终先生成整段 latent，再按 RF 规格计算每块的真实上下文与整数样本裁剪位置；与真实句首、句尾相交时只取实际存在的帧，不补 latent、不淡入淡出、不裁掉 encoder/flow 上下文。全部声码器块成功后才返回完整 FP32 波形，由原有片段逻辑归一化、追加静音和转换 PCM 一次。私有工作进程沿用 FP32 / int64 输入协议，HALF latent 留在进程内。任意块失败不返回部分波形；后续请求按既有生命周期规则恢复。关闭模型释放两张 session，构造失败也清除半构造对象持有的 session 引用。
 

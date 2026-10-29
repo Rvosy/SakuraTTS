@@ -1,4 +1,4 @@
-"""Full-context encoder/flow and finite-context vocoder execution on CUDA."""
+"""Full-context encoder/flow and finite-context vocoder execution on CPU or CUDA."""
 from __future__ import annotations
 
 from copy import deepcopy
@@ -29,16 +29,17 @@ def _clear_session_tracebacks(error):
 
 
 class ORTChunkedSoVITS(ORTSoVITS):
-    """Return a complete FP32 waveform with resident or sequential CUDA sessions."""
+    """Return a complete FP32 waveform with resident or sequential sessions."""
 
     @classmethod
     def load_verified(cls, package, manifest, *, chunk_frames, profile_prefix=None,
-                      acoustic_session_policy="resident"):
+                      acoustic_session_policy="resident", device="cuda", device_id=0,
+                      threads=4, enable_cpu_mem_arena=True):
         """Called only after the public loader validates the self-contained package."""
         import onnxruntime as ort
 
         package = Path(package).resolve(strict=True)
-        if "CUDAExecutionProvider" not in ort.get_available_providers():
+        if device == "cuda" and "CUDAExecutionProvider" not in ort.get_available_providers():
             raise RuntimeError("CUDA provider is unavailable for chunked acoustics")
         planner = VocoderReceptiveField.from_json(package / manifest["rf"]["file"])
         provenance = {"package_manifest_sha256": sha256_file(package / "manifest.json"),
@@ -46,16 +47,17 @@ class ORTChunkedSoVITS(ORTSoVITS):
                 "graphs": deepcopy(manifest["graphs"]), "weights": deepcopy(manifest["weights"]),
                 "rf_spec_sha256": manifest["rf"].get("sha256"),
                 "rf_original_graph_sha256": planner.source.get("graph_sha256"),
-                "sample_ratio": planner.samples_per_frame, "acoustic_arena_shrink": True,
+                "sample_ratio": planner.samples_per_frame, "acoustic_arena_shrink": device == "cuda",
                 "validation": deepcopy(manifest.get("validation")),
                 "ort_path": ort.__file__, "onnxruntime": ort.__version__}
         return cls(package, manifest, planner, chunk_frames, provenance,
-                   profile_prefix=profile_prefix, acoustic_session_policy=acoustic_session_policy)
+                   profile_prefix=profile_prefix, acoustic_session_policy=acoustic_session_policy,
+                   device=device, device_id=device_id, threads=threads,
+                   enable_cpu_mem_arena=enable_cpu_mem_arena)
 
     def __init__(self, package, manifest, planner, chunk_frames, provenance, *, profile_prefix=None,
-                 acoustic_session_policy="resident"):
-        if acoustic_session_policy not in ("resident", "staged"):
-            raise ValueError("acoustic_session_policy must be resident or staged")
+                 acoustic_session_policy="resident", device="cuda", device_id=0,
+                 threads=4, enable_cpu_mem_arena=True):
         import onnxruntime as ort
 
         self.session = self.vocoder_session = self._run_options = None
@@ -65,14 +67,19 @@ class ORTChunkedSoVITS(ORTSoVITS):
         self.package, self.profile_prefix = package, profile_prefix
         self.encoder = SimpleNamespace(manifest=manifest)
         self.sample_rate = manifest["config"]["sample_rate"]
-        self.diagnostic, self.acoustic_arena_shrink = False, True
+        self.device, self.threads = device, threads
+        self.enable_cpu_mem_arena = enable_cpu_mem_arena
+        self.diagnostic, self.acoustic_arena_shrink = False, device == "cuda"
         self.acoustic_session_policy = acoustic_session_policy
         # Before deferred initialization these describe the requested execution
-        # policy. Every created session must independently prove CUDA selection.
-        self.providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
-        self.provider_options = {"CUDAExecutionProvider": {"device_id": "0",
+        # policy. Every created session must independently prove provider selection.
+        self.providers = (["CUDAExecutionProvider", "CPUExecutionProvider"] if device == "cuda"
+                          else ["CPUExecutionProvider"])
+        self.provider_options = {"CUDAExecutionProvider": {"device_id": str(device_id),
             "arena_extend_strategy": "kSameAsRequested", "cudnn_conv_algo_search": "HEURISTIC",
-            "cudnn_conv_use_max_workspace": "0", "use_tf32": "0"}}
+            "cudnn_conv_use_max_workspace": "0", "use_tf32": "0"}} if device == "cuda" else {}
+        self._requested_providers = ([("CUDAExecutionProvider", self.provider_options["CUDAExecutionProvider"]),
+                                     "CPUExecutionProvider"] if device == "cuda" else ["CPUExecutionProvider"])
         self.planner, self.chunk_frames = planner, chunk_frames
         self.runtime = {"experiment": "split-full" if chunk_frames == 0 else "chunked-vocoder",
                         "development_only": True, "quality_accepted": False,
@@ -81,8 +88,9 @@ class ORTChunkedSoVITS(ORTSoVITS):
                         "session_initialization": "deferred" if acoustic_session_policy == "staged" else "eager",
                         "providers": {}}
         try:
-            self._run_options = ort.RunOptions()
-            self._run_options.add_run_config_entry("memory.enable_memory_arena_shrinkage", "gpu:0")
+            if device == "cuda":
+                self._run_options = ort.RunOptions()
+                self._run_options.add_run_config_entry("memory.enable_memory_arena_shrinkage", f"gpu:{device_id}")
             if acoustic_session_policy == "resident":
                 self._create_session("latent")
                 self._create_session("vocoder")
@@ -91,7 +99,8 @@ class ORTChunkedSoVITS(ORTSoVITS):
             self.session = self.vocoder_session = self._run_options = None
             self._closed = True
             _clear_session_tracebacks(error)
-            gc.collect()
+            if self.device == "cuda":
+                gc.collect()
             raise
 
     def _record_stage(self, kind, operation, started, *, chunk_index=None):
@@ -112,19 +121,23 @@ class ORTChunkedSoVITS(ORTSoVITS):
         settings = manifest["settings"]
         try:
             options = ort.SessionOptions()
-            options.intra_op_num_threads, options.inter_op_num_threads = 4, 1
+            options.intra_op_num_threads, options.inter_op_num_threads = self.threads, 1
             options.enable_mem_pattern = False
+            if self.device == "cpu":
+                options.enable_cpu_mem_arena = self.enable_cpu_mem_arena
+                options.add_session_config_entry("session.intra_op.allow_spinning", "0")
+                options.add_session_config_entry("session.inter_op.allow_spinning", "0")
             options.graph_optimization_level = getattr(ort.GraphOptimizationLevel, settings["ort_graph_optimization_level"])
             options.use_deterministic_compute = settings["ort_use_deterministic_compute"]
             if self.profile_prefix is not None:
                 options.enable_profiling = True
                 options.profile_file_prefix = str(self.profile_prefix) + "-" + kind
             session = ort.InferenceSession(str(self.package / manifest["graphs"][kind]["file"]),
-                sess_options=options, providers=[("CUDAExecutionProvider", {"device_id": "0",
-                    "arena_extend_strategy": "kSameAsRequested", "cudnn_conv_algo_search": "HEURISTIC",
-                    "cudnn_conv_use_max_workspace": "0", "use_tf32": "0"}), "CPUExecutionProvider"])
-            if not session.get_providers() or session.get_providers()[0] != "CUDAExecutionProvider":
-                raise RuntimeError("Chunk session did not initialize CUDA; refusing silent CPU inference")
+                sess_options=options, providers=self._requested_providers)
+            actual_providers = session.get_providers()
+            if (self.device == "cpu" and actual_providers != ["CPUExecutionProvider"] or
+                    self.device == "cuda" and actual_providers[:1] != ["CUDAExecutionProvider"]):
+                raise RuntimeError(f"Chunk session did not initialize {self.device}; refusing provider fallback")
             types = {"INT64": "tensor(int64)", "FLOAT": "tensor(float)", "FLOAT16": "tensor(float16)"}
             for role, actual in (("inputs", session.get_inputs()), ("outputs", session.get_outputs())):
                 expected = manifest["interfaces"][kind][role]
@@ -147,7 +160,8 @@ class ORTChunkedSoVITS(ORTSoVITS):
             # failed session even after the caller has handled the exception.
             session = None
             _clear_session_tracebacks(error)
-            gc.collect()
+            if self.device == "cuda":
+                gc.collect()
             raise
         finally:
             session = None
@@ -159,7 +173,8 @@ class ORTChunkedSoVITS(ORTSoVITS):
             return
         started = (time.time(), time.perf_counter())
         setattr(self, attribute, None)
-        gc.collect()
+        if self.device == "cuda":
+            gc.collect()
         self._record_stage(kind, "session_release", started)
 
     def _run_session(self, kind, names, feeds, *, chunk_index=None):
@@ -222,9 +237,11 @@ class ORTChunkedSoVITS(ORTSoVITS):
                 self._release_session("vocoder")
             self.last_transfer = {"experiment": self.runtime["experiment"], "chunk_frames": self.chunk_frames,
                 "chunks": len(plans), "latent_dtype": str(latent.dtype), "latent_frames": total,
-                "latent_d2h_bytes": latent.nbytes, "latent_inputs_h2d_bytes": sum(value.nbytes for value in feeds.values()),
-                "vocoder_inputs_h2d_bytes": inputs_bytes, "vocoder_outputs_d2h_bytes": outputs_bytes,
-                "byte_scope": "Logical host tensor sizes; excludes driver copies, workspaces and transfer profiling",
+                "latent_d2h_bytes": latent.nbytes if self.device == "cuda" else 0,
+                "latent_inputs_h2d_bytes": sum(value.nbytes for value in feeds.values()) if self.device == "cuda" else 0,
+                "vocoder_inputs_h2d_bytes": inputs_bytes if self.device == "cuda" else 0,
+                "vocoder_outputs_d2h_bytes": outputs_bytes if self.device == "cuda" else 0,
+                "byte_scope": "Logical device transfer tensor sizes; CPU execution has no device transfers",
                 "latent_ms": latent_ms, "decode_ms": (time.perf_counter() - started) * 1000,
                 "acoustic_session_policy": self.acoustic_session_policy,
                 "stage_intervals": list(self._stage_intervals),
@@ -249,6 +266,7 @@ class ORTChunkedSoVITS(ORTSoVITS):
         self._release_session("vocoder")
         self._run_options = None
         self.release_request_state()
-        gc.collect()
+        if self.device == "cuda":
+            gc.collect()
 
     close = unload

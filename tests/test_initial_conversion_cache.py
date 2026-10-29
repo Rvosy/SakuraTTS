@@ -126,6 +126,35 @@ class InitialConversionCacheTests(unittest.TestCase):
                                  ["cuda", "cpu", "directml", "directml"])
                 self.assertEqual(convert.call_args.kwargs["experimental"], {"capacity": 1024})
 
+    def test_cpu_memory_profiles_share_preparation_without_changing_legacy_default_cache(self):
+        from sakuratts.prepare.cache import prepare_initial_model, prepare_checkpoint
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.fixture(root)
+            settings = dict(self.inference(root).settings, backend="cpu")
+            def prepare_weight(_kind, _path, output, **_kwargs):
+                output.mkdir(parents=True)
+            with patch("sakuratts.prepare.converter.convert", side_effect=lambda **kw: kw["output"].mkdir(parents=True)), \
+                 patch("sakuratts.prepare.converter.convert_checkpoint", side_effect=prepare_weight), \
+                 patch("sakuratts.engine.Model.load", side_effect=lambda path: path):
+                paths, gpts = {}, []
+                for profile in ("balanced", "int8", "low-memory", "compact", "minimum-memory"):
+                    settings["profile"] = profile
+                    paths[profile] = (prepare_initial_model(settings),
+                        prepare_checkpoint("sovits", root / "sovits.pth", "same", settings, backend="cpu"))
+                    gpts.append(prepare_checkpoint("gpt", root / "gpt.ckpt", "same", settings, backend="cpu"))
+                self.assertEqual(paths["balanced"], paths["int8"])
+                self.assertNotEqual(paths["balanced"], paths["low-memory"])
+                self.assertEqual(paths["low-memory"], paths["minimum-memory"])
+                self.assertEqual(paths["low-memory"], paths["compact"])
+                self.assertEqual(len(set(gpts)), 1)
+                tuning = {"acoustic_chunk_frames": 64, "threads": 2, "policy": "resident"}
+                self.assertEqual((prepare_initial_model(settings, experimental=tuning),
+                    prepare_checkpoint("sovits", root / "sovits.pth", "same", settings,
+                                       backend="cpu", experimental=tuning)), paths["minimum-memory"])
+                self.assertEqual(prepare_checkpoint("gpt", root / "gpt.ckpt", "same", settings,
+                    backend="cpu", experimental=tuning), gpts[0])
+
     def test_shared_checkpoint_loader_updates_invalidate_model_and_weight_caches(self):
         from sakuratts.prepare.cache import prepare_checkpoint, prepare_initial_model
 

@@ -84,10 +84,14 @@ def _check_runtime_packages(config_path, *, backend=None, profile=None,
         checked_file(paths["gpt"], gpt["weights"]["file"])
     is_fp16 = manifests["sovits"].get("dtype") == "float16"
     precision_options = {"allow_experimental_fp16": True} if is_fp16 else {}
-    if backend == "cuda":
+    if backend in ("cpu", "cuda"):
         precision_options.update(acoustic_chunk_frames=options.get("acoustic_chunk_frames"),
-            acoustic_arena_shrink=options.get("acoustic_arena_shrink", True),
             acoustic_session_policy=options.get("acoustic_session_policy", "resident"))
+        if backend == "cpu":
+            from sakuratts.profiles import resolve_cpu_acoustics
+            frames, policy = resolve_cpu_acoustics(manifests["sovits"].get("format"),
+                precision_options["acoustic_chunk_frames"], precision_options["acoustic_session_policy"])
+            precision_options.update(acoustic_chunk_frames=frames, acoustic_session_policy=policy)
     acoustic, _ = read_manifest(paths["sovits"], **precision_options)
     if profile is not None:
         from types import SimpleNamespace
@@ -131,6 +135,9 @@ def _check_runtime_packages(config_path, *, backend=None, profile=None,
         frontend_worker, frontend_runtime_files = worker, runtime_files
     return {"status": "passed", "config": str(config_path), "backend": backend,
             "profile": profile, "gpt_resources": gpt_resources,
+            "acoustic_execution": {"format": acoustic["format"],
+                "chunk_frames": precision_options.get("acoustic_chunk_frames"),
+                "session_policy": precision_options.get("acoustic_session_policy", "resident")},
             "model_family": acoustic["config"]["model"]["version"],
             "packages": {name: str(path) for name, path in paths.items()}, "references": list(references),
             "japanese_g2p": frontend_profile, "worker": worker, "worker_files_checked": runtime_files,

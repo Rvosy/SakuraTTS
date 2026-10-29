@@ -63,6 +63,83 @@ class CPURuntimeTests(unittest.TestCase):
         self.gpts.append(value)
         return value
 
+    def test_cpu_memory_profiles_preserve_pcm_and_release_at_the_selected_boundary(self):
+        outputs = []
+        for profile in ("balanced", "low-memory", "minimum-memory", "int8", "compact"):
+            with self.subTest(profile=profile):
+                self.events.clear()
+                before_gpt, before_acoustic = len(self.gpts), len(self.acoustics)
+                with Engine.load(self.config, backend="cpu", profile=profile) as engine:
+                    first = engine.synthesize("test", seed=1234)
+                    second = engine.synthesize("test", seed=1234)
+                    np.testing.assert_array_equal(first.pcm, second.pcm)
+                    outputs.append(first.pcm)
+                    created = self.gpts[before_gpt:]
+                    if profile == "minimum-memory":
+                        self.assertEqual(self.events, ["gpt_load", "gpt_close", "acoustic_load",
+                            "acoustic_close"] * 2)
+                        self.assertEqual(len(created), 2)
+                    else:
+                        self.assertEqual(len(created), 1)
+                        self.assertEqual(len(self.acoustics) - before_acoustic, 1)
+                        created[0].close.assert_not_called()
+                        self.assertEqual(created[0].release_request_state.call_count,
+                                         2 if profile in ("low-memory", "compact") else 0)
+        for pcm in outputs[1:]:
+            np.testing.assert_array_equal(pcm, outputs[0])
+
+    def test_cpu_profiles_select_acoustic_execution_for_both_package_formats(self):
+        path = self.root / "sovits/manifest.json"
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        for chunked in (False, True):
+            manifest["format"] = "sakuratts-sovits-chunked-v1" if chunked else "sakuratts-sovits-onnx-v1"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            for profile, frames, policy in (("balanced", 0, "resident"),
+                    ("int8", 0, "resident"), ("low-memory", 256, "resident"),
+                    ("compact", 256, "resident"), ("minimum-memory", 128, "staged")):
+                with self.subTest(chunked=chunked, profile=profile), Engine.load(
+                        self.config, backend="cpu", profile=profile,
+                        experimental={"threads": 2, "gpt_threads": 2}) as engine:
+                    audio = engine.synthesize("test")
+                    self.assertEqual(audio.report["profile"],
+                        {"int8": "balanced", "compact": "low-memory"}.get(profile, profile))
+                    options = self.acoustic_loader.call_args.kwargs
+                    self.assertEqual(options["device"], "cpu")
+                    self.assertEqual(options["acoustic_chunk_frames"], frames if chunked else None)
+                    self.assertEqual(options["acoustic_session_policy"], policy if chunked else "resident")
+                    self.assertEqual(audio.report["acoustic_chunk_frames"], options["acoustic_chunk_frames"])
+                    self.assertEqual(audio.report["acoustic_session_policy"], options["acoustic_session_policy"])
+                    self.assertEqual(options["intra_op_num_threads"], 2)
+                    self.assertFalse(options["enable_cpu_mem_arena"])
+
+    def test_explicit_chunk_size_on_whole_graph_is_not_silently_ignored(self):
+        self.acoustic_loader.side_effect = self.real_acoustic_load
+        with Engine.load(self.config, backend="cpu", profile="low-memory",
+                         experimental={"acoustic_chunk_frames": 64}) as engine:
+            with self.assertRaisesRegex(ValueError, "requires a chunked"):
+                engine.synthesize("test")
+
+    def test_cpu_full_vocoder_can_use_staged_acoustic_sessions(self):
+        path = self.root / "sovits/manifest.json"
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        manifest["format"] = "sakuratts-sovits-chunked-v1"
+        path.write_text(json.dumps(manifest), encoding="utf-8")
+        with Engine.load(self.config, backend="cpu", profile="balanced",
+                         experimental={"acoustic_session_policy": "staged"}) as engine:
+            audio = engine.synthesize("test")
+            self.assertEqual(audio.report["acoustic_chunk_frames"], 0)
+            self.assertEqual(audio.report["acoustic_session_policy"], "staged")
+
+    def test_cpu_memory_profile_override_keeps_resident_models(self):
+        with Engine.load(self.config, backend="cpu", profile="minimum-memory",
+                         experimental={"policy": "resident"}) as engine:
+            for _ in range(2):
+                audio = engine.synthesize("test")
+                self.assertEqual(audio.report["policy"], "resident")
+            self.assertEqual(len(self.gpts), 1)
+            self.assertEqual(len(self.acoustics), 1)
+            self.gpts[0].close.assert_not_called()
+
     def make_acoustic(self, *args, **kwargs):
         value = SoVITS()
         value.encoder = SimpleNamespace(manifest={

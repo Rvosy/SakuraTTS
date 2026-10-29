@@ -32,8 +32,8 @@ def _preparation_identity(backend, experimental=None, *, kind=None):
         scripts += ["export_gpt_directml.py"]
     if kind != "gpt" and backend == "directml":
         scripts += ["export_sovits_fp16.py", "conv_transpose_polyphase.py"]
-    if kind != "gpt" and backend == "cuda" and (experimental or {}).get("acoustic_chunk_frames") is not None:
-        identity["acoustic"] = "fp16-chunked"
+    if kind != "gpt" and backend in ("cpu", "cuda") and (experimental or {}).get("acoustic_chunk_frames") is not None:
+        identity["acoustic"] = "fp32-chunked" if backend == "cpu" else "fp16-chunked"
         scripts += ["export_sovits_chunks.py", "export_sovits_fp16.py",
                     "conv_transpose_polyphase.py", "split_sovits_vocoder.py", "vocoder_receptive_field.py"]
     root = Path(__file__).parent
@@ -43,11 +43,12 @@ def _preparation_identity(backend, experimental=None, *, kind=None):
 
 def _prepare_backend(kind, package, *, backend, python, experimental=None):
     """Finish target resources inside the caller's unpublished staging directory."""
-    if backend == "cuda" and kind == "sovits" and (experimental or {}).get("acoustic_chunk_frames") is not None:
-        logger.info("准备 NVIDIA FP16 分块声学资源")
-        candidate = package.with_name(package.name + "-fp16-chunked")
+    if backend in ("cpu", "cuda") and kind == "sovits" and (experimental or {}).get("acoustic_chunk_frames") is not None:
+        precision = "fp32" if backend == "cpu" else "fp16"
+        logger.info("准备 %s %s 分块声学资源", backend, precision)
+        candidate = package.with_name(package.name + "-" + precision + "-chunked")
         run_conversion([str(python), "-B", str(Path(__file__).with_name("export_sovits_chunks.py")),
-                        "--source", str(package), "--output", str(candidate)],
+                        "--source", str(package), "--output", str(candidate), "--precision", precision],
                        env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1"))
         return candidate
     if backend not in ("cpu", "directml"):

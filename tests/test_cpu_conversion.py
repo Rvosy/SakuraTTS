@@ -58,7 +58,8 @@ class CPUConversionTests(unittest.TestCase):
             output.mkdir()
             weights = output / "weights.bin"
             weights.write_bytes(script.encode())
-            manifest = {"source": source, "dtype": "float32", "config": {"model": {"version": "v2ProPlus"}}}
+            manifest = {"format": "sakuratts-sovits-onnx-v1", "source": source,
+                        "dtype": "float32", "config": {"model": {"version": "v2ProPlus"}}}
             if script == "export_sovits_fp16.py":
                 manifest.update(dtype="float16", precision={"fp16_scope": "all"})
             if script == "convert_gpt.py":

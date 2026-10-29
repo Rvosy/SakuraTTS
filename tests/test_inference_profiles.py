@@ -32,6 +32,15 @@ class InferenceProfileTests(unittest.TestCase):
                 Engine.load(self.model("cuda"), profile="fp16")
         self.assertIn("frontend process cleanup failed", failure.exception.__notes__[0])
 
+    def test_cpu_memory_profiles_require_fp32_acoustics_before_synthesis(self):
+        for profile in ("low-memory", "minimum-memory", "compact"):
+            runtime = Mock(acoustic_precision="fp16")
+            with self.subTest(profile=profile), \
+                    patch("sakuratts.backends.create_runtime", return_value=runtime):
+                with self.assertRaisesRegex(ValueError, "requires a fp32 acoustic package"):
+                    Engine.load(self.model("cpu"), profile=profile)
+                runtime.close.assert_called_once()
+
     def test_invalid_service_profile_fails_before_conversion_or_worker_start(self):
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory) / "tts.json"
@@ -54,7 +63,7 @@ class InferenceProfileTests(unittest.TestCase):
                 for _ in range(2):
                     proxy.wake()
                     result = proxy.tts({"chunks": 1})
-                    self.assertEqual(result.report["profile"], "int8")
+                    self.assertEqual(result.report["profile"], "balanced")
                     self.assertEqual(result.report["backend"], "cpu")
                     pids.append(result.report["pid"])
                     proxy.sleep()

@@ -41,7 +41,8 @@ class DiagnosticsCompositionTests(unittest.TestCase):
             gpt.update(format="sakuratts-gpt-fp32-v1", architecture="gpt-sovits-ar-postnorm-relu",
                 weights={"file": weights.name, "bytes": weights.stat().st_size, "sha256": sha256_file(weights)})
             gpt_path.write_text(json.dumps(gpt))
-            acoustic = {"source": gpt["source"], "config": {"model": {"version": "v2ProPlus"}}}
+            acoustic = {"format": "sakuratts-sovits-onnx-v1", "source": gpt["source"],
+                        "config": {"model": {"version": "v2ProPlus"}}}
             with patch("sakuratts.module.sovits.read_manifest", return_value=(acoustic, None)), \
                     patch("sakuratts.diagnostics.resources.check_worker_imports",
                           side_effect=lambda python, profile, **kwargs: {"executable": str(python)}) as probe:

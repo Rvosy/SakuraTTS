@@ -98,7 +98,7 @@ class ChunkedSessionPolicyTests(unittest.TestCase):
         fixture = RuntimeFixture(self.manifest)
         with patch.dict(sys.modules, {"onnxruntime": fixture.module}), \
                 patch("sakuratts.backends.cuda.runtime.configure_cuda"):
-            model = ORTSoVITS.load(self.root, **OPTIONS, acoustic_session_policy="staged")
+            model = ORTSoVITS.load(self.root, **OPTIONS, acoustic_arena_shrink=True, acoustic_session_policy="staged")
             self.assertEqual(fixture.events, [])
             self.assertEqual(model.runtime["session_initialization"], "deferred")
             self.assertEqual(model.runtime["providers"], {})
@@ -125,7 +125,7 @@ class ChunkedSessionPolicyTests(unittest.TestCase):
             fixture = RuntimeFixture(self.manifest)
             with patch.dict(sys.modules, {"onnxruntime": fixture.module}), \
                     patch("sakuratts.backends.cuda.runtime.configure_cuda"):
-                model = ORTSoVITS.load(self.root, **OPTIONS, acoustic_session_policy=policy)
+                model = ORTSoVITS.load(self.root, **OPTIONS, acoustic_arena_shrink=True, acoustic_session_policy=policy)
                 self.assertEqual(len(model.runtime["initialization_stage_intervals"]), 2 if policy == "resident" else 0)
                 outputs.append(model.decode(*self.inputs))
                 report = model.last_transfer
@@ -156,7 +156,7 @@ class ChunkedSessionPolicyTests(unittest.TestCase):
                     fixture = RuntimeFixture(self.manifest, fail_at=kind + "." + operation)
                     with patch.dict(sys.modules, {"onnxruntime": fixture.module}), \
                             patch("sakuratts.backends.cuda.runtime.configure_cuda"):
-                        model = ORTSoVITS.load(self.root, **OPTIONS, acoustic_session_policy="staged")
+                        model = ORTSoVITS.load(self.root, **OPTIONS, acoustic_arena_shrink=True, acoustic_session_policy="staged")
                         caught = None
                         try:
                             model.decode(*self.inputs)
@@ -181,7 +181,7 @@ class ChunkedSessionPolicyTests(unittest.TestCase):
         fixture = RuntimeFixture(self.manifest)
         with patch.dict(sys.modules, {"onnxruntime": fixture.module}), \
                 patch("sakuratts.backends.cuda.runtime.configure_cuda"):
-            model = ORTSoVITS.load(self.root, **OPTIONS, acoustic_session_policy="staged")
+            model = ORTSoVITS.load(self.root, **OPTIONS, acoustic_arena_shrink=True, acoustic_session_policy="staged")
             with self.assertRaisesRegex(ValueError, "FP32"):
                 model.decode(*self.inputs[:-1], self.inputs[-1].astype(np.float16))
             with self.assertRaisesRegex(ValueError, "capture"):

@@ -8,7 +8,7 @@ Linux 当前使用源码安装路径。依赖锁文件包含 Linux，CPU 后端�
 
 ```sh
 UV_PROJECT_ENVIRONMENT=.venv-linux-cpu uv sync --locked --python 3.12 \
-  --extra cpu --extra japanese-text --extra server
+  --extra cpu --extra japanese-text --extra english --extra server
 uv pip check --python .venv-linux-cpu/bin/python
 .venv-linux-cpu/bin/python -m sakuratts doctor --backend cpu --japanese
 ```
@@ -26,6 +26,8 @@ uv pip check --python .venv-linux-cpu/bin/python
 .venv-linux-cpu/bin/python -m sakuratts serve models/voice-cpu --backend cpu
 ```
 
-CPU 模型需要 INT8 GPT sidecar 与 FP32 声学资源，配置见 [CPU 指南](cpu-amd.md)。经典日文前端的 `frontend_python` 必须指向具有匹配 classic 前端和字典的 Linux 环境，不能沿用 Windows 的 `.exe` 路径，也不能直接换成上述 plus 前端。模型和资源使用可搬迁的相对目录，见[模型格式](model-format.md)。原始权重转换和新参考编码仍需独立的准备环境、官方源码及辅助模型，仅安装上述运行依赖不包含这些资源。
+CPU 模型需要 INT8 GPT sidecar 与 FP32 声学资源，配置见 [CPU 指南](cpu-amd.md)。日文夹英文还需要[英文前端资源](english-frontend.md)，仅安装 `english` 依赖不够；`all_ja` 中的拉丁字母词也会使用英文处理器。经典日文前端的 `frontend_python` 必须指向具有匹配 classic 前端和字典的 Linux 环境，不能沿用 Windows 的 `.exe` 路径，也不能直接换成上述 plus 前端。模型和资源使用可搬迁的相对目录，见[模型格式](model-format.md)。原始权重转换和新参考编码仍需独立的准备环境、官方源码及辅助模型，仅安装上述运行依赖不包含这些资源。
 
 当前实测条件、失败记录及未验证项见 [Windows / Linux 检查记录](../research/notes/cross-platform-portability-20261004.md)。其他 glibc 版本、旧 CPU 和 Linux ARM 尚未验收。
+
+与 MaiBot 共用 Linux 服务器时，参考 [systemd 服务与插件整合指南](../integrations/maibot_sakuratts/deploy/linux/README.md)。该指南提供独立服务模板、CPU 档位配置、私有网络连接和真实合成检查，不需要在 MaiBot 的 Python 环境中安装推理依赖。

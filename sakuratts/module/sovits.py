@@ -36,8 +36,7 @@ def _package_file(root, spec):
 
 
 def read_manifest(package, *, diagnostic=False, allow_experimental_fp16=False,
-                  acoustic_chunk_frames=None, acoustic_arena_shrink=False,
-                  acoustic_session_policy="resident"):
+                  acoustic_chunk_frames=None, acoustic_session_policy="resident"):
     if acoustic_session_policy not in ("resident", "staged"):
         raise ValueError("acoustic_session_policy must be resident or staged")
     package = Path(package).resolve()
@@ -45,8 +44,7 @@ def read_manifest(package, *, diagnostic=False, allow_experimental_fp16=False,
     if manifest.get("format") == "sakuratts-sovits-chunked-v1":
         from sakuratts.module.chunked_package import read_chunked_manifest
         return read_chunked_manifest(package, diagnostic=diagnostic,
-            allow_experimental_fp16=allow_experimental_fp16, acoustic_chunk_frames=acoustic_chunk_frames,
-            acoustic_arena_shrink=acoustic_arena_shrink)
+            allow_experimental_fp16=allow_experimental_fp16, acoustic_chunk_frames=acoustic_chunk_frames)
     if acoustic_chunk_frames is not None:
         raise ValueError("acoustic_chunk_frames requires a chunked acoustic package")
     if acoustic_session_policy != "resident":
@@ -115,9 +113,12 @@ class ORTSoVITS:
             raise ValueError("Acoustic arena shrinkage requires CUDA execution")
         manifest, graph = read_manifest(package, diagnostic=diagnostic,
             allow_experimental_fp16=allow_experimental_fp16, acoustic_chunk_frames=acoustic_chunk_frames,
-            acoustic_arena_shrink=acoustic_arena_shrink, acoustic_session_policy=acoustic_session_policy)
-        if graph is None and device != "cuda":
-            raise ValueError("Chunked acoustic execution requires CUDA")
+            acoustic_session_policy=acoustic_session_policy)
+        if graph is None:
+            if device == "directml":
+                raise ValueError("Chunked acoustic execution requires CPU or CUDA")
+            if device == "cuda" and not acoustic_arena_shrink:
+                raise ValueError("CUDA chunked acoustics require arena shrinkage")
         if device == "cuda":
             from sakuratts.backends.cuda.runtime import configure_cuda
             configure_cuda()
@@ -127,7 +128,8 @@ class ORTSoVITS:
             from sakuratts.module.chunked import ORTChunkedSoVITS
             return ORTChunkedSoVITS.load_verified(package, manifest,
                 chunk_frames=acoustic_chunk_frames, profile_prefix=profile_prefix,
-                acoustic_session_policy=acoustic_session_policy)
+                acoustic_session_policy=acoustic_session_policy, device=device, device_id=device_id,
+                threads=intra_op_num_threads, enable_cpu_mem_arena=enable_cpu_mem_arena)
 
         options = ort.SessionOptions()
         options.intra_op_num_threads = intra_op_num_threads

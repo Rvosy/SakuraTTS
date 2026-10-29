@@ -9,7 +9,8 @@ class ORTEngine(InferenceRuntime):
     def __init__(self, config, *, policy="resident", capacity=2048, threads=2,
                  device_id=0, gpt_backend="numpy", gpt_precision="fp32", gpt_threads=None, gpt_prefill_query_chunk_size=128,
                  enable_cpu_mem_arena=False, load_references=True,
-                 allow_experimental_acoustic_fp16=False):
+                 allow_experimental_acoustic_fp16=False,
+                 acoustic_chunk_frames=None, acoustic_session_policy="resident"):
         if policy not in ("resident", "release-state", "staged"):
             raise ValueError("Unknown model policy")
         for name, value, minimum in (("capacity", capacity, 1), ("threads", threads, 1),
@@ -37,6 +38,12 @@ class ORTEngine(InferenceRuntime):
             raise ValueError("ONNX GPT requires gpt_prefill_query_chunk_size=0")
         if self.name == "cpu" and device_id != 0:
             raise ValueError("device_id selects a DirectML adapter; CPU requires device_id=0")
+        if acoustic_chunk_frames is not None and (
+                self.name != "cpu" or (acoustic_chunk_frames != "auto" and
+                (type(acoustic_chunk_frames) is not int or acoustic_chunk_frames < 0))):
+            raise ValueError("CPU acoustic_chunk_frames must be a nonnegative integer, auto or None")
+        if acoustic_session_policy not in ("resident", "staged"):
+            raise ValueError("acoustic_session_policy must be resident or staged")
         self.policy, self.capacity, self.threads = policy, capacity, threads
         self.device_id = device_id
         self.gpt_backend = gpt_backend
@@ -46,9 +53,17 @@ class ORTEngine(InferenceRuntime):
         self.gpt_precision = gpt_precision
         self.allow_experimental_acoustic_fp16 = allow_experimental_acoustic_fp16
         self.acoustic_arena_shrink = False
-        self.acoustic_chunk_frames = None
-        self.acoustic_session_policy = "resident"
+        self.acoustic_chunk_frames = acoustic_chunk_frames
+        self.acoustic_session_policy = acoustic_session_policy
         self._prepare_model(config, load_references=load_references)
+
+    def _validate_acoustic_package(self):
+        super()._validate_acoustic_package()
+        if self.name == "cpu":
+            from sakuratts.profiles import resolve_cpu_acoustics
+            self.acoustic_chunk_frames, self.acoustic_session_policy = resolve_cpu_acoustics(
+                self.manifests["sovits"].get("format"),
+                self.acoustic_chunk_frames, self.acoustic_session_policy)
 
     def _load_gpt(self):
         if self.gpt is None:
@@ -71,7 +86,9 @@ class ORTEngine(InferenceRuntime):
             self.sovits = ORTSoVITS.load(self.packages["sovits"], device=self.name,
                 device_id=self.device_id, intra_op_num_threads=self.threads,
                 enable_cpu_mem_arena=self.enable_cpu_mem_arena,
-                allow_experimental_fp16=self.allow_experimental_acoustic_fp16)
+                allow_experimental_fp16=self.allow_experimental_acoustic_fp16,
+                acoustic_chunk_frames=self.acoustic_chunk_frames,
+                acoustic_session_policy=self.acoustic_session_policy)
 
     def _execution_report(self):
         return {"backend": self.name, "gpt_device": "directml" if self.gpt_backend == "directml" else "cpu", "gpt_backend": self.gpt_backend,

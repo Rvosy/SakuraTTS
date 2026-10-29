@@ -2,4 +2,4 @@
 sakuratts:
   model: models/cpu-amd/model.json
   backend: cpu
-  profile: int8
+  profile: balanced

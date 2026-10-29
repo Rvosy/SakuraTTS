@@ -414,7 +414,7 @@ def check_inputs(args):
             raise FileNotFoundError(args.bundle / name)
     release = marker["release"]
     args.backend = args.backend or ("cpu" if release["backend"] == "directml" else release["backend"])
-    args.profile = args.profile or {"cpu": "int8", "directml": "fp16", "cuda": "fp32", "mlx": "fp32"}[args.backend]
+    args.profile = args.profile or {"cpu": "balanced", "directml": "fp16", "cuda": "fp32", "mlx": "fp32"}[args.backend]
     if args.backend not in release.get("backends", [release["backend"]]):
         raise ValueError("Backend is not included in this bundle: " + args.backend)
     if not args.prompt_text.strip():

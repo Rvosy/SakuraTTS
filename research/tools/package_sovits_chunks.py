@@ -258,7 +258,7 @@ def package_sovits_chunks(source, split_package, rf_spec, evidence_root, ordinar
     evidence.unchanged()
     (output / "manifest.json").write_text(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     for size in (0, 256):
-        read_chunked_manifest(output, allow_experimental_fp16=True, acoustic_chunk_frames=size, acoustic_arena_shrink=True)
+        read_chunked_manifest(output, allow_experimental_fp16=True, acoustic_chunk_frames=size)
     return result
 
 
