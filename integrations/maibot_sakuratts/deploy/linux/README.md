@@ -22,7 +22,7 @@ MaiBot Replyer → 回复扩展 → 私有网桥上的 POST /tts
 
 ## 准备引擎
 
-1. 将选定版本的源码放到 `/opt/sakuratts/releases/<版本>/`，按 [Linux CPU 指南](../../../../docs/linux.md) 在该目录建立 `.venv-linux-cpu`。保留版本目录，`/opt/sakuratts/current` 链接到这版源码。当前尚未发布的工作区改动需要随候选一起交付，直接下载旧版 main 不包含这些优化。
+1. 将选定 Git 提交的源码放到 `/opt/sakuratts/releases/<版本>/`，按 [Linux CPU 指南](../../../../docs/linux.md) 在该目录建立 `.venv-linux-cpu`。保留版本目录，`/opt/sakuratts/current` 链接到这版源码，并记录提交号。CPU 三档策略需要包含 `balanced`、`low-memory` 和 `minimum-memory` 的版本；旧整合包不一定包含这些优化。
 2. 将 CPU INT8 GPT、FP32 **分块声学包**、匹配的日文前端和预制参考条件放到 `/opt/sakuratts/shared/models/voice-cpu/`。检查 `model.json` 的路径；经典日文前端还需要有效的 Linux `frontend_python`。极限档遇到旧整图包仍可运行，但不会获得分块路径的内存收益。
 3. 将与预制参考条件哈希匹配的原始音频放到 `/opt/sakuratts/shared/references/`。`/tts` 仍读取该音频；仅保留条件数组不够。更换参考音频之前，先离线准备对应条件，或按 HTTP 指南配置完整准备环境。
 

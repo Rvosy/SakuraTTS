@@ -1,0 +1,40 @@
+--- a/src/common/utils/utils_message.py
++++ b/src/common/utils/utils_message.py
+@@ -12,6 +12,10 @@
+ 
+ import asyncio
+ import threading
++import sqlite3
++import time
++
++from sqlalchemy.exc import OperationalError
+ 
+ from src.common.paths import get_instance_root
+ from src.common.data_models.message_component_data_model import (
+@@ -216,11 +220,21 @@
+         from src.common.database.database import get_db_session
+ 
+         with _DB_WRITE_THREAD_LOCK:
+-            with get_db_session() as session:
+-                MessageUtils.fill_reply_frequency_if_available(message)
+-                MessageUtils._persist_image_components(message.raw_message.components, session)
+-                db_message = message.to_db_instance()
+-                session.add(db_message)
++            # 其他业务也会写入 SQLite；忙碌时回滚整笔事务后重新保存。
++            # 只重试保存，不触发平台发送。
++            for attempt in range(3):
++                try:
++                    with get_db_session() as session:
++                        MessageUtils.fill_reply_frequency_if_available(message)
++                        MessageUtils._persist_image_components(message.raw_message.components, session)
++                        db_message = message.to_db_instance()
++                        session.add(db_message)
++                    return
++                except OperationalError as exc:
++                    code = getattr(exc.orig, "sqlite_errorcode", None)
++                    if code is None or code & 0xff != sqlite3.SQLITE_BUSY or attempt == 2:
++                        raise
++                    time.sleep(0.1 * (attempt + 1))
+ 
+     @staticmethod
+     async def store_message_to_db_async(message: "SessionMessage") -> None:
