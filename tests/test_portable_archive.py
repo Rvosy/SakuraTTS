@@ -52,6 +52,26 @@ class PortableArchiveTests(unittest.TestCase):
         report = json.loads((archive.parent / "compression-report.json").read_text())
         self.assertEqual(report["sha256"], ARCHIVER.digest(archive))
 
+    @unittest.skipUnless(ARCHIVER.find_sevenzip() and importlib.util.find_spec("py7zr"),
+                         "7-Zip and py7zr are required")
+    def test_executable_archive_can_be_extracted_by_plugin_decoder(self):
+        import py7zr
+        executable = self.bundle / Path(sys.executable).name
+        executable.write_bytes(Path(sys.executable).read_bytes())
+        manifest_file = self.bundle / "bundle-manifest.json"
+        manifest = json.loads(manifest_file.read_text())
+        manifest["files"][executable.name] = {"bytes": executable.stat().st_size,
+                                              "sha256": ARCHIVER.digest(executable)}
+        manifest["bytes"] += executable.stat().st_size
+        manifest_file.write_text(json.dumps(manifest), encoding="utf-8")
+        result = self.archive("7z")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        destination = self.root / "plugin-extracted"
+        with py7zr.SevenZipFile(self.root / "release" / (self.bundle.name + ".7z")) as archive:
+            archive.extractall(destination)
+        self.assertEqual(ARCHIVER.digest(destination / self.bundle.name / executable.name),
+                         ARCHIVER.digest(executable))
+
     def test_archive_excludes_user_data_and_preserves_files_and_modes(self):
         (self.bundle / "cache").mkdir()
         (self.bundle / "cache/model.bin").write_bytes(b"personal data")

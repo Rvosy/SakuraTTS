@@ -54,12 +54,13 @@ def run(sevenzip, arguments, cwd):
 def compress(sevenzip, source, listing, archive, profile):
     if archive.exists():
         raise FileExistsError(archive)
-    seconds = run(sevenzip, ["a", "-t7z", "-m0=LZMA2", *PROFILES[profile],
+    # The desktop importer's py7zr supports BCJ, but not automatic BCJ2/ARM64 filters.
+    seconds = run(sevenzip, ["a", "-t7z", "-m0=LZMA2", *PROFILES[profile], "-mf=BCJ",
                            "-ms=on", "-mmt=2", "-mtc=off", "-mta=off", "-scsUTF-8",
                            str(archive), "@" + str(listing)], source)
     tested = run(sevenzip, ["t", str(archive)], source)
     return {"profile": profile, "bytes": archive.stat().st_size, "compression_seconds": seconds,
-            "test_seconds": tested, "parameters": ["-m0=LZMA2", *PROFILES[profile], "-ms=on", "-mmt=2"]}
+            "test_seconds": tested, "parameters": ["-m0=LZMA2", *PROFILES[profile], "-mf=BCJ", "-ms=on", "-mmt=2"]}
 
 
 def main():
