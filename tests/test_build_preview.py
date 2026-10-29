@@ -1,10 +1,11 @@
-"""Check the release boundary and artifact hashes without building or networking."""
+"""Check release boundaries, artifact hashes and the real source manifest offline."""
 
 import importlib.util
 import io
 import json
 from pathlib import Path
 import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
@@ -25,6 +26,9 @@ def source_tree(root):
              "packaging/recipes/windows-nvidia-ja.toml": 'target="windows-x64"\nbackend="cuda"\n',
              "docs/preview-release.md": "Developer installation guide\n",
              "docs/third-party/example-LICENSE.txt": "Example license\n",
+             "docs/third-party/example-attribution.md": "Example attribution\n",
+             "docs/third-party/fasttext-language-identification.html": "<html>fastText model attribution</html>\n",
+             "scripts/build_ffmpeg.sh": "#!/bin/sh\nexit 0\n",
              "sakuratts/__init__.py": '"""Package."""\n',
              "packaging/auxiliary-model-sources.json": '{}\n',
              "sakuratts/prepare/convert_gpt.py": "pass\n",
@@ -65,6 +69,26 @@ def write_distributions(source, dist, fault=None):
 
 
 class PreviewBuildTests(unittest.TestCase):
+    def test_setuptools_distributions_preserve_build_scripts_and_attribution(self):
+        project = SCRIPT.parent.parent
+        with tempfile.TemporaryDirectory() as folder:
+            root, staged, dist = (Path(folder) / name for name in ("repo", "staged", "dist"))
+            source_tree(root)
+            for name in ("MANIFEST.in", "pyproject.toml", "scripts/build_ffmpeg.sh",
+                         "docs/third-party/fasttext-language-identification.html"):
+                (root / name).write_bytes((project / name).read_bytes())
+            inventory = preview.stage_source(root, staged)
+            self.assertIn("scripts/build_ffmpeg.sh", inventory)
+            self.assertIn("docs/third-party/fasttext-language-identification.html", inventory)
+            result = subprocess.run(
+                [sys.executable, "-c", "import sys; from setuptools.build_meta import build_sdist, build_wheel; "
+                 "destination = sys.argv[1]; build_sdist(destination); build_wheel(destination)", str(dist)],
+                cwd=staged, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            validation = preview.verify_distributions(next(dist.glob("*.whl")),
+                                                      next(dist.glob("*.tar.gz")), inventory)
+            self.assertTrue(validation["hashes_passed"])
+
     def test_research_is_excluded_without_losing_product_sources(self):
         with tempfile.TemporaryDirectory() as folder:
             root, staged = Path(folder) / "repo", Path(folder) / "staged"

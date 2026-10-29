@@ -11,10 +11,14 @@ from ..runtime.protocol import read_message, write_message
 
 
 class ReferencePreparer:
+    IDLE_SECONDS = 5
+
     def __init__(self):
         self.process = None
         self.tree = None
         self.reader = None
+        self._lock = threading.RLock()
+        self._idle_timer = None
 
     @staticmethod
     def _stderr(stream):
@@ -22,6 +26,26 @@ class ReferencePreparer:
             logging.getLogger('sakuratts.prepare').debug('%s', line.decode('utf-8', errors='replace').rstrip())
 
     def run(self, command, *, env):
+        with self._lock:
+            if self._idle_timer is not None:
+                self._idle_timer.cancel()
+                self._idle_timer = None
+            self._run(command, env=env)
+            timer = threading.Timer(self.IDLE_SECONDS, lambda: self._close_idle(timer))
+            timer.daemon = True
+            self._idle_timer = timer
+            timer.start()
+
+    def _close_idle(self, timer):
+        with self._lock:
+            # A timer that was already waiting for the lock must not close a new request's worker.
+            if self._idle_timer is timer:
+                try:
+                    self.close()
+                except Exception:
+                    logging.getLogger('sakuratts.prepare').exception('Failed to close idle reference preparer')
+
+    def _run(self, command, *, env):
         try:
             if self.process is None:
                 self.tree = ProcessTree() if os.name == 'nt' else None
@@ -42,6 +66,13 @@ class ReferencePreparer:
             raise
 
     def close(self):
+        with self._lock:
+            if self._idle_timer is not None:
+                self._idle_timer.cancel()
+                self._idle_timer = None
+            self._close()
+
+    def _close(self):
         if self.tree is not None:
             self.tree.close()
         elif self.process is not None:

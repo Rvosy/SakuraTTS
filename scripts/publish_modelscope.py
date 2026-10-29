@@ -38,14 +38,13 @@ def publish_platform(api, folder, target, release_id, commit, output):
         number += 1
         name = f'{stem}-{number}.{extension}'
     path = f'previews/{release_id}/{name}'
-    api.upload_file(REPO, 'model', archive, path, commit_message=f'上传 {release_id} {target}', disable_tqdm=True)
+    api.upload_file(REPO, 'model', archive, path, commit_message=f'上传 {release_id} {target}')
     checksum = archive.with_name(archive.name + '.sha256').read_text().split()[0]
     api.upload_file(REPO, 'model', f'{checksum}  {name}\n'.encode(), path + '.sha256',
                     commit_message=f'上传 {release_id} {target} 校验文件', disable_tqdm=True)
     record = {'platform': target, 'path': path, 'url': download_url(path), 'bytes': archive.stat().st_size,
               'unpackedBytes': report['unpacked_bytes'], 'sourceCommit': commit, 'releaseId': release_id,
               'validation': 'cpu-synthesis-and-idle' if target == 'windows-x64' else 'imports-and-managed-http'}
-    verify_files(api, [record])
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(record, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 

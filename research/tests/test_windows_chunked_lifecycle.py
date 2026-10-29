@@ -279,7 +279,7 @@ class ChunkedLifecycleTests(unittest.TestCase):
                 def run(engine_factory, actual_output, result):
                     engine_factory("resident")
                     engine_factory("staged")
-                    self.assertEqual(actual_output, output)
+                    self.assertEqual(actual_output, output.resolve())
                     self.assertEqual(result["entrypoint"], "public-package")
                     self.assertEqual(result["provenance"]["sample_ratio"], 3)
                     self.assertIn("sakuratts/module/chunked.py", result["sources_sha256"])
@@ -331,6 +331,34 @@ class ChunkedLifecycleTests(unittest.TestCase):
                 self.assertEqual(saved["status"], "configuration_verified" if check_only else "failed")
                 if not check_only:
                     self.assertIn("public suite failure", saved["errors"][0])
+
+    def test_public_check_only_accepts_converted_and_historical_package_metadata(self):
+        for converted in (True, False):
+            with self.subTest(converted=converted), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                config = self.public_configuration(root)
+                package = root / "chunk-package"
+                manifest_path = package / "manifest.json"
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                if converted:
+                    del manifest["provenance"]
+                    manifest["validation"] = {
+                        "onnx_checker_passed": True, "gpu_tested": False, "quality_accepted": False}
+                    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+                output = root / "run"
+                with patch.object(probe, "run_checks") as run, redirect_stdout(io.StringIO()):
+                    status = probe.main(["--public-package", "--check-only", "--config", str(config),
+                        "--output", str(output), "--allow-experimental-acoustic-fp16", "--acoustic-arena-shrink"])
+                self.assertEqual(status, 0)
+                run.assert_not_called()
+                saved = json.loads((output / "results.json").read_text(encoding="utf-8"))
+                self.assertEqual(saved["status"], "configuration_verified")
+                self.assertFalse(saved["gpu_execution_requested"])
+                self.assertEqual(saved["provenance"]["source_identity"], manifest["source"])
+                self.assertEqual(saved["provenance"]["validation"], manifest["validation"])
+                self.assertEqual(saved["provenance"]["sample_ratio"], 3)
+                for key, value in manifest.get("provenance", {}).items():
+                    self.assertEqual(saved["provenance"][key], value)
 
     def test_public_mode_rejects_development_overrides_and_wrong_chunk_before_loading(self):
         for extra in (["--split-package", "unused"], ["--rf-spec", "unused"],

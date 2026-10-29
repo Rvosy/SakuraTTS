@@ -1,5 +1,6 @@
 """下载固定版本的运行环境输入，不依赖开发机路径。"""
 import argparse
+import hashlib
 from pathlib import Path
 import shutil
 import subprocess
@@ -35,6 +36,15 @@ def main():
         raise ValueError('基包缺少唯一的发行清单')
     candidates[0].parent.rename(args.directory / 'bundle')
     extracted.rmdir()
+    name = 'english-frontend-20261006.tar.gz'
+    subprocess.run(['gh', 'release', 'download', 'runtime-base-20261004', '--repo', 'Rvosy/SakuraTTS',
+                    '--pattern', name, '--dir', str(args.directory)], check=True)
+    archive = args.directory / name
+    if hashlib.sha256(archive.read_bytes()).hexdigest() != 'ca7f81e9fb25ca63a7b138a5e7355cbaecc463dd8610a0f0327ce4cb6833a169':
+        raise ValueError('English frontend archive SHA256 mismatch')
+    with tarfile.open(archive) as source:
+        source.extractall(args.directory, filter='data')
+    archive.unlink()
 
 
 if __name__ == '__main__':

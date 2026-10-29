@@ -2,7 +2,7 @@
 
 Apple silicon 的独立运行组件、构建与验收见 [Mac 整合包指南](portable-macos.md)。
 
-整合包可以只用本地文件构建。默认发行组合包含 HTTP、CLI、日英混合推理及私有 Python 和所选后端的运行库；完整包另外带独立准备组件，让用户提供原始权重和新参考音频后直接调用 HTTP。PyTorch、原版准备源码和公共辅助模型放在准备组件中，按需启动 CPU 进程，完成后退出。HTTP 和准备组件可以分别省略。
+整合包可以只用本地文件构建。默认发行组合包含 HTTP、CLI、日英混合推理及私有 Python 和所选后端的运行库；完整包另外带独立准备组件，让用户提供原始权重和新参考音频后直接调用 HTTP。PyTorch、原版准备源码和公共辅助模型放在准备组件中，按需启动 CPU 进程；转换完成后退出，参考编码的短暂复用与回收见 [HTTP 指南](http-api.md#生命周期与输出)。HTTP 和准备组件可以分别省略。
 
 默认使用 Windows x64 统一组合，同包提供 CPU、NVIDIA CUDA 与 DirectML，通过配置或 `--backend cpu|cuda|directml` 选择。主环境使用包含 CPU provider 的 DirectML ONNX Runtime，CUDA 声学使用私有 ORT GPU worker，避免多个 ORT 分发包覆盖同一模块。无需按显卡代际拆包。带准备组件的完整包可处理原始权重和新参考；精简包仅适合已有转换资源，按实际分发需求选择，不必同时发布两种大小。
 
@@ -161,7 +161,7 @@ python scripts/archive_portable.py --bundle dist/SakuraTTS-Windows-CPU-AMD `
 
 脚本从 PATH 查找 `7zz` 或 `7z`，Windows 也会查找 Program Files 下的 7-Zip。其他安装位置可用 `--sevenzip "C:/Tools/7-Zip/7z.exe"` 指定。输出目录必须尚不存在。
 
-压缩选项由 [archive_portable.py](../scripts/archive_portable.py) 的 `PROFILES` 定义。`balanced` 适合开发打包，默认的 `maximum` 控制内存成本；`extreme` 使用更大字典、较长匹配和按扩展名排序，供体积优先的发行物使用。各档位均使用 LZMA2 solid 和 2 个压缩线程，避免增加线程后分块压缩损失跨块匹配。大字典主要增加压缩内存，解压时也需要容纳字典；solid 压缩适合整包解压，单独提取后部文件可能较慢。
+压缩选项由 [archive_portable.py](../scripts/archive_portable.py) 的 `PROFILES` 定义。默认使用 `balanced`，优先控制发布耗时；`maximum` 使用更大字典和更高压缩级别；`extreme` 使用更大字典、较长匹配和按扩展名排序，供体积优先的发行物使用。各档位均使用 LZMA2 solid 和 2 个压缩线程，避免增加线程后分块压缩损失跨块匹配。大字典主要增加压缩内存，解压时也需要容纳字典；solid 压缩适合整包解压，单独提取后部文件可能较慢。
 
 `--benchmark` 比较所有档位，记录大小、压缩耗时、校验和解压耗时。样本取自最大的 12 个文件，读取头部、中间和尾部互不重叠的片段，小文件只读取一次。样本不能反映完整文件和跨目录重复内容的全部收益，不能据此宣称整包压缩率或全局最优参数。发行前应对同一完整包比较候选档位。
 

@@ -1,7 +1,7 @@
 target = "windows-x64"
 backend = "cpu"
 backends = ["cpu", "directml", "cuda"]
-languages = ["ja"]
+languages = ["ja", "en"]
 services = ["http"]
 
 [workers]

@@ -97,7 +97,7 @@ def main():
         runtime.update(shared_cuda_process=False,private_acoustic_process=True)
         ready={**deepcopy(runtime),"status":"ready","providers":model.providers,
             "provider_options":model.provider_options,"python":sys.version,
-            "worker_pid":os.getpid(),"executable":str(Path(sys.executable).resolve()),
+            "worker_pid":os.getpid(),"executable":sys.executable,
             "package_manifest_sha256":sha256_file(Path(args.package)/"manifest.json"),
             "diagnostic":args.diagnostic,"chunk_frames":runtime.get("chunk_frames",args.acoustic_chunk_frames),
             "acoustic_dtype":model.encoder.manifest["dtype"],
