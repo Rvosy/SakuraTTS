@@ -137,7 +137,7 @@ with urlopen("http://127.0.0.1:9880/tts?" + urlencode(params)) as response:
 
 | 字段 | 默认值 | 当前行为 |
 | --- | --- | --- |
-| `speed_factor` | `1` | 调速未实现；仅接受 `1`，其他值返回 400 |
+| `speed_factor` | `1` | 非流式支持 `0.5`–`2.0`；非 `1` 值需要 FFmpeg，以保音高方式调整整段输出速度。流式仍只支持 `1` |
 | `fragment_interval` | `0.3` | 每片尾部的静音秒数，必须 ≥ 0 |
 | `media_type` | `"wav"` | 支持 `wav` / `raw`；`ogg` / `aac` 需 FFmpeg 分别提供 `libvorbis` / `aac` 编码器 |
 | `streaming_mode` | `false` | `0` / `false` 返回完整音频；`1` / `true` 按句返回；`2` / `3` 返回 400 |
@@ -147,6 +147,8 @@ with urlopen("http://127.0.0.1:9880/tts?" + urlencode(params)) as response:
 | `min_chunk_length` | `16` | 保留字段；当前模式 0 / 1 不使用它 |
 
 `batch_threshold`、`sample_steps`、`overlap_length` 和 `min_chunk_length` 可随原版请求一起传入，但修改它们不会启用新的能力。表外字段会被忽略。
+
+`speed_factor=0.9` 轻微放慢，整段时长约为原来的 `1/0.9`。调速使用 FFmpeg 的 [atempo](https://ffmpeg.org/ffmpeg-filters.html#atempo)，在模型生成后处理整段音频（包括片尾静音），不改变采样率，也不重新生成台词；这与上游模型内部调速的计算路径不同。`1` 保留原始 PCM。完整响应的 `X-SakuraTTS-Speed-Factor` 标明倍率，`X-SakuraTTS-Audio-Seconds` 是调整后的时长。缺少 FFmpeg、超出倍率范围或请求流式调速时，在推理和唤醒前返回 400。
 
 按句流式需要客户端持续读取响应：每句话生成完成才发送这一片，尚不支持语义 Token 流式。WAV 模式先发送空数据长度的 WAV 头，再发送 PCM；直接保存后可能无法作为普通完整 WAV 播放。需要保存完整文件时使用 `streaming_mode=false`。RAW 为单声道 16 位小端 PCM，不包含采样率等文件头信息。
 

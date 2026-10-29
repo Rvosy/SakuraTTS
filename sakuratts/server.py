@@ -20,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from .engine import Audio, BusyError
 from .TTS_infer_pack.TTS import Inference
 from .runtime.cancellation import SynthesisCancelled
-from .runtime.pcm import pcm_s16le_bytes
+from .runtime.pcm import pcm_from_s16le, pcm_s16le_bytes
 from .runtime.logging import log_result, request_id, request_scope, service_logging, set_stage, stage
 from .text.profiles import SUPPORTED_LANGUAGE_MODES
 from .TTS_infer_pack.text_segmentation_method import get_method_names
@@ -79,8 +79,10 @@ class SpeechRequest(BaseModel):
         if request["streaming_mode"] not in (0, 1, 2, 3):
             raise ValueError("streaming_mode must be 0, 1, 2, 3 or true/false")
         unsupported = []
-        if request["speed_factor"] != 1:
-            unsupported.append("speed_factor != 1")
+        if not 0.5 <= request["speed_factor"] <= 2:
+            raise ValueError("speed_factor must be between 0.5 and 2")
+        if request["speed_factor"] != 1 and request["streaming_mode"]:
+            unsupported.append("speed_factor != 1 with streaming")
         if request["batch_size"] != 1:
             unsupported.append("batch_size != 1")
         if request["streaming_mode"] in (2, 3):
@@ -93,6 +95,8 @@ class SpeechRequest(BaseModel):
             unsupported.append("super_sampling")
         if unsupported:
             raise NotImplementedError("Not implemented by the native backend: " + ", ".join(unsupported))
+        if request["speed_factor"] != 1 and not shutil.which("ffmpeg"):
+            raise ValueError("ffmpeg is required for speed_factor != 1")
         if request["seed"] < -1 or request["top_k"] < 1:
             raise ValueError("Require seed >= -1 and top_k >= 1")
         if not 0 < request["top_p"] <= 1:
@@ -105,6 +109,28 @@ class SpeechRequest(BaseModel):
         if request["media_type"] in ("ogg", "aac") and not shutil.which("ffmpeg"):
             raise ValueError("ffmpeg is required for " + request["media_type"] + " output")
         return request
+
+
+def change_audio_tempo(audio, factor):
+    """Apply pitch-preserving output tempo without changing model inference."""
+    if factor == 1:
+        return audio
+    started = time.perf_counter()
+    result = subprocess.run([
+        "ffmpeg", "-hide_banner", "-loglevel", "error", "-f", "s16le",
+        "-ar", str(audio.sample_rate), "-ac", "1", "-i", "pipe:0",
+        "-af", f"atempo={factor}", "-f", "s16le", "pipe:1"],
+        input=pcm_s16le_bytes(audio.pcm), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        timeout=30, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    if result.returncode:
+        raise RuntimeError("Audio tempo conversion failed: " + result.stderr.decode("utf-8", errors="replace"))
+    if not result.stdout:
+        raise RuntimeError("Audio tempo conversion returned empty audio")
+    pcm = pcm_from_s16le(result.stdout)
+    elapsed = (time.perf_counter() - started) * 1000
+    report = dict(audio.report, output_speed_factor=factor, tempo_ms=elapsed,
+                  pcm_seconds=len(pcm) / audio.sample_rate, request_ms=audio.report["request_ms"] + elapsed)
+    return Audio(pcm, audio.sample_rate, report)
 
 
 def pack_audio(pcm, rate, media_type):
@@ -344,9 +370,15 @@ def create_app(model=None, *, tts_config=None, backend=None, profile=None, exper
     def run_synthesis(values, *, on_fragment=None, cancel_requested=None):
         with request_scope():
             try:
-                audio = app.state.inference.tts(values, on_fragment=on_fragment, cancel_requested=cancel_requested)
+                native_values = dict(values, speed_factor=1)
+                audio = app.state.inference.tts(native_values, on_fragment=on_fragment, cancel_requested=cancel_requested)
                 if cancel_requested is not None and cancel_requested():
                     raise SynthesisCancelled("stream_output")
+                if values["speed_factor"] != 1:
+                    set_stage("语速调整")
+                    audio = change_audio_tempo(audio, values["speed_factor"])
+                    if cancel_requested is not None and cancel_requested():
+                        raise SynthesisCancelled("audio_tempo")
                 set_stage("音频编码")
                 data = None if on_fragment is not None else pack_audio(audio.pcm, audio.sample_rate, values["media_type"])
                 log_result(audio)
@@ -414,6 +446,7 @@ def create_app(model=None, *, tts_config=None, backend=None, profile=None, exper
             "X-SakuraTTS-Request-Ms": str(round(audio.report["request_ms"], 2)),
             "X-SakuraTTS-Total-Ms": str(round((time.perf_counter() - started) * 1000, 2)),
             "X-SakuraTTS-Audio-Seconds": str(round(len(audio.pcm) / audio.sample_rate, 3)),
+            "X-SakuraTTS-Speed-Factor": str(values["speed_factor"]),
             "Cache-Control": "no-store"}
         for key, header in [('reference_ms', 'Reference-Ms'), ('frontend_ms', 'Frontend-Ms'),
                             ('reference_cache', 'Reference-Cache'), ('backend', 'Backend')]:

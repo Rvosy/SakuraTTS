@@ -50,7 +50,7 @@ class ServerTests(unittest.TestCase):
                 raise AssertionError("Unsupported requests must not reach inference")
         cases = [dict(REQUEST, **update) for update in (
             {"text_lang": "zh"}, {"prompt_lang": "ko"},
-            {"speed_factor": 1.2}, {"batch_size": 2},
+            {"speed_factor": 1.2, "streaming_mode": 1}, {"batch_size": 2},
             {"streaming_mode": 2}, {"streaming_mode": 3}, {"prompt_text": ""},
             {"super_sampling": True})]
         for mode in ("direct", "managed"):
@@ -122,6 +122,63 @@ class ServerTests(unittest.TestCase):
                 "-f", "s16le", "pipe:1"], input=data, capture_output=True, check=True)
             self.assertGreater(len(decoded.stdout), 0)
 
+    @unittest.skipUnless(shutil.which("ffmpeg"), "FFmpeg is required for tempo validation")
+    def test_fixed_tempo_changes_duration_without_changing_pitch(self):
+        import io
+        import wave
+        import numpy as np
+        from fastapi.testclient import TestClient
+        from sakuratts.engine import Audio
+        from sakuratts.server import create_app
+        rate = 32000
+        pcm = (10000 * np.sin(2 * np.pi * 440 * np.arange(rate * 2) / rate)).astype(np.int16)
+        class FakeInference:
+            def __init__(self, *args, **kwargs): pass
+            def info(self): return None
+            def close(self): pass
+            def tts(self, request, **kwargs):
+                assert request['speed_factor'] == 1
+                return Audio(pcm, rate, {"status": "completed", "request_ms": 1, "pcm_seconds": 2})
+        with patch("sakuratts.server.Inference", FakeInference), TestClient(create_app()) as client:
+            for factor, method in ((1.0, "post"), (0.9, "post"), (1.2, "get")):
+                with self.subTest(factor=factor, method=method):
+                    request = dict(REQUEST, speed_factor=factor)
+                    response = (client.post('/tts', json=request) if method == 'post'
+                                else client.get('/tts', params=request))
+                    self.assertEqual(response.status_code, 200)
+                    self.assertEqual(float(response.headers['X-SakuraTTS-Speed-Factor']), factor)
+                    with wave.open(io.BytesIO(response.content)) as wav:
+                        self.assertEqual(wav.getframerate(), rate)
+                        samples = np.frombuffer(wav.readframes(wav.getnframes()), dtype='<i2')
+                    duration = len(samples) / rate
+                    self.assertAlmostEqual(duration, 2 / factor, delta=0.06)
+                    self.assertAlmostEqual(float(response.headers['X-SakuraTTS-Audio-Seconds']), duration, delta=.001)
+                    peak_hz = np.argmax(abs(np.fft.rfft(samples))) * rate / len(samples)
+                    self.assertAlmostEqual(peak_hz, 440, delta=2)
+                    if factor == 1:
+                        np.testing.assert_array_equal(samples, pcm)
+
+    def test_missing_tempo_dependency_fails_before_inference_or_wake(self):
+        from fastapi.testclient import TestClient
+        from sakuratts.server import create_app
+        from test_managed_server import process_double
+        class DirectInference:
+            def __init__(self, *args, **kwargs): pass
+            def info(self): return None
+            def close(self): pass
+            def tts(self, *args, **kwargs):
+                raise AssertionError('Missing tempo dependency must fail before inference')
+        for mode in ('direct', 'managed'):
+            fake = process_double()
+            with patch('sakuratts.server.Inference', DirectInference), \
+                    patch('sakuratts.runtime.inference_process.ProcessInference', fake), \
+                    patch('sakuratts.server.shutil.which', return_value=None), \
+                    TestClient(create_app('model', runtime_mode=mode)) as client:
+                response = client.post('/tts', json=dict(REQUEST, speed_factor=0.9))
+                self.assertEqual(response.status_code, 400)
+                self.assertIn('ffmpeg', response.json()['message'])
+                self.assertEqual(fake.wake_calls, 0)
+
     def test_shared_engine_routes_limits_busy_and_shutdown(self):
         from fastapi.testclient import TestClient
         from sakuratts.server import create_app
@@ -152,7 +209,7 @@ class ServerTests(unittest.TestCase):
                 self.assertEqual(client.get("/models").json(), [{"name": "試験"}])
                 self.assertEqual(client.get("/").status_code, 404)
                 for update in ({"text": " "}, {"ref_audio_path": ""}, {"seed": -2},
-                               {"text_lang": "zh"}, {"speed_factor": 1.2}, {"top_p": 0},
+                               {"text_lang": "zh"}, {"speed_factor": 0}, {"speed_factor": 2.1}, {"top_p": 0},
                                {"streaming_mode": 2}, {"batch_size": 2}, {"aux_ref_audio_paths": ["a.wav"]}):
                     self.assertEqual(client.post("/tts", json=dict(REQUEST, **update)).status_code, 400)
                 response = client.post("/tts", json=dict(REQUEST, text="limit"))
