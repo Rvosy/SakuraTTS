@@ -1,19 +1,19 @@
 --- a/src/common/utils/utils_message.py
 +++ b/src/common/utils/utils_message.py
 @@ -12,6 +12,10 @@
- 
+
  import asyncio
  import threading
 +import sqlite3
 +import time
 +
 +from sqlalchemy.exc import OperationalError
- 
+
  from src.common.paths import get_instance_root
  from src.common.data_models.message_component_data_model import (
 @@ -216,11 +220,21 @@
          from src.common.database.database import get_db_session
- 
+
          with _DB_WRITE_THREAD_LOCK:
 -            with get_db_session() as session:
 -                MessageUtils.fill_reply_frequency_if_available(message)
@@ -35,6 +35,6 @@
 +                    if code is None or code & 0xff != sqlite3.SQLITE_BUSY or attempt == 2:
 +                        raise
 +                    time.sleep(0.1 * (attempt + 1))
- 
+
      @staticmethod
      async def store_message_to_db_async(message: "SessionMessage") -> None:
