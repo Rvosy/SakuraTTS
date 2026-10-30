@@ -39,8 +39,6 @@ for name, directory in [('adapter_check', '/adapter'), ('adapter_check.codecs', 
     sys.modules[name] = package
 from adapter_check.codecs.outbound.segment_encoder import QQOutboundSegmentEncoder
 encoder = QQOutboundSegmentEncoder()
-policy = load('emoji_policy', '/policy/plugin.py').create_plugin()
-policy._set_context(PluginContext('rvosy.emoji-send-policy'))
 source = Path('src/maisaka/runtime.py').read_text(encoding='utf-8-sig')
 node = next(n for n in ast.walk(ast.parse(source)) if isinstance(n, ast.FunctionDef)
             and n.name == 'append_sent_message_to_chat_history')
@@ -84,8 +82,7 @@ async def main():
         if name == 'send_service.after_send':
             await plugin.record_sent_expression(message=send.serialize_session_message(message), sent=kwargs['sent'])
             return types.SimpleNamespace(aborted=False, kwargs=kwargs), message
-        result = await policy.stop_outbound_emoji(message=send.serialize_session_message(message))
-        return types.SimpleNamespace(aborted=result['action']=='abort', kwargs=kwargs), message
+        return types.SimpleNamespace(aborted=False, kwargs=kwargs), message
     platform = Platform()
     host = RuntimeCoreCapabilityMixin()
     async def rpc(method, plugin_id, payload, **kwargs):
@@ -168,9 +165,8 @@ async def main():
                 ordinary = [{'segments':[{'type':'text','data':'普通回复'}], 'quote_previous':False}]
                 assert await no_attachment.transform('普通回复', ordinary) == ordinary
         await plugin.on_unload()
-    assert (await policy.stop_outbound_emoji(message={'raw_message':[{'type':'emoji','data':'other'}]}))['action']=='abort'
     report={'status':'passed','three_original_images':True,'real_host_schema':True,'success_only_history':True,
-            'qq_sticker_sub_type':1,'emoji_allowlist_compatible':True,'reply_extension_voice_and_sticker_order':True,
+            'qq_sticker_sub_type':1,'reply_extension_voice_and_sticker_order':True,
             'platform_messages_sent':0,'production_database_writes':0}
     Path('/eval/reply-host-check.json').write_text(json.dumps(report,indent=2))
     print(json.dumps(report))

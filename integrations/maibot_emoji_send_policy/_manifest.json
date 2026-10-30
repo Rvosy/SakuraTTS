@@ -3,7 +3,7 @@
   "id": "rvosy.emoji-send-policy",
   "version": "1.1.0",
   "name": "固定表情发送策略",
-  "description": "禁用通用表情库，仅允许 N.A.V.I. 的开心、无奈认真和意料之外三张原图作为表情包发送。",
+  "description": "禁用通用表情库的选择入口，配合 N.A.V.I. 固定表情插件使用。",
   "author": {"name": "Rvosy", "url": "https://github.com/Rvosy"},
   "urls": {"repository": "https://github.com/Rvosy", "homepage": "https://github.com/Rvosy"},
   "license": "MIT",
