@@ -160,7 +160,7 @@ class Inference:
         if kind == "sovits" and self.engine is not None and self.engine._runtime.name == "mlx":
             expected = "sakuratts-sovits-decode-fp32-v1"
         accepted = {expected}
-        if kind == "sovits" and self.settings.get("backend", self.model.backend if self.model else "cuda") == "cuda":
+        if kind == "sovits" and self.settings.get("backend", self.model.backend if self.model else "cuda") in ("cpu", "cuda"):
             accepted.add("sakuratts-sovits-chunked-v1")
         if manifest.get("format") not in accepted:
             raise ValueError("Wrong model type for " + kind)

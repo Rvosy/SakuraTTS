@@ -119,6 +119,27 @@ class CPURuntimeTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "requires a chunked"):
                 engine.synthesize("test")
 
+    def test_cpu_model_switch_accepts_chunked_acoustics_and_recomputes_profile(self):
+        original = self.root / "sovits/manifest.json"
+        original_manifest = json.loads(original.read_text(encoding="utf-8"))
+        original_manifest["format"] = "sakuratts-sovits-onnx-v1"
+        original.write_text(json.dumps(original_manifest), encoding="utf-8")
+        package = self.replacement_acoustic()
+        path = package / "manifest.json"
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        manifest["format"] = "sakuratts-sovits-chunked-v1"
+        path.write_text(json.dumps(manifest), encoding="utf-8")
+        with contextlib.closing(Inference(self.config, backend="cpu", profile="low-memory")) as inference:
+            inference.set_weights("sovits", package)
+            chunked = self.speech_request(inference)
+            self.assertEqual(chunked.report["status"], "completed")
+            self.assertEqual(chunked.report["acoustic_chunk_frames"], 256)
+            inference.set_weights("sovits", self.root / "sovits")
+            whole = self.speech_request(inference)
+            self.assertEqual(whole.report["status"], "completed")
+            self.assertIsNone(whole.report["acoustic_chunk_frames"])
+            np.testing.assert_array_equal(chunked.pcm, whole.pcm)
+
     def test_cpu_full_vocoder_can_use_staged_acoustic_sessions(self):
         path = self.root / "sovits/manifest.json"
         manifest = json.loads(path.read_text(encoding="utf-8"))

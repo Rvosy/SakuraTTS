@@ -95,8 +95,6 @@ class SpeechRequest(BaseModel):
             unsupported.append("super_sampling")
         if unsupported:
             raise NotImplementedError("Not implemented by the native backend: " + ", ".join(unsupported))
-        if request["speed_factor"] != 1 and not shutil.which("ffmpeg"):
-            raise ValueError("ffmpeg is required for speed_factor != 1")
         if request["seed"] < -1 or request["top_k"] < 1:
             raise ValueError("Require seed >= -1 and top_k >= 1")
         if not 0 < request["top_p"] <= 1:
@@ -106,8 +104,8 @@ class SpeechRequest(BaseModel):
                 raise ValueError(field + " must be finite and positive")
         if request["fragment_interval"] < 0:
             raise ValueError("fragment_interval must be nonnegative")
-        if request["media_type"] in ("ogg", "aac") and not shutil.which("ffmpeg"):
-            raise ValueError("ffmpeg is required for " + request["media_type"] + " output")
+        if (request["speed_factor"] != 1 or request["media_type"] in ("ogg", "aac")) and not shutil.which("ffmpeg"):
+            raise ValueError("ffmpeg is required for tempo adjustment or compressed audio output")
         return request
 
 
