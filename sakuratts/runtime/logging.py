@@ -118,8 +118,12 @@ class ConsoleFormatter(logging.Formatter):
         elif record.name.startswith("uvicorn") and str(record.msg).startswith("Uvicorn running on"):
             message = "服务就绪，按 Ctrl+C 停止。"
         elif record.exc_info and record.exc_info[1] is not None:
-            message += f" | {type(record.exc_info[1]).__name__}: {record.exc_info[1]}"
-        message = compact(message, 500)
+            if level >= logging.ERROR:
+                message += "\n" + self.formatException(record.exc_info)
+            else:
+                message += f" | {type(record.exc_info[1]).__name__}: {record.exc_info[1]}"
+        if level < logging.ERROR:
+            message = compact(message, 500)
         label = "错误 " if level >= logging.ERROR else "警告 " if level >= logging.WARNING else ""
         heading = block in ("startup", "request")
         if heading or label:

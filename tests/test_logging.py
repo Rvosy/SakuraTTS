@@ -7,6 +7,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import traceback
 import unittest
 import unicodedata
 from unittest.mock import patch
@@ -68,7 +69,7 @@ class LoggingTests(unittest.TestCase):
         visible = console.getvalue()
         self.assertNotIn("INFO:", visible)
         self.assertNotIn("SHA256", visible)
-        self.assertNotIn("Traceback", visible)
+        self.assertIn("Traceback", visible)
         self.assertNotIn("200", visible)
         self.assertIn("警告 HTTP 404", visible)
         self.assertIn("错误", visible)
@@ -77,6 +78,28 @@ class LoggingTests(unittest.TestCase):
         self.assertIn("Traceback", details)
         self.assertIn(f"[请求 {identifier}]", details)
         self.assertIn('POST /tts HTTP/1.1" 200', details)
+
+    def test_captured_startup_failure_keeps_full_traceback_and_original_cause(self):
+        for preformatted in (False, True):
+            console = io.StringIO()
+            with self.subTest(preformatted=preformatted), tempfile.TemporaryDirectory() as folder, \
+                    patch("sys.stderr", console):
+                file = Path(folder) / "server.log"
+                with service_logging(file):
+                    try:
+                        try:
+                            raise OSError("CUDA library load failed: " + "runtime/compiler/" * 40 + "cublasLt64_12.dll")
+                        except OSError as cause:
+                            raise RuntimeError("Model initialization failed") from cause
+                    except RuntimeError:
+                        expected = traceback.format_exc().rstrip()
+                        logger = logging.getLogger("uvicorn.error")
+                        if preformatted:
+                            logger.error(expected)
+                        else:
+                            logger.exception("Application startup failed")
+                self.assertIn(expected, console.getvalue())
+                self.assertIn(expected, file.read_text(encoding="utf-8"))
 
     def test_warning_level_disables_live_progress_even_on_a_terminal(self):
         class Terminal(io.StringIO):
