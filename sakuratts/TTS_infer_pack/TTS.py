@@ -55,11 +55,21 @@ class Inference:
             self.close()
             raise
 
-    def _activate(self, model):
+    def _activate(self, model, *, cached_conversion=False):
         from .reference import ReferenceCache
-        workers = {name: os.path.abspath(self.settings[name]) for name in ("acoustic_python", "frontend_python")
+        worker_fields = ("acoustic_python", "frontend_python")
+        workers = {name: os.path.abspath(self.settings[name]) for name in worker_fields
                    if self.settings.get(name)}
-        if workers:
+        if cached_conversion and any(name in model.manifest for name in worker_fields):
+            # A cached conversion can have been built with different worker overrides.
+            manifest = {key: value for key, value in model.manifest.items() if key not in worker_fields}
+            if not workers:
+                import json
+                from ..prepare.converter import model_workers
+                frontend = model.path.parent / manifest["frontend"] / "manifest.json"
+                workers = model_workers(json.loads(frontend.read_text(encoding="utf-8")), self.settings["python"], workers)
+            model = Model(model.path, dict(manifest, **workers))
+        elif workers:
             model = Model(model.path, dict(model.manifest, **workers))
         self.logger.info("加载 GPT / SoVITS…")
         self.logger.debug("Loading GPT and SoVITS weights: %s", model.path)
@@ -132,7 +142,7 @@ class Inference:
 
     def _convert_initial(self):
         from ..prepare.cache import prepare_initial_model
-        self._activate(prepare_initial_model(self.settings, self.experimental))
+        self._activate(prepare_initial_model(self.settings, self.experimental), cached_conversion=True)
 
     def set_weights(self, kind, weights_path):
         import json

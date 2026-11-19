@@ -74,6 +74,51 @@ class InitialConversionCacheTests(unittest.TestCase):
                     self.assertEqual(convert.call_count, 2)
                     self.assertNotEqual(changed._activate.call_args.args[0].name, key)
 
+    def test_source_cache_uses_selected_language_model_and_workers(self):
+        from test_backend_selection import FakeRuntime
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.fixture(root)
+            settings = self.inference(root).settings
+            language = root / "lid.bin"
+            language.write_text("first detector")
+            settings.update(language_model=str(language), frontend_python=str(root / "custom-python"))
+
+            def convert(**options):
+                output = options["output"]
+                frontend = output / "frontend"
+                frontend.mkdir(parents=True)
+                (frontend / "manifest.json").write_text('{"japanese_g2p":{"implementation":"pyopenjtalk-classic"}}')
+                (frontend / "lid.bin").write_bytes(language.read_bytes())
+                manifest = {"format": "sakuratts-windows-config-v1", "gpt": "gpt", "sovits": "sovits",
+                            "frontend": "frontend", "frontend_python": str(root / "custom-python")}
+                (output / "model.json").write_text(json.dumps(manifest))
+
+            def launch():
+                config = root / "tts.json"
+                config.write_text(json.dumps({"sakuratts": settings}))
+                inference = Inference(tts_config=config)
+                try:
+                    model = inference.model
+                    return ((model.path.parent / "frontend/lid.bin").read_text(),
+                            model.manifest.get("frontend_python"), model.manifest.get("acoustic_python"))
+                finally:
+                    inference.close()
+
+            with patch("sakuratts.runtime.portable.bundle_root", return_value=None), \
+                 patch("sakuratts.prepare.converter.convert", side_effect=convert) as conversion, \
+                 patch("sakuratts.backends.create_runtime", side_effect=lambda *a, **kw: FakeRuntime()):
+                self.assertEqual(launch(), ("first detector", str(root / "custom-python"), None))
+                settings.pop("frontend_python")
+                settings["acoustic_python"] = str(root / "acoustic-python")
+                self.assertEqual(launch(), ("first detector", None, str(root / "acoustic-python")))
+                settings.pop("acoustic_python")
+                self.assertEqual(launch(), ("first detector", None, settings["python"]))
+                self.assertEqual(conversion.call_count, 1)
+                language.write_text("updated detector")
+                self.assertEqual(launch(), ("updated detector", None, settings["python"]))
+
     def update_component(self, root):
         manifest = root / "runtime/preparation/preparation-manifest.json"
         data = json.loads(manifest.read_text())

@@ -38,6 +38,10 @@ def prepare_initial_model(settings, experimental=None):
     portable_root = bundle_root()
     if portable_root is None:
         identity["python"] = os.path.abspath(options["python"])
+        if settings.get("language_model"):
+            language = Path(settings["language_model"]).resolve(strict=True)
+            stat = language.stat()
+            identity["language_model"] = [str(language), stat.st_size, stat.st_mtime_ns]
         chinese = Path(options["official_source"]) / "chinese"
         if chinese.is_dir():
             identity["chinese_frontend"] = sha256_file(chinese / "manifest.json")

@@ -43,11 +43,6 @@ def write_json(path, value):
     Path(path).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def identity(path):
-    path = Path(path).resolve(strict=True)
-    return {"path": str(path), "bytes": path.stat().st_size, "sha256": digest(path)}
-
-
 def character_inputs(character):
     character = Path(character).resolve(strict=True)
     voice = read_json(character / "character.json")["voice"]
@@ -167,30 +162,32 @@ def prepare_frontend(root, output, language_model=None, preflight=None):
     profile = frontend_profile(preflight)
     classic_files = classic_frontend_files(preflight)
     namespace = {"__name__": "sakuratts_prepared_symbols"}
-    exec(compile(source.read_bytes(), str(source), "exec"), namespace)
+    symbol_source = source.read_bytes()
+    exec(compile(symbol_source, str(source), "exec"), namespace)
     symbols = namespace["symbols"]
     if not isinstance(symbols, list) or not symbols or any(not isinstance(s, str) for s in symbols):
         raise ValueError("Official symbol source did not provide a nonempty symbol list")
     output.mkdir(parents=True)
-    write_json(output / "symbols-v2.json", symbols)
-    shutil.copy2(user / "user.dict", output / "user.dict")
-    shutil.copy2(language, output / "lid.176.bin")
+    symbol_file = output / "symbols-v2.json"
+    write_json(symbol_file, symbols)
     shutil.copytree(root / "english", output / "english")
-    classic_identities = {name: identity(path) for name, path in classic_files.items()}
-    for name, source_path in classic_files.items():
+    files = {symbol_file.name: {"bytes": symbol_file.stat().st_size, "sha256": digest(symbol_file)}}
+    sources = {}
+    for name, source_path in {"user.dict": user / "user.dict", "lid.176.bin": language, **classic_files}.items():
         target = output / name
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_path, target)
+        files[name] = {"bytes": target.stat().st_size, "sha256": digest(target)}
+        sources[name] = {"path": str(source_path.resolve()), **files[name]}
     manifest = {"format": "sakuratts-japanese-frontend-resources-v1", "official_commit": source_id,
-                "symbol_source_sha256": digest(source),
-                "sources": {"user_dictionary": identity(user / "user.dict"), "language_model": identity(language)},
-                "files": {name: {"bytes": (output / name).stat().st_size, "sha256": digest(output / name)}
-                          for name in ("symbols-v2.json", "user.dict", "lid.176.bin", *classic_files)}}
+                "symbol_source_sha256": hashlib.sha256(symbol_source).hexdigest(),
+                "sources": {"user_dictionary": sources.pop("user.dict"), "language_model": sources.pop("lid.176.bin")},
+                "files": files}
     if profile is not None:
         manifest["japanese_g2p"] = profile
         manifest["sources"]["japanese_g2p_preflight"] = preflight
-    if classic_files:
-        manifest["sources"]["classic_files"] = classic_identities
+    if sources:
+        manifest["sources"]["classic_files"] = sources
     manifest["english_g2p"] = {"implementation": "gpt-sovits-english-v1", "directory": "english"}
     manifest["files"].update({"english/" + path.name: {"bytes": path.stat().st_size}
                               for path in (output / "english").iterdir() if path.is_file()})
@@ -228,82 +225,89 @@ def disable_network():
     sys.addaudithook(check)
 
 
-def worker(job_file, session=None):
-    job = read_json(job_file)
-    root, run = Path(job["official_source"]), Path(job_file).parent
+def load_reference_engine(job, run):
+    root = Path(job["official_source"])
     cache = Path(job.get("cache_dir", run))
     sys.dont_write_bytecode = True
     os.environ.update(PYTHONDONTWRITEBYTECODE="1", HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1",
                       NUMBA_CACHE_DIR=str(cache / "numba-cache"), MPLCONFIGDIR=str(cache / "mpl-cache"),
                       PYTHONIOENCODING="utf-8")
-    from runpy import run_path
-    run_path(str(PACKAGE / "runtime/worker.py"))["load_package"](PACKAGE)
-    run_path(str(PACKAGE / "runtime/worker.py"))["enable_windows_long_import_paths"]()
     sys.path[:0] = [str(root), str(root / "GPT_SoVITS")]
     os.chdir(root)
+    import fast_langdetect
+    import torch
+    from GPT_SoVITS.TTS_infer_pack.TTS import TTS, TTS_Config
+    from process_ckpt import get_sovits_version_from_path_fast
+
+    if job["device"] == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("CUDA was requested for reference preparation but is unavailable")
+    torch.set_num_threads(job["cpu_threads"])
+    torch.backends.cuda.matmul.allow_tf32 = False
+    torch.backends.cudnn.allow_tf32 = False
+    frontend = Path(job.get("frontend", Path(job["output"]) / "frontend"))
+    fast_langdetect.infer._default_detector = fast_langdetect.infer.LangDetector(
+        fast_langdetect.infer.LangDetectConfig(cache_dir=frontend))
+
+    class ReferenceOnlyTTS(TTS):
+        def _init_models(self):
+            self.init_vits_weights(self.configs.vits_weights_path)
+            self.init_cnhuhbert_weights(self.configs.cnhuhbert_base_path)
+
+    _, family, lora = get_sovits_version_from_path_fast(job["sovits"])
+    if family not in ("v2Pro", "v2ProPlus") or lora:
+        raise ValueError("Reference preparation supports non-LoRA V2Pro and V2ProPlus checkpoints")
+    config_data = {"custom": {"version": family, "device": job["device"], "is_half": job["precision"] == "fp16",
+                   "t2s_weights_path": job["gpt"], "vits_weights_path": job["sovits"],
+                   "bert_base_path": str(root / "GPT_SoVITS/pretrained_models/chinese-roberta-wwm-ext-large"),
+                   "cnhuhbert_base_path": job.get("cnhubert", str(root / "GPT_SoVITS/pretrained_models/chinese-hubert-base"))}}
+    # TTS_Config creates a relative configs directory even with an explicit config.
+    os.chdir(run)
+    config = TTS_Config(config_data)
+    config.configs_path = str(run / "tts-prepare.yaml")
+    os.chdir(root)
+    engine = ReferenceOnlyTTS(config)
+    if (engine.configs.version != family or str(engine.configs.device) != job["device"]
+            or engine.t2s_model is not None or engine.bert_model is not None):
+        raise RuntimeError("Reference-only initialization differs from the requested model family or device")
+    return engine
+
+
+def worker(job_file, session=None):
+    job = read_json(job_file)
+    run = Path(job_file).parent
     result = {"status": "running", "prepare_only": True, "target_synthesis_calls": 0, "references": []}
     started = time.perf_counter()
     try:
         if session is None:
             disable_network()
+            run_path(str(PACKAGE / "runtime/worker.py"))["load_package"](PACKAGE)
         try:
+            engine = session.get("engine") if session is not None else None
+            if engine is None:
+                engine = load_reference_engine(job, run)
+                if session is not None:
+                    session["engine"] = engine
             import numpy as np
             import torch
-            from GPT_SoVITS.TTS_infer_pack.TTS import TTS, TTS_Config
             from module import commons
-            from process_ckpt import get_sovits_version_from_path_fast
             from TTS_infer_pack.text_segmentation_method import splits
             from sakuratts.module.reference_condition import validate_arrays
-            import fast_langdetect
         except ImportError as error:
             raise RuntimeError("Preparation interpreter lacks an official source dependency: " + str(error)
                                + ". Install the development dependencies or pass --python with the existing official interpreter.") from error
-        if job["device"] == "cuda" and not torch.cuda.is_available():
-            raise RuntimeError("CUDA was requested for reference preparation but is unavailable")
-        torch.set_num_threads(job["cpu_threads"])
-        torch.backends.cuda.matmul.allow_tf32 = False
-        torch.backends.cudnn.allow_tf32 = False
-        fast_langdetect.infer._default_detector = fast_langdetect.infer.LangDetector(
-            fast_langdetect.infer.LangDetectConfig(cache_dir=Path(job.get("frontend", str(Path(job["output"]) / "frontend")))))
-
-        class ReferenceOnlyTTS(TTS):
-            def _init_models(self):
-                self.init_vits_weights(self.configs.vits_weights_path)
-                self.init_cnhuhbert_weights(self.configs.cnhuhbert_base_path)
-
-        _, family, lora = get_sovits_version_from_path_fast(job["sovits"])
-        if family not in ("v2Pro", "v2ProPlus") or lora:
-            raise ValueError("Reference preparation supports non-LoRA V2Pro and V2ProPlus checkpoints")
-        config_data = {"custom": {"version": family, "device": job["device"], "is_half": job["precision"] == "fp16",
-                       "t2s_weights_path": job["gpt"], "vits_weights_path": job["sovits"],
-                       "bert_base_path": str(root / "GPT_SoVITS/pretrained_models/chinese-roberta-wwm-ext-large"),
-                       "cnhuhbert_base_path": job.get("cnhubert", str(root / "GPT_SoVITS/pretrained_models/chinese-hubert-base"))}}
-        # TTS_Config creates a relative configs directory even for an explicit
-        # dictionary. Both that directory and later save_configs stay in run.
-        os.chdir(run)
-        config = TTS_Config(config_data)
-        config.configs_path = str(run / "tts-prepare.yaml")
-        os.chdir(root)
-        engine = session.get("engine") if session is not None else None
-        if engine is None:
-            engine = ReferenceOnlyTTS(config)
-            if session is not None:
-                session["engine"] = engine
-        if (engine.configs.version != family or str(engine.configs.device) != job["device"]
-                or engine.t2s_model is not None or engine.bert_model is not None):
-            raise RuntimeError("Reference-only initialization differs from the requested model family or device")
+        family = engine.configs.version
         for ref in job["references"]:
             phase = time.perf_counter()
             engine.set_ref_audio(ref["audio"])
-            prompt = ref["text"].strip("\n")
-            if prompt[-1] not in splits:
-                prompt += "。"
             if "text_features" in ref:
                 with np.load(ref["text_features"], allow_pickle=False) as features:
                     phones, bert = features["phones"], features["bert"]
                     normalized = features["normalized"].item()
                     prompt = features["prompt"].item()
             else:
+                prompt = ref["text"].strip("\n")
+                if prompt[-1] not in splits:
+                    prompt += "。"
                 phones, bert, normalized = engine.text_preprocessor.segment_and_extract_feature_for_text(prompt, "ja", family)
                 bert = bert.detach().float().cpu().numpy()
             with torch.no_grad():

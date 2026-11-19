@@ -18,6 +18,12 @@ def acoustic_converter(backend):
     return "convert_sovits_mlx.py" if backend == "mlx" else "export_sovits_onnx.py"
 
 
+def model_workers(frontend_manifest, preparation_python, workers):
+    if not workers and frontend_manifest.get("japanese_g2p", {}).get("implementation") == "pyopenjtalk-classic":
+        return {"acoustic_python": os.path.abspath(preparation_python)}
+    return workers
+
+
 def _preparation_identity(backend, experimental=None, *, kind=None):
     """Cache the selected artifacts, independently of execution tuning."""
     from ..profiles import resolve_profile
@@ -165,9 +171,10 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
     output = _destination(output)
     interpreter = os.path.abspath(python or sys.executable)
     os.stat(interpreter)
-    worker = os.path.abspath(acoustic_python) if acoustic_python else None
-    if worker:
-        os.stat(worker)
+    workers = {name: os.path.abspath(path) for name, path in (
+        ("acoustic_python", acoustic_python), ("frontend_python", frontend_python)) if path}
+    for path in workers.values():
+        os.stat(path)
     tools = Path(__file__).parent
     env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1")
     with tempfile.TemporaryDirectory(prefix=".sakuratts-convert-", dir=output.parent) as temporary:
@@ -189,7 +196,7 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
             inputs.write_text(json.dumps(weights, ensure_ascii=False), encoding="utf-8")
             run_conversion([*command, "--frontend-only"], env=env)
             features = temporary / "transcript.npz"
-            _prepare_transcript(prepared / "frontend", os.path.abspath(frontend_python or worker or interpreter),
+            _prepare_transcript(prepared / "frontend", os.path.abspath(frontend_python or acoustic_python or interpreter),
                                 reference_text, reference_language, features)
             refs[0]["text_features"] = str(features)
         inputs.write_text(json.dumps(dict(weights, references=refs), ensure_ascii=False), encoding="utf-8")
@@ -206,13 +213,7 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
         config = {"format": "sakuratts-windows-config-v1", "gpt": "gpt", "sovits": "sovits",
                   "frontend": "frontend", "references": {"reference": "references/000"} if refs else {},
                   "backend": {"preferred": backend}, "languages": ["ja", "en", "zh"] if "chinese_g2p" in frontend_manifest else ["ja", "en"]}
-        if worker:
-            config["acoustic_python"] = worker
-        elif not frontend_python and frontend_manifest.get("japanese_g2p", {}).get("implementation") == "pyopenjtalk-classic":
-            config["acoustic_python"] = interpreter
-        if frontend_python:
-            os.stat(frontend_python)
-            config["frontend_python"] = os.path.abspath(frontend_python)
+        config.update(model_workers(frontend_manifest, interpreter, workers))
         staged = temporary / "model"
         staged.mkdir()
         for source, target in ((prepared / "gpt", "gpt"), (acoustic, "acoustic"), (prepared / "frontend", "frontend")):
