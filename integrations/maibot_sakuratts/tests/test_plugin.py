@@ -250,6 +250,24 @@ class PluginTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(self.rpc_calls, [])
         self.plugin._client = self.client
 
+    async def test_reply_timeout_preserves_chinese_while_manual_command_waits_its_turn(self):
+        config = self.plugin.get_plugin_config_data()
+        config["engine"]["timeout_seconds"] = 0.02
+        self.plugin.set_plugin_config(config)
+        async with asyncio.timeout(2):
+            async with self.plugin._synthesis_lock:
+                await self.plugin.speak_command(stream_id="chat-1", matched_groups={"text": "一番。"})
+                result = await self.extension(mode="requested")
+                segments = [part for message in result["messages"] for part in message["segments"]]
+                self.assertEqual(segments[0], {"type": "text", "data": "会长，辛苦了。"})
+                self.assertIn("超时", segments[1]["data"])
+                automatic = await self.extension(mode="auto")
+                self.assertEqual(automatic["messages"], [{"segments": [segments[0]], "quote_previous": False}])
+                self.assertEqual(self.requests, [])
+            await self.plugin._command_queue.join()
+        self.assertEqual([json.loads(request.content)["text"] for request in self.requests], ["一番。"])
+        self.assertEqual([call[2]["capability"] for call in self.rpc_calls], ["send.hybrid"])
+
     async def test_total_timeout_closes_response_and_allows_next_request(self):
         class SlowAudio(httpx.AsyncByteStream):
             closed = False

@@ -104,32 +104,31 @@ async def synthesize(client: httpx.AsyncClient, config: SakuraConfig, text: str)
         "speed_factor": voice.speed_factor,
     }
     url = config.engine.base_url.rstrip("/") + "/tts"
-    async with asyncio.timeout(config.engine.timeout_seconds):
-        async with client.stream("POST", url, json=payload, timeout=config.engine.timeout_seconds) as response:
-            if response.status_code == 409:
-                raise SynthesisError("语音引擎正在处理其他请求，请稍后再试。")
-            if response.is_error:
-                # 保留服务端原因供日志排错，不把本地路径或参考转写发到聊天中。
-                body = bytearray()
-                async for chunk in response.aiter_bytes():
-                    body.extend(chunk[:2048 - len(body)])
-                    if len(body) >= 2048:
-                        break
-                raise SynthesisError(f"语音引擎返回 HTTP {response.status_code}，请查看插件日志。") from RuntimeError(
-                    body.decode("utf-8", errors="replace")
-                )
-            if response.status_code != 200:
-                raise SynthesisError(f"语音接口返回 HTTP {response.status_code}，请检查服务地址。")
-            status = response.headers.get("X-SakuraTTS-Status")
-            if status == "stopped_at_limit":
-                raise SynthesisError("合成触发生成上限，音频不完整；请缩短文本后重试。")
-            if status not in (None, "completed"):
-                raise SynthesisError(f"语音引擎返回未识别的完成状态：{status}")
-            data = bytearray()
+    async with client.stream("POST", url, json=payload, timeout=config.engine.timeout_seconds) as response:
+        if response.status_code == 409:
+            raise SynthesisError("语音引擎正在处理其他请求，请稍后再试。")
+        if response.is_error:
+            # 保留服务端原因供日志排错，不把本地路径或参考转写发到聊天中。
+            body = bytearray()
             async for chunk in response.aiter_bytes():
-                if len(data) + len(chunk) > MAX_AUDIO_BYTES:
-                    raise SynthesisError("音频超过 4 MiB，请缩短文本。")
-                data.extend(chunk)
+                body.extend(chunk[:2048 - len(body)])
+                if len(body) >= 2048:
+                    break
+            raise SynthesisError(f"语音引擎返回 HTTP {response.status_code}，请查看插件日志。") from RuntimeError(
+                body.decode("utf-8", errors="replace")
+            )
+        if response.status_code != 200:
+            raise SynthesisError(f"语音接口返回 HTTP {response.status_code}，请检查服务地址。")
+        status = response.headers.get("X-SakuraTTS-Status")
+        if status == "stopped_at_limit":
+            raise SynthesisError("合成触发生成上限，音频不完整；请缩短文本后重试。")
+        if status not in (None, "completed"):
+            raise SynthesisError(f"语音引擎返回未识别的完成状态：{status}")
+        data = bytearray()
+        async for chunk in response.aiter_bytes():
+            if len(data) + len(chunk) > MAX_AUDIO_BYTES:
+                raise SynthesisError("音频超过 4 MiB，请缩短文本。")
+            data.extend(chunk)
     try:
         with wave.open(io.BytesIO(data), "rb") as audio:
             if audio.getnframes() <= 0:
@@ -172,7 +171,7 @@ class SakuraTTSPlugin(MaiBotPlugin):
         if scope == "self":
             self.ctx.logger.info("SakuraTTS 配置已更新，版本 %s", version)
 
-    async def _audio(self, text: str) -> bytes:
+    async def _audio(self, text: str, *, queued_command: bool = False) -> bytes:
         config = self.config
         text = text.strip()
         if not text:
@@ -182,7 +181,11 @@ class SakuraTTSPlugin(MaiBotPlugin):
         if self._client is None:
             raise SynthesisError("语音插件尚未加载。")
         try:
-            async with self._synthesis_lock:
+            timeout = config.engine.timeout_seconds
+            if queued_command:
+                async with self._synthesis_lock, asyncio.timeout(timeout):
+                    return await synthesize(self._client, config, text)
+            async with asyncio.timeout(timeout), self._synthesis_lock:
                 return await synthesize(self._client, config, text)
         except (TimeoutError, httpx.TimeoutException) as exc:
             raise SynthesisError("语音合成超时，请检查引擎负载或缩短文本。") from exc
@@ -279,7 +282,7 @@ class SakuraTTSPlugin(MaiBotPlugin):
 
     async def _send_command_voice(self, stream_id: str, text: str, requester: str) -> tuple[bool, str, int]:
         try:
-            audio = await self._audio(text)
+            audio = await self._audio(text, queued_command=True)
         except SynthesisError as exc:
             self.ctx.logger.warning("SakuraTTS 手动合成失败：%s；原因：%s", exc, exc.__cause__ or "无")
             success, message = False, str(exc)
