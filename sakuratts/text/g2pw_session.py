@@ -34,8 +34,6 @@ class G2PWSession:
         Initializers reference the mapped model file. Keep that file unchanged
         while the session is alive; the original ONNX loader remains available.
         """
-        os.environ["ORT_DISABLE_TELEMETRY"] = "1"
-
         package = Path(package)
         manifest = json.loads((package / "manifest.json").read_text(encoding="utf-8"))
         if manifest["format"] != "sakuratts-g2pw-ort-candidate-v1":
@@ -103,10 +101,11 @@ class G2PWSession:
         preds: List[str] = [""] * len(texts)
         confidences: List[float] = [0.0] * len(texts)
         for indices in grouped_indices.values():
-            group_input = {name: value[indices] for name, value in model_input.items()}
-            if len(indices) > 1:
-                for name in ("input_ids", "token_type_ids", "attention_masks"):
-                    group_input[name] = group_input[name][:1]
+            first_row = slice(indices[0], indices[0] + 1)
+            group_input = {
+                name: value[first_row] if name in ("input_ids", "token_type_ids", "attention_masks") else value[indices]
+                for name, value in model_input.items()
+            }
 
             group_preds, group_confidences = self._predict(model_input=group_input)
             for output_idx, pred, confidence in zip(indices, group_preds, group_confidences):

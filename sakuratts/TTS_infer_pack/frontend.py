@@ -1,5 +1,6 @@
 """Build text resources independently of semantic and acoustic backends."""
 
+from contextlib import ExitStack
 from dataclasses import dataclass
 from importlib import metadata
 import json
@@ -12,12 +13,11 @@ from ..text.profiles import JAPANESE
 @dataclass
 class FrontendRuntime:
     text: object
-    components: tuple
+    components: ExitStack
     profile: dict
 
     def close(self):
-        for component in self.components:
-            component.close()
+        self.components.close()
 
 
 def load_frontend(config_path, config, package, manifest):
@@ -38,19 +38,15 @@ def load_frontend(config_path, config, package, manifest):
     root = Path(config_path).parent
     package = Path(package).resolve()
     profile = manifest.get("japanese_g2p", {"implementation": "pyopenjtalk-plus"})
-    japanese = segmenter = chinese = None
+    components = ExitStack()
     try:
         if profile["implementation"] == "pyopenjtalk-classic":
             from ..text.classic_japanese import ClassicJapaneseG2P
             python = config.get("frontend_python", config.get("acoustic_python"))
             if not python:
                 raise ValueError("The classic frontend requires its prepared Python runtime")
-            directories = {}
-            for key in ("module_directory", "main_dictionary"):
-                path = (package / profile[key]).resolve(strict=True)
-                directories[key] = path
-            japanese = ClassicJapaneseG2P(root / python, directories["module_directory"],
-                directories["main_dictionary"], package / "user.dict")
+            japanese = ClassicJapaneseG2P(root / python, package / profile["module_directory"],
+                package / profile["main_dictionary"], package / "user.dict")
         elif profile["implementation"] == "pyopenjtalk-plus":
             from ..text.japanese import JapaneseG2P
             dictionary = config.get("main_dictionary")
@@ -60,7 +56,9 @@ def load_frontend(config_path, config, package, manifest):
             japanese = JapaneseG2P(dictionary, package / "user.dict")
         else:
             raise ValueError("Unsupported Japanese frontend implementation")
+        components.callback(japanese.close)
         segmenter = LanguageSegmenter(package)
+        components.callback(segmenter.close)
         symbols = json.loads((package / "symbols-v2.json").read_text(encoding="utf-8"))
         processors = {JAPANESE.code: JapaneseProcessor(japanese)}
         if "english_g2p" in manifest:
@@ -74,15 +72,13 @@ def load_frontend(config_path, config, package, manifest):
             if spec["implementation"] != "gpt-sovits-chinese-v2-onnx":
                 raise ValueError("Unsupported Chinese frontend profile")
             chinese = ChineseProcessor(package / spec["directory"])
+            components.callback(chinese.close)
             processors["zh"] = chinese
         text = TextFrontend(processors, symbols, segmenter)
-        components = (japanese, segmenter, chinese) if chinese else (japanese, segmenter)
         return FrontendRuntime(text, components, profile)
     except BaseException as error:
-        for component in (chinese, segmenter, japanese):
-            if component is not None:
-                try:
-                    component.close()
-                except BaseException as cleanup_error:
-                    error.add_note(f"Frontend construction cleanup failed: {cleanup_error!r}")
+        try:
+            components.close()
+        except BaseException as cleanup_error:
+            error.add_note(f"Frontend construction cleanup failed: {cleanup_error!r}")
         raise

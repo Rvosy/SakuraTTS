@@ -3,12 +3,21 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 
 
 class ChineseFrontendMemoryTests(unittest.TestCase):
+    def test_g2pw_preserves_tokenizer_error(self):
+        from sakuratts.text.g2pw_inputs import G2PWInputs
+
+        tokenizer = Mock()
+        tokenizer.tokenize.side_effect = ValueError("invalid tokenizer vocabulary")
+        inputs = G2PWInputs(tokenizer, [("重", "chong2")])
+        with self.assertRaisesRegex(ValueError, "invalid tokenizer vocabulary"):
+            inputs.prepare(["重庆"], [0])
+
     @unittest.skipUnless(all(importlib.util.find_spec(name) for name in ("pypinyin", "opencc", "tokenizers")),
                          "requires Chinese frontend dependencies")
     def test_dictionary_then_polyphonic_query_opens_one_session(self):

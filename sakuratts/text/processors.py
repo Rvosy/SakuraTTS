@@ -33,11 +33,7 @@ class ChineseProcessor:
             from .chinese import ChinesePhones
             from .g2pw import G2PW
             g2pw = G2PW(self.directory, self.directory / "tokenizer.json", self.directory / "g2pw.onnx")
-            try:
-                self.phones = ChinesePhones(self.directory, g2pw)
-            except BaseException:
-                g2pw.close()
-                raise
+            self.phones = ChinesePhones(self.directory, g2pw)
         return self.phones.clean(text)
 
     def features(self, phones, word2ph, normalized):

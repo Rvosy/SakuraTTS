@@ -293,7 +293,7 @@ def validate(args):
     report = dict(status="passed" if passed else "mismatch", **info,
                   reference_run=str(run), reference_manifest_sha256=sha256(run / "prepared.json"),
                   tokenizer_original_source=prepared["tokenizer_source"],
-                  tokenizer_loaded_source=str(tokenizer.source_path), tokenizer_sha256=tokenizer.source_sha256,
+                  tokenizer_loaded_source=str(run / "tokenizer.json"), tokenizer_sha256=prepared["files"]["tokenizer.json"],
                   tokenizer_load_seconds=load_seconds, id_probes_equal=ids_equal,
                   packing_setup_seconds=packing_setup_seconds,
                   packing_setup_scope="Import native module, read labels, build static character IDs and masks",

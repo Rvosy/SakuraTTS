@@ -101,8 +101,7 @@ class TextFrontend:
 
     def clean_segment(self, text, language):
         raw, word2ph, normalized = self.processors[language].clean(text)
-        phones = [phone if phone in self.symbol_ids else "UNK" for phone in raw]
-        ids = [self.symbol_ids[phone] for phone in phones]
+        ids = [self.symbol_ids[phone if phone in self.symbol_ids else "UNK"] for phone in raw]
         return ids, word2ph, normalized
 
     def segment(self, text, language, *, final=False):
@@ -112,17 +111,17 @@ class TextFrontend:
             raise NotImplementedError(f"Language segment G2P is not implemented: {sorted(unsupported)}")
         if not routes:
             raise ValueError("No language segments")
-        segments, phone_groups, feature_groups = [], [], []
+        segments, phones = [], []
         for item in routes:
-            phones, word2ph, normalized = self.clean_segment(item["text"], item["lang"])
-            phone_groups.append(phones)
-            feature_groups.append(self.processors[item["lang"]].features(phones, word2ph, normalized))
-            segments.append(dict(input=item["text"], language=item["lang"], phones=phones,
+            segment_phones, word2ph, normalized = self.clean_segment(item["text"], item["lang"])
+            phones.extend(segment_phones)
+            segments.append(dict(input=item["text"], language=item["lang"], phones=segment_phones,
                                  word2ph=word2ph, norm_text=normalized))
-        phones = sum(phone_groups, [])
-        normalized = "".join(item["norm_text"] for item in segments)
         if not final and len(phones) < 6:
             return self.segment("." + text, language, final=True)
+        normalized = "".join(item["norm_text"] for item in segments)
+        feature_groups = [self.processors[item["language"]].features(item["phones"], item["word2ph"], item["norm_text"])
+                          for item in segments]
         features = feature_groups[0] if len(feature_groups) == 1 else np.concatenate(feature_groups, axis=1)
         return dict(phones=phones, bert_features=features, norm_text=normalized, segments=segments)
 

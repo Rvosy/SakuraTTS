@@ -4,25 +4,17 @@ The original tokenizer.json owns normalization, vocabulary and special tokens.
 No model loading, download, text segmentation, padding or truncation occurs here.
 """
 
-from pathlib import Path
-import hashlib
-import json
-
 import numpy as np
 from tokenizers import Tokenizer
 
 
 class ChineseBertTokenizer:
     def __init__(self, tokenizer_json):
-        self.source_path = Path(tokenizer_json).resolve()
-        source = self.source_path.read_bytes()
-        self.source_sha256 = hashlib.sha256(source).hexdigest()
-        specification = json.loads(source)
-        self._tokenizer = Tokenizer.from_str(source.decode("utf-8"))
+        self._tokenizer = Tokenizer.from_file(str(tokenizer_json))
         # Match AutoTokenizer's single-text defaults, including for long inputs.
         self._tokenizer.no_padding()
         self._tokenizer.no_truncation()
-        self._unknown_id = self._tokenizer.token_to_id(specification["model"]["unk_token"])
+        self._unknown_id = self._tokenizer.token_to_id(self._tokenizer.model.unk_token)
         if self._unknown_id is None:
             raise ValueError("The source tokenizer must define its unknown token")
 

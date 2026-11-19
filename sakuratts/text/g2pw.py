@@ -43,9 +43,7 @@ class G2PW:
         texts, model_positions, result_positions, sentence_ids, partials = self.text.prepare(sentences)
         if not texts:
             return partials
-        model_input = self.inputs.prepare(texts, model_positions, window_size=None)
-        if not model_input:
-            return partials
+        model_input = self.inputs.prepare(texts, model_positions)
         predictions, _confidences = self.session.predict(model_input, texts)
         for sentence_id, position, prediction in zip(sentence_ids, result_positions, predictions):
             partials[sentence_id][position] = self.text.convert_bopomofo(prediction)

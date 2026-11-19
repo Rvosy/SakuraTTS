@@ -127,16 +127,17 @@ class ReferenceCache:
         # This cache belongs to one engine and its loaded frontend.
         text_key = (prompt, language)
         if self.text_cache is None or self.text_cache[0] != text_key:
-            self.text_cache = (text_key, self.engine._runtime.frontend.segment(prompt, language))
-        target = self.text_cache[1]
-        phones = np.asarray(target["phones"], dtype=np.int64)
-        bert = np.asarray(target["bert_features"], dtype=np.float32)
-        phones.setflags(write=False)
-        bert.setflags(write=False)
+            target = self.engine._runtime.frontend.segment(prompt, language)
+            phones = np.asarray(target["phones"], dtype=np.int64)
+            bert = np.asarray(target["bert_features"], dtype=np.float32)
+            phones.setflags(write=False)
+            bert.setflags(write=False)
+            self.text_cache = (text_key, target["norm_text"], phones, bert)
+        _, normalized, phones, bert = self.text_cache
         # Acoustic/semantic audio features are independent of the transcript.
         # Keep each request's transcript identity separate from cached features.
         manifest = dict(base.manifest, identity=dict(base.manifest["identity"],
             reference_text=text, reference_language=language),
-            reference={"prompt_text": prompt, "normalized_text": target["norm_text"]})
+            reference={"prompt_text": prompt, "normalized_text": normalized})
         manifest.pop("arrays", None)
         return replace(base, manifest=manifest, reference_phones=phones, reference_bert=bert)

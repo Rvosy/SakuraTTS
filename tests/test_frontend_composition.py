@@ -41,6 +41,18 @@ class FrontendCompositionTests(unittest.TestCase):
                     load_frontend(config_path, config, path.parent, manifest)
                 worker.assert_not_called()
 
+    def test_worker_close_error_still_releases_the_language_detector(self):
+        with tempfile.TemporaryDirectory() as folder:
+            config_path, path, manifest = fixture(Path(folder).resolve())
+            config = json.loads(config_path.read_text())
+            with patch("sakuratts.text.classic_japanese.ClassicJapaneseG2P") as worker, \
+                    patch("sakuratts.text.LangSegmenter.LanguageSegmenter") as segmenter:
+                frontend = load_frontend(config_path, config, path.parent, manifest)
+                worker.return_value.close.side_effect = RuntimeError("worker close failed")
+                with self.assertRaisesRegex(RuntimeError, "worker close failed"):
+                    frontend.close()
+                segmenter.return_value.close.assert_called_once()
+
     def test_japanese_modes_preserve_phone_ids_and_zero_features(self):
         g2p = SimpleNamespace(normalize=lambda text: text, g2p=lambda text: ["a", "missing", "a"] * 2)
         segmenter = Mock(return_value=[{"lang": "ja", "text": "今日は晴れです。"}])
@@ -59,6 +71,17 @@ class FrontendCompositionTests(unittest.TestCase):
         result = frontend.segment("今日は晴れです。", "all_ja")
         np.testing.assert_array_equal(result["bert_features"][:, :6], np.full((1024, 6), 3, dtype=np.float32))
         np.testing.assert_array_equal(result["bert_features"][:, 6:], np.full((1024, 6), 5, dtype=np.float32))
+
+    def test_short_prompt_runs_bert_only_for_the_punctuated_text(self):
+        processor = SimpleNamespace(
+            clean=lambda text: (["a"] * len(text), None, text),
+            features=Mock(side_effect=lambda phones, *_: np.ones((1024, len(phones)), dtype=np.float32)),
+        )
+        frontend = TextFrontend({"zh": processor}, ["a"], lambda text: [{"lang": "zh", "text": text}])
+        result = frontend.segment("森林", "zh")
+        self.assertEqual(result["norm_text"], ".森林")
+        self.assertEqual(result["bert_features"].shape, (1024, 3))
+        processor.features.assert_called_once_with([0] * 3, None, ".森林")
 
     def test_english_segment_is_rejected_without_silent_japanese_fallback(self):
         processor = Mock()
