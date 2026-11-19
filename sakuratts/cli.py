@@ -123,11 +123,13 @@ def main(argv=None):
     if args.command == "capabilities":
         from .backends import available_backends
         from .profiles import available_profiles
-        from .runtime.portable import bundle_root
+        from .runtime.portable import read_bundle
         from .text.profiles import LANGUAGE_PROFILES
-        root = bundle_root()
-        languages = list(LANGUAGE_PROFILES) if root is None else json.loads(
-            (root / "runtime/portable.json").read_text(encoding="utf-8"))["release"]["languages"]
+        root, marker = read_bundle()
+        # The first portable release shipped Japanese and had no release metadata.
+        languages = list(LANGUAGE_PROFILES)
+        if root is not None:
+            languages = marker["release"]["languages"] if "release" in marker else ["ja"]
         modes = [mode for language in languages for mode in LANGUAGE_PROFILES[language].modes]
         print(json.dumps({"backends": available_backends(), "languages": languages,
             "profiles": available_profiles(),

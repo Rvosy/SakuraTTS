@@ -22,7 +22,7 @@ Model 描述内容与建议配置，读取时检查必要字段、资源路径�
 
 ## 当前范围与后续成本
 
-`capabilities` 返回源码实现的后端和语言，实际可用性取决于设备、运行环境和当前模型的资源清单。HTTP 默认使用 direct 模式，所有后端遵循相同的请求互斥、取消和 managed 睡醒契约。[模型与功能验证矩阵](../specs/compatibility-matrix.md)
+`capabilities` 列出已实现的后端。源码安装列出所有已实现的语言，整合包列出随包提供的语言。实际可用性取决于设备、运行环境和当前模型的资源清单。HTTP 默认使用 direct 模式，所有后端遵循相同的请求互斥、取消和 managed 睡醒契约。[模型与功能验证矩阵](../specs/compatibility-matrix.md)
 
 新增设备需要交付 GPT 与声学运行实现、模型转换适配、资源准备和目标系统的工作进程，再验证公开入口。新增语言需要在目标文本和参考转写两侧验证发音与特征，在混读时检查各段的音素对齐。最初的设备与前端职责核查见[源码核查记录](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/architecture-audit-20260922.md)，后续工作见[路线图](../roadmap.md)。
 

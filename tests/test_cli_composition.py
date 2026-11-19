@@ -78,5 +78,20 @@ assert not set(('numpy', 'torch', 'cupy', 'mlx', 'onnxruntime', 'pyopenjtalk',
         self.assertEqual(capabilities["languages"], ["ja", "en", "zh"])
         self.assertEqual(capabilities["language_modes"], ["ja", "all_ja", "en", "zh", "all_zh", "auto"])
 
+    def test_capabilities_reports_languages_shipped_in_each_bundle(self):
+        with tempfile.TemporaryDirectory() as temporary, patch.dict("os.environ", SAKURATTS_BUNDLE_ROOT=temporary):
+            runtime = Path(temporary) / "runtime"
+            runtime.mkdir()
+            for languages in (None, ["ja", "en"], ["zh", "ja", "en"]):
+                marker = {"format": "sakuratts-portable-v1"}
+                if languages is not None:
+                    marker["release"] = {"languages": languages}
+                (runtime / "portable.json").write_text(json.dumps(marker), encoding="utf-8")
+                with self.subTest(languages=languages), contextlib.redirect_stdout(io.StringIO()) as output:
+                    self.assertEqual(main(["capabilities"]), 0)
+                    capabilities = json.loads(output.getvalue())
+                    self.assertEqual(capabilities["languages"], languages or ["ja"])
+                    self.assertEqual("all_zh" in capabilities["language_modes"], "zh" in (languages or []))
+
 if __name__ == "__main__":
     unittest.main()

@@ -6,6 +6,7 @@ from email.parser import Parser
 import hashlib
 import importlib.util
 import json
+import os
 import re
 from pathlib import Path, PurePosixPath
 from runpy import run_path
@@ -210,20 +211,20 @@ class Plan:
         name, version = metadata["Name"], metadata["Version"]
         component = target + ":" + name
         self.components[component] = {"name": name, "version": version, "source": "local-installed-RECORD"}
+        site = site.resolve()
         with (directory / "RECORD").open(encoding="utf-8", newline="") as stream:
-            for relative, _, _ in csv.reader(stream):
-                if not relative or "\\" in relative or PurePosixPath(relative).is_absolute() or ":" in relative:
-                    raise ValueError("Unsafe RECORD entry: " + relative)
-                parts = PurePosixPath(relative).parts
-                if ".." in parts:
+            for entry, _, _ in csv.reader(stream):
+                path = Path(os.path.normpath(site / entry))
+                if not path.is_relative_to(site):
                     continue  # Environment Scripts/include are not library payloads.
-                if (relative.endswith((".pyc", ".pyo", ".pth")) or "__pycache__" in parts
-                        or parts[-1] in ("direct_url.json", "uv_cache.json", "uv_build.json")):
+                local = path.relative_to(site)
+                relative = local.as_posix()
+                if (relative.endswith((".pyc", ".pyo", ".pth")) or "__pycache__" in local.parts
+                        or local.name in ("direct_url.json", "uv_cache.json", "uv_build.json")):
                     continue
                 if include is not None and not include(relative):
                     continue
-                path = site.joinpath(*parts)
-                if site.resolve() not in path.resolve(strict=True).parents:
+                if site not in path.resolve(strict=True).parents:
                     raise ValueError("RECORD input escaped site-packages: " + relative)
                 self.add(path, target + "/" + relative, component)
 

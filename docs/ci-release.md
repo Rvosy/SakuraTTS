@@ -27,8 +27,8 @@ Windows 中文资源使用[本地导出工具](chinese-frontend.md)。发布输�
 不同发布串行执行，同一发布内的平台构建和平台上传分别并行执行。发布编号使用 GitHub run ID 与 attempt，重跑不会覆盖上一轮候选文件。
 
 - 两平台使用包内解释器比对离线英文前端与上游样例。
-- Windows 在 CPU 上检查矩阵运算、原始模型转换、合成、空闲卸载和进程退出。托管任务先从 Actions 缓存取出指定版本的测试权重，未命中时取一次，供同轮的 Windows 语言包共用。验收脚本通过 `--gpt` 和 `--sovits` 读取本地文件，解压包的真人参考验收见 [Windows 整合包](portable-bundle.md#验证范围)。
-- macOS 在托管 runner 检查包内导入、MLX CPU 运算及 managed HTTP 未加载模型启动。Metal 合成仍需具备相应硬件加速的 Mac 验收。
+- Windows 在 CPU 上检查矩阵运算、原始模型转换、合成、空闲卸载和进程退出。两个 Windows 语言包共用按上游版本保存的 Actions 缓存。缓存未命中时，各 runner 将验收权重下载到本机，通过 `--gpt` 和 `--sovits` 交给验收脚本。解压包的真人参考验收见 [Windows 整合包](portable-bundle.md#验证范围)。
+- macOS 使用 macOS 15 Apple silicon runner 检查包内导入、MLX CPU 运算及 managed HTTP 未加载模型启动。FFmpeg 的最低部署版本为 macOS 14。Metal 合成仍需具备相应硬件加速的 Mac 验收。
 - CUDA、DirectML 合成、峰值显存和人工听音需要独立真机证据，不以构建成功代替。
 
 运行报告和压缩报告通过 Actions artifact 保存。整合包通过不做二次压缩的临时 artifact 交给 Ubuntu 上传任务，保留期由工作流的 `retention-days` 定义。压缩和上传进度写入 Actions 日志。原始错误与首次失败原因必须调查清楚后修复，不设置自动重跑。

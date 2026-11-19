@@ -28,57 +28,81 @@ class Api:
 
 
 class ReleaseTests(unittest.TestCase):
-    def test_rebuild_updates_i18n_resources_and_both_inventories(self):
+    def test_rebuild_replaces_preparation_resources_and_syncs_inventories(self):
         from test_preparation_builder import I18N_SOURCE, put
         with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
+            root = Path(temp).resolve()
             prep = root / 'runtime/preparation'
-            path = put(prep, 'official/tools/i18n/i18n.py', I18N_SOURCE)
-            put(prep, 'official/tools/i18n/locale/en_US.json', '{"hello":"Hello"}')
-            files, inventory = {}, {}
-            rebuild_portable.record(prep, path, files, 'official')
-            manifest = put(prep, 'preparation-manifest.json', json.dumps({'files': files}))
-            for _ in range(2):
-                rebuild_portable.update_preparation_i18n(root, inventory)
-                updated = json.loads(manifest.read_text())
-                self.assertEqual(updated['bytes'], sum(row['bytes'] for row in updated['files'].values()))
-                for base, rows in ((prep, updated['files']), (root, inventory)):
-                    for name, row in rows.items():
-                        self.assertEqual(row['sha256'], rebuild_portable.builder.digest(base / name))
-                        self.assertEqual(row['bytes'], (base / name).stat().st_size)
-                spec = importlib.util.spec_from_file_location('rebuilt_i18n', path)
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-                self.assertEqual(module.load_language_list('en_US'), {'hello': 'Hello'})
+            controller = 'Lib/site-packages:threadpoolctl'
+            licenses = {'components': {controller: {}, 'public-analysis-resource': {}}}
+            base = {'licenses.json': (json.dumps(licenses), 'generated'),
+                    'official/tools/i18n/i18n.py': (I18N_SOURCE, 'official'),
+                    'official/tools/i18n/locale/en_US.json': ('{"hello":"Hello"}', 'official'),
+                    'official/chinese/bert.bin': ('obsolete weights', 'chinese-frontend-resources'),
+                    'Lib/site-packages/threadpoolctl.py': ('old', controller),
+                    'Lib/site-packages/threadpoolctl-3.1.0.dist-info/METADATA': ('old', controller),
+                    'Lib/site-packages/numpy.py': ('preserved', 'numpy')}
+            files = {}
+            bundle = {'files': {}, 'components': {}}
+            for name, (data, owner) in base.items():
+                path = put(prep, name, data)
+                rebuild_portable.record(prep, path, files, owner)
+                rebuild_portable.record(root, path, bundle['files'], 'preparation:' + owner)
+            # A previous attempt already removed the old wheel metadata.
+            (prep / 'Lib/site-packages/threadpoolctl-3.1.0.dist-info/METADATA').unlink()
+            manifest = put(prep, 'preparation-manifest.json', json.dumps({'files': files,
+                           'components': {controller: {'name': 'threadpoolctl'}}}))
+            english, chinese = root / 'english', root / 'chinese'
+            for name in ('checkpoint.npz', 'english.md', 'CMUdict-README.txt', 'GPT-SoVITS-LICENSE.txt', 'Apache-2.0.txt'):
+                put(english, name)
+            put(english, 'source.json', '{"sources": {"upstream": "sha256"}}')
+            names = ['g2pw.onnx', 'bert.onnx', 'tokenizer.json', 'MONOPHONIC_CHARS.txt', 'POLYPHONIC_CHARS.txt',
+                     'bopomofo_to_pinyin_wo_tune_dict.json', 'traditional_to_simplified.json', 'corrections.json',
+                     'pinyin-symbols.json', 'symbols-v2.json', 'notices/model.txt']
+            for name in names:
+                put(chinese, name)
+            put(chinese, 'manifest.json', json.dumps({'format': 'sakuratts-chinese-v2-resources-v1',
+                                                       'files': dict.fromkeys(names, {})}))
+            wheel = root / 'threadpoolctl.whl'
+            with zipfile.ZipFile(wheel, 'w') as archive:
+                archive.writestr('threadpoolctl.py', 'new')
+                archive.writestr('threadpoolctl-3.6.0.dist-info/METADATA', 'Name: threadpoolctl\nVersion: 3.6.0\n')
+                archive.writestr('threadpoolctl-3.6.0.dist-info/LICENSE', 'license')
+            args = SimpleNamespace(threadpoolctl_wheel=wheel, english_resources=english, chinese_resources=chinese)
+            auxiliary = put(root, 'auxiliary-model-sources.json', '{}')
+            with self.assertRaisesRegex(ValueError, 'SHA256'):
+                rebuild_portable.update_preparation(root, bundle, args, auxiliary)
+            digest = rebuild_portable.builder.digest
+            def fixture_digest(path):
+                return ('43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb'
+                        if path == wheel else digest(path))
+            with patch.object(rebuild_portable.builder, 'digest', side_effect=fixture_digest):
+                rebuild_portable.update_preparation(root, bundle, args, auxiliary)
 
-    def test_english_resources_update_both_inventories_and_licenses(self):
-        with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
-            prep = root / 'runtime/preparation'
-            prep.mkdir(parents=True)
-            licenses = prep / 'licenses.json'
-            licenses.write_text('{"components": {}}')
-            files, inventory, components = {}, {}, {}
-            rebuild_portable.record(prep, licenses, files, 'generated')
-            manifest = prep / 'preparation-manifest.json'
-            manifest.write_text(json.dumps({'files': files, 'components': {}}))
-            source = root / 'english'
-            source.mkdir()
-            for name in ('g2p.json', 'checkpoint.npz', 'probes.json', 'english.md',
-                         'CMUdict-README.txt', 'GPT-SoVITS-LICENSE.txt', 'Apache-2.0.txt'):
-                (source / name).write_bytes(b'fixture')
-            (source / 'source.json').write_text('{"sources": {"upstream": "sha256"}}')
-            rebuild_portable.install_language_resources(root, source, inventory, components, 'english')
             updated = json.loads(manifest.read_text())
-            self.assertEqual((prep / 'official/english/checkpoint.npz').read_bytes(), b'fixture')
-            self.assertEqual(components['preparation:english-frontend-resources']['sources'],
-                             {'upstream': 'sha256'})
             self.assertEqual(updated['bytes'], sum(row['bytes'] for row in updated['files'].values()))
-            for base, rows in ((prep, updated['files']), (root, inventory)):
+            self.assertEqual(set(bundle['files']), {'runtime/preparation/' + name for name in
+                             [*updated['files'], 'preparation-manifest.json']})
+            for directory, rows in ((prep, updated['files']), (root, bundle['files'])):
                 for name, row in rows.items():
-                    self.assertEqual(row['sha256'], rebuild_portable.builder.digest(base / name))
-            for name in json.loads(licenses.read_text())['components']['english-frontend-resources']['notices']:
-                self.assertTrue((prep / name).is_file())
+                    self.assertEqual(row['sha256'], digest(directory / name))
+                    self.assertEqual(row['bytes'], (directory / name).stat().st_size)
+            self.assertFalse((prep / 'official/chinese/bert.bin').exists())
+            self.assertEqual((prep / 'official/chinese/bert.onnx').read_text(), 'fixture')
+            self.assertEqual((prep / 'official/english/checkpoint.npz').read_text(), 'fixture')
+            self.assertEqual(bundle['components']['preparation:english-frontend-resources']['sources'],
+                             {'upstream': 'sha256'})
+            self.assertEqual((prep / 'Lib/site-packages/numpy.py').read_text(), 'preserved')
+            self.assertEqual((prep / 'Lib/site-packages/threadpoolctl.py').read_text(), 'new')
+            self.assertEqual(bundle['components']['preparation:' + controller]['version'], '3.6.0')
+            licenses = json.loads((prep / 'licenses.json').read_text())['components']
+            for owner in ('english-frontend-resources', 'chinese-frontend-resources', controller):
+                for name in licenses[owner]['notices']:
+                    self.assertTrue((prep / name).is_file())
+            spec = importlib.util.spec_from_file_location('rebuilt_i18n', prep / 'official/tools/i18n/i18n.py')
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            self.assertEqual(module.load_language_list('en_US'), {'hello': 'Hello'})
 
     def test_missing_dependencies_are_added_without_overwriting_base_packages(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -129,57 +153,6 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual((site / 'reader.py').read_text(), 'installed')
             self.assertEqual(set(manifest['files']), {'runtime/main/site/' + name for name in files})
             self.assertEqual(manifest['components']['runtime/main/site:reader']['version'], '1')
-
-    def test_preparation_controller_upgrade_updates_both_inventories_and_notices(self):
-        with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
-            prep = root / 'runtime/preparation'
-            component = 'Lib/site-packages:threadpoolctl'
-            files, inventory = {}, {}
-            for name in ('Lib/site-packages/threadpoolctl.py',
-                         'Lib/site-packages/threadpoolctl-3.1.0.dist-info/METADATA',
-                         'Lib/site-packages/threadpoolctl-3.1.0.dist-info/LICENSE'):
-                path = prep / name
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text('old')
-                rebuild_portable.record(prep, path, files, component)
-                rebuild_portable.record(root, path, inventory, 'preparation:' + component)
-            untouched = prep / 'Lib/site-packages/numpy.py'
-            untouched.write_text('preserved')
-            rebuild_portable.record(prep, untouched, files, 'numpy')
-            rebuild_portable.record(root, untouched, inventory, 'preparation:numpy')
-            licenses = prep / 'licenses.json'
-            licenses.write_text(json.dumps({'components': {component: {'version': '3.1.0'}}}))
-            rebuild_portable.record(prep, licenses, files, 'generated')
-            manifest = prep / 'preparation-manifest.json'
-            manifest.write_text(json.dumps({'files': files, 'components': {component: {'name': 'threadpoolctl'}}}))
-            wheel = root / 'threadpoolctl.whl'
-            with zipfile.ZipFile(wheel, 'w') as archive:
-                archive.writestr('threadpoolctl.py', 'new')
-                archive.writestr('threadpoolctl-3.6.0.dist-info/METADATA', 'Name: threadpoolctl\nVersion: 3.6.0\n')
-                archive.writestr('threadpoolctl-3.6.0.dist-info/LICENSE', 'license')
-            with self.assertRaisesRegex(ValueError, 'SHA256'):
-                rebuild_portable.upgrade_preparation_threadpoolctl(root, wheel, inventory, {})
-            digest = rebuild_portable.builder.digest
-            def fixture_digest(path):
-                return ('43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb'
-                        if path == wheel else digest(path))
-            components = {}
-            with patch.object(rebuild_portable.builder, 'digest', side_effect=fixture_digest):
-                rebuild_portable.upgrade_preparation_threadpoolctl(root, wheel, inventory, components)
-            updated = json.loads(manifest.read_text())
-            self.assertEqual(components['preparation:' + component]['version'], '3.6.0')
-            self.assertEqual(untouched.read_text(), 'preserved')
-            self.assertEqual((prep / 'Lib/site-packages/threadpoolctl.py').read_text(), 'new')
-            self.assertFalse((prep / 'Lib/site-packages/threadpoolctl-3.1.0.dist-info/METADATA').exists())
-            self.assertFalse(any('3.1.0' in name for name in inventory))
-            self.assertEqual(updated['bytes'], sum(row['bytes'] for row in updated['files'].values()))
-            for base, rows in ((prep, updated['files']), (root, inventory)):
-                for name, row in rows.items():
-                    self.assertEqual(row['sha256'], digest(base / name))
-                    self.assertEqual(row['bytes'], (base / name).stat().st_size)
-            for name in json.loads(licenses.read_text())['components'][component]['notices']:
-                self.assertTrue((prep / name).is_file())
 
     def test_published_names_include_date_and_daily_sequence(self):
         with tempfile.TemporaryDirectory() as temp:

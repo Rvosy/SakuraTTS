@@ -32,14 +32,20 @@ def install_language_dependencies(bundle, site, source, project, recipe, release
         target = bundle / name
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(row['source'], target)
-        record(bundle, target, manifest['files'], row['component'])
+        manifest['files'][name] = {key: row[key] for key in ('bytes', 'sha256', 'component')}
     manifest['components'].update(plan.components)
 
 
-def install_language_resources(bundle, source, inventory, components, language):
-    prep = bundle / 'runtime/preparation'
-    manifest_path = prep / 'preparation-manifest.json'
-    manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+def remove_obsolete(prep, files, component, keep):
+    for name in [name for name, row in files.items() if row['component'] == component and name not in keep]:
+        target = (prep / name).resolve()
+        if prep not in target.parents:
+            raise ValueError('Preparation inventory input escaped its root: ' + name)
+        target.unlink(missing_ok=True)
+        del files[name]
+
+
+def install_language_resources(prep, manifest, licenses, source, language):
     component = language + '-frontend-resources'
     if language == 'english':
         provenance = json.loads((source / 'source.json').read_text(encoding='utf-8'))
@@ -49,77 +55,69 @@ def install_language_resources(bundle, source, inventory, components, language):
         provenance, resources = builder.chinese_resources(source)
         notices = sorted(name for name in provenance['files'] if name.startswith('notices/'))
     manifest['components'][component] = provenance
-    components['preparation:' + component] = provenance
-    for path in resources:
-        target = prep / 'official' / language / path.relative_to(source)
+    prefix = 'official/' + language + '/'
+    sources = {prefix + path.relative_to(source).as_posix(): path for path in resources}
+    remove_obsolete(prep, manifest['files'], component, sources)
+    for name, path in sources.items():
+        target = prep / name
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, target)
         record(prep, target, manifest['files'], component)
-        record(bundle, target, inventory, 'preparation:' + component)
-    licenses_path = prep / 'licenses.json'
-    licenses = json.loads(licenses_path.read_text(encoding='utf-8'))
-    licenses['components'][component] = {'notices': [f'official/{language}/{name}' for name in notices]}
-    licenses_path.write_text(json.dumps(licenses, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    record(prep, licenses_path, manifest['files'], manifest['files']['licenses.json']['component'])
-    manifest['bytes'] = sum(row['bytes'] for row in manifest['files'].values())
-    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    for path in (licenses_path, manifest_path):
-        record(bundle, path, inventory, 'preparation-inventory')
+    licenses['components'][component] = {'notices': [prefix + name for name in notices]}
 
 
-def upgrade_preparation_threadpoolctl(bundle, wheel, inventory, components):
-    """Replace the base bundle's pure Python controller, including its inventories."""
-    if builder.digest(wheel) != '43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb':
+def upgrade_preparation_threadpoolctl(prep, manifest, licenses, wheel):
+    checksum = builder.digest(wheel)
+    if checksum != '43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb':
         raise ValueError('Expected the pinned threadpoolctl 3.6.0 wheel (SHA256 mismatch)')
-    prep = bundle / 'runtime/preparation'
+    old = next(name for name, row in manifest['components'].items() if row.get('name') == 'threadpoolctl')
+    site = old.rsplit(':', 1)[0]
+    with zipfile.ZipFile(wheel) as archive:
+        entries = {site + '/' + item.filename: item for item in archive.infolist() if not item.is_dir()}
+        remove_obsolete(prep, manifest['files'], old, entries)
+        for name, item in entries.items():
+            target = prep / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(archive.read(item))
+            record(prep, target, manifest['files'], old)
+    component = {'name': 'threadpoolctl', 'version': '3.6.0', 'source': 'wheel', 'wheel_sha256': checksum}
+    manifest['components'][old] = component
+    licenses['components'][old] = {**component, 'notices': [site + '/threadpoolctl-3.6.0.dist-info/' + name
+                                                          for name in ('LICENSE', 'METADATA')]}
+
+
+def update_preparation(bundle, bundle_manifest, args, auxiliary_source):
+    prefix = 'runtime/preparation/'
+    prep = bundle / prefix
     manifest_path = prep / 'preparation-manifest.json'
     manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
     license_path = prep / 'licenses.json'
     licenses = json.loads(license_path.read_text(encoding='utf-8'))
-    with zipfile.ZipFile(wheel) as archive:
-        payload = {item.filename: archive.read(item) for item in archive.infolist() if not item.is_dir()}
-    old = next(name for name, row in manifest['components'].items() if row.get('name') == 'threadpoolctl')
-    site = old.rsplit(':', 1)[0]
-    # The old RECORD owns both the module and its versioned metadata.
-    for name in list(manifest['files']):
-        if manifest['files'][name]['component'] == old:
-            target = (prep / name).resolve()
-            if prep.resolve() not in target.parents:
-                raise ValueError('Preparation inventory input escaped its root: ' + name)
-            target.unlink()
-            del manifest['files'][name]
-            inventory.pop('runtime/preparation/' + name, None)
-    component = {'name': 'threadpoolctl', 'version': '3.6.0', 'source': 'wheel',
-                 'wheel_sha256': builder.digest(wheel)}
-    manifest['components'][old] = component
-    components['preparation:' + old] = component
-    for name, data in payload.items():
-        target = prep / site / name
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(data)
-        record(prep, target, manifest['files'], old)
-        record(bundle, target, inventory, 'preparation:' + old)
-    licenses['components'][old] = {**component, 'notices': [site + '/threadpoolctl-3.6.0.dist-info/' + name
-                                                          for name in ('LICENSE', 'METADATA')]}
-    license_path.write_text(json.dumps(licenses, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    record(prep, license_path, manifest['files'], manifest['files']['licenses.json']['component'])
-    manifest['bytes'] = sum(row['bytes'] for row in manifest['files'].values())
-    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    for target in (license_path, manifest_path):
-        record(bundle, target, inventory, 'preparation-inventory')
+    upgrade_preparation_threadpoolctl(prep, manifest, licenses, args.threadpoolctl_wheel)
+    install_language_resources(prep, manifest, licenses, args.english_resources, 'english')
+    if args.chinese_resources:
+        install_language_resources(prep, manifest, licenses, args.chinese_resources, 'chinese')
 
-
-def update_preparation_i18n(bundle, inventory):
-    prep = bundle / 'runtime/preparation'
+    files = manifest['files']
     path = patch_i18n(prep)
-    manifest_path = prep / 'preparation-manifest.json'
-    manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
-    component = manifest['files'][path.relative_to(prep).as_posix()]['component']
-    record(prep, path, manifest['files'], component)
-    record(bundle, path, inventory, 'preparation:' + component)
-    manifest['bytes'] = sum(row['bytes'] for row in manifest['files'].values())
-    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    record(prep, path, files, files[path.relative_to(prep).as_posix()]['component'])
+    auxiliary = prep / 'auxiliary-model-sources.json'
+    shutil.copy2(auxiliary_source, auxiliary)
+    record(prep, auxiliary, files, 'generated')
+    licenses['components']['public-analysis-resource']['license_status'] = 'GPT-SoVITS distribution declaration and original model cards are included; see licenses/sakuratts/portable-resources.md at the bundle root.'
+    builder.write(license_path, json.dumps(licenses, ensure_ascii=False, indent=2) + '\n')
+    record(prep, license_path, files, files['licenses.json']['component'])
+    manifest['bytes'] = sum(row['bytes'] for row in files.values())
+    builder.write(manifest_path, json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
+
+    inventory = bundle_manifest['files']
+    for name in [name for name in inventory if name.startswith(prefix)]:
+        del inventory[name]
+    for name, row in files.items():
+        inventory[prefix + name] = {**row, 'component': 'preparation:' + row['component']}
     record(bundle, manifest_path, inventory, 'preparation-inventory')
+    for name, component in manifest['components'].items():
+        bundle_manifest['components']['preparation:' + name] = component
 
 
 def install_product(bundle, site, wheel, inventory):
@@ -180,11 +178,7 @@ def main():
     site = bundle / ('runtime/main/lib/python3.11/site-packages' if apple else 'runtime/main/Lib/site-packages')
     install_language_dependencies(bundle, site, args.language_dependencies, project, recipe, release, manifest)
     inventory = manifest['files']
-    install_language_resources(bundle, args.english_resources, inventory, manifest['components'], 'english')
-    if args.chinese_resources:
-        install_language_resources(bundle, args.chinese_resources, inventory, manifest['components'], 'chinese')
-    upgrade_preparation_threadpoolctl(bundle, args.threadpoolctl_wheel, inventory, manifest['components'])
-    update_preparation_i18n(bundle, inventory)
+    update_preparation(bundle, manifest, args, root / 'packaging/auxiliary-model-sources.json')
     install_product(bundle, site, args.wheel, inventory)
     for name in builder.launch_files(recipe):
         target = bundle / ('README.md' if name == 'README-macos.md' else name)
@@ -216,23 +210,6 @@ def main():
             target.parent.mkdir(exist_ok=True)
             shutil.copy2(source, target)
             record(bundle, target, inventory, 'third-party-notices')
-    prep = bundle / 'runtime/preparation'
-    license_file = prep / 'licenses.json'
-    licenses = json.loads(license_file.read_text(encoding='utf-8'))
-    analysis = licenses['components']['public-analysis-resource']
-    analysis['license_status'] = 'GPT-SoVITS distribution declaration and original model cards are included; see licenses/sakuratts/portable-resources.md at the bundle root.'
-    license_file.write_text(json.dumps(licenses, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    prep_manifest_file = prep / 'preparation-manifest.json'
-    prep_manifest = json.loads(prep_manifest_file.read_text(encoding='utf-8'))
-    auxiliary = prep / 'auxiliary-model-sources.json'
-    shutil.copy2(root / 'packaging/auxiliary-model-sources.json', auxiliary)
-    record(bundle, auxiliary, inventory, 'preparation-inventory')
-    for path in (license_file, auxiliary):
-        prep_manifest['files'][path.name].update(bytes=path.stat().st_size, sha256=builder.digest(path))
-    prep_manifest['bytes'] = sum(row['bytes'] for row in prep_manifest['files'].values())
-    prep_manifest_file.write_text(json.dumps(prep_manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    for path in (license_file, prep_manifest_file):
-        record(bundle, path, inventory, 'preparation-inventory')
     release.update(version=project['version'], source_commit=commit, source_dirty=dirty, languages=recipe['languages'])
     marker = bundle / 'runtime/portable.json'
     value = json.loads(marker.read_text(encoding='utf-8'))

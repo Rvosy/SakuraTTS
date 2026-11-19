@@ -271,19 +271,25 @@ class PortableBuilderTests(unittest.TestCase):
 
     def test_record_copies_library_payload_with_local_patches(self):
         with tempfile.TemporaryDirectory() as temporary:
-            site = Path(temporary)
+            site = Path(temporary) / "site"
             info = site / "example-1.dist-info"
-            info.mkdir()
+            info.mkdir(parents=True)
             (site / "example.py").write_bytes(b"example")
+            native = Path("module") / "native.py"
+            (site / native).parent.mkdir()
+            (site / native).write_text("native")
+            outside = site.parent / "outside.py"
+            outside.write_text("excluded")
             checksum = base64.urlsafe_b64encode(hashlib.sha256(b"example").digest()).decode().rstrip("=")
-            rows = [("example.py", "sha256=" + checksum, "7"), ("../../Scripts/example.exe", "", ""),
+            rows = [(str(site / "example.py"), "sha256=" + checksum, "7"), (str(native), "", ""),
+                    (str(outside), "", ""), ("../../Scripts/example.exe", "", ""),
                     ("editable.pth", "", ""), ("example-1.dist-info/direct_url.json", "", "")]
             with (info / "RECORD").open("w", newline="") as stream:
                 csv.writer(stream).writerows(rows)
             metadata = Parser().parsestr("Name: example\nVersion: 1\n")
             plan = builder.Plan()
             plan.package(site, info, metadata, "runtime/site")
-            self.assertEqual(list(plan.files), ["runtime/site/example.py"])
+            self.assertEqual(set(plan.files), {"runtime/site/example.py", "runtime/site/module/native.py"})
             (site / "example.py").write_bytes(b"changed")
             builder.Plan().package(site, info, metadata, "runtime/site")
 

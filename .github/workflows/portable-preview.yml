@@ -16,32 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  test-weights:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: 复用固定版本验收权重
-        id: weights
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: test-weights
-          key: gpt-sovits-v2proplus-336b2ec4e8d4ac74740798dd40af44e74659ecaf
-      - name: 准备公共验收权重
-        if: steps.weights.outputs.cache-hit != 'true'
-        env:
-          BASE: https://huggingface.co/lj1995/GPT-SoVITS/resolve/336b2ec4e8d4ac74740798dd40af44e74659ecaf
-        run: |
-          mkdir -p test-weights
-          curl --fail --location "$BASE/s1v3.ckpt" --output test-weights/gpt.ckpt
-          curl --fail --location "$BASE/v2Pro/s2Gv2ProPlus.pth" --output test-weights/sovits.pth
-      - name: 供 Windows 各语言包复用
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: test-weights
-          path: test-weights/
-          compression-level: 0
-          retention-days: 1
   build:
-    needs: test-weights
     # GitHub 仅向具备推送权限的调用者返回 Release 草稿。
     permissions:
       contents: write
@@ -49,11 +24,12 @@ jobs:
       fail-fast: false
       matrix:
         target: ${{ fromJSON(inputs.chinese_resources_asset && '["windows-x64","macos-arm64","windows-x64-zh"]' || '["windows-x64","macos-arm64"]') }}
-    runs-on: ${{ startsWith(matrix.target, 'windows-x64') && 'windows-2022' || 'macos-14' }}
+    runs-on: ${{ startsWith(matrix.target, 'windows-x64') && 'windows-2022' || 'macos-15' }}
     timeout-minutes: 90
     env:
       PYTHONUTF8: '1'
       PYTHONDONTWRITEBYTECODE: '1'
+      WEIGHTS_REVISION: 336b2ec4e8d4ac74740798dd40af44e74659ecaf
     steps:
       - name: 设置构建目录
         shell: bash
@@ -92,7 +68,7 @@ jobs:
         id: ffmpeg-cache
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
-          key: ffmpeg-7.1.2-${{ runner.os == 'Windows' && 'windows-2022' || 'macos-14' }}-${{ runner.arch }}-${{ hashFiles('scripts/build_ffmpeg.sh') }}
+          key: ffmpeg-7.1.2-${{ runner.os == 'Windows' && 'windows-2022' || 'macos-15' }}-${{ runner.arch }}-${{ hashFiles('scripts/build_ffmpeg.sh') }}
           path: |
             ${{ env.WORK }}/ffmpeg/ffmpeg
             ${{ env.WORK }}/ffmpeg/ffmpeg.exe
@@ -113,6 +89,8 @@ jobs:
         run: brew install pkg-config
       - name: 构建 macOS 音频工具
         if: runner.os == 'macOS' && steps.ffmpeg-cache.outputs.cache-hit != 'true'
+        env:
+          MACOSX_DEPLOYMENT_TARGET: '14.0'
         shell: bash
         run: bash scripts/build_ffmpeg.sh "$WORK/ffmpeg-7.1.2.tar.xz" "$WORK/ffmpeg"
       - name: 保存音频工具缓存
@@ -149,12 +127,21 @@ jobs:
             --language-dependencies "$WORK/language-dependencies" --english-resources "$WORK/base/english" "${recipe[@]}" \
             --ffmpeg "$ffmpeg" --ffmpeg-source "$WORK/ffmpeg-7.1.2.tar.xz" \
             --output "$WORK/SakuraTTS-${{ matrix.target }}"
-      - name: 读取本次验收权重
+      - name: 复用 Windows 验收权重
         if: runner.os == 'Windows'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        id: weights
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
-          name: test-weights
           path: ${{ env.WORK }}/test-weights
+          key: gpt-sovits-v2proplus-${{ env.WEIGHTS_REVISION }}
+      - name: 下载缺少的公共验收权重
+        if: runner.os == 'Windows' && steps.weights.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          base="https://huggingface.co/lj1995/GPT-SoVITS/resolve/$WEIGHTS_REVISION"
+          mkdir -p "$WORK/test-weights"
+          curl --fail --location "$base/s1v3.ckpt" --output "$WORK/test-weights/gpt.ckpt"
+          curl --fail --location "$base/v2Pro/s2Gv2ProPlus.pth" --output "$WORK/test-weights/sovits.pth"
       - name: 验证包内运行环境
         shell: bash
         run: |
