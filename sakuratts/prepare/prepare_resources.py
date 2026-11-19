@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare portable Japanese/English frontend and V2Pro/V2ProPlus references.
+"""Prepare portable text resources and V2Pro/V2ProPlus references.
 
 Preparation alone needs PyTorch and an explicit GPT-SoVITS source distribution.
 The resulting packages do not need that distribution for ordinary inference.
@@ -23,6 +23,7 @@ import traceback
 PACKAGE = Path(__file__).resolve().parents[1]
 from runpy import run_path
 run_path(str(PACKAGE / "runtime/worker.py"))["enable_windows_long_import_paths"]()
+read_chinese_resources = run_path(str(PACKAGE / "prepare/chinese_resources.py"))["read_chinese_resources"]
 SOURCE_FILE = "GPT_SoVITS/TTS_infer_pack/TTS.py"
 
 
@@ -193,6 +194,16 @@ def prepare_frontend(root, output, language_model=None, preflight=None):
     manifest["english_g2p"] = {"implementation": "gpt-sovits-english-v1", "directory": "english"}
     manifest["files"].update({"english/" + path.name: {"bytes": path.stat().st_size}
                               for path in (output / "english").iterdir() if path.is_file()})
+    chinese = root / "chinese"
+    if chinese.is_dir():
+        _, files = read_chinese_resources(chinese, (p for p in chinese.rglob("*") if p.is_file()))
+        for path in files:
+            dest = output / "chinese" / path.relative_to(chinese)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(path, dest)
+        manifest["chinese_g2p"] = {"implementation": "gpt-sovits-chinese-v2-onnx", "directory": "chinese"}
+        manifest["files"].update({"chinese/" + path.relative_to(chinese).as_posix(): {"bytes": path.stat().st_size}
+                                  for path in files})
     write_json(output / "manifest.json", manifest)
     return manifest
 
@@ -287,7 +298,14 @@ def worker(job_file, session=None):
             prompt = ref["text"].strip("\n")
             if prompt[-1] not in splits:
                 prompt += "。"
-            phones, bert, normalized = engine.text_preprocessor.segment_and_extract_feature_for_text(prompt, "ja", family)
+            if "text_features" in ref:
+                with np.load(ref["text_features"], allow_pickle=False) as features:
+                    phones, bert = features["phones"], features["bert"]
+                    normalized = features["normalized"].item()
+                    prompt = features["prompt"].item()
+            else:
+                phones, bert, normalized = engine.text_preprocessor.segment_and_extract_feature_for_text(prompt, "ja", family)
+                bert = bert.detach().float().cpu().numpy()
             with torch.no_grad():
                 spec, audio = engine.prompt_cache["refer_spec"][0]
                 spec = spec.to(dtype=engine.precision, device=job["device"])
@@ -300,7 +318,7 @@ def worker(job_file, session=None):
                 ge512 = engine.vits_model.ge_to512(ge.transpose(2, 1)).transpose(2, 1)
             arrays = {"reference_phones": np.asarray(phones, dtype=np.int64),
                       "prompt_semantic": engine.prompt_cache["prompt_semantic"].detach().cpu().numpy().astype(np.int64).reshape(-1),
-                      "reference_bert": bert.detach().float().cpu().numpy(),
+                      "reference_bert": bert,
                       "ge": ge.detach().float().cpu().numpy(), "ge512": ge512.detach().float().cpu().numpy()}
             validate_arrays(arrays)
             package = Path(job["output"]) / "references" / ref["tone"]
@@ -311,7 +329,7 @@ def worker(job_file, session=None):
                         "identity": {"gpt_checkpoint_sha256": job["source_hashes"][job["gpt"]],
                             "sovits_checkpoint_sha256": job["source_hashes"][job["sovits"]],
                             "audio_sha256": job["source_hashes"][ref["audio"]], "official_commit": job["source_id"],
-                            "reference_text": ref["text"], "reference_language": "ja"},
+                            "reference_text": ref["text"], "reference_language": ref["language"]},
                         "reference": {"prompt_text": prompt, "normalized_text": normalized, "tone": ref["tone"]},
                         "preparation": {"precision": job["precision"], "device": job["device"], "torch_version": torch.__version__,
                             "japanese_g2p": frontend_profile(job["frontend_preflight"]),
@@ -403,8 +421,10 @@ def main(argv=None, session=None):
         if not references and not args.frontend_only:
             raise ValueError("At least one reference is required for preparation")
         for ref in references:
-            if ref.get("language") != "ja" or not ref.get("text", "").strip():
-                raise ValueError("Reference preparation requires Japanese prompt text")
+            if not ref.get("text", "").strip():
+                raise ValueError("Reference preparation requires a transcript")
+            if ref.get("language") != "ja" and "text_features" not in ref:
+                raise ValueError("Use sakuratts convert --reference-language to prepare this transcript")
             if ref.get("tone") != "reference":
                 raise ValueError("Direct reference preparation uses the internal name 'reference'")
             ref["audio"] = str(Path(ref["audio"]).resolve(strict=True))

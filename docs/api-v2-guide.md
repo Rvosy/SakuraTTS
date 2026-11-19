@@ -1,6 +1,6 @@
 # API V2 使用说明
 
-SakuraTTS 只以 GPT-SoVITS 的 `api_v2.py` 作为 HTTP 兼容目标。当前可用于 Windows / NVIDIA、V2ProPlus 模型的日文合成，加入[英文资源](english-frontend.md)后可处理英文与日英混合。Apple silicon 的 MLX／V2Pro / V2ProPlus 使用同一 HTTP 入口，安装与准备方式见 [Apple 指南](apple.md)。尚未实现的 V2 功能返回 HTTP 400。旧版 `api.py` 协议、Gradio 接口和原版 Python 调用接口不在兼容范围内。
+SakuraTTS 提供 GPT-SoVITS API v2 的 GET / POST 合成接口。Windows 的 CPU、CUDA、DirectML 与 Apple silicon 的 MLX 使用同一 HTTP 入口。Windows 日英包提供日文、英文和日英混读；中日英包另外提供普通话前端。各设备和模型的实测范围见[兼容矩阵](specs/compatibility-matrix.md)，Apple 安装方法见 [Apple 指南](apple.md)。
 
 这份文档用于客户端接入；部署细节见[快速开始](quickstart.md)，接口实现与生命周期见 [HTTP 服务配置](http-api.md)。对照版本固定为 GPT-SoVITS [`48b1a016`](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/api_v2.py)。
 
@@ -110,13 +110,13 @@ with urlopen("http://127.0.0.1:9880/tts?" + urlencode(params)) as response:
 | 字段 | 默认值 | 当前行为 |
 | --- | --- | --- |
 | `text` | `null` | 必须传非空目标文本 |
-| `text_lang` | `null` | `ja`、`all_ja`、`en` 或 `auto`；英文段需配置英文资源 |
+| `text_lang` | `null` | `ja`、`all_ja`、`en`、`zh`、`all_zh` 或 `auto`。处理中文或英文的段落需要对应前端资源 |
 | `ref_audio_path` | `null` | 必须传服务端可读的参考音频路径 |
 | `aux_ref_audio_paths` | `null` | 多参考未实现；`null` / 空数组可用，非空数组返回 400 |
 | `prompt_lang` | `null` | 同上，独立于目标语言生效 |
 | `prompt_text` | `""` | 当前必须传参考音频的非空转写；无转写推理返回 400 |
 
-切换语言通过每次请求的 `text_lang` / `prompt_lang` 完成，没有单独的语言切换路由。英文与日英混合的依赖、资源准备和 `auto` 检测限制见[英文前端](english-frontend.md)。中文、韩语和粤语处理器尚未接入，检测到这些语言段会返回 400。
+每次请求可以单独选择目标语言和参考录音的语言。`auto` 使用原版语言检测分段，遇到当前模型前端缺少的处理器会返回 HTTP 400。普通话用 `zh` 或 `all_zh`，韩语和粤语没有专用模式。参见[普通话请求示例](chinese-frontend.md)与[日英混合处理](english-frontend.md)。
 
 ### 分句与采样
 
@@ -128,7 +128,7 @@ with urlopen("http://127.0.0.1:9880/tts?" + urlencode(params)) as response:
 | `temperature` | `1` | 已接入采样，必须为有限正数 |
 | `repetition_penalty` | `1.35` | 已接入重复惩罚，必须为有限正数 |
 | `seed` | `-1` | `-1` 随机；非负整数固定种子。同 seed 不保证与原版 Torch 输出相同 |
-| `batch_size` | `1` | 支持 `(0, 1]`，用于核采样 |
+| `batch_size` | `1` | 当前只支持单项批次，其他值返回 400 |
 | `batch_threshold` | `0.75` | 保留字段；当前单项批次中不改变批次划分 |
 | `split_bucket` | `true` | 非流式按文本长度排序推理后恢复音频顺序；按句流式自动关闭 |
 | `parallel_infer` | `true` | 接受；当前单项批次按顺序执行 |

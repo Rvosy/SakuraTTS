@@ -77,8 +77,8 @@ class G2PWSession:
 
     def _predict(self, model_input):
         probabilities = self.run(model_input)
-        indices = np.argmax(probabilities, axis=1).tolist()
-        confidences = [row[index] for index, row in zip(indices, probabilities.tolist())]
+        indices = np.argmax(probabilities, axis=1)
+        confidences = probabilities[np.arange(len(indices)), indices].tolist()
         return [self.labels[index] for index in indices], confidences
 
     def predict(self, model_input, texts):

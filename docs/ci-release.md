@@ -2,7 +2,7 @@
 
 工作流为 [portable-preview.yml](../.github/workflows/portable-preview.yml)，上传到 [SuzushimaArisu/SakuraTTS](https://modelscope.cn/models/SuzushimaArisu/SakuraTTS)。仓库 Secret `MODELSCOPE_TOKEN` 保存该魔搭仓库的写入令牌；令牌只交给上传步骤，不进入构建输入或产物。
 
-当前支持 Windows x64 统一包和 macOS arm64 包。两平台分别执行打包测试、构建产品 wheel、装配、运行检查和归档，再由 Ubuntu 任务上传，全部成功后更新 `latest-preview.json` 和下载说明。失败保留已上传候选文件与 Actions 日志，不覆盖旧版入口、不自动重跑失败测试。
+默认任务构建 Windows x64 日英包和 macOS arm64 包。在手动发布页面填写 `chinese_resources_asset` 后，同次构建会增加 Windows 中日英完整包。各包分别构建产品 wheel、装配、运行检查和归档，再统一更新 `latest-preview.json` 和下载说明。
 
 Windows 使用 Windows runner 自带的 7-Zip 和 [归档脚本](../scripts/archive_portable.py) 的 `balanced` 档位，压缩后运行 `7z t`。macOS 继续使用 tar.gz，保留可执行权限。上传文件名追加北京时间日期，例如 `SakuraTTS-windows-x64-20261005.7z` 和 `SakuraTTS-macos-arm64-20261005.tar.gz`；同日后续版本在日期后追加 `-1`、`-2`。两平台均上传对应的 `.sha256`，其中的文件名与下载文件一致。
 
@@ -16,6 +16,8 @@ FFmpeg 单独从固定的 7.1.2 源码编译，保留音频解码、PCM、AAC �
 
 更新基包时，在对应平台按[Windows 指南](portable-bundle.md)和[macOS 指南](portable-macos.md)重新准备并验收运行环境，保存为新版本输入，再修改下载脚本中的固定版本与文件名。保留原输入，避免历史构建因依赖漂移失效。
 
+Windows 中文资源使用[本地导出工具](chinese-frontend.md)。发布输入为根目录名为 `chinese/` 的 tar.gz，包含清单、模型、词典和来源材料；手动任务按文件名从基包草稿读取。公开上传前核对[普通话资源声明](third-party/mandarin-resources.md)。
+
 ## 触发与验收
 
 项目统一在 `main` 维护。提交、推送代码都不会构建或上传整合包；发布只由 Actions 的手动入口触发。
@@ -25,7 +27,7 @@ FFmpeg 单独从固定的 7.1.2 源码编译，保留音频解码、PCM、AAC �
 不同发布串行执行，同一发布内的平台构建和平台上传分别并行执行。发布编号使用 GitHub run ID 与 attempt，重跑不会覆盖上一轮候选文件。
 
 - 两平台使用包内解释器比对离线英文前端与上游样例。
-- Windows 在 CPU 上检查矩阵运算、原始模型转换、合成、空闲卸载和进程退出。公共测试权重与合成参考音频仅用于验收，不进入整合包。
+- Windows 在 CPU 上检查矩阵运算、原始模型转换、合成、空闲卸载和进程退出。托管任务先从 Actions 缓存取出指定版本的测试权重，未命中时取一次，供同轮的 Windows 语言包共用。验收脚本通过 `--gpt` 和 `--sovits` 读取本地文件，解压包的真人参考验收见 [Windows 整合包](portable-bundle.md#验证范围)。
 - macOS 在托管 runner 检查包内导入、MLX CPU 运算及 managed HTTP 未加载模型启动。Metal 合成仍需具备相应硬件加速的 Mac 验收。
 - CUDA、DirectML 合成、峰值显存和人工听音需要独立真机证据，不以构建成功代替。
 
@@ -33,6 +35,6 @@ FFmpeg 单独从固定的 7.1.2 源码编译，保留音频解码、PCM、AAC �
 
 ## 魔搭目录与更新入口
 
-每次发布保存到 `previews/<发布编号>/`，包含两平台压缩包与归档校验文件。平台上传后保存发布结果；更新入口前统一核对两平台远端文件尺寸。最后的发布任务要求两个结果来自同一源码提交和同一发布编号，并再次核对远端文件。
+每次发布保存到 `previews/<发布编号>/`，包含本次选择的压缩包与校验文件。发布任务核对各包的远端文件尺寸、源码提交和发布编号，全部成功后更新下载页和 `latest-preview.json`。
 
-`latest-preview.json` 只在两个平台全部成功后更新，记录平台、文件位置、尺寸、源码提交与验证范围。`README.md` 提供对应下载链接；稳定版入口尚未建立。当前桌宠插件仍使用离线导入，尚未读取该清单自动下载或更新。
+`latest-preview.json` 的 `packages` 数组沿用每个平台一个默认包的格式。若同时发布 Windows 中日英版，它的地址、体积、语言和验收范围记录在 `variants` 数组中。下载页列出本次发布的所有语言版本。

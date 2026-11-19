@@ -1,0 +1,508 @@
+{
+  "scope": "Mandarin processor in original unpacked Windows Python process, CPUExecutionProvider, 2 intra-op threads. Fresh process per candidate. First pass over each text saves final BERT features and actual G2PW probabilities, followed by three hot passes. Timings are exploratory under concurrent system load.",
+  "units": "Windows GetProcessMemoryInfo in MiB = 1048576 bytes. private is PrivateUsage (private commit); wset is current working set; peak_wset and peak_pagefile are OS lifetime maxima at the stated boundary. File-backed working-set pages may be shared/reclaimed.",
+  "os": "Windows-11-10.0.22631-SP0",
+  "cpu": "AMD Ryzen 7 9700X 8-Core Processor",
+  "ort": "1.24.4",
+  "numpy": "2.4.6",
+  "texts": [
+    "今天下午三点，我们在图书馆门口见。",
+    "银行行长在重庆开会，音乐老师正在教室里弹琴。",
+    "明天出门前，请把门口的雨伞带上，到了以后给我打个电话。"
+  ],
+  "input_sha256": {
+    "g2pw": "2eb3c71fd95117b2e1abef8d2d0cd78aae894bbe7f0fac105ddc9c32ce63cbd0",
+    "bert": "bd2e9162e60532898c3834a80acd15ef46c29a7c174274e0394f66800121022b"
+  },
+  "layout": {
+    "portable-external": "Original ONNX operators, FP32 parameters and runtime optimization. ONNX external_data size threshold 16384 bytes; one weights file per graph; contiguous offsets.",
+    "aligned-external": "Same as portable-external with each external tensor at a 64 KiB offset.",
+    "externalized-prepacked": "ORT_ENABLE_ALL saved graph and externally serialized prepacked tensors. Derived on this CPU. This layout also stores the source weights."
+  },
+  "candidates": {
+    "baseline": {
+      "two_models_bytes": 1832851127,
+      "distribution": "original ONNX graph",
+      "before_mib": {
+        "private": 514.01,
+        "wset": 47.66,
+        "peak_wset": 47.66,
+        "peak_pagefile": 514.01
+      },
+      "after_first_clean_mib": {
+        "private": 1356.02,
+        "wset": 894.88,
+        "peak_wset": 1018.46,
+        "peak_pagefile": 1527.5
+      },
+      "after_first_features_mib": {
+        "private": 2506.96,
+        "wset": 2043.66,
+        "peak_wset": 2124.24,
+        "peak_pagefile": 2612.77
+      },
+      "after_hot_requests_mib": {
+        "private": 2509.94,
+        "wset": 2046.18,
+        "peak_wset": 2124.24,
+        "peak_pagefile": 2612.77
+      },
+      "after_close_mib": {
+        "private": 681.71,
+        "wset": 223.2,
+        "peak_wset": 2124.24,
+        "peak_pagefile": 2612.77
+      },
+      "first_request_ms": 3558.47,
+      "hot_median_ms_by_text": [
+        53.09,
+        62.74,
+        68.22
+      ],
+      "hot_calls_per_second": 16.281,
+      "same_text_phones_word2ph": true,
+      "bit_exact_arrays": true,
+      "arrays_compared": 9
+    },
+    "no-arena": {
+      "two_models_bytes": 1832851127,
+      "distribution": "original ONNX graph",
+      "before_mib": {
+        "private": 513.91,
+        "wset": 47.56,
+        "peak_wset": 47.56,
+        "peak_pagefile": 513.91
+      },
+      "after_first_clean_mib": {
+        "private": 1354.82,
+        "wset": 894.26,
+        "peak_wset": 1018.29,
+        "peak_pagefile": 1527.17
+      },
+      "after_first_features_mib": {
+        "private": 2506.04,
+        "wset": 2043.29,
+        "peak_wset": 2123.76,
+        "peak_pagefile": 2611.73
+      },
+      "after_hot_requests_mib": {
+        "private": 2507.55,
+        "wset": 2044.86,
+        "peak_wset": 2123.76,
+        "peak_pagefile": 2611.73
+      },
+      "after_close_mib": {
+        "private": 682.23,
+        "wset": 223.97,
+        "peak_wset": 2123.76,
+        "peak_pagefile": 2611.73
+      },
+      "first_request_ms": 3581.27,
+      "hot_median_ms_by_text": [
+        80.49,
+        84.67,
+        94.3
+      ],
+      "hot_calls_per_second": 11.579,
+      "same_text_phones_word2ph": true,
+      "bit_exact_arrays": true,
+      "arrays_compared": 9
+    },
+    "no-pattern": {
+      "two_models_bytes": 1832851127,
+      "distribution": "original ONNX graph",
+      "before_mib": {
+        "private": 513.82,
+        "wset": 47.65,
+        "peak_wset": 47.65,
+        "peak_pagefile": 513.82
+      },
+      "after_first_clean_mib": {
+        "private": 1356.17,
+        "wset": 894.97,
+        "peak_wset": 1018.47,
+        "peak_pagefile": 1527.39
+      },
+      "after_first_features_mib": {
+        "private": 2507.06,
+        "wset": 2043.69,
+        "peak_wset": 2124.24,
+        "peak_pagefile": 2612.75
+      },
+      "after_hot_requests_mib": {
+        "private": 2510.16,
+        "wset": 2046.12,
+        "peak_wset": 2124.24,
+        "peak_pagefile": 2612.75
+      },
+      "after_close_mib": {
+        "private": 681.39,
+        "wset": 222.84,
+        "peak_wset": 2124.24,
+        "peak_pagefile": 2612.75
+      },
+      "first_request_ms": 3595.65,
+      "hot_median_ms_by_text": [
+        76.45,
+        85.29,
+        86.54
+      ],
+      "hot_calls_per_second": 11.981,
+      "same_text_phones_word2ph": true,
+      "bit_exact_arrays": true,
+      "arrays_compared": 9
+    },
+    "sequential": {
+      "two_models_bytes": 1832851127,
+      "distribution": "original ONNX graph",
+      "before_mib": {
+        "private": 514.21,
+        "wset": 47.84,
+        "peak_wset": 47.84,
+        "peak_pagefile": 514.21
+      },
+      "after_first_clean_mib": {
+        "private": 742.56,
+        "wset": 282.99,
+        "peak_wset": 1018.41,
+        "peak_pagefile": 1527.3
+      },
+      "after_first_features_mib": {
+        "private": 1896.45,
+        "wset": 1434.84,
+        "peak_wset": 1515.37,
+        "peak_pagefile": 2002.29
+      },
+      "after_hot_requests_mib": {
+        "private": 1900.42,
+        "wset": 1437.42,
+        "peak_wset": 1517.73,
+        "peak_pagefile": 2004.33
+      },
+      "after_close_mib": {
+        "private": 740.71,
+        "wset": 279.66,
+        "peak_wset": 1517.73,
+        "peak_pagefile": 2004.33
+      },
+      "first_request_ms": 3615.68,
+      "hot_median_ms_by_text": [
+        1588.25,
+        1633.89,
+        1566.68
+      ],
+      "hot_calls_per_second": 0.6,
+      "same_text_phones_word2ph": true,
+      "bit_exact_arrays": true,
+      "arrays_compared": 9
+    },
+    "ort-plain": {
+      "two_models_bytes": 1833180432,
+      "distribution": "host-optimized ORT graph; CPU and runtime portability unverified",
+      "before_mib": {
+        "private": 513.97,
+        "wset": 47.66,
+        "peak_wset": 47.66,
+        "peak_pagefile": 513.97
+      },
+      "after_first_clean_mib": {
+        "private": 1352.27,
+        "wset": 890.47,
+        "peak_wset": 1621.2,
+        "peak_pagefile": 2085.59
+      },
+      "after_first_features_mib": {
+        "private": 2501.95,
+        "wset": 2037.84,
+        "peak_wset": 3261.06,
+        "peak_pagefile": 3727.71
+      },
+      "after_hot_requests_mib": {
+        "private": 2505.43,
+        "wset": 2040.77,
+        "peak_wset": 3261.06,
+        "peak_pagefile": 3727.71
+      },
+      "after_close_mib": {
+        "private": 679.11,
+        "wset": 220.02,
+        "peak_wset": 3261.06,
+        "peak_pagefile": 3727.71
+      },
+      "first_request_ms": 5257.97,
+      "hot_median_ms_by_text": [
+        69.69,
+        67.79,
+        74.53
+      ],
+      "hot_calls_per_second": 13.493,
+      "same_text_phones_word2ph": true,
+      "bit_exact_arrays": true,
+      "arrays_compared": 9
+    },
+    "ort-mmap": {
+      "two_models_bytes": 1833180432,
+      "distribution": "host-optimized ORT graph; CPU and runtime portability unverified",
+      "before_mib": {
+        "private": 514.11,
+        "wset": 47.93,
+        "peak_wset": 47.93,
+        "peak_pagefile": 514.11
+      },
+      "after_first_clean_mib": {
+        "private": 1352.49,
+        "wset": 890.72,
+        "peak_wset": 1621.46,
+        "peak_pagefile": 2085.8
+      },
+      "after_first_features_mib": {
+        "private": 2502.04,
+        "wset": 2037.94,
+        "peak_wset": 3261.4,
+        "peak_pagefile": 3727.98
+      },
+      "after_hot_requests_mib": {
+        "private": 2505.26,
+        "wset": 2040.73,
+        "peak_wset": 3261.4,
+        "peak_pagefile": 3727.98
+      },
+      "after_close_mib": {
+        "private": 680.09,
+        "wset": 220.43,
+        "peak_wset": 3261.4,
+        "peak_pagefile": 3727.98
+      },
+      "first_request_ms": 5189.04,
+      "hot_median_ms_by_text": [
+        58.59,
+        64.3,
+        66.58
+      ],
+      "hot_calls_per_second": 15.865,
+      "same_text_phones_word2ph": true,
+      "bit_exact_arrays": true,
+      "arrays_compared": 9
+    },
+    "inline-optimized": {
+      "two_models_bytes": 1832563934,
+      "distribution": "host-optimized ORT graph; CPU and runtime portability unverified",
+      "before_mib": {
+        "private": 514.18,
+        "wset": 48.08,
+        "peak_wset": 48.08,
+        "peak_pagefile": 514.18
+      },
+      "after_first_clean_mib": {
+        "private": 1352.27,
+        "wset": 890.76,
+        "peak_wset": 1014.77,
+        "peak_pagefile": 1533.28
+      },
+      "after_first_features_mib": {
+        "private": 2503.72,
+        "wset": 2038.31,
+        "peak_wset": 2117.67,
+        "peak_pagefile": 2606.58
+      },
+      "after_hot_requests_mib": {
+        "private": 2504.7,
+        "wset": 2040.51,
+        "peak_wset": 2117.67,
+        "peak_pagefile": 2606.58
+      },
+      "after_close_mib": {
+        "private": 679.72,
+        "wset": 221.07,
+        "peak_wset": 2117.67,
+        "peak_pagefile": 2606.58
+      },
+      "first_request_ms": 3225.34,
+      "hot_median_ms_by_text": [
+        59.4,
+        68.14,
+        70.83
+      ],
+      "hot_calls_per_second": 15.162,
+      "same_text_phones_word2ph": true,
+      "bit_exact_arrays": true,
+      "arrays_compared": 9
+    },
+    "external-default": {
+      "two_models_bytes": 1832578525,
+      "distribution": "host-optimized ORT graph; CPU and runtime portability unverified",
+      "before_mib": {
+        "private": 513.73,
+        "wset": 47.6,
+        "peak_wset": 47.6,
+        "peak_pagefile": 513.73
+      },
+      "after_first_clean_mib": {
+        "private": 1074.64,
+        "wset": 613.52,
+        "peak_wset": 613.52,
+        "peak_pagefile": 1074.64
+      },
+      "after_first_features_mib": {
+        "private": 2141.07,
+        "wset": 1676.43,
+        "peak_wset": 1690.29,
+        "peak_pagefile": 2141.07
+      },
+      "after_hot_requests_mib": {
+        "private": 2142.04,
+        "wset": 1679.41,
+        "peak_wset": 1690.29,
+        "peak_pagefile": 2142.04
+      },
+      "after_close_mib": {
+        "private": 680.03,
+        "wset": 221.32,
+        "peak_wset": 1690.29,
+        "peak_pagefile": 2142.04
+      },
+      "first_request_ms": 3334.25,
+      "hot_median_ms_by_text": [
+        63.29,
+        72.91,
+        66.22
+      ],
+      "hot_calls_per_second": 14.731,
+      "same_text_phones_word2ph": true,
+      "bit_exact_arrays": true,
+      "arrays_compared": 9
+    },
+    "externalized-prepacked": {
+      "two_models_bytes": 3283709514,
+      "distribution": "host-optimized ORT graph; CPU and runtime portability unverified",
+      "before_mib": {
+        "private": 513.93,
+        "wset": 47.96,
+        "peak_wset": 47.96,
+        "peak_pagefile": 513.93
+      },
+      "after_first_clean_mib": {
+        "private": 746.74,
+        "wset": 613.2,
+        "peak_wset": 613.2,
+        "peak_pagefile": 746.74
+      },
+      "after_first_features_mib": {
+        "private": 757.1,
+        "wset": 1675.69,
+        "peak_wset": 1675.69,
+        "peak_pagefile": 771.41
+      },
+      "after_hot_requests_mib": {
+        "private": 758.08,
+        "wset": 1678.59,
+        "peak_wset": 1678.59,
+        "peak_pagefile": 771.41
+      },
+      "after_close_mib": {
+        "private": 678.39,
+        "wset": 220.21,
+        "peak_wset": 1678.61,
+        "peak_pagefile": 771.41
+      },
+      "first_request_ms": 2816.81,
+      "hot_median_ms_by_text": [
+        57.35,
+        59.18,
+        65.3
+      ],
+      "hot_calls_per_second": 16.608,
+      "same_text_phones_word2ph": true,
+      "bit_exact_arrays": true,
+      "arrays_compared": 9
+    },
+    "portable-external": {
+      "two_models_bytes": 1832864232,
+      "distribution": "original ONNX graph",
+      "before_mib": {
+        "private": 514.15,
+        "wset": 47.88,
+        "peak_wset": 47.88,
+        "peak_pagefile": 514.15
+      },
+      "after_first_clean_mib": {
+        "private": 1078.39,
+        "wset": 617.52,
+        "peak_wset": 617.52,
+        "peak_pagefile": 1078.39
+      },
+      "after_first_features_mib": {
+        "private": 2144.86,
+        "wset": 1682.14,
+        "peak_wset": 1696.47,
+        "peak_pagefile": 2144.87
+      },
+      "after_hot_requests_mib": {
+        "private": 2147.61,
+        "wset": 1685.14,
+        "peak_wset": 1696.47,
+        "peak_pagefile": 2147.61
+      },
+      "after_close_mib": {
+        "private": 680.19,
+        "wset": 222.75,
+        "peak_wset": 1696.47,
+        "peak_pagefile": 2147.61
+      },
+      "first_request_ms": 3415.64,
+      "hot_median_ms_by_text": [
+        72.49,
+        86.09,
+        91.54
+      ],
+      "hot_calls_per_second": 11.87,
+      "same_text_phones_word2ph": true,
+      "bit_exact_arrays": true,
+      "arrays_compared": 9
+    },
+    "aligned-external": {
+      "two_models_bytes": 1834150577,
+      "distribution": "original ONNX graph",
+      "before_mib": {
+        "private": 514.34,
+        "wset": 48.17,
+        "peak_wset": 48.17,
+        "peak_pagefile": 514.34
+      },
+      "after_first_clean_mib": {
+        "private": 1078.99,
+        "wset": 617.94,
+        "peak_wset": 617.94,
+        "peak_pagefile": 1078.99
+      },
+      "after_first_features_mib": {
+        "private": 2145.33,
+        "wset": 1682.52,
+        "peak_wset": 1696.83,
+        "peak_pagefile": 2145.34
+      },
+      "after_hot_requests_mib": {
+        "private": 2148.31,
+        "wset": 1685.67,
+        "peak_wset": 1696.83,
+        "peak_pagefile": 2148.31
+      },
+      "after_close_mib": {
+        "private": 681.36,
+        "wset": 223.25,
+        "peak_wset": 1696.83,
+        "peak_pagefile": 2148.31
+      },
+      "first_request_ms": 3004.44,
+      "hot_median_ms_by_text": [
+        63.5,
+        63.8,
+        66.71
+      ],
+      "hot_calls_per_second": 15.548,
+      "same_text_phones_word2ph": true,
+      "bit_exact_arrays": true,
+      "arrays_compared": 9
+    }
+  }
+}

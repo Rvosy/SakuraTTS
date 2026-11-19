@@ -109,6 +109,24 @@ class FrontendCompositionTests(unittest.TestCase):
                 self.assertEqual(g2p.call_args.args[0], english)
                 frontend.close()
 
+    def test_chinese_modes_keep_english_and_expand_chinese_features(self):
+        from sakuratts.text.processors import EnglishProcessor
+        mandarin = SimpleNamespace(
+            clean=lambda text: (["zh"] * 4, [2, 2], text),
+            features=lambda phones, alignment, text: np.repeat(
+                np.asarray([[1, 2]] * 1024, dtype=np.float32), alignment, axis=1),
+        )
+        english_g2p = SimpleNamespace(normalize=lambda text: text, g2p=lambda text: ["en"] * 2)
+        routes = [{"lang": "zh", "text": "银行"}, {"lang": "en", "text": "OK"}]
+        segmenter = Mock(return_value=routes)
+        frontend = TextFrontend({"zh": mandarin, "en": EnglishProcessor(english_g2p)},
+                                ["UNK", "zh", "en"], segmenter)
+        for mode in ("zh", "all_zh", "auto"):
+            row = frontend.segment("银行OK", mode)
+            self.assertEqual(row["phones"], [1] * 4 + [2] * 2)
+            np.testing.assert_array_equal(row["bert_features"], [[1, 1, 2, 2, 0, 0]] * 1024)
+        self.assertEqual(segmenter.call_args_list[1].args, ("银行OK", "zh"))
+
 
 if __name__ == "__main__":
     unittest.main()

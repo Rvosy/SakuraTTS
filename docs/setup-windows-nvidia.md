@@ -2,7 +2,7 @@
 
 本页说明源码安装和离线资源准备。自带 Python 的版本见[整合包指南](portable-bundle.md)，设备与模型范围见[兼容矩阵](specs/compatibility-matrix.md)。
 
-普通推理使用自有 CUDA GPT、日文前端和独立 ORT 声学工作进程。原始权重、官方源码及 PyTorch 用于转换和参考准备，运行主环境单独安装。
+普通推理使用自有 CUDA GPT、文本前端和独立 ORT 声学工作进程。原始权重、官方源码及 PyTorch 用于转换和参考准备，运行主环境单独安装。
 
 ## 安装主环境
 
@@ -30,7 +30,7 @@ uv --offline pip check --python .venv-windows-runtime\Scripts\python.exe
 
 ## 转换原始模型
 
-在独立的开发环境安装转换依赖，并准备受支持的官方源码、HuBERT、Pro 说话人编码器、完整语言识别模型和日文字典：
+在独立的开发环境安装转换依赖，并准备受支持的官方源码、HuBERT、Pro 说话人编码器、完整语言识别模型、日文字典和[英文资源](english-frontend.md)。需要普通话时，在同一目录另行准备[中文前端资源](chinese-frontend.md)。
 
 ```powershell
 python -m pip install ".[convert,japanese]"

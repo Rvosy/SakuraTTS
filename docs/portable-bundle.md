@@ -2,7 +2,7 @@
 
 Apple silicon 的独立运行组件、构建与验收见 [Mac 整合包指南](portable-macos.md)。
 
-整合包可以只用本地文件构建。默认发行组合包含 HTTP、CLI、日英混合推理及私有 Python 和所选后端的运行库；完整包另外带独立准备组件，让用户提供原始权重和新参考音频后直接调用 HTTP。PyTorch、原版准备源码和公共辅助模型放在准备组件中，按需启动 CPU 进程；转换完成后退出，参考编码的短暂复用与回收见 [HTTP 指南](http-api.md#生命周期与输出)。HTTP 和准备组件可以分别省略。
+Windows 提供两种语言组合。日英包用于日语、英语和日英混读；中日英完整包另带普通话词典、G2PW 和中文 BERT，可直接使用普通话参考录音和转写。两包都自带 Python、HTTP 服务、CLI 和模型准备组件，用户提供自己的 GPT / SoVITS 权重与参考音频。[普通话使用说明](chinese-frontend.md)。
 
 默认使用 Windows x64 统一组合，同包提供 CPU、NVIDIA CUDA 与 DirectML，通过配置或 `--backend cpu|cuda|directml` 选择。主环境使用包含 CPU provider 的 DirectML ONNX Runtime，CUDA 声学使用私有 ORT GPU worker，避免多个 ORT 分发包覆盖同一模块。无需按显卡代际拆包。带准备组件的完整包可处理原始权重和新参考；精简包仅适合已有转换资源，按实际分发需求选择，不必同时发布两种大小。
 
@@ -68,13 +68,13 @@ NVIDIA 包的 `configs/low-vram.json` 和 `configs/minimum-vram.json` 保留低�
 
 ## 离线构建
 
-发行组合在 [packaging/recipes/windows-x64.toml](../packaging/recipes/windows-x64.toml) 中声明：
+日英包使用 [windows-x64.toml](../packaging/recipes/windows-x64.toml)，中日英完整包使用 [windows-x64-zh.toml](../packaging/recipes/windows-x64-zh.toml)。两者使用相同的 Windows 后端。日英配方如下。
 
 ```toml
 target = "windows-x64"
 backend = "cpu"
 backends = ["cpu", "directml", "cuda"]
-languages = ["ja"]
+languages = ["ja", "en"]
 services = ["http"]
 
 [workers]
@@ -91,7 +91,7 @@ frontend = "runtime/acoustic/python.exe"
 | 提供 `--preparation LOCAL_COMPONENT` | 带原始权重转换、新参考编码所需的独立 CPU 准备组件 |
 | 省略 `--preparation` | 使用已有转换结果和已准备的参考条件 |
 
-仅构建 CPU/AMD 子集时可使用 [windows-cpu-amd-ja.toml](../packaging/recipes/windows-cpu-amd-ja.toml)，`backend = "directml"` 表示装入 DirectML ORT 及其 CPU provider。它仅选择 `japanese-text`，不会混装 CPU ORT，也没有独立前端或声学 worker。仅构建 NVIDIA 子集时可使用 `windows-nvidia-ja.toml`；这两个子集配方保留给开发与单后端验收，默认分发使用统一包。`languages` 支持 `ja` 和可选的 `en`；这只是依赖选择，首次转换当前生成日文前端，英文需另行准备并验收资源。
+单后端开发可选 [Windows CPU / DirectML 配方](../packaging/recipes/windows-cpu-amd-ja.toml) 或 [Windows CUDA 配方](../packaging/recipes/windows-nvidia-ja.toml)。面向用户的两个 Windows 包都可切换设备。制作中日英完整包时，将[导出的中文资源目录](chinese-frontend.md)交给 `build_preparation.py --chinese-resources`，再用中日英配方装配。首次转换角色权重时会把所选包的语言资源写入模型目录。
 
 `workers` 分别描述前端和声学运行角色，路径相对于包根目录，必须属于所选发行内容。CUDA 组合中二者共享一套 Python 3.9，配置为两个角色不会多复制一套环境。CPU/AMD 留空，在主环境执行。构建器把角色路径写入 `runtime/portable.json`，推理时再绑定到当前安装位置；模型本身不负责选择安装目录。
 
@@ -171,18 +171,19 @@ python scripts/archive_portable.py --bundle dist/SakuraTTS-Windows-CPU-AMD `
 
 ## 验证范围
 
-首次使用验收使用新的完整包副本和空的模型／参考缓存：
+解压本地压缩包，在模型和参考缓存均为空时运行首次使用验收。以下示例使用 Windows 中日英包、磁盘上的普通话权重和参考录音。将转写换成录音中的台词。
 
 ```powershell
 python scripts/verify_portable_first_use.py `
-  --bundle dist/SakuraTTS-Windows-CPU-AMD `
-  --backend cpu --profile int8 `
+  --bundle D:/SakuraTTS/SakuraTTS-windows-x64-zh-ja-en `
+  --backend cpu --profile balanced `
   --gpt D:/Voices/voice.ckpt --sovits D:/Voices/voice.pth `
-  --reference D:/Voices/reference.wav --prompt-text "参考音声です。" `
+  --reference D:/Voices/reference.wav --prompt-text "这是我的参考录音。" --prompt-lang zh `
+  --text "今天是星期五，出门记得带伞。" --text-lang zh `
   --output outputs/portable-first-use
 ```
 
-AMD 验收改用 `--backend directml --profile fp16`，使用独立的空缓存包；NVIDIA 可用 `--backend cuda`。同一次验收比较同一后端的重复 PCM，不要求不同 ORT 或不同后端逐位相同。
+NVIDIA 使用 `--backend cuda --profile fp32`，DirectML 使用 `--backend directml --profile fp16`。每个后端从空缓存开始。日英包可用相同流程，换用日文或英文音频、转写、文本和语言参数。脚本会比较同一后端多次返回的 PCM。
 
 运行验收脚本的开发解释器需要 `psutil`，被测服务及准备、推理子进程都使用包内解释器。脚本保留已有缓存，发现模型或参考缓存非空就拒绝首次使用测试；报告和音频写到包外。验收覆盖原始模型转换、新参考编码、重复请求、重启缓存、默认 direct、managed 休眠和进程退出，并比较返回的 PCM。它不代替干净机器、峰值显存和人工听音测试。
 
@@ -192,12 +193,13 @@ AMD 验收改用 `--backend directml --profile fp16`，使用独立的空缓存�
 
 | 产物与日期 | 记录 |
 | --- | --- |
+| 2026-11-20 Windows 日英包与中日英包 | [7z 体积、解压校验和普通话 CPU / CUDA 首次使用](../research/notes/windows-mandarin-20261120.md) |
 | 2026-10-05 压缩实验 | [7z 参数对照与完整包校验](../research/notes/portable-7z-20261005.md) |
 | 2026-09-22 完整包 | [缩减、首次使用、搬迁与解压验收](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/portable-compact-20260922.md) |
 | 早期精简推理包 | [压缩、解压与单机运行检查](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/portable-runtime-bundle-20260922.md) |
 
 这些记录中的体积、路径和设备对应当时的构建。查询手头产物应读取 `bundle-manifest.json`、压缩报告及 SHA256 文件。构建和本机验证结果与实际发布状态分别记录。
 
-硬件记录集中于 RTX 5060。其他 Windows 设备、干净机器、最低驱动、长句、多轮请求、取消恢复、完整显存测量和人工听音仍需验收。
+Windows 真机记录覆盖 RTX 5060、RTX 5070 Ti 和 Radeon 780M。最低驱动和干净机器安装仍需单独验收。
 
 自动预览发布见 [GitHub Actions 整合包发布](ci-release.md)。该流程从固定运行环境输入装配当前源码，公开产物的 FFmpeg 与资源声明见对应指南。

@@ -1,0 +1,356 @@
+{
+  "baseline": "After load_frontend, immediately before prepare_target, with no reference or GPT/SoVITS",
+  "split_method": "cut0",
+  "memory": "Windows working set and private bytes summed over all live frontend processes at call boundaries",
+  "cold": "First call in each new process, existing filesystem caches",
+  "system": "Windows 11 build 22631, Ryzen 7 9700X, CPython from Mandarin-Japanese-English archive",
+  "bundle_sha256": "52e7dc2ce079080e8b6b027b04c87af9cb2eb12e11dd74644b11e551b2ee2801",
+  "languages": {
+    "zh": {
+      "text": "今天下午三点，我们在图书馆门口见。",
+      "baseline_bytes": {
+        "working_set": 319180800,
+        "private_bytes": 1297121280
+      },
+      "cold_delta_bytes": {
+        "working_set": 2245427200,
+        "private_bytes": 2237169664
+      },
+      "hot_median_seconds": 0.0546342,
+      "calls": [
+        {
+          "phase": "call",
+          "run": 0,
+          "seconds": 3.712168,
+          "parts": [
+            {
+              "text": "今天下午三点,我们在图书馆门口见.",
+              "phones": 32,
+              "bert_shape": [
+                1024,
+                32
+              ],
+              "nonzero_bert_columns": 32
+            }
+          ],
+          "loaded_mandarin_providers": {
+            "g2pw": [
+              "CPUExecutionProvider"
+            ],
+            "bert": [
+              "CPUExecutionProvider"
+            ]
+          },
+          "memory_bytes": {
+            "working_set": 2564608000,
+            "private_bytes": 3534290944
+          }
+        },
+        {
+          "phase": "call",
+          "run": 1,
+          "seconds": 0.0557368,
+          "parts": [
+            {
+              "text": "今天下午三点,我们在图书馆门口见.",
+              "phones": 32,
+              "bert_shape": [
+                1024,
+                32
+              ],
+              "nonzero_bert_columns": 32
+            }
+          ],
+          "loaded_mandarin_providers": {
+            "g2pw": [
+              "CPUExecutionProvider"
+            ],
+            "bert": [
+              "CPUExecutionProvider"
+            ]
+          },
+          "memory_bytes": {
+            "working_set": 2565050368,
+            "private_bytes": 3536396288
+          }
+        },
+        {
+          "phase": "call",
+          "run": 2,
+          "seconds": 0.0546342,
+          "parts": [
+            {
+              "text": "今天下午三点,我们在图书馆门口见.",
+              "phones": 32,
+              "bert_shape": [
+                1024,
+                32
+              ],
+              "nonzero_bert_columns": 32
+            }
+          ],
+          "loaded_mandarin_providers": {
+            "g2pw": [
+              "CPUExecutionProvider"
+            ],
+            "bert": [
+              "CPUExecutionProvider"
+            ]
+          },
+          "memory_bytes": {
+            "working_set": 2565050368,
+            "private_bytes": 3536396288
+          }
+        },
+        {
+          "phase": "call",
+          "run": 3,
+          "seconds": 0.0539633,
+          "parts": [
+            {
+              "text": "今天下午三点,我们在图书馆门口见.",
+              "phones": 32,
+              "bert_shape": [
+                1024,
+                32
+              ],
+              "nonzero_bert_columns": 32
+            }
+          ],
+          "loaded_mandarin_providers": {
+            "g2pw": [
+              "CPUExecutionProvider"
+            ],
+            "bert": [
+              "CPUExecutionProvider"
+            ]
+          },
+          "memory_bytes": {
+            "working_set": 2565050368,
+            "private_bytes": 3536396288
+          }
+        }
+      ]
+    },
+    "ja": {
+      "text": "今日の午後三時に、図書館の前で会いましょう。",
+      "baseline_bytes": {
+        "working_set": 318455808,
+        "private_bytes": 1295638528
+      },
+      "cold_delta_bytes": {
+        "working_set": 140795904,
+        "private_bytes": 137490432
+      },
+      "hot_median_seconds": 0.0009036,
+      "calls": [
+        {
+          "phase": "call",
+          "run": 0,
+          "seconds": 0.222395,
+          "parts": [
+            {
+              "text": "今日の午後三時に、図書館の前で会いましょう。",
+              "phones": 52,
+              "bert_shape": [
+                1024,
+                52
+              ],
+              "nonzero_bert_columns": 0
+            }
+          ],
+          "loaded_mandarin_providers": {
+            "g2pw": [],
+            "bert": []
+          },
+          "memory_bytes": {
+            "working_set": 459251712,
+            "private_bytes": 1433128960
+          }
+        },
+        {
+          "phase": "call",
+          "run": 1,
+          "seconds": 0.0009715,
+          "parts": [
+            {
+              "text": "今日の午後三時に、図書館の前で会いましょう。",
+              "phones": 52,
+              "bert_shape": [
+                1024,
+                52
+              ],
+              "nonzero_bert_columns": 0
+            }
+          ],
+          "loaded_mandarin_providers": {
+            "g2pw": [],
+            "bert": []
+          },
+          "memory_bytes": {
+            "working_set": 459464704,
+            "private_bytes": 1433346048
+          }
+        },
+        {
+          "phase": "call",
+          "run": 2,
+          "seconds": 0.0008558,
+          "parts": [
+            {
+              "text": "今日の午後三時に、図書館の前で会いましょう。",
+              "phones": 52,
+              "bert_shape": [
+                1024,
+                52
+              ],
+              "nonzero_bert_columns": 0
+            }
+          ],
+          "loaded_mandarin_providers": {
+            "g2pw": [],
+            "bert": []
+          },
+          "memory_bytes": {
+            "working_set": 459464704,
+            "private_bytes": 1433346048
+          }
+        },
+        {
+          "phase": "call",
+          "run": 3,
+          "seconds": 0.0009036,
+          "parts": [
+            {
+              "text": "今日の午後三時に、図書館の前で会いましょう。",
+              "phones": 52,
+              "bert_shape": [
+                1024,
+                52
+              ],
+              "nonzero_bert_columns": 0
+            }
+          ],
+          "loaded_mandarin_providers": {
+            "g2pw": [],
+            "bert": []
+          },
+          "memory_bytes": {
+            "working_set": 459464704,
+            "private_bytes": 1433346048
+          }
+        }
+      ]
+    },
+    "en": {
+      "text": "Let's meet in front of the library at three this afternoon.",
+      "baseline_bytes": {
+        "working_set": 319213568,
+        "private_bytes": 1296699392
+      },
+      "cold_delta_bytes": {
+        "working_set": 307200,
+        "private_bytes": 0
+      },
+      "hot_median_seconds": 0.000441,
+      "calls": [
+        {
+          "phase": "call",
+          "run": 0,
+          "seconds": 0.0041872,
+          "parts": [
+            {
+              "text": "Let's meet in front of the library at three this afternoon.",
+              "phones": 41,
+              "bert_shape": [
+                1024,
+                41
+              ],
+              "nonzero_bert_columns": 0
+            }
+          ],
+          "loaded_mandarin_providers": {
+            "g2pw": [],
+            "bert": []
+          },
+          "memory_bytes": {
+            "working_set": 319520768,
+            "private_bytes": 1296699392
+          }
+        },
+        {
+          "phase": "call",
+          "run": 1,
+          "seconds": 0.0004419,
+          "parts": [
+            {
+              "text": "Let's meet in front of the library at three this afternoon.",
+              "phones": 41,
+              "bert_shape": [
+                1024,
+                41
+              ],
+              "nonzero_bert_columns": 0
+            }
+          ],
+          "loaded_mandarin_providers": {
+            "g2pw": [],
+            "bert": []
+          },
+          "memory_bytes": {
+            "working_set": 319520768,
+            "private_bytes": 1296699392
+          }
+        },
+        {
+          "phase": "call",
+          "run": 2,
+          "seconds": 0.0004381,
+          "parts": [
+            {
+              "text": "Let's meet in front of the library at three this afternoon.",
+              "phones": 41,
+              "bert_shape": [
+                1024,
+                41
+              ],
+              "nonzero_bert_columns": 0
+            }
+          ],
+          "loaded_mandarin_providers": {
+            "g2pw": [],
+            "bert": []
+          },
+          "memory_bytes": {
+            "working_set": 319520768,
+            "private_bytes": 1296699392
+          }
+        },
+        {
+          "phase": "call",
+          "run": 3,
+          "seconds": 0.000441,
+          "parts": [
+            {
+              "text": "Let's meet in front of the library at three this afternoon.",
+              "phones": 41,
+              "bert_shape": [
+                1024,
+                41
+              ],
+              "nonzero_bert_columns": 0
+            }
+          ],
+          "loaded_mandarin_providers": {
+            "g2pw": [],
+            "bert": []
+          },
+          "memory_bytes": {
+            "working_set": 319520768,
+            "private_bytes": 1296699392
+          }
+        }
+      ]
+    }
+  }
+}

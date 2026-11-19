@@ -1,12 +1,11 @@
 <h1 align="center">SakuraTTS</h1>
 
 <p align="center">
-  <strong>为 AI 桌宠优化的 GPT-SoVITS 推理引擎</strong>
+  <strong>本地运行的 GPT-SoVITS 语音合成引擎</strong>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/status-developer_preview-orange" alt="开发者预览版">
-  <img src="https://img.shields.io/badge/platform-Windows-0078D4" alt="Windows">
   <img src="https://img.shields.io/badge/python-3.11%2B-3776AB" alt="Python 3.11+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
 </p>
@@ -21,43 +20,112 @@
 
 ---
 
-SakuraTTS 是面向 AI 桌宠的 GPT-SoVITS 推理引擎，以完全兼容原版为目标，同时降低合成耗时、显存占用和长期待机成本。当前实现和待补齐范围见[兼容矩阵](docs/specs/compatibility-matrix.md)。
+SakuraTTS 使用 GPT-SoVITS 模型在本机合成语音。你可以把一段文本生成为 WAV，在 Python 脚本里处理音频，也可以让配音工具、聊天机器人或桌宠通过 HTTP 调用同一个服务。完整整合包能直接导入已有的 GPT `.ckpt`、SoVITS `.pth` 和参考录音，首次使用时自动转换并缓存。
 
-桌宠需要长时间挂机，却只在交互时说话。原版推理服务在合成结束后仍会保留模型和缓存，这部分常驻显存会与游戏及其他应用争用资源。SakuraTTS 为此提供四档 CUDA 推理配置，并支持空闲休眠：无交互时释放推理进程持有的 GPU 资源，桌宠发起 LLM 请求时提前唤醒，利用等待回复的时间启动和加载模型。
-
-已有的 GPT `.ckpt`、SoVITS `.pth` 和参考音频可以继续使用，无需重新训练。完整整合包会在首次使用时自动转换并缓存支持的模型；客户端继续通过 `/tts` 请求语音，也可以使用 Python 或命令行接口。
-
-> 当前为开发者预览版，提供 Windows CUDA、CPU 与 DirectML 后端，支持 V2ProPlus、日文、英文与日英混合。默认整合包包含[日英文本处理资源](docs/english-frontend.md)。HTTP 兼容范围见 [API V2 文档](docs/api-v2-guide.md)，模型与设备验证情况见[兼容矩阵](docs/specs/compatibility-matrix.md)。
-
-设备通过 `backend` 选择：CPU 默认使用 INT8 GPT、8 线程声学；AMD DirectML 默认使用 FP16、KV 容量 1280。两个设备各保留这一套配置，具体资源要求见[CPU / AMD 指南](docs/cpu-amd.md)。CUDA 与 Apple MLX 的[推理档位](docs/inference-profiles.md)保持独立；Apple silicon 的 V2Pro / V2ProPlus／FP32 转换、HTTP 与整合包用法见 [Apple 指南](docs/apple.md)。
+Windows 支持 CPU、NVIDIA CUDA 和 DirectML，Apple silicon 使用 MLX。CUDA 可以按显存选择四档配置。间歇使用语音的应用可以开启空闲休眠，在下次需要发声时再加载模型。设备、模型家族和原版 API v2 的兼容范围见[兼容矩阵](docs/specs/compatibility-matrix.md)。
 
 ## 快速开始
 
-CPU 与 AMD 核显可通过源码安装并切换后端，见 [CPU / DirectML 指南](docs/cpu-amd.md)；Windows 默认构建同包提供 CPU、NVIDIA CUDA 和 DirectML 的统一运行环境，通过后端设置切换。构建与验收范围见整合包指南。
+Windows 完整包自带 Python、运行库和模型转换工具，默认使用 CPU。两个语言版本都能选择 CPU、NVIDIA CUDA 或 DirectML。
 
-[Windows 整合包](docs/portable-bundle.md)自带 Python 与运行依赖，完整包还带有模型转换和参考准备组件。模型与参考音频由使用者提供。解压后：
+| Windows x64 完整包 | 用途 |
+| --- | --- |
+| 日英版（`ja-en`） | 日语、英语及日英混读。沿用现有整合包的语言配置。 |
+| 中日英版（`zh-ja-en`） | 在日英版基础上增加普通话发音词表、G2PW 和中文 BERT，用于中文参考录音与中文朗读。[普通话使用说明](docs/chinese-frontend.md) |
 
-1. 复制 `configs/tts_infer.example.yaml` 为 `configs/tts_infer.yaml`，填写自己的 GPT / SoVITS 权重路径。
-2. 运行 `check-runtime.bat` 检查默认设备（统一包默认 CPU；检查 DirectML 使用 `sakuratts.bat check-runtime --backend directml`），再运行 `start-server.bat`。需要空闲自动释放资源时，按下文启用[休眠与唤醒](#休眠与唤醒)。
-3. 向默认地址 `http://127.0.0.1:9880/tts` 提交合成请求，或打开 `/docs` 查看接口。
+已公开的日英预览版可从[魔搭下载页](https://modelscope.cn/models/SuzushimaArisu/SakuraTTS)取得。中日英版当前为本地候选包。Apple silicon 用户见 [Mac 整合包](docs/portable-macos.md)，Linux 用户见 [Linux CPU 指南](docs/linux.md)。
 
-将参考音频路径和转写替换为自己的内容：
+准备一对受支持的 GPT / SoVITS 权重、一段参考录音和录音中的实际台词后，按以下步骤生成第一段语音。
+
+1. 解压 Windows 包，将 `configs/tts_infer.example.yaml` 复制为 `configs/tts_infer.yaml`，填入两份权重的路径。
+2. 双击 `check-runtime.bat` 检查 CPU，再运行 `start-server.bat`。使用 NVIDIA 时可在终端执行 `.\start-server.bat --backend cuda`，使用 DirectML 时执行 `.\start-server.bat --backend directml`。首次模型转换的进度显示在这个窗口。
+3. 服务启动后，另开 PowerShell 窗口，执行下例生成 `hello.wav`。将参考音频路径和转写换成你自己的。本例使用日文模型和日文参考。
 
 ```powershell
-curl.exe -X POST http://127.0.0.1:9880/tts -H "Content-Type: application/json" --data-raw '{"text":"こんにちは。","text_lang":"ja","ref_audio_path":"D:/Voices/reference.wav","prompt_text":"参考音声です。","prompt_lang":"ja"}' --output hello.wav
+$request = @{
+    text           = 'こんにちは。'
+    text_lang      = 'ja'
+    ref_audio_path = 'D:/Voices/reference.wav'
+    prompt_text    = '参考音声です。'
+    prompt_lang    = 'ja'
+} | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:9880/tts' -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes($request)) -OutFile 'hello.wav'
 ```
 
-`parallel_infer` 可省略；当前单项批次按顺序执行。首次模型转换和参考准备可能比后续请求耗时更长，建议在正式对话前完成一次首次合成。源码安装、Python 示例和资源准备见[快速开始](docs/quickstart.md)。
+新参考录音的首次编码也会写入缓存。开发者可在服务的 `/docs` 查看请求字段，或使用 `sakuratts tts` 和 Python 直接生成 WAV。参见 [API v2 使用说明](docs/api-v2-guide.md)、[Python 与命令行快速开始](docs/quickstart.md)和 [Windows 整合包指南](docs/portable-bundle.md)。
+
+使用中日英包时，可用 `.\start-server.bat --backend cuda --runtime-mode managed --profile fp16` 启动同一个服务。把请求的 `text_lang` 切为 `zh`、`ja` 或 `en` 即可换朗读语言，`prompt_lang` 填参考录音的语言。需要省显存时把启动档位改为 `low-memory` 或 `minimum-memory`，这个选择对所有语言生效。
 
 ## 性能对比
 
-CPU INT8 与 AMD FP16 的同机完整请求、Genie 前后复测、内存和试听见 [Genie 对比](research/notes/genie-comparison-20260927.md)。其他候选与取舍保留在[历史精度实验](research/notes/cpu-amd-precision-listening-20260927.md)。以下数据来自 NVIDIA 设备，不能直接用于比较不同硬件。
+### RTX 5070 Ti 上的中日英三档对照
 
-测试环境：RTX 5060 8 GB、Windows 11 WDDM、Sakura V2ProPlus 日文。每组使用相同权重、参考音频、输入和采样参数，执行两轮共 12 次请求，覆盖短句、长句与多句文本。
+普通话、日语和英语共用 **FP16 标准、低显存、极限** 三个档位。桌面 RTX 5070 Ti 16 GB 上，三种语言在每个档位的请求后显存相同。由标准切到极限，常驻显存从 **767 MB 降到 205 MB**。
+
+| CUDA 档位 | 请求后显存（三语） | 普通话峰值 | 日语峰值 | 英语峰值 |
+| --- | ---: | ---: | ---: | ---: |
+| FP16 标准 | 767 MB | 886 MB | 897 MB | 894 MB |
+| FP16 低显存 | 584 MB | 773 MB | 785 MB | 785 MB |
+| FP16 极限 | 205 MB | 601 MB | 616 MB | 616 MB |
+
+同一服务按普通话、日语、英语的顺序朗读“今天下午三点，我们在图书馆门口见”的三语文本。模型、档位、中文参考录音和随机种子都保持一致，只改变目标文本与语言。下表是从发出请求到收齐 WAV 的中位耗时。
+
+| CUDA 档位 | 普通话（音频 3.10 秒） | 日语（4.02 秒） | 英语（4.02 秒） |
+| --- | ---: | ---: | ---: |
+| FP16 标准 | 0.218 秒 | 0.199 秒 | 0.181 秒 |
+| FP16 低显存 | 0.816 秒 | 0.795 秒 | 0.847 秒 |
+| FP16 极限 | 2.199 秒 | 2.242 秒 | 2.199 秒 |
+
+测试使用 Wass V2ProPlus。显存表取短句和长句中的观测峰值，统计 Windows 服务进程树的专用显存，单位为十进制 MB。速度表取三语轮换的三轮热请求中位数，统一种子为 7。[三语实测、RTF 与样音核查](research/notes/windows-cuda-multilingual-20261120.md)
+
+普通话文本前端使用 CPU。Ryzen 7 9700X 首次处理“今天下午三点，我们在图书馆门口见。”时，前端进程树新增约 **1.69 GiB 系统私有内存**，较原版少约 **400 MiB**。首次输入“森林。”时，词典即可确定读音，只加载中文 BERT，新增约 **1.36 GiB**。[中文前端内存与耗时](research/notes/windows-mandarin-frontend-memory-20261120.md)
+
+### Windows 普通话整句耗时
+
+使用 Wass V2ProPlus 合成普通话短句“今天是星期五，出门记得带伞。”，两种设备都生成了 3.02 秒音频。Ryzen 7 9700X 的均衡档耗时 **0.812 秒**，桌面 RTX 5070 Ti 的 CUDA FP32 档耗时 **0.219 秒**。每句预热一次，再取五次完整 HTTP 返回的中位数。[长句数据与整合包验收](research/notes/windows-mandarin-20261120.md)
+
+### Windows 普通话首段延迟
+
+“明天下午三点，我们在银行门口见面。去之前先看一下天气预报，如果下雨，记得带伞。”按句号分成两片（`cut3`）。开启分片流式输出后，客户端在 Ryzen 7 9700X 上等 **1.08 秒**就能开始播放，在桌面 RTX 5070 Ti 上等 **0.39 秒**。
+
+| 设备与档位 | 输出模式 | 收到首段可播放音频 | 收齐整段音频 | 生成音频时长 |
+| --- | --- | ---: | ---: | ---: |
+| Ryzen 7 9700X · CPU balanced | 默认 | 2.23 秒 | 2.23 秒 | 7.64 秒 |
+| Ryzen 7 9700X · CPU balanced | 分片流式 | 1.08 秒 | 2.22 秒 | 7.64 秒 |
+| RTX 5070 Ti · CUDA FP32 | 默认 | 0.66 秒 | 0.66 秒 | 8.32 秒 |
+| RTX 5070 Ti · CUDA FP32 | 分片流式 | 0.39 秒 | 0.69 秒 | 8.32 秒 |
+
+本机 HTTP 服务使用 Wass V2ProPlus 模型、同一段中文参考录音和转写，固定种子 1234。模型常驻，每种输出模式预热一次，再各测三次取中位数。计时从客户端发出请求开始，首段取读完 WAV 头并收到前 20 毫秒 PCM 的时刻，整段取响应读完的时刻。播放器缓冲另计。请求中设置 `streaming_mode=1` 即可按片返回音频。
+
+### 不同 Windows 设备的日文合成速度
+
+从发出请求到收到完整 WAV，桌面 RTX 5060 Ti 的中位耗时为 **0.94 秒**，RTX 5060 笔记本为 **1.74 秒**，RTX 3050 笔记本为 **3.39 秒**。表中各设备使用各自的模型、文本和设置。
+
+| 设备及后端 | 请求数 | 安装数 | 耗时 P50 | 耗时 P95 | RTF P50 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| GeForce RTX 5060 Ti（台式，CUDA） | 1,349 | 2 | 0.938 秒 | 8.125 秒 | 0.098 |
+| GeForce RTX 5060 Laptop GPU（CUDA） | 759 | 4 | 1.735 秒 | 8.281 秒 | 0.114 |
+| GeForce RTX 4060 Laptop GPU（CUDA） | 527 | 6 | 2.235 秒 | 20.859 秒 | 0.177 |
+| GeForce RTX 5070 Ti Laptop GPU（CUDA） | 145 | 1 | 1.484 秒 | 3.296 秒 | 0.088 |
+| GeForce RTX 3050 Laptop GPU（CUDA） | 140 | 1 | 3.391 秒 | 8.610 秒 | 0.209 |
+| GeForce RTX 5070 Laptop GPU（CUDA） | 26 | 1 | 2.094 秒 | 9.500 秒 | 0.092 |
+| GeForce RTX 4060 Ti（台式，CUDA） | 21 | 1 | 2.032 秒 | 15.656 秒 | 0.172 |
+| CPU | 1,668 | 7 | 9.157 秒 | 22.937 秒 | 0.765 |
+| DirectML | 200 | 1 | 2.360 秒 | 9.735 秒 | 0.188 |
+
+数据来自 Sakura 桌宠 1.4.0 于 2026 年 11 月 14 日 03:06 至 20 日 02:28（北京时间）完成的 4,835 次 Windows 日文请求。RTX 4060 笔记本有 289 次使用 10 月 7 日版整合包，其余请求使用 10 月 17 日版。P50 和 P95 用最近秩法计算。RTF 是耗时与生成音频时长的比值，小于 1 表示合成快于播放。
+
+### Radeon 780M 核显
+
+2026 年 9 月 27 日，在 Ryzen 7 7840HS 笔记本上，Radeon 780M 使用 DirectML FP16、KV 容量 1280 和 N.A.V.I. 日文模型。短句生成 3.42 秒音频，耗时中位数 **1.272 秒**；长句生成 20.70 秒音频，耗时中位数 **8.278 秒**。每句预热一次、热测三次，计时到完整 PCM 返回。[同机 CPU 和核显实测](research/notes/genie-comparison-20260927.md)
+
+### GeForce RTX 5060 桌面卡的显存与速度
+
+2026 年 9 月 21 日，在 RTX 5060 8 GB、Windows 11 WDDM 上测试 Sakura V2ProPlus 日文模型。每组使用相同权重、参考、文本和采样参数，执行两轮共 12 次请求，覆盖短句、长句和多句文本。
 
 显存与同精度原版比较，单位为十进制 MB。† 表示沿用上一轮原版数据的跨轮次参考，低显存档和极限档所在轮次没有重跑原版。
 
-### 峰值显存
+#### 峰值显存
 
 | 精度与配置 | 原版观测峰值 | SakuraTTS 观测峰值 | 峰值降低 |
 | --- | ---: | ---: | ---: |
@@ -66,9 +134,9 @@ CPU INT8 与 AMD FP16 的同机完整请求、Genie 前后复测、内存和试�
 | FP16 低显存档 † | 2323.2 MB | 584.1 MB | **74.9%** † |
 | FP16 极限档 † | 2323.2 MB | 465.1 MB | **80.0%** † |
 
-### 请求后空闲显存
+#### 请求后空闲显存
 
-这里的空闲指最后一次请求后约 1 秒，**尚未进入休眠**。
+空闲显存取最后一次请求结束后约 1 秒，推理进程仍在运行。
 
 | 精度与配置 | 原版空闲显存 | SakuraTTS 空闲显存 | 空闲降低 |
 | --- | ---: | ---: | ---: |
@@ -77,9 +145,9 @@ CPU INT8 与 AMD FP16 的同机完整请求、Genie 前后复测、内存和试�
 | FP16 低显存档 † | 1677.2 MB | 387.0 MB | **76.9%** † |
 | FP16 极限档 † | 1677.2 MB | 106.5 MB | **93.7%** † |
 
-### 合成耗时
+#### 热请求耗时
 
-下表为热请求的**完整音频生成耗时中位数**，不是流式首包延迟，也不包含从休眠唤醒的时间。短句取 3 次、长句取 2 次，测量期间持续采集显存。
+下表为已经加载模型后，生成**完整音频**的耗时中位数。短句取 3 次、长句取 2 次，测量期间持续采集显存。
 
 | 引擎与配置 | 热短句耗时 | 热长句耗时 | 输出音频时长（短句 / 长句） |
 | --- | ---: | ---: | ---: |
@@ -90,16 +158,14 @@ CPU INT8 与 AMD FP16 的同机完整请求、Genie 前后复测、内存和试�
 | SakuraTTS FP16 低显存档 | 1.009 s | 3.560 s | 3.46 / 25.46 s |
 | SakuraTTS FP16 极限档 | 3.055 s | 5.481 s | 3.46 / 25.46 s |
 
-CUDA 标准档适合连续短句；低显存档与极限档通过片段重载进一步节省显存，也增加等待。四档配置和使用条件见[推理档位](docs/inference-profiles.md)。CUDA 默认仍为 FP32，FP16 需匹配的转换模型包，人工听感验收尚未完成。
+CUDA 的 FP16 标准档适合连续短句。低显存档与极限档在每段合成时重新加载部分模型，进一步降低显存峰值，也增加等待时间。默认档为 FP32，FP16 需要匹配的转换模型包。这组 FP16 样本的人工听感验收仍待完成。[推理档位](docs/inference-profiles.md)
 
 <details>
 <summary>测量口径与数据来源</summary>
 
-显存使用 WDDM 进程 Dedicated Usage，SakuraTTS 汇总主进程与声学 worker 的同一时刻计数；MB 为十进制单位。测量使用已准备的参考条件，不含首次转换和陌生参考准备；采样可能漏过短暂尖峰。两套引擎的随机数实现与输出长度不同，因此这些数据用于比较同一应用请求的资源开销，不用于推导统一加速倍数。FP32 与 FP16 标准档见[同精度实测报告](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/low-vram-20260921.md)，低显存档与极限档及其跨轮次对照见[声学错峰报告](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/acoustic-session-staging-20260921.md)。
+显存取 WDDM 的 Dedicated Usage，对主进程与声学工作进程在同一时刻的读数求和，再取采样峰值。降幅用未舍入的读数计算。各组使用已准备好的模型和参考条件，两套引擎的随机数实现会影响生成的音频时长。[同精度实测报告](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/low-vram-20260921.md) · [声学错峰报告](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/acoustic-session-staging-20260921.md)
 
-原版两档与 SakuraTTS FP32 取自[首轮汇总数据](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/data/2026-09-21-low-vram.json)，SakuraTTS 三个 FP16 档取自[声学错峰轮次](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/data/2026-09-21-acoustic-session-staging.json)。输入相同，但原版与 SakuraTTS 的生成长度不同，且部分数据跨轮次，因此不把这些耗时换算成固定工作量的加速倍数。
-
-显存降幅由未舍入的读数计算。硬件实测集中于 RTX 5060，尚未单独测量对游戏帧率的影响。
+原版两档与 SakuraTTS FP32 取自首轮，SakuraTTS 三个 FP16 档的读数取自后续声学错峰轮次。[首轮原始数据](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/data/2026-09-21-low-vram.json) · [错峰轮次原始数据](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/data/2026-09-21-acoustic-session-staging.json)
 
 </details>
 
@@ -111,7 +177,7 @@ CUDA 标准档适合连续短句；低显存档与极限档通过片段重载进
 .\start-server.bat -c configs/tts_infer.yaml --runtime-mode managed --idle-sleep-seconds 60
 ```
 
-桌宠可以在向 LLM API 发送消息的同时调用 `/runtime/wake`，让模型加载与回复生成并行。取得可朗读文本后照常提交 `/tts`；如果加载尚未结束，请求会等待同一次准备完成。
+配音工具可以在用户开始编辑台词时唤醒引擎。聊天机器人和桌宠则可在发出 LLM 请求时调用 `/runtime/wake`，让模型加载与回复生成并行。文字准备好后提交 `/tts` 即可。
 
 ```mermaid
 sequenceDiagram
@@ -129,7 +195,7 @@ sequenceDiagram
     Note over TTS: 无活动请求，且空闲与保活期限均到达后休眠
 ```
 
-在发出 LLM 请求的同时调用：
+下例让服务保活 60 秒。
 
 ```http
 POST /runtime/wake
@@ -138,11 +204,11 @@ Content-Type: application/json
 {"keep_alive_seconds":60}
 ```
 
-流式 LLM 可以在第一句形成后开始合成，由桌宠串行提交后续句子并管理播放队列。未提前唤醒时，`/tts` 也会自动启动推理进程。LLM 请求失败或最终不需要语音时，让保活自然过期即可。
+直接调用 `/tts` 也会唤醒引擎，并等待模型就绪。使用流式 LLM 时，客户端可以在第一句形成后发起合成，再串行提交后续句子。极限档按片段重载模型，提前唤醒只准备运行环境。[后台运行、预热与播放队列](docs/background-runtime.md)
 
-`wake` 提前完成启动与加载，不会自动试合成。需要执行预热时，宿主可在等待 LLM 期间提交一条短句、完整接收并丢弃音频，再提交正式文本。极限档按片段重载模型，提前唤醒只准备运行环境。具体流程和取舍见[后台运行指南](docs/background-runtime.md)。
+在 RTX 5060 的 Windows 测试中，标准档休眠后，推理进程树退出，对应的 GPU 计数实例消失。30 秒内测得控制服务及启动器的系统内存 RSS 中位数为 68.0 MB。同机另完成 100 轮睡醒，每轮都确认推理子进程退出。[Windows 睡醒实测](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/managed-refinement-20260922.md)
 
-Windows 标准档的既有测量中，休眠后推理进程的 GPU 计数实例消失，控制服务及启动器的系统内存 RSS 中位数约 68 MB、私有提交约 45.5 MB；两者是不同的主存指标，不能相加。同机完成了 100 轮真实模型睡醒，每轮确认推理子进程退出。测量条件、首句耗时及尚未覆盖的长期测试见[睡醒实测报告](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/managed-refinement-20260922.md)。
+2026 年 10 月 26 日，2 vCPU 的 Linux ECS 使用 CPU 极限省内存档生成一条日文语音。服务进程树的 RSS 在合成结束后为 440.50 MiB，空闲 60 秒自动休眠后为 41.36 MiB。此时 cgroup 共记账 576.95 MiB，其中 544.89 MiB 是文件缓存。[Linux 待机补测](research/notes/maibot-engine-integration-20261026.md)
 
 ## 文档
 

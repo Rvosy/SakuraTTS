@@ -38,6 +38,9 @@ def prepare_initial_model(settings, experimental=None):
     portable_root = bundle_root()
     if portable_root is None:
         identity["python"] = os.path.abspath(options["python"])
+        chinese = Path(options["official_source"]) / "chinese"
+        if chinese.is_dir():
+            identity["chinese_frontend"] = sha256_file(chinese / "manifest.json")
     else:
         identity["preparation"] = sha256_file(portable_root / "runtime/preparation/preparation-manifest.json")
     identity["converter"] = sha256_file(Path(__file__).with_name("converter.py"))

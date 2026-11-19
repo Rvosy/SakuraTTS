@@ -1,0 +1,411 @@
+{
+  "platform": "Windows 11 build 22631; Ryzen 7 9700X; bundled CPython 3.12 and ONNX Runtime 1.24.4 CPU EP, two intra-op threads per Chinese model",
+  "method": "TextFrontend.prepare_target with cut0 and zh. Old and new code are read from their respective locally extracted archives, with the corresponding CPU-prepared model and Chinese resources. No reference or GPT/SoVITS is loaded. New processes, existing filesystem caches. Order: old/new, new/old, old/new. Hot medians pool five timed calls per length per process, after discarding the initial short/long pair. Memory is measured by external psutil for the process tree, in bytes. Peak includes samples taken at call boundaries and approximately every 10 ms while requests were running.",
+  "texts": {
+    "short": "今天下午三点，我们在图书馆门口见。",
+    "long": "明天下午三点，我们在银行门口见面。去之前先看一下天气预报，如果下雨，记得带伞。",
+    "dictionary": "森林。"
+  },
+  "versions": {
+    "old": {
+      "runs": [
+        {
+          "short": {
+            "before_bytes": {
+              "working_set": 307167232,
+              "private": 1288982528
+            },
+            "after_first_bytes": {
+              "working_set": 2551889920,
+              "private": 3525971968
+            },
+            "peak_bytes": {
+              "working_set": 2567430144,
+              "private": 3548606464
+            },
+            "first_ms": 3629.6839,
+            "g2pw_loaded": true,
+            "hot_ms": {
+              "short": [
+                55.0596,
+                54.7632,
+                61.1621,
+                54.3081,
+                55.1129
+              ],
+              "long": [
+                112.4502,
+                117.5022,
+                129.102,
+                104.9338,
+                130.4221
+              ]
+            }
+          },
+          "dictionary": {
+            "before_bytes": {
+              "working_set": 309874688,
+              "private": 1292623872
+            },
+            "after_first_bytes": {
+              "working_set": 2551021568,
+              "private": 3526287360
+            },
+            "peak_bytes": {
+              "working_set": 2563313664,
+              "private": 3549077504
+            },
+            "first_ms": 3456.9709,
+            "g2pw_loaded": true
+          }
+        },
+        {
+          "short": {
+            "before_bytes": {
+              "working_set": 308015104,
+              "private": 1291157504
+            },
+            "after_first_bytes": {
+              "working_set": 2553151488,
+              "private": 3528638464
+            },
+            "peak_bytes": {
+              "working_set": 2568650752,
+              "private": 3551510528
+            },
+            "first_ms": 3336.017,
+            "g2pw_loaded": true,
+            "hot_ms": {
+              "short": [
+                53.1491,
+                52.2185,
+                52.7672,
+                52.5157,
+                52.857
+              ],
+              "long": [
+                107.241,
+                102.9779,
+                103.9561,
+                103.9529,
+                102.6773
+              ]
+            }
+          },
+          "dictionary": {
+            "before_bytes": {
+              "working_set": 308445184,
+              "private": 1290866688
+            },
+            "after_first_bytes": {
+              "working_set": 2550792192,
+              "private": 3525844992
+            },
+            "peak_bytes": {
+              "working_set": 2566279168,
+              "private": 3546857472
+            },
+            "first_ms": 3546.3966,
+            "g2pw_loaded": true
+          }
+        },
+        {
+          "short": {
+            "before_bytes": {
+              "working_set": 309616640,
+              "private": 1292935168
+            },
+            "after_first_bytes": {
+              "working_set": 2552807424,
+              "private": 3528130560
+            },
+            "peak_bytes": {
+              "working_set": 2613682176,
+              "private": 3638505472
+            },
+            "first_ms": 3320.8893,
+            "g2pw_loaded": true,
+            "hot_ms": {
+              "short": [
+                50.9967,
+                51.93,
+                51.0835,
+                52.1337,
+                51.4473
+              ],
+              "long": [
+                109.0408,
+                113.8578,
+                101.6479,
+                105.707,
+                107.8147
+              ]
+            }
+          },
+          "dictionary": {
+            "before_bytes": {
+              "working_set": 307990528,
+              "private": 1290420224
+            },
+            "after_first_bytes": {
+              "working_set": 2551324672,
+              "private": 3526422528
+            },
+            "peak_bytes": {
+              "working_set": 2566782976,
+              "private": 3549782016
+            },
+            "first_ms": 3212.5405,
+            "g2pw_loaded": true
+          }
+        }
+      ],
+      "median": {
+        "short": {
+          "cold_ms": 3336.017,
+          "after_first_bytes": {
+            "working_set": 2552807424,
+            "private": 3528130560
+          },
+          "delta_after_first_bytes": {
+            "working_set": 2244722688,
+            "private": 2236989440
+          },
+          "peak_bytes": {
+            "working_set": 2568650752,
+            "private": 3551510528
+          },
+          "delta_peak_bytes": {
+            "working_set": 2260635648,
+            "private": 2260353024
+          },
+          "hot_ms": {
+            "short": 52.7672,
+            "long": 107.241
+          }
+        },
+        "dictionary": {
+          "cold_ms": 3456.9709,
+          "after_first_bytes": {
+            "working_set": 2551021568,
+            "private": 3526287360
+          },
+          "delta_after_first_bytes": {
+            "working_set": 2242347008,
+            "private": 2234978304
+          },
+          "peak_bytes": {
+            "working_set": 2566279168,
+            "private": 3549077504
+          },
+          "delta_peak_bytes": {
+            "working_set": 2257833984,
+            "private": 2256453632
+          }
+        }
+      }
+    },
+    "new": {
+      "runs": [
+        {
+          "short": {
+            "before_bytes": {
+              "working_set": 309321728,
+              "private": 1292587008
+            },
+            "after_first_bytes": {
+              "working_set": 2132623360,
+              "private": 3105980416
+            },
+            "peak_bytes": {
+              "working_set": 2135662592,
+              "private": 3108659200
+            },
+            "first_ms": 2902.5037,
+            "g2pw_loaded": true,
+            "hot_ms": {
+              "short": [
+                50.1546,
+                52.1456,
+                51.451,
+                52.4606,
+                52.7669
+              ],
+              "long": [
+                101.2959,
+                108.2577,
+                109.9761,
+                101.5778,
+                100.9458
+              ]
+            }
+          },
+          "dictionary": {
+            "before_bytes": {
+              "working_set": 307474432,
+              "private": 1289904128
+            },
+            "after_first_bytes": {
+              "working_set": 1782898688,
+              "private": 2754527232
+            },
+            "peak_bytes": {
+              "working_set": 1782898688,
+              "private": 2754527232
+            },
+            "first_ms": 2517.157,
+            "g2pw_loaded": false
+          }
+        },
+        {
+          "short": {
+            "before_bytes": {
+              "working_set": 307372032,
+              "private": 1290903552
+            },
+            "after_first_bytes": {
+              "working_set": 2133098496,
+              "private": 3106623488
+            },
+            "peak_bytes": {
+              "working_set": 2136035328,
+              "private": 3109167104
+            },
+            "first_ms": 3031.2672,
+            "g2pw_loaded": true,
+            "hot_ms": {
+              "short": [
+                60.2379,
+                58.2661,
+                57.9146,
+                58.9988,
+                52.9189
+              ],
+              "long": [
+                122.1905,
+                113.0427,
+                115.4507,
+                110.6123,
+                113.5074
+              ]
+            }
+          },
+          "dictionary": {
+            "before_bytes": {
+              "working_set": 309661696,
+              "private": 1292447744
+            },
+            "after_first_bytes": {
+              "working_set": 1783271424,
+              "private": 2755579904
+            },
+            "peak_bytes": {
+              "working_set": 1783271424,
+              "private": 2755579904
+            },
+            "first_ms": 2739.751,
+            "g2pw_loaded": false
+          }
+        },
+        {
+          "short": {
+            "before_bytes": {
+              "working_set": 310562816,
+              "private": 1293553664
+            },
+            "after_first_bytes": {
+              "working_set": 2132828160,
+              "private": 3105820672
+            },
+            "peak_bytes": {
+              "working_set": 2137194496,
+              "private": 3108364288
+            },
+            "first_ms": 3144.5074,
+            "g2pw_loaded": true,
+            "hot_ms": {
+              "short": [
+                58.9318,
+                56.9693,
+                55.6922,
+                53.3573,
+                53.791
+              ],
+              "long": [
+                106.669,
+                109.3432,
+                107.7516,
+                112.1776,
+                104.9067
+              ]
+            }
+          },
+          "dictionary": {
+            "before_bytes": {
+              "working_set": 307888128,
+              "private": 1290608640
+            },
+            "after_first_bytes": {
+              "working_set": 1783427072,
+              "private": 2755850240
+            },
+            "peak_bytes": {
+              "working_set": 1783427072,
+              "private": 2755850240
+            },
+            "first_ms": 2619.2162,
+            "g2pw_loaded": false
+          }
+        }
+      ],
+      "median": {
+        "short": {
+          "cold_ms": 3031.2672,
+          "after_first_bytes": {
+            "working_set": 2132828160,
+            "private": 3105980416
+          },
+          "delta_after_first_bytes": {
+            "working_set": 1823301632,
+            "private": 1813393408
+          },
+          "peak_bytes": {
+            "working_set": 2136035328,
+            "private": 3108659200
+          },
+          "delta_peak_bytes": {
+            "working_set": 1826631680,
+            "private": 1816072192
+          },
+          "hot_ms": {
+            "short": 53.791,
+            "long": 109.3432
+          }
+        },
+        "dictionary": {
+          "cold_ms": 2619.2162,
+          "after_first_bytes": {
+            "working_set": 1783271424,
+            "private": 2755579904
+          },
+          "delta_after_first_bytes": {
+            "working_set": 1475424256,
+            "private": 1464623104
+          },
+          "peak_bytes": {
+            "working_set": 1783271424,
+            "private": 2755579904
+          },
+          "delta_peak_bytes": {
+            "working_set": 1475424256,
+            "private": 1464623104
+          }
+        }
+      }
+    }
+  },
+  "bundle_sha256": {
+    "old": "52e7dc2ce079080e8b6b027b04c87af9cb2eb12e11dd74644b11e551b2ee2801",
+    "new": "3ab82f4931f65769dad8cfc84414b9a18060ff8b7edf69c1b88f52eefd4c5fe7"
+  }
+}

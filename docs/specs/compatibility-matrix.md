@@ -9,7 +9,7 @@
 | 维度 | 当前差距与验收要求 |
 | --- | --- |
 | 模型与资源 | 公共转换支持 V2Pro / V2ProPlus，MLX 使用原生权重，Windows 后端使用 ONNX 声学资源；V1、V2、V3、V4 及其他组合仍须逐一完成权重识别、加载、转换、参考编码和音频对照 |
-| 语言 | 日文、英文及日英混合已接入；中文组件尚未贯通公共入口，粤语、韩语及其混合模式待补齐；同时验证目标文本与参考转写 |
+| 语言 | 日英包提供日文、英文和日英混读。Windows 多语言包另提供普通话，目标文本与参考转写可分别选择语言。粤语、韩语仍待接入 |
 | 推理参数 | 多参考、无转写、模型内语速、真正的批量/并行、语义 Token 流式 2/3 与超采样仍有缺口；HTTP 非流式支持生成后的保音高调速，见 [API 字段](../api-v2-guide.md#音频与流式)；Top-p 的 HTTP 字段与采样函数已存在，但生成循环仍要求 `top_p=1`，不能标成已贯通 |
 | 配置 | 当前读取部分上游 YAML 字段；上游 `is_half`、模型版本分支、设备切换与全部资源字段尚未完全映射；不能用 SakuraTTS 的独立 profile 宣称上游配置已兼容 |
 | 调用入口 | 当前 HTTP 为 API V2 子集；根目录 `api.py` 启动同一 V2 服务，尚未实现旧版协议。原版 Python 类/导入接口、Gradio、WebUI 和其他启动流程仍需适配与回归 |
@@ -24,13 +24,13 @@
 | 项目 | 公共入口的范围 |
 | --- | --- |
 | 设备与模型 | Windows CUDA、CPU、DirectML，V2ProPlus；CPU 的 GPT 与声学均在 CPU，DirectML 的 GPT Transformer 与声学均使用 GPU。Apple MLX 提供实验性原生 V2Pro / V2ProPlus 适配器，支持原始权重转换与新参考准备 |
-| 语言 | `ja`、`all_ja`、`en`、`auto`；英文段需要[英文依赖与资源包](../english-frontend.md)，`auto` 检测到其他语言时明确报错 |
+| 语言 | `ja`、`all_ja`、`en`、`auto`；多语言包另支持 `zh` 和 `all_zh`。自动分段使用当前模型目录配备的[英文](../english-frontend.md)和[普通话](../chinese-frontend.md)资源 |
 | HTTP | CPU / CUDA / DirectML / MLX 共用 GPT-SoVITS 固定版本 API V2；单活动请求，完整音频及按句流式 |
 | 精度 | CPU 默认选择 INT8 GPT + FP32 声学；DirectML 默认选择 FP16，KV 容量 1280。CUDA / MLX 保持原有档位，资源与验证要求见[推理档位](../inference-profiles.md) |
 | 生命周期 | 默认 `direct`；可选 `managed` 提供提前唤醒、保活与空闲休眠 |
 | 分发 | wheel、源码包和可离线构建的 Windows / Apple silicon 整合包；Linux 当前采用 [CPU 源码安装](../linux.md)，整合包尚未接入；构建、验收与发布分别记录 |
 
-后端实现表在 [backends._IMPLEMENTATIONS](../../sakuratts/backends/__init__.py)，语言模式在 [frontend.profiles](../../sakuratts/text/profiles.py)。`Model` 允许读取结构有效的其他语言或后端声明；执行时仍由已实现的适配器判断是否可用。中文研究模块未接入公共 Engine。MLX 的模型限制和安装方式见 [Apple 指南](../apple.md)。
+后端实现见 [backends._IMPLEMENTATIONS](../../sakuratts/backends/__init__.py)，语言模式见 [text.profiles](../../sakuratts/text/profiles.py)。模型目录的前端清单决定可用语言；MLX 的模型范围和安装方式见 [Apple 指南](../apple.md)。
 
 ## 已有验证与未验收项
 
@@ -38,6 +38,7 @@
 
 | 范围 | 证据 | 仍需验证 |
 | --- | --- | --- |
+| Windows 普通话整链 | [Ryzen 7 9700X 与 RTX 5070 Ti 的中日英整合包](../../research/notes/windows-mandarin-20261120.md)。从解压包导入 V2ProPlus 原始权重和中文参考录音，验证 CPU、CUDA、缓存与重启 | DirectML 普通话、更多声线和人工听感 |
 | Windows 日文整链 | [RTX 5060 / Sakura V2ProPlus 实测](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/2026-09-20-windows-nvidia-backend.md)：原文到 WAV、长文、五参考及异常恢复 | 其他 GPU、其他权重、人工音色与自然度 |
 | 当前 CPU / DirectML | [Genie 前后复测与试听](../../research/notes/genie-comparison-20260927.md)：CPU INT8、8 线程声学；AMD FP16、容量 1280；N.A.V.I 短句、长句与进程树资源 | 更多硬件与权重、人工听音、ASR、长期睡醒及共存负载；CPU 性能取自 DirectML 1.24.4 的 CPU provider，不代表独立 CPU ORT 1.30.0 的速度 |
 | DirectML 显卡选择 | [设备转发与初始化失败测试](../../tests/test_directml_devices.py)、[配置覆盖与重新加载](../../tests/test_cpu_runtime.py)、[Session KV 分配与回收](../../tests/test_directml_static_gpt.py)：用替身覆盖非零适配器编号；[780M 回放与卸载占用](../../research/notes/directml-host-overhead-20260927.md)保留本轮实机证据 | AMD 独显及多张物理显卡上的真实执行、KV 归属、内存占用与音频结果尚未验收；非零编号测试不代表独显实测 |
@@ -52,7 +53,7 @@
 | 完整整合包 | [2026-09-22 构建与验收](https://github.com/Rvosy/SakuraTTS/blob/main/research/notes/portable-compact-20260922.md)：原始权重、新参考、缓存、搬迁和解压校验 | 第二台干净机器、最低驱动、峰值显存、音质及分发材料 |
 | 内容检查 | [24 条 Windows 音频的 ASR 记录](https://github.com/Rvosy/SakuraTTS/blob/main/research/experiments/2026-09-20-windows-asr.md) | 报告中的内容疑点与人工复听 |
 
-CUDA 实测设备为 RTX 5060 8 GB；CPU / DirectML 已在 Ryzen 7 7840HS / Radeon 780M 上执行 N.A.V.I V2ProPlus 日文模型，配置与限制见 [CPU / AMD 指南](../cpu-amd.md)。Apple M4 的当前验证见上表；其他模型家族、语义 Token 流式、并行批量与宿主集成尚未完成。CPU / DirectML 的 Windows 共包构建入口见[整合包指南](../portable-bundle.md)，代码支持与最终包验收分别记录；MLX 可通过源码安装或构建 [Mac 整合包](../portable-macos.md)。
+CUDA 已在 RTX 5060 8 GB 和 RTX 5070 Ti 16 GB 上执行完整合成。Ryzen 7 7840HS 与 Radeon 780M 的 N.A.V.I V2ProPlus 日文结果见 [CPU / AMD 指南](../cpu-amd.md)。可按[整合包指南](../portable-bundle.md)构建 Windows 语言包，或为 Apple silicon 构建 [Mac 整合包](../portable-macos.md)。
 
 ## 历史证据与更新方式
 

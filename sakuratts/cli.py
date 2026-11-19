@@ -115,17 +115,24 @@ def main(argv=None):
     conversion.add_argument("--experimental", type=Path,
                             help="JSON runtime options; DirectML preparation uses capacity and device_id")
     conversion.add_argument("--reference-text")
+    conversion.add_argument("--reference-language", choices=SUPPORTED_LANGUAGE_MODES,
+                            help="Language of the reference transcript (default: ja)")
     conversion.add_argument("--name")
     conversion.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     if args.command == "capabilities":
         from .backends import available_backends
         from .profiles import available_profiles
-        from .text.profiles import SUPPORTED_LANGUAGES
-        print(json.dumps({"backends": available_backends(), "languages": list(SUPPORTED_LANGUAGES),
+        from .runtime.portable import bundle_root
+        from .text.profiles import LANGUAGE_PROFILES
+        root = bundle_root()
+        languages = list(LANGUAGE_PROFILES) if root is None else json.loads(
+            (root / "runtime/portable.json").read_text(encoding="utf-8"))["release"]["languages"]
+        modes = [mode for language in languages for mode in LANGUAGE_PROFILES[language].modes]
+        print(json.dumps({"backends": available_backends(), "languages": languages,
             "profiles": available_profiles(),
             "experimental_backends": {"mlx": "Apple silicon; native V2Pro/V2ProPlus FP32 with conversion and HTTP; FP16 is not implemented"},
-            "language_modes": list(SUPPORTED_LANGUAGE_MODES),
+            "language_modes": [*modes, "auto"],
             "scope": "Implemented components; driver availability and model compatibility are checked when loading."}))
         return 0
     if args.command in ("tts", "serve", "convert", "benchmark"):
@@ -162,7 +169,8 @@ def run_product_command(args):
             raise ValueError("Experimental options must be a JSON object")
     if args.command == "convert":
         from .prepare.converter import convert, package_model
-        raw = (args.gpt, args.sovits, args.reference, args.reference_text, args.official_source)
+        raw = (args.gpt, args.sovits, args.reference, args.reference_text,
+               args.reference_language, args.official_source)
         if args.config:
             if any(raw) or any((args.python, args.acoustic_python, args.frontend_python, args.language_model,
                                args.backend, args.experimental)):
@@ -172,7 +180,8 @@ def run_product_command(args):
             if not all((args.gpt, args.sovits, args.official_source)):
                 raise ValueError("Provide --config, or --gpt, --sovits and --official-source")
             model = convert(gpt=args.gpt, sovits=args.sovits, reference=args.reference,
-                reference_text=args.reference_text, official_source=args.official_source,
+                reference_text=args.reference_text, reference_language=args.reference_language or "ja",
+                official_source=args.official_source,
                 output=args.output, name=args.name, python=args.python,
                 acoustic_python=args.acoustic_python, frontend_python=args.frontend_python,
                 language_model=args.language_model, backend=args.backend or "cuda", experimental=experimental)

@@ -4,6 +4,8 @@ This module is a correctness and resource experiment, not the final runtime
 dependency. It accepts already-tokenized inputs and does not alter the frontend.
 """
 
+from __future__ import annotations
+
 from copy import deepcopy
 from pathlib import Path
 
@@ -34,14 +36,14 @@ class BertFeatures(nn.Module):
         self.source_num_hidden_layers = source_num_hidden_layers
 
     @classmethod
-    def from_pretrained(cls, path: str | Path, dtype=torch.float32) -> "BertFeatures":
+    def from_pretrained(cls, path: str | Path, dtype=torch.float32, *, use_safetensors=None) -> "BertFeatures":
         source = AutoConfig.from_pretrained(path, local_files_only=True)
         if source.architectures != ["BertForMaskedLM"]:
             raise ValueError("Expected an unpruned BertForMaskedLM checkpoint")
         config = feature_config(source)
         bert, loading = BertModel.from_pretrained(
             path, config=config, add_pooling_layer=False, torch_dtype=dtype,
-            local_files_only=True, output_loading_info=True,
+            local_files_only=True, output_loading_info=True, use_safetensors=use_safetensors,
         )
         # The removed encoder layers and MLM head are expected unused weights.
         # Missing retained weights would silently initialize random features.

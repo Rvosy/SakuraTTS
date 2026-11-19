@@ -1,0 +1,201 @@
+{
+  "method": {
+    "machine": "Windows 11 x64, AMD Ryzen 7 9700X, ORT DirectML package 1.24.4 with CPUExecutionProvider, intra_op_num_threads=2",
+    "memory_unit": "MiB, independent process, Windows GetProcessMemoryInfo. Resident after six phrases, lifetime peak RSS/Private including session initialization. Models tested separately.",
+    "warm_samples_per_sentence": 3,
+    "timing_scope": "BERT tokenization + hidden ORT call, or complete ChinesePhones.clean including G2PW. Fresh session, one warmup per phrase. Half-weights exploratory timings used Windows monotonic clock with ~15.6 ms granularity. Embedding-only and matched BERT FP32 comparisons use perf_counter.",
+    "input": "six Mandarin phrases (see texts), 255 phones",
+    "source": "FP32 models in the previous multilingual bundle, identified in 2026-11-20-mandarin-frontend-equivalence.json"
+  },
+  "tested": [
+    {
+      "model": "bert",
+      "variant": "baseline",
+      "mem": {
+        "rss": 1219.781,
+        "private": 1682.398,
+        "peak_rss": 1293.68,
+        "peak_private": 1781.242
+      },
+      "load_s": 1.0401,
+      "warm_median_ms_per_input": [
+        28.297,
+        34.007,
+        34.616,
+        57.402,
+        36.582,
+        91.942
+      ],
+      "identical": true,
+      "max_abs": 0.0,
+      "allclose_1e_4_1e_5": true
+    },
+    {
+      "model": "bert",
+      "variant": "external",
+      "mem": {
+        "rss": 1135.57,
+        "private": 1597.48,
+        "peak_rss": 1145.133,
+        "peak_private": 1597.508
+      },
+      "load_s": 1.0326,
+      "warm_median_ms_per_input": [
+        35.491,
+        42.562,
+        32.106,
+        45.349,
+        36.718,
+        85.942
+      ],
+      "identical": true,
+      "max_abs": 0.0,
+      "allclose_1e_4_1e_5": true
+    },
+    {
+      "model": "bert",
+      "variant": "gather16",
+      "mem": {
+        "rss": 1136.168,
+        "private": 1598.371,
+        "peak_rss": 1145.848,
+        "peak_private": 1598.375
+      },
+      "load_s": 1.0538,
+      "warm_median_ms_per_input": [
+        35.535,
+        36.459,
+        27.679,
+        48.437,
+        28.582,
+        85.167
+      ],
+      "identical": true,
+      "max_abs": 0.0,
+      "allclose_1e_4_1e_5": true
+    },
+    {
+      "model": "bert",
+      "variant": "half",
+      "mem": {
+        "rss": 1529.32,
+        "private": 1591.57,
+        "peak_rss": 1529.32,
+        "peak_private": 1591.605
+      },
+      "load_s": 0.484,
+      "warm_median_ms_per_input": [
+        94.0,
+        109.0,
+        109.0,
+        125.0,
+        109.0,
+        203.0
+      ],
+      "identical": false,
+      "max_abs": 9.5367431640625e-06,
+      "allclose_1e_4_1e_5": true
+    },
+    {
+      "model": "bert",
+      "variant": "half-noarena",
+      "mem": {
+        "rss": 604.133,
+        "private": 535.133,
+        "peak_rss": 1049.094,
+        "peak_private": 981.09
+      },
+      "load_s": 0.422,
+      "warm_median_ms_per_input": [
+        156.0,
+        156.0,
+        125.0,
+        140.0,
+        110.0,
+        188.0
+      ],
+      "identical": false,
+      "max_abs": 9.5367431640625e-06,
+      "allclose_1e_4_1e_5": true
+    },
+    {
+      "model": "g2pw",
+      "variant": "baseline",
+      "mem": {
+        "rss": 896.594,
+        "private": 1357.344,
+        "peak_rss": 896.594,
+        "peak_private": 1373.676
+      },
+      "load_s": 0.641,
+      "warm_median_ms_per_input": [
+        16.0,
+        16.0,
+        15.0,
+        32.0,
+        15.0,
+        63.0
+      ],
+      "phones_equal": true,
+      "alignment_equal": true
+    },
+    {
+      "model": "g2pw",
+      "variant": "half",
+      "mem": {
+        "rss": 501.863,
+        "private": 816.758,
+        "peak_rss": 501.863,
+        "peak_private": 816.758
+      },
+      "load_s": 0.141,
+      "warm_median_ms_per_input": [
+        32.0,
+        47.0,
+        31.0,
+        78.0,
+        31.0,
+        141.0
+      ],
+      "phones_equal": true,
+      "alignment_equal": true
+    },
+    {
+      "model": "g2pw",
+      "variant": "half-noarena",
+      "mem": {
+        "rss": 454.219,
+        "private": 749.406,
+        "peak_rss": 480.559,
+        "peak_private": 775.859
+      },
+      "load_s": 0.125,
+      "warm_median_ms_per_input": [
+        62.0,
+        62.0,
+        31.0,
+        94.0,
+        31.0,
+        157.0
+      ],
+      "phones_equal": true,
+      "alignment_equal": true
+    }
+  ],
+  "storage": {
+    "bert_dynamic_large_fp16_exact_values": 298983424,
+    "g2pw_dynamic_large_fp16_values": 158650536,
+    "g2pw_rounding_changed": 158631094,
+    "g2pw_max_abs_weight_rounding": 0.0019521713256835938,
+    "bert_embedding_fp32_aligned_bytes": 88678400,
+    "bert_embedding_fp16_aligned_bytes": 44371968
+  },
+  "texts": [
+    "今天是星期五，出门记得带伞。",
+    "银行行长在银行门口，重说了重庆的地名。",
+    "我想重新学音乐。",
+    "我们沿着河岸走了三公里，到了那里，发现港口已停满船。",
+    "这把钥匙拿得动吗？",
+    "今天下午三点，我们在图书馆门口见。天气预报说下午可能会下雨，你出门前记得带把伞。到了以后给我打个电话，我会在门口等你。"
+  ]
+}

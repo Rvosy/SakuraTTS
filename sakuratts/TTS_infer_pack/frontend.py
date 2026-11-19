@@ -24,19 +24,21 @@ def load_frontend(config_path, config, package, manifest):
     """Construct only the implementation declared by this resource package."""
     from ..text.LangSegmenter import LanguageSegmenter
     from .TextPreprocessor import TextFrontend
-    from ..text.processors import JapaneseProcessor, EnglishProcessor
+    from ..text.processors import ChineseProcessor, EnglishProcessor, JapaneseProcessor
 
     if manifest["format"] != JAPANESE.resource_format:
         raise ValueError("Unsupported frontend resource package")
     languages = {JAPANESE.code}
     if "english_g2p" in manifest:
         languages.add("en")
+    if "chinese_g2p" in manifest:
+        languages.add("zh")
     if not set(config.get("languages", (JAPANESE.code,))).issubset(languages):
         raise ValueError("This frontend resource package provides " + ", ".join(sorted(languages)) + " only")
     root = Path(config_path).parent
     package = Path(package).resolve()
     profile = manifest.get("japanese_g2p", {"implementation": "pyopenjtalk-plus"})
-    japanese = segmenter = None
+    japanese = segmenter = chinese = None
     try:
         if profile["implementation"] == "pyopenjtalk-classic":
             from ..text.classic_japanese import ClassicJapaneseG2P
@@ -67,10 +69,17 @@ def load_frontend(config_path, config, package, manifest):
             if english["implementation"] != "gpt-sovits-english-v1":
                 raise ValueError("Unsupported English frontend profile")
             processors["en"] = EnglishProcessor(EnglishG2P(package / english["directory"], symbols))
+        if "chinese_g2p" in manifest:
+            spec = manifest["chinese_g2p"]
+            if spec["implementation"] != "gpt-sovits-chinese-v2-onnx":
+                raise ValueError("Unsupported Chinese frontend profile")
+            chinese = ChineseProcessor(package / spec["directory"])
+            processors["zh"] = chinese
         text = TextFrontend(processors, symbols, segmenter)
-        return FrontendRuntime(text, (japanese, segmenter), profile)
+        components = (japanese, segmenter, chinese) if chinese else (japanese, segmenter)
+        return FrontendRuntime(text, components, profile)
     except BaseException as error:
-        for component in (segmenter, japanese):
+        for component in (chinese, segmenter, japanese):
             if component is not None:
                 try:
                     component.close()

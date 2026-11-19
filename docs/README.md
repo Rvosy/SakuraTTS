@@ -10,6 +10,7 @@
 | HTTP 客户端接入与当前能力表 | [API V2 使用说明](api-v2-guide.md) |
 | MaiBot 语音插件、同机部署与独立升级 | [MaiBot 插件说明](https://github.com/Rvosy/SakuraTTS/blob/main/integrations/maibot_sakuratts/README.md) |
 | 英文与日英混合资源准备 | [英文前端](english-frontend.md) |
+| 普通话合成、本地资源导出与中文参考录音 | [普通话前端](chinese-frontend.md) |
 | Windows 模型与运行资源准备 | [Windows 指南](setup-windows-nvidia.md)、[独立 ORT 组件](setup-ort-worker-offline.md) |
 | CPU 与 AMD 核显的安装、选择和资源配置 | [CPU / DirectML 推理](cpu-amd.md) |
 | Linux CPU 源码安装与交付限制 | [Linux 指南](linux.md) |

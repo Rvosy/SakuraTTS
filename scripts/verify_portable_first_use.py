@@ -27,6 +27,7 @@ import wave
 
 
 PROJECT = Path(__file__).resolve().parents[1]
+uses_staged_policy = runpy.run_path(str(PROJECT / "sakuratts/profiles.py"))["uses_staged_policy"]
 TIMEOUT = 900
 TEXT = "おはよう。今日もよろしくね。"
 PREPARATION_MARKERS = ("首次转换 GPT / SoVITS 权重",
@@ -51,11 +52,15 @@ def cache_snapshot(bundle):
     for name in ("models", "references"):
         root = bundle / "cache" / name
         rows = []
-        keys = sorted(p.name for p in root.iterdir()) if root.exists() else []
-        for path in sorted(root.rglob("*")) if root.exists() else []:
-            if path.is_file():
-                stat = path.stat()
-                rows.append([path.relative_to(root).as_posix(), stat.st_size, stat.st_mtime_ns])
+        entries = sorted(root.iterdir()) if root.exists() else []
+        if name == "references":
+            entries = [entry for entry in entries if entry.name != ".preparation-cache"]
+        keys = [entry.name for entry in entries]
+        for entry in entries:
+            for path in sorted(entry.rglob("*")) if entry.is_dir() else [entry]:
+                if path.is_file():
+                    stat = path.stat()
+                    rows.append([path.relative_to(root).as_posix(), stat.st_size, stat.st_mtime_ns])
         result[name] = {"keys": keys, "files": len(rows), "bytes": sum(row[1] for row in rows),
                        "inventory_sha256": hashlib.sha256(json.dumps(rows).encode()).hexdigest()}
     return result
@@ -284,12 +289,14 @@ class Service:
             time.sleep(.2)
         raise TimeoutError("Managed runtime did not reach " + expected)
 
-    def wake(self):
+    def wake(self, profile=None):
         started = time.monotonic()
         self.http("/runtime/wake", {"keep_alive_seconds": 600})
         result = self.state("awake")
-        if not result.get("model_loaded") or result.get("worker_pid") is None:
-            raise AssertionError("Configured model was not loaded after wake")
+        expected = "runtime_init" if uses_staged_policy(profile) else "model_load"
+        if (result["preparation"] != expected or result["model_loaded"] != (expected == "model_load")
+                or result.get("worker_pid") is None):
+            raise AssertionError(f"Expected an awake inference worker with {expected}: {result}")
         self.record["wake_seconds"] = time.monotonic() - started
         self.record["awake"] = result
 
@@ -431,7 +438,7 @@ def verify_first_use(args, report, config, request, port):
         if first.wait_ready()["model_loaded"]:
             raise AssertionError("Managed service loaded a model before wake")
         first.state("sleeping")
-        first.wake()
+        first.wake(args.profile)
         after_wake = cache_snapshot(args.bundle)
         if len(after_wake["models"]["keys"]) != 1 or after_wake["references"]["keys"]:
             raise AssertionError("Wake must convert one model without preparing a reference")
@@ -461,7 +468,8 @@ def verify_first_use(args, report, config, request, port):
 
 
 def verify_reuse(args, report, config, request, port, cached):
-    for mode in ("managed", "direct"):
+    staged = uses_staged_policy(args.profile)
+    for mode in (("managed",) if staged else ("managed", "direct")):
         name = "managed-restart" if mode == "managed" and not args.reuse_cache else mode + "-reuse"
         print("Starting " + mode + " service to verify disk cache reuse", flush=True)
         service = Service(args.bundle, config, args.output, name, mode, port, report)
@@ -470,8 +478,10 @@ def verify_reuse(args, report, config, request, port, cached):
                 raise AssertionError("Startup model_loaded differs from " + mode + " semantics")
             if mode == "managed":
                 service.state("sleeping")
-                service.wake()
+                service.wake(args.profile)
             report["audio"].append(service.synthesize(request, name))
+            if staged and args.reuse_cache:
+                report["audio"].append(service.synthesize(request, name + "-repeat"))
             if mode == "managed":
                 service.sleep()
         service.assert_process_paths()
@@ -480,9 +490,9 @@ def verify_reuse(args, report, config, request, port, cached):
         service.assert_execution(args.backend, args.profile)
 
 
-def speech_request(reference, prompt_text):
-    return {"text": TEXT, "text_lang": "ja", "ref_audio_path": str(reference),
-        "prompt_text": prompt_text, "prompt_lang": "ja", "seed": 1234,
+def speech_request(reference, prompt_text, text=TEXT, text_lang="ja", prompt_lang="ja"):
+    return {"text": text, "text_lang": text_lang, "ref_audio_path": str(reference),
+        "prompt_text": prompt_text, "prompt_lang": prompt_lang, "seed": 1234,
         "top_k": 15, "top_p": 1., "temperature": 1., "repetition_penalty": 1.35,
         "text_split_method": "cut0", "batch_size": 1, "split_bucket": False,
         "parallel_infer": False, "streaming_mode": False, "media_type": "wav"}
@@ -495,7 +505,7 @@ def verify(args, report):
         "sakuratts": {"backend": args.backend, "profile": args.profile}},
         ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (args.output / "external-cwd").mkdir()
-    request = speech_request(args.reference, args.prompt_text)
+    request = speech_request(args.reference, args.prompt_text, args.text, args.text_lang, args.prompt_lang)
     (args.output / "request.json").write_text(json.dumps(request, ensure_ascii=False, indent=2) + "\n",
                                                encoding="utf-8")
     port = available_port(args.port)
@@ -505,10 +515,12 @@ def verify(args, report):
     verify_reuse(args, report, config, request, port, cached)
     comparison = report["pcm_comparison"] = compare_audio([audio["wav"] for audio in report["audio"]])
     if not comparison["within_one_lsb"]:
-        raise AssertionError("Repeated/restarted/direct PCM differs in length or by more than 1 int16 LSB")
+        raise AssertionError("Repeated PCM differs in length or by more than 1 int16 LSB")
     report["checks"].update(configured_execution=True, repeated_pcm_within_one_lsb=True,
-        managed_disk_cache=True, default_direct_disk_cache=True,
+        managed_disk_cache=True,
         sleeping_inference_tree_exited=True, observed_executables_bundled_or_system=True)
+    if not uses_staged_policy(args.profile):
+        report["checks"]["default_direct_disk_cache"] = True
 
 
 def main(argv=None):
@@ -516,6 +528,9 @@ def main(argv=None):
     for name in ("bundle", "gpt", "sovits", "reference", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--prompt-text", required=True)
+    parser.add_argument("--text", default=TEXT)
+    parser.add_argument("--text-lang", default="ja")
+    parser.add_argument("--prompt-lang", default="ja")
     parser.add_argument("--port", type=int)
     parser.add_argument("--backend", choices=("cpu", "directml", "cuda", "mlx"))
     parser.add_argument("--profile", help="Execution profile; defaults to the selected backend preset")

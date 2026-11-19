@@ -3,7 +3,7 @@
 Derived from GPT-SoVITS 48b1a0169a28582a8984402f82cf438d3bfa6aca:
 TextPreprocessor.py, text_segmentation_method.py and text/LangSegmenter/langsegmenter.py.
 MIT, Copyright (c) 2024 RVC-Boss; see docs/third-party/GPT-SoVITS-LICENSE.txt.
-Japanese and English phone and feature preparation are supported.
+Phone and feature preparation uses the language processors in the loaded resource package.
 The original split-lang/full-fastText routing remains active for every mode.
 """
 

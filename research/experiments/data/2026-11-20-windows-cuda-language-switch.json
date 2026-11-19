@@ -1,0 +1,453 @@
+{
+  "utc": "2026-11-19T19:36:00.982820+00:00",
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 5070 Ti",
+    "luid": "0x00000000_0x0001a059",
+    "node_mask": 1
+  },
+  "manifest_sha256": "dfc67571e19769eb42f6bd70a482b21b67a332f977486371df90385fc518ee61",
+  "gpt_sha256": "2f39cbde85bcd7c50f8b929ac79618527678523f051df16a1006a74e29e4754c",
+  "sovits_sha256": "75fae9a6d60d6a824528127423d4b656ea0fdceb2ac3432760545aeb64265f4f",
+  "reference_sha256": "e4b51c3f2754de67dbb75cf49634e4518d1008c02e69d122350c3df3084f991e",
+  "raw_directory": "outputs/mandarin-release/5070ti-language-switch-seed7",
+  "parameters": {
+    "prompt_text": "六点多出发吧，到那边八点多应该。",
+    "prompt_lang": "zh",
+    "seed": 7,
+    "top_k": 15,
+    "top_p": 1.0,
+    "temperature": 1.0,
+    "repetition_penalty": 1.35,
+    "text_split_method": "cut0",
+    "batch_size": 1,
+    "split_bucket": false,
+    "parallel_infer": false,
+    "streaming_mode": false,
+    "media_type": "wav"
+  },
+  "order": [
+    "zh",
+    "ja",
+    "en"
+  ],
+  "texts": {
+    "zh": "今天下午三点，我们在图书馆门口见。",
+    "ja": "今日の午後三時に、図書館の前で会いましょう。",
+    "en": "Let's meet in front of the library at three this afternoon."
+  },
+  "warmup_cycles": 1,
+  "hot_cycles": 3,
+  "metric": "Full HTTP POST to received WAV body; no WDDM sampling in this run.",
+  "profiles": [
+    {
+      "profile": "fp16",
+      "model": {
+        "name": "Wass_e4_s108",
+        "backend": "cuda",
+        "languages": [
+          "ja",
+          "en",
+          "zh"
+        ]
+      },
+      "generation": 1,
+      "checks": {
+        "one_worker_and_model": true,
+        "one_reference_and_profile": true,
+        "observed_executables_bundled_or_system": true,
+        "owned_process_tree_reaped": true,
+        "configured_execution": true
+      },
+      "hot_medians": {
+        "zh": {
+          "wav_seconds": 3.1,
+          "http_ms": 218.329,
+          "rtf": 0.070429
+        },
+        "ja": {
+          "wav_seconds": 4.02,
+          "http_ms": 198.695,
+          "rtf": 0.049427
+        },
+        "en": {
+          "wav_seconds": 4.02,
+          "http_ms": 180.922,
+          "rtf": 0.045006
+        }
+      },
+      "requests": [
+        {
+          "language": "zh",
+          "index": 0,
+          "wav_seconds": 3.1,
+          "pcm_sha256": "09a5112d7982bd47fb5572f473dbc216f41de44d75fa61e6da4e46844cd81401",
+          "http_ms": 4368.038,
+          "rtf": 1.409045
+        },
+        {
+          "language": "ja",
+          "index": 0,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "9bf362cba5d98d2666f6104aca648b79c23394bb7a82c0a28f9fcdfdeaef45a7",
+          "http_ms": 210.651,
+          "rtf": 0.052401
+        },
+        {
+          "language": "en",
+          "index": 0,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "48ba1326695897a39c7b619502b8b5478630fcfc1e5676e2ca26eb98454e9ac4",
+          "http_ms": 209.433,
+          "rtf": 0.052098
+        },
+        {
+          "language": "zh",
+          "index": 1,
+          "wav_seconds": 3.1,
+          "pcm_sha256": "09a5112d7982bd47fb5572f473dbc216f41de44d75fa61e6da4e46844cd81401",
+          "http_ms": 218.329,
+          "rtf": 0.070429
+        },
+        {
+          "language": "ja",
+          "index": 1,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "9bf362cba5d98d2666f6104aca648b79c23394bb7a82c0a28f9fcdfdeaef45a7",
+          "http_ms": 189.194,
+          "rtf": 0.047063
+        },
+        {
+          "language": "en",
+          "index": 1,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "48ba1326695897a39c7b619502b8b5478630fcfc1e5676e2ca26eb98454e9ac4",
+          "http_ms": 179.8,
+          "rtf": 0.044726
+        },
+        {
+          "language": "zh",
+          "index": 2,
+          "wav_seconds": 3.1,
+          "pcm_sha256": "09a5112d7982bd47fb5572f473dbc216f41de44d75fa61e6da4e46844cd81401",
+          "http_ms": 201.567,
+          "rtf": 0.065022
+        },
+        {
+          "language": "ja",
+          "index": 2,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "9bf362cba5d98d2666f6104aca648b79c23394bb7a82c0a28f9fcdfdeaef45a7",
+          "http_ms": 198.695,
+          "rtf": 0.049427
+        },
+        {
+          "language": "en",
+          "index": 2,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "48ba1326695897a39c7b619502b8b5478630fcfc1e5676e2ca26eb98454e9ac4",
+          "http_ms": 180.922,
+          "rtf": 0.045006
+        },
+        {
+          "language": "zh",
+          "index": 3,
+          "wav_seconds": 3.1,
+          "pcm_sha256": "09a5112d7982bd47fb5572f473dbc216f41de44d75fa61e6da4e46844cd81401",
+          "http_ms": 222.088,
+          "rtf": 0.071641
+        },
+        {
+          "language": "ja",
+          "index": 3,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "9bf362cba5d98d2666f6104aca648b79c23394bb7a82c0a28f9fcdfdeaef45a7",
+          "http_ms": 220.154,
+          "rtf": 0.054765
+        },
+        {
+          "language": "en",
+          "index": 3,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "48ba1326695897a39c7b619502b8b5478630fcfc1e5676e2ca26eb98454e9ac4",
+          "http_ms": 194.79,
+          "rtf": 0.048455
+        }
+      ]
+    },
+    {
+      "profile": "low-memory",
+      "model": {
+        "name": "Wass_e4_s108",
+        "backend": "cuda",
+        "languages": [
+          "ja",
+          "en",
+          "zh"
+        ]
+      },
+      "generation": 1,
+      "checks": {
+        "one_worker_and_model": true,
+        "one_reference_and_profile": true,
+        "observed_executables_bundled_or_system": true,
+        "owned_process_tree_reaped": true,
+        "configured_execution": true
+      },
+      "hot_medians": {
+        "zh": {
+          "wav_seconds": 3.1,
+          "http_ms": 815.86,
+          "rtf": 0.263181
+        },
+        "ja": {
+          "wav_seconds": 4.02,
+          "http_ms": 795.42,
+          "rtf": 0.197866
+        },
+        "en": {
+          "wav_seconds": 4.02,
+          "http_ms": 846.885,
+          "rtf": 0.210668
+        }
+      },
+      "requests": [
+        {
+          "language": "zh",
+          "index": 0,
+          "wav_seconds": 3.1,
+          "pcm_sha256": "09a5112d7982bd47fb5572f473dbc216f41de44d75fa61e6da4e46844cd81401",
+          "http_ms": 4732.068,
+          "rtf": 1.526474
+        },
+        {
+          "language": "ja",
+          "index": 0,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "9bf362cba5d98d2666f6104aca648b79c23394bb7a82c0a28f9fcdfdeaef45a7",
+          "http_ms": 894.089,
+          "rtf": 0.22241
+        },
+        {
+          "language": "en",
+          "index": 0,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "48ba1326695897a39c7b619502b8b5478630fcfc1e5676e2ca26eb98454e9ac4",
+          "http_ms": 885.352,
+          "rtf": 0.220237
+        },
+        {
+          "language": "zh",
+          "index": 1,
+          "wav_seconds": 3.1,
+          "pcm_sha256": "09a5112d7982bd47fb5572f473dbc216f41de44d75fa61e6da4e46844cd81401",
+          "http_ms": 825.506,
+          "rtf": 0.266292
+        },
+        {
+          "language": "ja",
+          "index": 1,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "9bf362cba5d98d2666f6104aca648b79c23394bb7a82c0a28f9fcdfdeaef45a7",
+          "http_ms": 800.576,
+          "rtf": 0.199148
+        },
+        {
+          "language": "en",
+          "index": 1,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "48ba1326695897a39c7b619502b8b5478630fcfc1e5676e2ca26eb98454e9ac4",
+          "http_ms": 846.885,
+          "rtf": 0.210668
+        },
+        {
+          "language": "zh",
+          "index": 2,
+          "wav_seconds": 3.1,
+          "pcm_sha256": "09a5112d7982bd47fb5572f473dbc216f41de44d75fa61e6da4e46844cd81401",
+          "http_ms": 815.86,
+          "rtf": 0.263181
+        },
+        {
+          "language": "ja",
+          "index": 2,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "9bf362cba5d98d2666f6104aca648b79c23394bb7a82c0a28f9fcdfdeaef45a7",
+          "http_ms": 771.337,
+          "rtf": 0.191875
+        },
+        {
+          "language": "en",
+          "index": 2,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "48ba1326695897a39c7b619502b8b5478630fcfc1e5676e2ca26eb98454e9ac4",
+          "http_ms": 911.554,
+          "rtf": 0.226755
+        },
+        {
+          "language": "zh",
+          "index": 3,
+          "wav_seconds": 3.1,
+          "pcm_sha256": "09a5112d7982bd47fb5572f473dbc216f41de44d75fa61e6da4e46844cd81401",
+          "http_ms": 789.613,
+          "rtf": 0.254714
+        },
+        {
+          "language": "ja",
+          "index": 3,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "9bf362cba5d98d2666f6104aca648b79c23394bb7a82c0a28f9fcdfdeaef45a7",
+          "http_ms": 795.42,
+          "rtf": 0.197866
+        },
+        {
+          "language": "en",
+          "index": 3,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "48ba1326695897a39c7b619502b8b5478630fcfc1e5676e2ca26eb98454e9ac4",
+          "http_ms": 808.515,
+          "rtf": 0.201123
+        }
+      ]
+    },
+    {
+      "profile": "minimum-memory",
+      "model": {
+        "name": "Wass_e4_s108",
+        "backend": "cuda",
+        "languages": [
+          "ja",
+          "en",
+          "zh"
+        ]
+      },
+      "generation": 1,
+      "checks": {
+        "one_worker_and_model": true,
+        "one_reference_and_profile": true,
+        "observed_executables_bundled_or_system": true,
+        "owned_process_tree_reaped": true,
+        "configured_execution": true
+      },
+      "hot_medians": {
+        "zh": {
+          "wav_seconds": 3.1,
+          "http_ms": 2199.378,
+          "rtf": 0.709477
+        },
+        "ja": {
+          "wav_seconds": 4.02,
+          "http_ms": 2241.846,
+          "rtf": 0.557673
+        },
+        "en": {
+          "wav_seconds": 4.02,
+          "http_ms": 2199.132,
+          "rtf": 0.547048
+        }
+      },
+      "requests": [
+        {
+          "language": "zh",
+          "index": 0,
+          "wav_seconds": 3.1,
+          "pcm_sha256": "09a5112d7982bd47fb5572f473dbc216f41de44d75fa61e6da4e46844cd81401",
+          "http_ms": 6304.855,
+          "rtf": 2.033824
+        },
+        {
+          "language": "ja",
+          "index": 0,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "9bf362cba5d98d2666f6104aca648b79c23394bb7a82c0a28f9fcdfdeaef45a7",
+          "http_ms": 2247.693,
+          "rtf": 0.559128
+        },
+        {
+          "language": "en",
+          "index": 0,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "48ba1326695897a39c7b619502b8b5478630fcfc1e5676e2ca26eb98454e9ac4",
+          "http_ms": 2510.349,
+          "rtf": 0.624465
+        },
+        {
+          "language": "zh",
+          "index": 1,
+          "wav_seconds": 3.1,
+          "pcm_sha256": "09a5112d7982bd47fb5572f473dbc216f41de44d75fa61e6da4e46844cd81401",
+          "http_ms": 2356.751,
+          "rtf": 0.760242
+        },
+        {
+          "language": "ja",
+          "index": 1,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "9bf362cba5d98d2666f6104aca648b79c23394bb7a82c0a28f9fcdfdeaef45a7",
+          "http_ms": 2207.029,
+          "rtf": 0.549012
+        },
+        {
+          "language": "en",
+          "index": 1,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "48ba1326695897a39c7b619502b8b5478630fcfc1e5676e2ca26eb98454e9ac4",
+          "http_ms": 2199.132,
+          "rtf": 0.547048
+        },
+        {
+          "language": "zh",
+          "index": 2,
+          "wav_seconds": 3.1,
+          "pcm_sha256": "09a5112d7982bd47fb5572f473dbc216f41de44d75fa61e6da4e46844cd81401",
+          "http_ms": 2199.378,
+          "rtf": 0.709477
+        },
+        {
+          "language": "ja",
+          "index": 2,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "9bf362cba5d98d2666f6104aca648b79c23394bb7a82c0a28f9fcdfdeaef45a7",
+          "http_ms": 2256.904,
+          "rtf": 0.561419
+        },
+        {
+          "language": "en",
+          "index": 2,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "48ba1326695897a39c7b619502b8b5478630fcfc1e5676e2ca26eb98454e9ac4",
+          "http_ms": 2284.366,
+          "rtf": 0.56825
+        },
+        {
+          "language": "zh",
+          "index": 3,
+          "wav_seconds": 3.1,
+          "pcm_sha256": "09a5112d7982bd47fb5572f473dbc216f41de44d75fa61e6da4e46844cd81401",
+          "http_ms": 2196.464,
+          "rtf": 0.708537
+        },
+        {
+          "language": "ja",
+          "index": 3,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "9bf362cba5d98d2666f6104aca648b79c23394bb7a82c0a28f9fcdfdeaef45a7",
+          "http_ms": 2241.846,
+          "rtf": 0.557673
+        },
+        {
+          "language": "en",
+          "index": 3,
+          "wav_seconds": 4.02,
+          "pcm_sha256": "48ba1326695897a39c7b619502b8b5478630fcfc1e5676e2ca26eb98454e9ac4",
+          "http_ms": 2125.287,
+          "rtf": 0.528678
+        }
+      ]
+    }
+  ],
+  "distinct_hot_pcm_per_language": {
+    "zh": 1,
+    "ja": 1,
+    "en": 1
+  }
+}

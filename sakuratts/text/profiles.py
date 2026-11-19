@@ -18,7 +18,10 @@ JAPANESE = LanguageProfile(
 ENGLISH = LanguageProfile(
     "en", "English", ("en",), ".", "sakuratts-japanese-frontend-resources-v1",
 )
-LANGUAGE_PROFILES = {profile.code: profile for profile in (JAPANESE, ENGLISH)}
+CHINESE = LanguageProfile(
+    "zh", "Mandarin Chinese", ("zh", "all_zh"), "。", "sakuratts-chinese-v2-resources-v1",
+)
+LANGUAGE_PROFILES = {profile.code: profile for profile in (JAPANESE, ENGLISH, CHINESE)}
 SUPPORTED_LANGUAGES = tuple(LANGUAGE_PROFILES)
 SUPPORTED_LANGUAGE_MODES = tuple(mode for profile in LANGUAGE_PROFILES.values() for mode in profile.modes) + ("auto",)
 DEFAULT_LANGUAGE = JAPANESE.code

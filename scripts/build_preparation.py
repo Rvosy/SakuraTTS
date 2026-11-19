@@ -180,6 +180,12 @@ def make_plan(args):
     for path in tree(args.english_resources):
         plan.add(path, "official/english/" + path.relative_to(args.english_resources).as_posix(),
                  "english-frontend-resources")
+    if args.chinese_resources:
+        component = "chinese-frontend-resources"
+        manifest, resources = _helpers.chinese_resources(args.chinese_resources)
+        plan.components[component] = manifest
+        for path in resources:
+            plan.add(path, "official/chinese/" + path.relative_to(args.chinese_resources).as_posix(), component)
     for name in ("GPT-SoVITS-model-card.md", "fasttext-language-identification.html", "fasttext-CC-BY-SA-3.0.txt",
                  "HuBERT-model-card.md", "ERes2NetV2-model-card.md", "Apache-2.0.txt", "portable-resources.md"):
         plan.add(Path(__file__).resolve().parents[1] / "docs/third-party" / name, "licenses/" + name, "auxiliary-model-notices")
@@ -207,6 +213,9 @@ def license_inventory(plan):
                  (Path(path).name.upper().startswith(("LICENSE", "COPYING", "NOTICE")) or Path(path).name in ("METADATA", "PKG-INFO"))]
         result[name] = {**component, "notices": sorted(files)}
     result["cpython"] = {"notices": ["LICENSE.txt"]}
+    if "chinese-frontend-resources" in plan.components:
+        result["chinese-frontend-resources"]["notices"] = sorted(
+            path for path in plan.files if path.startswith("official/chinese/notices/"))
     result["gpt-sovits-source"] = {"notices": sorted(path for path in plan.files if path.startswith("official/") and Path(path).name.upper().startswith(("LICENSE", "NOTICE", "COPYING")))}
     result["openjtalk-dictionary"] = {"notices": sorted(path for path in plan.files if "/pyopenjtalk/" in path and Path(path).name == "COPYING")}
     result["public-analysis-resource"] = {
@@ -276,6 +285,7 @@ def main():
     parser.add_argument("--language-model", type=Path, help="Local lid.176.bin; defaults to the upstream pretrained_models directory")
     parser.add_argument("--runtime-site", type=Path,
                         help="CPU torch, torchaudio and onnxruntime site-packages overriding --site")
+    parser.add_argument("--chinese-resources", type=Path, help="Offline resource directory produced by prepare_chinese_frontend.py")
     parser.add_argument("--english-resources", type=Path, required=True,
                         help="Offline English data exported by tools/prepare_english_frontend.py --export")
     args = parser.parse_args()

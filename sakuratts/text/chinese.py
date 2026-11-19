@@ -8,9 +8,11 @@ G2PW is supplied by the caller; this module never loads upstream Python.
 """
 
 import json
+import logging
 from pathlib import Path
 import re
 
+import jieba_fast
 import jieba_fast.posseg as psg
 import numpy as np
 from pypinyin.contrib.tone_convert import to_finals_tone3, to_initials
@@ -162,13 +164,14 @@ class ChinesePhones:
     """
 
     def __init__(self, resource_dir, g2pw):
+        jieba_fast.setLogLevel(logging.WARNING)
         resource_dir = Path(resource_dir)
-        manifest = json.loads((resource_dir / "manifest.json").read_text())
+        manifest = json.loads((resource_dir / "manifest.json").read_text(encoding="utf-8"))
         if manifest["format"] != "sakuratts-chinese-v2-resources-v1":
             raise ValueError("Unsupported Chinese phone resource format")
-        self.corrections = json.loads((resource_dir / "corrections.json").read_text())
-        self.symbol_map = json.loads((resource_dir / "pinyin-symbols.json").read_text())
-        self.symbols = json.loads((resource_dir / "symbols-v2.json").read_text())
+        self.corrections = json.loads((resource_dir / "corrections.json").read_text(encoding="utf-8"))
+        self.symbol_map = json.loads((resource_dir / "pinyin-symbols.json").read_text(encoding="utf-8"))
+        self.symbols = json.loads((resource_dir / "symbols-v2.json").read_text(encoding="utf-8"))
         self.symbol_ids = {symbol: index for index, symbol in enumerate(self.symbols)}
         self.g2pw = g2pw
         self.tone_modifier = ToneSandhi()
@@ -267,8 +270,7 @@ class ChinesePhones:
 def chinese_bert_features(normalized, word2ph, bert, tokenizer):
     """Expand the required hidden_states[-3] prefix output to phone features.
 
-    The caller supplies MLXBertFeatures and chooses its execution stream. No
-    zero-feature fallback exists for Chinese. Returned shape is [1024, phones].
+    The caller supplies the BERT prefix. Returned shape is [1024, phones].
     """
     assert len(normalized) == len(word2ph)
     if not word2ph:

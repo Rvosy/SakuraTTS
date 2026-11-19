@@ -1,0 +1,163 @@
+{
+  "model": {
+    "gpt": "s1v3.ckpt",
+    "sovits": "s2Gv2ProPlus.pth"
+  },
+  "backend": "cuda",
+  "profile": "fp16",
+  "seed": 1234,
+  "text_split_method": "cut0",
+  "reference": {
+    "file": "english-reference-librispeech-6313-76958-0021.wav",
+    "start": 0.0,
+    "end": 3.56,
+    "rate": 16000,
+    "sha256": "483c0e2c892b1a7fa650630d66472ea8c8bc67c9522ca6e33b615011a810a5af",
+    "language": "en",
+    "text": "Keep a going and if you're lucky you'll run plumb into them.",
+    "source": "fairseq/examples/hubert/tests/6313-76958-0021.flac",
+    "transcript_source": "fairseq/examples/hubert/tests/test_finetuned_asr.sh:15"
+  },
+  "cases": {
+    "short": {
+      "expected": "Let's meet in front of the library at three this afternoon.",
+      "seconds": 3.62,
+      "sample_rate": 32000,
+      "gpt_precision": "fp16",
+      "acoustic_precision": "fp16",
+      "fragments": [
+        {
+          "norm": "Let's meet in front of the library at three this afternoon.",
+          "phones": 41,
+          "semantic_tokens": 83,
+          "stop": [
+            "argmax_eos",
+            "sample_eos"
+          ]
+        }
+      ],
+      "asr": "Let's meet in front of the library at 3 this afternoon.",
+      "asr_segments": [
+        [
+          0.0,
+          3.36,
+          " Let's meet in front of the library at 3 this afternoon."
+        ]
+      ],
+      "normalized_word_count": 11,
+      "asr_word_count": 11,
+      "distance": 0,
+      "wer": 0.0
+    },
+    "long": {
+      "expected": "Let's meet in front of the library at three this afternoon. The forecast says it might rain, so remember to bring an umbrella when you leave. Call me when you get there. I'll be waiting by the entrance.",
+      "seconds": 12.42,
+      "sample_rate": 32000,
+      "gpt_precision": "fp16",
+      "acoustic_precision": "fp16",
+      "fragments": [
+        {
+          "norm": "Let's meet in front of the library at three this afternoon. The forecast says it might rain, so remember to bring an umbrella when you leave. Call me when you get there. I'll be waiting by the entrance.",
+          "phones": 133,
+          "semantic_tokens": 303,
+          "stop": [
+            "argmax_eos"
+          ]
+        }
+      ],
+      "asr": "Let's meet in front of the library at three this afternoon. The forecast says it might train, so remember to bring an umbrella when you leave. Call me when you get there. I'll be waiting by the entrance.",
+      "asr_segments": [
+        [
+          0.0,
+          2.86,
+          " Let's meet in front of the library at three this afternoon."
+        ],
+        [
+          3.38,
+          7.8,
+          " The forecast says it might train, so remember to bring an umbrella when you leave."
+        ],
+        [
+          8.42,
+          9.8,
+          " Call me when you get there."
+        ],
+        [
+          10.42,
+          11.98,
+          " I'll be waiting by the entrance."
+        ]
+      ],
+      "normalized_word_count": 38,
+      "asr_word_count": 38,
+      "distance": 1,
+      "wer": 0.0263
+    }
+  },
+  "recognizer": {
+    "name": "Whisper-large-v3-turbo",
+    "device": "cpu",
+    "compute_type": "int8",
+    "language": "en",
+    "initial_prompt": null,
+    "hotwords": null,
+    "vad": false,
+    "beam_size": 5,
+    "temperature": 0
+  },
+  "wass_reference_language": "zh",
+  "wass_seed_check": [
+    {
+      "profile": "fp16",
+      "seed": 1234,
+      "seconds": 1.3,
+      "text": "Thank you."
+    },
+    {
+      "profile": "fp16",
+      "seed": 2026,
+      "seconds": 1.02,
+      "text": "Thank you."
+    },
+    {
+      "profile": "fp16",
+      "seed": 42,
+      "seconds": 2.5,
+      "text": "Mm-hmm. Mm-hmm."
+    },
+    {
+      "profile": "fp16",
+      "seed": 7,
+      "seconds": 4.02,
+      "text": "Let's meet in front of the library at 3 this afternoon."
+    },
+    {
+      "profile": "fp32",
+      "seed": 1234,
+      "seconds": 1.3,
+      "text": "Thank you."
+    },
+    {
+      "profile": "fp32",
+      "seed": 2026,
+      "seconds": 1.26,
+      "text": "Thank you."
+    },
+    {
+      "profile": "fp32",
+      "seed": 42,
+      "seconds": 2.5,
+      "text": "Thank you."
+    },
+    {
+      "profile": "fp32",
+      "seed": 7,
+      "seconds": 4.02,
+      "text": "Let's meet in front of the library at 3 this afternoon."
+    }
+  ],
+  "wass_original_cpu_control": {
+    "duration": 1.42,
+    "transcription": "Thank you."
+  }
+}

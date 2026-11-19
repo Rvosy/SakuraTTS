@@ -116,21 +116,16 @@ def prepare_onnx_input(
     input_ids = []
     token_type_ids = []
     attention_masks = []
-    phoneme_masks = []
+    if use_mask:
+        phoneme_masks = np.zeros((len(texts), len(labels)), dtype=np.float32)
+    else:
+        phoneme_masks = np.ones((len(texts), len(labels)), dtype=np.float32)
     char_ids = []
     position_ids = []
     tokenized_cache = {}
 
     if char2id is None:
         char2id = {char: idx for idx, char in enumerate(chars)}
-    if use_mask:
-        if char_phoneme_masks is None:
-            char_phoneme_masks = {
-                char: [1 if i in char2phonemes[char] else 0 for i in range(len(labels))]
-                for char in char2phonemes
-            }
-    else:
-        full_phoneme_mask = [1] * len(labels)
 
     for idx in range(len(texts)):
         text = (truncated_texts if window_size else texts)[idx].lower()
@@ -196,16 +191,16 @@ def prepare_onnx_input(
 
         query_char = text_for_query[query_id_for_query]
         if use_mask:
-            phoneme_mask = char_phoneme_masks[query_char]
-        else:
-            phoneme_mask = full_phoneme_mask
+            if char_phoneme_masks is None:
+                phoneme_masks[idx, char2phonemes[query_char]] = 1
+            else:
+                phoneme_masks[idx] = char_phoneme_masks[query_char]
         char_id = char2id[query_char]
         position_id = text2token_for_query[query_id_for_query] + 1  # [CLS] token locate at first place
 
         input_ids.append(input_id)
         token_type_ids.append(token_type_id)
         attention_masks.append(attention_mask)
-        phoneme_masks.append(phoneme_mask)
         char_ids.append(char_id)
         position_ids.append(position_id)
 
@@ -218,7 +213,7 @@ def prepare_onnx_input(
         "input_ids": np.array(_pad_sequences(input_ids, pad_value=0)).astype(np.int64),
         "token_type_ids": np.array(_pad_sequences(token_type_ids, pad_value=0)).astype(np.int64),
         "attention_masks": np.array(_pad_sequences(attention_masks, pad_value=0)).astype(np.int64),
-        "phoneme_masks": np.array(phoneme_masks).astype(np.float32),
+        "phoneme_masks": phoneme_masks,
         "char_ids": np.array(char_ids).astype(np.int64),
         "position_ids": np.array(position_ids).astype(np.int64),
     }
@@ -301,16 +296,10 @@ class G2PWInputs:
         self.labels, self.char2phonemes = label_function(polyphonic_chars)
         self.chars = sorted(self.char2phonemes)
         self.char2id = {char: index for index, char in enumerate(self.chars)}
-        self.char_phoneme_masks = (
-            {char: [1 if i in self.char2phonemes[char] else 0 for i in range(len(self.labels))]
-             for char in self.char2phonemes}
-            if self.use_mask else None
-        )
 
     def prepare(self, texts, query_ids, *, window_size=None, max_len=512):
         return prepare_onnx_input(
             self.tokenizer, labels=self.labels, char2phonemes=self.char2phonemes,
             chars=self.chars, texts=texts, query_ids=query_ids, use_mask=self.use_mask,
             window_size=window_size, max_len=max_len, char2id=self.char2id,
-            char_phoneme_masks=self.char_phoneme_masks,
         )

@@ -13,6 +13,12 @@ from ..text.profiles import language_profile
 logger = logging.getLogger("sakuratts.TTS_infer_pack.reference")
 
 
+def punctuate_transcript(text, language):
+    from .text_segmentation_method import splits
+    prompt = text.strip("\n")
+    return prompt if prompt[-1] in splits else prompt + language_profile(language).terminal
+
+
 class ReferenceCache:
     def __init__(self, engine, settings):
         self.engine = engine
@@ -113,15 +119,11 @@ class ReferenceCache:
         self.preparer.close()
 
     def resolve(self, path, text, language):
-        profile = language_profile(language)
         if not text or not text.strip():
             raise NotImplementedError("Inference without prompt_text is not implemented by the native backend")
         base = self._audio(path)
-        from .text_segmentation_method import splits
         import numpy as np
-        prompt = text.strip("\n")
-        if prompt[-1] not in splits:
-            prompt += profile.terminal
+        prompt = punctuate_transcript(text, language)
         # This cache belongs to one engine and its loaded frontend.
         text_key = (prompt, language)
         if self.text_cache is None or self.text_cache[0] != text_key:

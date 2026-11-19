@@ -24,6 +24,9 @@ CPU / AMD 的当前入口只保留 CPU `int8` 和 DirectML `fp16`，默认参数
 
 文档中的早期方案与交接记录按日期归档：
 
+- [Windows 普通话合成与语言整合包](notes/windows-mandarin-20261120.md)
+- [Windows 普通话前端的系统内存、冷启动与热处理耗时](notes/windows-mandarin-frontend-memory-20261120.md)
+- [RTX 5070 Ti 中日英统一档位、专用显存和 HTTP 耗时](notes/windows-cuda-multilingual-20261120.md)
 - [原生 GPU 初始方案](notes/native-gpu-runtime-proposal-20260919.md)
 - [Mac 日文运行与部署](notes/japanese-runtime-20260920.md)
 - [Windows 接续与便携验收格式](notes/windows-handoff-20260920.md)

@@ -68,7 +68,7 @@ class ReleaseTests(unittest.TestCase):
                          'CMUdict-README.txt', 'GPT-SoVITS-LICENSE.txt', 'Apache-2.0.txt'):
                 (source / name).write_bytes(b'fixture')
             (source / 'source.json').write_text('{"sources": {"upstream": "sha256"}}')
-            rebuild_portable.install_english_resources(root, source, inventory, components)
+            rebuild_portable.install_language_resources(root, source, inventory, components, 'english')
             updated = json.loads(manifest.read_text())
             self.assertEqual((prep / 'official/english/checkpoint.npz').read_bytes(), b'fixture')
             self.assertEqual(components['preparation:english-frontend-resources']['sources'],
@@ -97,8 +97,10 @@ class ReleaseTests(unittest.TestCase):
             names = ['added.py', *['added-1.dist-info/' + name for name in ('METADATA', 'WHEEL', 'LICENSE', 'RECORD')]]
             (metadata / 'RECORD').write_text(''.join(name + ',,\n' for name in names))
             manifest = {'files': {}, 'components': {}}
+            rebuild_portable.record(root, site / 'existing-1.dist-info/METADATA', manifest['files'],
+                                    'runtime/main/site:existing')
             with patch.object(rebuild_portable.builder, 'main_requirements', return_value=['added==1']):
-                rebuild_portable.install_english_dependencies(root, site, source, {}, {},
+                rebuild_portable.install_language_dependencies(root, site, source, {}, {},
                     {'python': '3.12', 'target': 'windows-x64'}, manifest)
             self.assertEqual((site / 'added.py').read_text(), 'added')
             self.assertTrue((site / 'existing-1.dist-info').exists())
@@ -106,6 +108,27 @@ class ReleaseTests(unittest.TestCase):
             self.assertIn('runtime/main/site/added-1.dist-info/LICENSE', manifest['files'])
             for name, row in manifest['files'].items():
                 self.assertEqual(row['sha256'], rebuild_portable.builder.digest(root / name))
+
+    def test_rebuild_recovers_language_dependency_copied_before_manifest_was_saved(self):
+        from test_preparation_builder import put
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            site, source = root / 'runtime/main/site', root / 'dependencies'
+            metadata = 'reader-1.dist-info/METADATA'
+            files = {metadata: 'Name: reader\nVersion: 1\n', 'reader.py': 'installed',
+                     'reader-1.dist-info/WHEEL': 'Tag: py3-none-any\n'}
+            record = 'reader-1.dist-info/RECORD'
+            files[record] = ''.join(name + ',,\n' for name in [*files, record])
+            for name, content in files.items():
+                put(source, name, content)
+            put(site, metadata, files[metadata])
+            manifest = {'files': {}, 'components': {}}
+            with patch.object(rebuild_portable.builder, 'main_requirements', return_value=['reader==1']):
+                rebuild_portable.install_language_dependencies(root, site, source, {}, {},
+                    {'python': '3.12', 'target': 'windows-x64'}, manifest)
+            self.assertEqual((site / 'reader.py').read_text(), 'installed')
+            self.assertEqual(set(manifest['files']), {'runtime/main/site/' + name for name in files})
+            self.assertEqual(manifest['components']['runtime/main/site:reader']['version'], '1')
 
     def test_preparation_controller_upgrade_updates_both_inventories_and_notices(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -218,6 +241,27 @@ class ReleaseTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'不同'):
                 publish_modelscope.publish_index(api,root,'run','commit')
             self.assertEqual(api.uploads,[])
+
+    def test_chinese_download_preserves_default_desktop_package(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            api = Api()
+            published = {}
+            def upload(repo, kind, data, path, **_):
+                published[path] = data
+            api.upload_file = upload
+            for platform, languages in [('windows-x64', ['ja', 'en']), ('macos-arm64', ['ja', 'en']),
+                                        ('windows-x64', ['zh', 'ja', 'en'])]:
+                name = platform + '-' + '-'.join(languages)
+                record = {'platform': platform, 'languages': languages, 'path': name, 'url': name,
+                          'bytes': 1, 'sourceCommit': 'commit', 'releaseId': 'run'}
+                (root / (name + '.json')).write_text(json.dumps(record))
+                api.files[name] = 1
+            publish_modelscope.publish_index(api, root, 'run', 'commit', with_chinese=True)
+            index = json.loads(published['latest-preview.json'])
+            windows, = [p for p in index['packages'] if p['platform'] == 'windows-x64']
+            self.assertEqual(windows['languages'], ['ja', 'en'])
+            self.assertEqual(index['variants'][0]['languages'], ['zh', 'ja', 'en'])
 
     def test_existing_release_archive_is_not_overwritten(self):
         with tempfile.TemporaryDirectory() as temp:

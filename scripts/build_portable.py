@@ -8,6 +8,7 @@ import importlib.util
 import json
 import re
 from pathlib import Path, PurePosixPath
+from runpy import run_path
 import shutil
 import stat
 import subprocess
@@ -27,7 +28,7 @@ BACKEND_EXTRAS = {("windows-x64", "cuda"): "nvidia",
                   ("windows-x64", "directml"): "directml",
                   ("windows-x64", "cpu"): "cpu",
                   ("macos-arm64", "mlx"): "mlx"}
-LANGUAGE_EXTRAS = {"ja": "japanese", "en": "english"}
+LANGUAGE_EXTRAS = {"ja": "japanese", "en": "english", "zh": "chinese"}
 SERVICE_EXTRAS = {"http": "server"}
 PREPARATION_THREADPOOLCTL = "threadpoolctl>=3.6.0"
 
@@ -38,7 +39,9 @@ def read_recipe(path):
     if (recipe["target"], recipe["backend"]) not in BACKEND_EXTRAS:
         raise ValueError("Portable assembly supports windows-x64 with backend cuda, directml or cpu, and macos-arm64 with mlx")
     if "ja" not in recipe["languages"] or set(recipe["languages"]) - LANGUAGE_EXTRAS.keys():
-        raise ValueError("Portable language components require ja, with optional en")
+        raise ValueError("Portable language components require ja, with optional en or zh")
+    if "zh" in recipe["languages"] and recipe["target"] != "windows-x64":
+        raise ValueError("The Chinese portable runtime is available for windows-x64")
     if set(recipe["services"]) - SERVICE_EXTRAS.keys():
         raise ValueError("Unknown service component; supported services: http")
     selected = {key: recipe[key] for key in ("target", "backend", "languages", "services")}
@@ -124,6 +127,11 @@ def distributions(site):
             raise ValueError("Multiple installed distributions named " + name)
         result[name] = (metadata.parent, values)
     return result
+
+
+def chinese_resources(source):
+    helper = Path(__file__).resolve().parents[1] / "sakuratts/prepare/chinese_resources.py"
+    return run_path(str(helper))["read_chinese_resources"](source, tree(source))
 
 
 def windows_wheel_compatible(directory, python_version):
@@ -329,6 +337,9 @@ def make_plan(args):
     if apple:
         plan.release["binary_audit"] = macos.audit(plan, recipe["minimum_macos"], "runtime/main/bin/python3")
     if args.preparation is not None:
+        chinese = args.preparation / "official/chinese/manifest.json"
+        if chinese.is_file() != ("zh" in recipe["languages"]):
+            raise ValueError("Chinese preparation resources must match the recipe languages")
         add_preparation(plan, args.preparation)
     for name, path in plan.workers.items():
         if path not in plan.files:

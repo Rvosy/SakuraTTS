@@ -32,7 +32,9 @@ CPU 模式不加载 GPU 执行器。DirectML 把 GPT Transformer 与声学模型
 
 ## NVIDIA 既有档位与实测
 
-CUDA 当前提供四档：FP32、FP16 标准、FP16 低显存、FP16 极限。对应此前实验的 A、C、E、H。FP16 标准是常用推荐候选；不传实验选项时，运行时仍沿用 FP32 默认。FP16 的人工听音验收尚未完成。
+CUDA 提供 FP32 和三个 FP16 档位，分别对应下表中的 A、C、E、H。未指定档位或实验选项时，运行时使用 FP32。FP16 的人工听音验收尚未完成。
+
+普通话、日语、英语共用同一组 CUDA 档位。三个 FP16 档都用 FP16 GPT 和 256 帧分块声学模型，区别在于哪些模型和中间状态留在显存中。请求的 `text_lang` 决定目标文本的读音和特征，`prompt_lang` 决定参考文本的处理方式。普通话前端在 CPU 上判音、提取文本特征，再交给所选后端的 GPT。[普通话前端](chinese-frontend.md)
 
 | 档位 | 配置文件 | 适用情况 |
 |---|---|---|
@@ -40,6 +42,10 @@ CUDA 当前提供四档：FP32、FP16 标准、FP16 低显存、FP16 极限。�
 | C．FP16 标准 | [fp16.json](../examples/fp16.json) | 日常使用，兼顾速度与显存 |
 | E．FP16 低显存 | [low-vram.json](../examples/low-vram.json) | 更少显存，接受每片段额外加载 |
 | H．FP16 极限 | [minimum-vram.json](../examples/minimum-vram.json) | 显存优先，接受每片段重载等待 |
+
+## RTX 5070 Ti 的三语档位
+
+在同一份 Wass V2ProPlus 权重下，标准、低显存、极限三档的请求后显存依次约为 767、584、205 MB，中日英测得相同结果。每档的峰值和热请求耗时随输入及实际生成的音频长度变化。[RTX 5070 Ti 三语对照表](../research/notes/windows-cuda-multilingual-20261120.md)
 
 ## 2026-09-21 实测
 

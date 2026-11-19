@@ -130,7 +130,24 @@ def package_model(config, output, *, name=None):
     return Model.load(output)
 
 
-def convert(*, gpt, sovits, official_source, output, reference=None, reference_text=None,
+def _prepare_transcript(frontend_path, frontend_python, text, language, output):
+    """Encode the transcript in the inference environment; audio encoding uses its own interpreter."""
+    import numpy as np
+    from ..TTS_infer_pack.frontend import load_frontend
+    from ..TTS_infer_pack.reference import punctuate_transcript
+    manifest = json.loads((frontend_path / "manifest.json").read_text(encoding="utf-8"))
+    frontend = load_frontend(frontend_path / "manifest.json",
+                             {"frontend_python": str(frontend_python)}, frontend_path, manifest)
+    try:
+        prompt = punctuate_transcript(text, language)
+        segment = frontend.text.segment(prompt, language)
+        np.savez(output, prompt=prompt, normalized=segment["norm_text"], phones=segment["phones"],
+                 bert=segment["bert_features"])
+    finally:
+        frontend.close()
+
+
+def convert(*, gpt, sovits, official_source, output, reference=None, reference_text=None, reference_language="ja",
             name=None, python=None, acoustic_python=None, frontend_python=None, language_model=None,
             backend="cuda", experimental=None):
     """Convert supported checkpoints; reference audio is optional."""
@@ -138,6 +155,8 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
     backend = require_backend(backend)
     if bool(reference) != bool(reference_text and reference_text.strip()):
         raise ValueError("Supply both reference and reference_text, or neither")
+    if reference is None and reference_language != "ja":
+        raise ValueError("A reference recording and transcript are required with reference_language")
     paths = {key: Path(value).resolve(strict=True) for key, value in
              (("gpt", gpt), ("sovits", sovits), ("source", official_source))}
     output = Path(output).resolve()
@@ -155,9 +174,8 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
         temporary = Path(temporary)
         inputs = temporary / "inputs.json"
         refs = [] if reference is None else [{"audio": str(Path(reference).resolve(strict=True)),
-            "text": reference_text, "language": "ja", "tone": "reference"}]
-        inputs.write_text(json.dumps({"gpt": str(paths["gpt"]), "sovits": str(paths["sovits"]),
-            "references": refs}, ensure_ascii=False), encoding="utf-8")
+            "text": reference_text, "language": reference_language, "tone": "reference"}]
+        weights = {"gpt": str(paths["gpt"]), "sovits": str(paths["sovits"])}
         prepared = temporary / "prepared"
         command = [interpreter, "-B", str(tools / "prepare_resources.py"),
                    "--official-source", str(paths["source"]), "--inputs", str(inputs),
@@ -166,7 +184,15 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
             command.append("--frontend-only")
         if language_model:
             command += ["--language-model", str(Path(language_model).resolve(strict=True))]
-        logger.info("准备日英文本处理与参考资源")
+        logger.info("准备文本处理与参考资源")
+        if refs and reference_language != "ja":
+            inputs.write_text(json.dumps(weights, ensure_ascii=False), encoding="utf-8")
+            run_conversion([*command, "--frontend-only"], env=env)
+            features = temporary / "transcript.npz"
+            _prepare_transcript(prepared / "frontend", os.path.abspath(frontend_python or worker or interpreter),
+                                reference_text, reference_language, features)
+            refs[0]["text_features"] = str(features)
+        inputs.write_text(json.dumps(dict(weights, references=refs), ensure_ascii=False), encoding="utf-8")
         run_conversion(command, env=env)
         for script, checkpoint, target in (("convert_gpt.py", paths["gpt"], "gpt"),
                                            (acoustic_converter(backend), paths["sovits"], "sovits")):
@@ -176,13 +202,13 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
         _prepare_backend("gpt", prepared / "gpt", backend=backend, python=interpreter, experimental=experimental)
         acoustic = _prepare_backend("sovits", prepared / "sovits", backend=backend,
                                     python=interpreter, experimental=experimental)
+        frontend_manifest = json.loads((prepared / "frontend/manifest.json").read_text(encoding="utf-8"))
         config = {"format": "sakuratts-windows-config-v1", "gpt": "gpt", "sovits": "sovits",
                   "frontend": "frontend", "references": {"reference": "references/000"} if refs else {},
-                  "backend": {"preferred": backend}, "languages": ["ja", "en"]}
+                  "backend": {"preferred": backend}, "languages": ["ja", "en", "zh"] if "chinese_g2p" in frontend_manifest else ["ja", "en"]}
         if worker:
             config["acoustic_python"] = worker
-        elif not frontend_python and json.loads((prepared / "frontend/manifest.json").read_text(encoding="utf-8")).get(
-                "japanese_g2p", {}).get("implementation") == "pyopenjtalk-classic":
+        elif not frontend_python and frontend_manifest.get("japanese_g2p", {}).get("implementation") == "pyopenjtalk-classic":
             config["acoustic_python"] = interpreter
         if frontend_python:
             os.stat(frontend_python)

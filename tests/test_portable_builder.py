@@ -22,6 +22,44 @@ SPEC.loader.exec_module(builder)
 
 
 class PortableBuilderTests(unittest.TestCase):
+    def test_model_and_bundle_require_complete_mandarin_resources(self):
+        from sakuratts.prepare.prepare_resources import prepare_frontend
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            official = root / "official"
+            for name, content in {"GPT_SoVITS/TTS_infer_pack/TTS.py": "", "GPT_SoVITS/text/symbols2.py": "symbols=['a']",
+                                  "GPT_SoVITS/text/ja_userdic/user.dict": "", "lid.bin": "", "english/rules.json": "{}"}.items():
+                file = official / name
+                file.parent.mkdir(parents=True, exist_ok=True)
+                file.write_text(content, encoding="utf-8")
+            chinese = official / "chinese"
+            chinese.mkdir()
+            def declare(names):
+                for name in names:
+                    (chinese / name).touch()
+                (chinese / "manifest.json").write_text(json.dumps({
+                    "format": "sakuratts-chinese-v2-resources-v1", "files": dict.fromkeys(names, {"bytes": 0})}))
+            tables = ["corrections.json", "pinyin-symbols.json", "symbols-v2.json"]
+            declare(tables)
+            with self.assertRaisesRegex(ValueError, "Incomplete Chinese.*bert.onnx"):
+                builder.chinese_resources(chinese)
+            with self.assertRaisesRegex(ValueError, "Incomplete Chinese.*bert.onnx"):
+                prepare_frontend(official, root / "bad", language_model=official / "lid.bin")
+
+            inline = tables + ["g2pw.onnx", "bert.onnx", "tokenizer.json", "MONOPHONIC_CHARS.txt",
+                               "POLYPHONIC_CHARS.txt", "bopomofo_to_pinyin_wo_tune_dict.json",
+                               "traditional_to_simplified.json"]
+            for layout, names in (("inline", inline), ("external", [*inline, "g2pw.bin", "bert.bin"])):
+                declare(names)
+                self.assertEqual({p.name for p in builder.chinese_resources(chinese)[1]}, {*names, "manifest.json"})
+                model = root / layout
+                result = prepare_frontend(official, model, language_model=official / "lid.bin")
+                self.assertEqual(result["chinese_g2p"]["directory"], "chinese")
+                self.assertEqual({p.name for p in (model / "chinese").iterdir()}, {*names, "manifest.json"})
+            (chinese / "bert.bin").unlink()
+            with self.assertRaisesRegex(ValueError, "Incomplete Chinese.*bert.bin"):
+                builder.chinese_resources(chinese)
     def test_preview_recipes_include_english_frontend_dependencies(self):
         root = Path(__file__).resolve().parents[1]
         project = tomllib.loads((root / 'pyproject.toml').read_text(encoding='utf-8'))['project']
@@ -30,6 +68,9 @@ class PortableBuilderTests(unittest.TestCase):
                 recipe = builder.read_recipe(root / 'packaging/recipes' / name)
                 names = {builder.Requirement(value).name for value in builder.main_requirements(project, recipe)}
                 self.assertTrue({'nltk', 'wordsegment', 'inflect'} <= names)
+        recipe = builder.read_recipe(root / 'packaging/recipes/windows-x64-zh.toml')
+        names = {builder.Requirement(value).name for value in builder.main_requirements(project, recipe)}
+        self.assertTrue({'pypinyin', 'jieba-fast', 'tokenizers', 'nltk'} <= names)
 
     def test_windows_wheels_match_target_python_and_architecture(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -79,7 +120,7 @@ class PortableBuilderTests(unittest.TestCase):
             for original, replacement, error in (
                 ('"windows-x64"', '"macos-arm64"', "windows-x64"),
                 ('"cuda"', '"unknown"', "backend cuda"),
-                ('["ja", "en"]', '["ja", "zh"]', "language components"),
+                ('["ja", "en"]', '["ja", "ko"]', "language components"),
                 ('["http"]', '["webui"]', "service component"),
             ):
                 with self.subTest(replacement=replacement):

@@ -49,7 +49,7 @@ class ServerTests(unittest.TestCase):
             def tts(self, *args, **kwargs):
                 raise AssertionError("Unsupported requests must not reach inference")
         cases = [dict(REQUEST, **update) for update in (
-            {"text_lang": "zh"}, {"prompt_lang": "ko"},
+            {"text_lang": "yue"}, {"prompt_lang": "ko"},
             {"speed_factor": 1.2, "streaming_mode": 1}, {"batch_size": 2},
             {"streaming_mode": 2}, {"streaming_mode": 3}, {"prompt_text": ""},
             {"super_sampling": True})]
@@ -209,7 +209,7 @@ class ServerTests(unittest.TestCase):
                 self.assertEqual(client.get("/models").json(), [{"name": "試験"}])
                 self.assertEqual(client.get("/").status_code, 404)
                 for update in ({"text": " "}, {"ref_audio_path": ""}, {"seed": -2},
-                               {"text_lang": "zh"}, {"speed_factor": 0}, {"speed_factor": 2.1}, {"top_p": 0},
+                               {"text_lang": "yue"}, {"speed_factor": 0}, {"speed_factor": 2.1}, {"top_p": 0},
                                {"streaming_mode": 2}, {"batch_size": 2}, {"aux_ref_audio_paths": ["a.wav"]}):
                     self.assertEqual(client.post("/tts", json=dict(REQUEST, **update)).status_code, 400)
                 response = client.post("/tts", json=dict(REQUEST, text="limit"))

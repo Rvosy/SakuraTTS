@@ -25,17 +25,17 @@ class G2PWText:
     def __init__(self, resource_dir, *, context_chars=16, enable_opencc=True):
         resources = Path(resource_dir)
         polyphonic = [line.split("\t") for line in
-                      (resources / "POLYPHONIC_CHARS.txt").read_text().strip().splitlines()]
+                      (resources / "POLYPHONIC_CHARS.txt").read_text(encoding="utf-8").strip().splitlines()]
         monophonic = [line.split("\t") for line in
-                      (resources / "MONOPHONIC_CHARS.txt").read_text().strip().splitlines()]
+                      (resources / "MONOPHONIC_CHARS.txt").read_text(encoding="utf-8").strip().splitlines()]
         self.polyphonic_chars = {char for char, _ in polyphonic} - {
             "一", "不", "和", "咋", "嗲", "剖", "差", "攢", "倒", "難", "奔", "勁",
             "拗", "肖", "瘙", "誒", "泊", "听", "噢",
         }
         self.monophonic_chars = {char: phoneme for char, phoneme in monophonic
                                  if char not in {"似", "攢"}}
-        self.bopomofo_to_pinyin = json.loads((resources / "bopomofo_to_pinyin_wo_tune_dict.json").read_text())
-        self.traditional_to_simplified = json.loads((resources / "traditional_to_simplified.json").read_text())
+        self.bopomofo_to_pinyin = json.loads((resources / "bopomofo_to_pinyin_wo_tune_dict.json").read_text(encoding="utf-8"))
+        self.traditional_to_simplified = json.loads((resources / "traditional_to_simplified.json").read_text(encoding="utf-8"))
         self.context_chars = max(0, int(context_chars))
         self.cc = OpenCC("s2tw") if enable_opencc else None
 

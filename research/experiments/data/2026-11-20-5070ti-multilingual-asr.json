@@ -1,0 +1,655 @@
+{
+  "gpu": "NVIDIA GeForce RTX 5070 Ti",
+  "voice": "Wass V2ProPlus",
+  "seed": 1234,
+  "voice_finetuning": {
+    "clips": 20,
+    "language_labels": {
+      "ZH": 20
+    },
+    "evidence": "Wass training text records matched to the local audio annotations by clip filename"
+  },
+  "prompt_language": "zh",
+  "protocol": "windows_language_matrix.py",
+  "asr": {
+    "model": "faster-whisper-large-v3-turbo",
+    "faster-whisper": "1.1.1",
+    "ctranslate2": "4.6.0",
+    "device": "cpu",
+    "compute_type": "int8",
+    "threads": 2,
+    "task": "transcribe",
+    "language": "set separately to the target language",
+    "beam_size": 5,
+    "temperature": 0,
+    "initial_prompt": null,
+    "hotwords": null,
+    "vad_filter": false
+  },
+  "selection": "First hot WAV per language/length/profile. Transcriptions are reused only for identical PCM bytes with identical format.",
+  "scoring": {
+    "method": "Levenshtein distance divided by reference unit count",
+    "zh": "CER, NFKC, OpenCC t2s, individual digits 0–9 to Chinese forms, retain letters/numbers",
+    "ja": "CER, NFKC, individual digits 0–9 to kanji, retain letters/numbers",
+    "en": "WER, NFKC, lowercase ASCII words/numbers, preserve internal apostrophes, 0–9 as English words"
+  },
+  "results": [
+    {
+      "language": "ja",
+      "length": "short",
+      "reference": "今日の午後三時に、図書館の前で会いましょう。",
+      "reference_units": 20,
+      "metric": "CER",
+      "samples": [
+        {
+          "profiles": [
+            "fp16",
+            "low-memory",
+            "minimum-memory"
+          ],
+          "identical_hot_runs": {
+            "fp16": [
+              1,
+              2,
+              3
+            ],
+            "low-memory": [
+              1,
+              2,
+              3
+            ],
+            "minimum-memory": [
+              1,
+              2,
+              3
+            ]
+          },
+          "representative_wav": "fp16-ja/short-hot-1.wav",
+          "sample_rate": 32000,
+          "channels": 1,
+          "pcm_bits": 16,
+          "audio_seconds": 2.94,
+          "pcm_sha256": "01b96cee9cb31216b77057f729aa64346430dfdc18e3e2a45caa46c0e7e67d61",
+          "raw_transcription": "今日の午後3時に、図書館の前で会いましょう。",
+          "segments": [
+            [
+              0.0,
+              2.46,
+              "今日の午後3時に、図書館の前で会いましょう。"
+            ]
+          ],
+          "recognized_units": 20,
+          "edit_distance": 0,
+          "error_rate": 0.0
+        },
+        {
+          "profiles": [
+            "fp32"
+          ],
+          "identical_hot_runs": {
+            "fp32": [
+              1
+            ]
+          },
+          "representative_wav": "fp32-ja/short-hot-1.wav",
+          "sample_rate": 32000,
+          "channels": 1,
+          "pcm_bits": 16,
+          "audio_seconds": 2.94,
+          "pcm_sha256": "4574aa5252f49123bb66853fafa1b4ec354267d64c00812af66bf5fa7be46209",
+          "raw_transcription": "今日の午後3時に、図書館の前で会いましょう。",
+          "segments": [
+            [
+              0.0,
+              2.46,
+              "今日の午後3時に、図書館の前で会いましょう。"
+            ]
+          ],
+          "recognized_units": 20,
+          "edit_distance": 0,
+          "error_rate": 0.0
+        }
+      ]
+    },
+    {
+      "language": "ja",
+      "length": "long",
+      "reference": "今日の午後三時に、図書館の前で会いましょう。天気予報では午後から雨が降るかもしれないので、出かけるときは傘を忘れずに。着いたら電話してください。入り口で待っています。",
+      "reference_units": 77,
+      "metric": "CER",
+      "samples": [
+        {
+          "profiles": [
+            "fp16",
+            "low-memory",
+            "minimum-memory"
+          ],
+          "identical_hot_runs": {
+            "fp16": [
+              1,
+              2,
+              3
+            ],
+            "low-memory": [
+              1,
+              2,
+              3
+            ],
+            "minimum-memory": [
+              1,
+              2,
+              3
+            ]
+          },
+          "representative_wav": "fp16-ja/long-hot-1.wav",
+          "sample_rate": 32000,
+          "channels": 1,
+          "pcm_bits": 16,
+          "audio_seconds": 11.74,
+          "pcm_sha256": "a2259580428cd2d0432daf746398483237b64ea8607b0dcfb12b10fc0e9e7a9b",
+          "raw_transcription": "今日の午後3時に図書館の前で会いましょう。天気予報では午後から雨が来るかもしれないので、出かけるときは傘を忘れずに。着いたら電話してください。入口で待っています。",
+          "segments": [
+            [
+              0.0,
+              2.48,
+              "今日の午後3時に図書館の前で会いましょう。"
+            ],
+            [
+              2.98,
+              8.12,
+              "天気予報では午後から雨が来るかもしれないので、出かけるときは傘を忘れずに。"
+            ],
+            [
+              8.62,
+              11.36,
+              "着いたら電話してください。入口で待っています。"
+            ]
+          ],
+          "recognized_units": 76,
+          "edit_distance": 2,
+          "error_rate": 0.026
+        },
+        {
+          "profiles": [
+            "fp32"
+          ],
+          "identical_hot_runs": {
+            "fp32": [
+              1
+            ]
+          },
+          "representative_wav": "fp32-ja/long-hot-1.wav",
+          "sample_rate": 32000,
+          "channels": 1,
+          "pcm_bits": 16,
+          "audio_seconds": 11.74,
+          "pcm_sha256": "8edbd5f6b69c0c12459d7399e2510633ccfe2528380d8209eda35e5fa764bd7c",
+          "raw_transcription": "今日の午後3時に図書館の前で会いましょう。天気予報では午後から雨が来るかもしれないので、出かけるときは傘を忘れずに。着いたら電話してください。入口で待っています。",
+          "segments": [
+            [
+              0.0,
+              2.48,
+              "今日の午後3時に図書館の前で会いましょう。"
+            ],
+            [
+              2.98,
+              8.12,
+              "天気予報では午後から雨が来るかもしれないので、出かけるときは傘を忘れずに。"
+            ],
+            [
+              8.62,
+              11.36,
+              "着いたら電話してください。入口で待っています。"
+            ]
+          ],
+          "recognized_units": 76,
+          "edit_distance": 2,
+          "error_rate": 0.026
+        }
+      ]
+    },
+    {
+      "language": "en",
+      "length": "short",
+      "reference": "Let's meet in front of the library at three this afternoon.",
+      "reference_units": 11,
+      "metric": "WER",
+      "samples": [
+        {
+          "profiles": [
+            "fp16",
+            "low-memory",
+            "minimum-memory"
+          ],
+          "identical_hot_runs": {
+            "fp16": [
+              1,
+              2,
+              3
+            ],
+            "low-memory": [
+              1,
+              2,
+              3
+            ],
+            "minimum-memory": [
+              1,
+              2,
+              3
+            ]
+          },
+          "representative_wav": "fp16-en/short-hot-1.wav",
+          "sample_rate": 32000,
+          "channels": 1,
+          "pcm_bits": 16,
+          "audio_seconds": 1.3,
+          "pcm_sha256": "473d2d4c146c7717a972f56828176b3fd93df3e18ad97940aad8595257366924",
+          "raw_transcription": "Thank you.",
+          "segments": [
+            [
+              0.0,
+              29.98,
+              " Thank you."
+            ]
+          ],
+          "recognized_units": 2,
+          "edit_distance": 11,
+          "error_rate": 1.0
+        },
+        {
+          "profiles": [
+            "fp32"
+          ],
+          "identical_hot_runs": {
+            "fp32": [
+              1,
+              2
+            ]
+          },
+          "representative_wav": "fp32-en/short-hot-1.wav",
+          "sample_rate": 32000,
+          "channels": 1,
+          "pcm_bits": 16,
+          "audio_seconds": 1.3,
+          "pcm_sha256": "0f6265cdcac88f25d66e8ef517bca1d57a8268bc2a3ed132d6fa9f88672e40cb",
+          "raw_transcription": "Thank you.",
+          "segments": [
+            [
+              0.0,
+              29.98,
+              " Thank you."
+            ]
+          ],
+          "recognized_units": 2,
+          "edit_distance": 11,
+          "error_rate": 1.0
+        }
+      ]
+    },
+    {
+      "language": "en",
+      "length": "long",
+      "reference": "Let's meet in front of the library at three this afternoon. The forecast says it might rain, so remember to bring an umbrella when you leave. Call me when you get there. I'll be waiting by the entrance.",
+      "reference_units": 38,
+      "metric": "WER",
+      "samples": [
+        {
+          "profiles": [
+            "fp16",
+            "low-memory",
+            "minimum-memory"
+          ],
+          "identical_hot_runs": {
+            "fp16": [
+              1,
+              2,
+              3
+            ],
+            "low-memory": [
+              1,
+              2,
+              3
+            ],
+            "minimum-memory": [
+              1,
+              2,
+              3
+            ]
+          },
+          "representative_wav": "fp16-en/long-hot-1.wav",
+          "sample_rate": 32000,
+          "channels": 1,
+          "pcm_bits": 16,
+          "audio_seconds": 24.86,
+          "pcm_sha256": "f4bd738a3edea43455b404e85604b65925a6def747f3ea249592b8919052e64a",
+          "raw_transcription": "Let's meet in front of the library at 3 this afternoon, so remember...",
+          "segments": [
+            [
+              0.0,
+              10.0,
+              " Let's meet in front of the library at 3 this afternoon, so remember..."
+            ]
+          ],
+          "recognized_units": 13,
+          "edit_distance": 25,
+          "error_rate": 0.6579
+        },
+        {
+          "profiles": [
+            "fp32"
+          ],
+          "identical_hot_runs": {
+            "fp32": [
+              1
+            ]
+          },
+          "representative_wav": "fp32-en/long-hot-1.wav",
+          "sample_rate": 32000,
+          "channels": 1,
+          "pcm_bits": 16,
+          "audio_seconds": 24.86,
+          "pcm_sha256": "d28488a95883b8fbe98fbdf6a31615514b162ab90ee3c6eba296b356c4272ef6",
+          "raw_transcription": "Let's meet in front of the library at 3 this afternoon. So remember to bring an umbrella when you leave, call me when you get there.",
+          "segments": [
+            [
+              0.0,
+              9.44,
+              " Let's meet in front of the library at 3 this afternoon."
+            ],
+            [
+              9.44,
+              14.36,
+              " So remember to bring an umbrella when you leave, call me when you get there."
+            ]
+          ],
+          "recognized_units": 26,
+          "edit_distance": 12,
+          "error_rate": 0.3158
+        }
+      ]
+    },
+    {
+      "language": "zh",
+      "length": "short",
+      "reference": "今天下午三点，我们在图书馆门口见。",
+      "reference_units": 15,
+      "metric": "CER",
+      "samples": [
+        {
+          "profiles": [
+            "fp16",
+            "low-memory",
+            "minimum-memory"
+          ],
+          "identical_hot_runs": {
+            "fp16": [
+              1,
+              2,
+              3
+            ],
+            "low-memory": [
+              1,
+              2,
+              3
+            ],
+            "minimum-memory": [
+              1,
+              2,
+              3
+            ]
+          },
+          "representative_wav": "fp16-zh/short-hot-1.wav",
+          "sample_rate": 32000,
+          "channels": 1,
+          "pcm_bits": 16,
+          "audio_seconds": 3.7,
+          "pcm_sha256": "86c9b13bd59e1e7431094d765ba750da5b8c4976dfaf108dd99a6fe31dbb185f",
+          "raw_transcription": "今天下午3点,我们在图书馆门口见。",
+          "segments": [
+            [
+              0.0,
+              3.08,
+              "今天下午3点,我们在图书馆门口见。"
+            ]
+          ],
+          "recognized_units": 15,
+          "edit_distance": 0,
+          "error_rate": 0.0
+        },
+        {
+          "profiles": [
+            "fp32"
+          ],
+          "identical_hot_runs": {
+            "fp32": [
+              1
+            ]
+          },
+          "representative_wav": "fp32-zh/short-hot-1.wav",
+          "sample_rate": 32000,
+          "channels": 1,
+          "pcm_bits": 16,
+          "audio_seconds": 3.7,
+          "pcm_sha256": "635d6d30ef888a7d895d78cb5f0b24de606dac71c28df3ba8353be9a442f8617",
+          "raw_transcription": "明天下午3点,我们在图书馆门口见。",
+          "segments": [
+            [
+              0.0,
+              3.08,
+              "明天下午3点,我们在图书馆门口见。"
+            ]
+          ],
+          "recognized_units": 15,
+          "edit_distance": 1,
+          "error_rate": 0.0667
+        }
+      ]
+    },
+    {
+      "language": "zh",
+      "length": "long",
+      "reference": "今天下午三点，我们在图书馆门口见。天气预报说下午可能会下雨，你出门前记得带把伞。到了以后给我打个电话，我会在门口等你。",
+      "reference_units": 53,
+      "metric": "CER",
+      "samples": [
+        {
+          "profiles": [
+            "fp16",
+            "low-memory",
+            "minimum-memory"
+          ],
+          "identical_hot_runs": {
+            "fp16": [
+              1,
+              2,
+              3
+            ],
+            "low-memory": [
+              1,
+              2,
+              3
+            ],
+            "minimum-memory": [
+              1,
+              2,
+              3
+            ]
+          },
+          "representative_wav": "fp16-zh/long-hot-1.wav",
+          "sample_rate": 32000,
+          "channels": 1,
+          "pcm_bits": 16,
+          "audio_seconds": 10.22,
+          "pcm_sha256": "c713e8005b4386281b588883c3895698b967938815cf9dbee4241037416658fc",
+          "raw_transcription": "今天下午3點,我們在廚藝館門口見前期預報說下午可能會下雨出門前記得帶把傘還大到了以後給我打個電話,我會在門口等你",
+          "segments": [
+            [
+              0.0,
+              2.7,
+              "今天下午3點,我們在廚藝館門口見"
+            ],
+            [
+              3.14,
+              5.04,
+              "前期預報說下午可能會下雨"
+            ],
+            [
+              5.3,
+              7.0,
+              "出門前記得帶把傘還大"
+            ],
+            [
+              7.3,
+              9.94,
+              "到了以後給我打個電話,我會在門口等你"
+            ]
+          ],
+          "recognized_units": 54,
+          "edit_distance": 7,
+          "error_rate": 0.1321
+        },
+        {
+          "profiles": [
+            "fp32"
+          ],
+          "identical_hot_runs": {
+            "fp32": [
+              1
+            ]
+          },
+          "representative_wav": "fp32-zh/long-hot-1.wav",
+          "sample_rate": 32000,
+          "channels": 1,
+          "pcm_bits": 16,
+          "audio_seconds": 10.22,
+          "pcm_sha256": "2b4f633b70fe204367805a9ddfdd922a79fcde6d35bfbdacc045d11465523aec",
+          "raw_transcription": "请便下午3点,我们在服务馆门口见前期预报说下午可能会下雨出门前记得带把伞还大到了以后给我打个电话,我会在门口等你",
+          "segments": [
+            [
+              0.0,
+              3.14,
+              "请便下午3点,我们在服务馆门口见"
+            ],
+            [
+              3.14,
+              5.28,
+              "前期预报说下午可能会下雨"
+            ],
+            [
+              5.28,
+              7.28,
+              "出门前记得带把伞还大"
+            ],
+            [
+              7.28,
+              9.92,
+              "到了以后给我打个电话,我会在门口等你"
+            ]
+          ],
+          "recognized_units": 54,
+          "edit_distance": 9,
+          "error_rate": 0.1698
+        }
+      ]
+    }
+  ],
+  "same_service_language_switch": {
+    "seed": 7,
+    "test": "Managed service kept open per profile during zh, ja, en requests in rotation",
+    "samples": [
+      {
+        "language": "zh",
+        "reference": "今天下午三点，我们在图书馆门口见。",
+        "reference_units": 15,
+        "metric": "CER",
+        "outputs": [
+          {
+            "representative_wav": "fp16/zh-hot-1.wav",
+            "identical_wavs": [
+              "fp16/zh-hot-1.wav",
+              "fp16/zh-hot-2.wav",
+              "fp16/zh-hot-3.wav",
+              "low-memory/zh-hot-1.wav",
+              "low-memory/zh-hot-2.wav",
+              "low-memory/zh-hot-3.wav",
+              "minimum-memory/zh-hot-1.wav",
+              "minimum-memory/zh-hot-2.wav",
+              "minimum-memory/zh-hot-3.wav"
+            ],
+            "audio_seconds": 3.1,
+            "pcm_sha256": "09a5112d7982bd47fb5572f473dbc216f41de44d75fa61e6da4e46844cd81401",
+            "raw_transcription": "今天下午3點我們在圖書館門口",
+            "recognized_units": 14,
+            "edit_distance": 1,
+            "error_rate": 0.0667
+          }
+        ]
+      },
+      {
+        "language": "ja",
+        "reference": "今日の午後三時に、図書館の前で会いましょう。",
+        "reference_units": 20,
+        "metric": "CER",
+        "outputs": [
+          {
+            "representative_wav": "fp16/ja-hot-1.wav",
+            "identical_wavs": [
+              "fp16/ja-hot-1.wav",
+              "fp16/ja-hot-2.wav",
+              "fp16/ja-hot-3.wav",
+              "low-memory/ja-hot-1.wav",
+              "low-memory/ja-hot-2.wav",
+              "low-memory/ja-hot-3.wav",
+              "minimum-memory/ja-hot-1.wav",
+              "minimum-memory/ja-hot-2.wav",
+              "minimum-memory/ja-hot-3.wav"
+            ],
+            "audio_seconds": 4.02,
+            "pcm_sha256": "9bf362cba5d98d2666f6104aca648b79c23394bb7a82c0a28f9fcdfdeaef45a7",
+            "raw_transcription": "今日の午後3時に図書館の前で会いましょう。",
+            "recognized_units": 20,
+            "edit_distance": 0,
+            "error_rate": 0.0
+          }
+        ]
+      },
+      {
+        "language": "en",
+        "reference": "Let's meet in front of the library at three this afternoon.",
+        "reference_units": 11,
+        "metric": "WER",
+        "outputs": [
+          {
+            "representative_wav": "fp16/en-hot-1.wav",
+            "identical_wavs": [
+              "fp16/en-hot-1.wav",
+              "fp16/en-hot-2.wav",
+              "fp16/en-hot-3.wav",
+              "low-memory/en-hot-1.wav",
+              "low-memory/en-hot-2.wav",
+              "low-memory/en-hot-3.wav",
+              "minimum-memory/en-hot-1.wav",
+              "minimum-memory/en-hot-2.wav",
+              "minimum-memory/en-hot-3.wav"
+            ],
+            "audio_seconds": 4.02,
+            "pcm_sha256": "48ba1326695897a39c7b619502b8b5478630fcfc1e5676e2ca26eb98454e9ac4",
+            "raw_transcription": "Let's meet in front of the library at 3 this afternoon.",
+            "recognized_units": 11,
+            "edit_distance": 0,
+            "error_rate": 0.0
+          }
+        ]
+      }
+    ],
+    "zh_crosscheck": {
+      "model": "speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch",
+      "device": "cpu",
+      "threads": 2,
+      "prompt": null,
+      "wav": "fp16/zh-hot-1.wav",
+      "resampling": "32 kHz to 16 kHz via resample_poly(1,2)",
+      "raw_transcription": "今天下午三点我们在图书馆门口见"
+    }
+  }
+}

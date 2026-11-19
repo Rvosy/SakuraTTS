@@ -1,0 +1,13 @@
+# 普通话前端资源来源
+
+资源由本机 GPT-SoVITS 安装目录离线导出。`manifest.json` 记录实际输入和导出文件的 SHA-256。随资源保存的许可和来源材料位于 `notices/`。
+
+| 资源 | 来源、处理和许可材料 |
+|---|---|
+| 中文 BERT 与 tokenizer | GPT-SoVITS 的 `pretrained_models/chinese-roberta-wwm-ext-large/`，原模型为 [HFL Chinese RoBERTa WWM Ext Large](https://huggingface.co/hfl/chinese-roberta-wwm-ext-large)。保留原 tokenizer，导出 embedding 和前 22 层的 FP32 ONNX。GPT-SoVITS 预训练仓库的 [模型卡](GPT-SoVITS-model-card.md) 声明 MIT。本机 BERT 目录含权重、配置与 tokenizer。 |
+| G2PW 推理图及读音表 | GPT-SoVITS 采用 PaddleSpeech 的普通话优化版。接入作者 KamioRinn 发布的 `G2PWModel_1.1.zip` 中，8 个条目的名称、长度和 CRC32 均与本机原文件相符。该发布者的模型卡标注 Apache-2.0。GPT-SoVITS 推荐的 Hugging Face 镜像包含同样的 8 个条目，模型仓库标注 MIT。对镜像中权重和字表各自适用条款的询问仍未获维护者答复。[接入说明](https://github.com/RVC-Boss/GPT-SoVITS/pull/488) · [发布者模型卡](https://www.modelscope.cn/models/kamiorinn/g2pw/resolve/master/README.md) · [镜像文件](https://huggingface.co/XXXXRT/GPT-SoVITS-Pretrained/blob/502bea75a80af535955c39eeef3f7c86bc235665/G2PWModel.zip) · [上游许可询问](https://github.com/RVC-Boss/GPT-SoVITS/issues/2835) |
+| 发音修正与音素表 | 本机两份修正表与 GPT-SoVITS 的历史文件逐字节一致，导出保留覆盖顺序。`symbols2.py` 提供音素编号。项目采用 MIT，首次加入大表的提交没有说明其汇编数据来源或独立许可。[小表](https://github.com/RVC-Boss/GPT-SoVITS/blob/10e589f99ec6/GPT_SoVITS/text/g2pw/polyphonic.rep) · [本机版本的大表](https://github.com/RVC-Boss/GPT-SoVITS/blob/570da092c9da/GPT_SoVITS/text/g2pw/polyphonic-fix.rep) · [大表首个提交](https://github.com/RVC-Boss/GPT-SoVITS/commit/7778412ed2b8f7639393b01ff9396c7479650350) · [GPT-SoVITS 许可](GPT-SoVITS-LICENSE.txt) |
+| 拼音到声韵母的映射 | 本机 `opencpop-strict.txt` 与 Bert-VITS2 提交 `3604247` 中的文件逐字节一致，该提交标注 MIT，版权人为 `Copyright (c) 2023 rcell123`。Diff-SVC 也说明了严格映射与 Opencpop 标注表的关系，其版本的 429 项中有 417 项与本机相同。Opencpop 的非商用条款针对歌唱语料，独立映射表的归属应按具体版本核对。[相同文件](https://github.com/fishaudio/Bert-VITS2/blob/3604247c92973fd0782c577bcccc49b262be2936/text/opencpop-strict.txt) · [同一提交的 MIT 许可](https://github.com/fishaudio/Bert-VITS2/blob/3604247c92973fd0782c577bcccc49b262be2936/LICENSE) · [Diff-SVC 映射说明](https://github.com/Diff-SVC-develop-team/Diff-SVC/blob/51ffa345987bbc72fdffa531e089501719806dbf/docs/README-SVS-custom-phonemes.md) · [Opencpop 语料许可](https://wenet-e2e.github.io/opencpop/liscense/) |
+| 中文规范化、变调和繁简映射 | 相关源码保留 PaddlePaddle 的版权头和 [Apache-2.0 许可](Apache-2.0.txt)。`traditional_to_simplified.json` 由该源码的字符映射导出。[迁入文件清单](chinese-source-manifest.json)记录上游版本和修改。 |
+
+中文分词使用 jieba-fast，读音转换使用 PyPinyin，两者的 MIT 许可随包保留。OpenCC-Python 提供简繁转换，字典来源见 [OpenCC NOTICE](OpenCC-NOTICE.txt)。Hugging Face Tokenizers 读取 tokenizer.json，ONNX Runtime 执行两张图。运行依赖保留各自的包元数据和许可材料。[jieba-fast 许可](jieba-fast-LICENSE.txt) · [PyPinyin 许可](PyPinyin-LICENSE.txt) · [OpenCC 许可](OpenCC-LICENSE.txt)

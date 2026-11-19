@@ -86,12 +86,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--bundle', required=True, type=Path)
     parser.add_argument('--output', required=True, type=Path)
+    parser.add_argument('--gpt', type=Path, help='Local GPT weights for Windows synthesis')
+    parser.add_argument('--sovits', type=Path, help='Local SoVITS weights for Windows synthesis')
     args = parser.parse_args()
     bundle = args.bundle.resolve()
     output = args.output.resolve()
-    output.mkdir(parents=True, exist_ok=False)
     release = json.loads((bundle / 'runtime/portable.json').read_text())['release']
     apple = release['target'] == 'macos-arm64'
+    if not apple and not (args.gpt and args.gpt.is_file() and args.sovits and args.sovits.is_file()):
+        parser.error('Windows synthesis requires existing --gpt and --sovits files')
+    output.mkdir(parents=True, exist_ok=False)
     python = bundle / release.get('python_executable', 'runtime/main/python.exe')
     command = [str(python), '-I', str(bundle / 'launcher.py')]
     english_probe = '''import json,runpy,sys
@@ -112,10 +116,6 @@ print(json.dumps({'probes':len(probes),'passed':True}))
     (output / 'english.log').write_text(english.stdout + english.stderr, encoding='utf-8')
     english.check_returncode()
     opener = build_opener(ProxyHandler({}))
-    def fetch(url, destination):
-        with opener.open(url, timeout=120) as response, destination.open('wb') as stream:
-            while block := response.read(1024*1024):
-                stream.write(block)
     report = {'platform': release['target'], 'gpuSynthesis': False, 'listeningQuality': False}
     report['english'] = json.loads(english.stdout)
     if not apple:
@@ -150,16 +150,13 @@ print(json.dumps({'probes':len(probes),'passed':True}))
             raise
     launch = [*command, 'serve', '--runtime-mode', 'managed', '--idle-sleep-seconds', '2', '-p', str(port)]
     if not apple:
-        model_url = 'https://huggingface.co/lj1995/GPT-SoVITS/resolve/336b2ec4e8d4ac74740798dd40af44e74659ecaf/'
-        for remote, local in [('s1v3.ckpt', 'gpt.ckpt'), ('v2Pro/s2Gv2ProPlus.pth', 'sovits.pth')]:
-            fetch(model_url + remote, output / local)
         reference = output / 'reference.wav'
         with wave.open(str(reference), 'wb') as audio:
             audio.setparams((1,2,32000,0,'NONE','not compressed'))
             audio.writeframes(b''.join(struct.pack('<h', int(6000 * math.sin(i*2*math.pi*(170+(i//8000)%5*35)/32000))) for i in range(4*32000)))
         config = output / 'config.json'
-        config.write_text(json.dumps({'custom': {'t2s_weights_path': str(output/'gpt.ckpt'),
-                         'vits_weights_path':str(output/'sovits.pth'), 'is_half':False}, 'sakuratts':{'backend':'cpu'}}))
+        config.write_text(json.dumps({'custom': {'t2s_weights_path': str(args.gpt.resolve()),
+                         'vits_weights_path':str(args.sovits.resolve()), 'is_half':False}, 'sakuratts':{'backend':'cpu'}}))
         launch.extend(['--backend', 'cpu', '-c', str(config)])
     with (output / 'server.log').open('wb') as log:
         process = subprocess.Popen(launch, cwd=bundle, env=dict(os.environ, SAKURATTS_CACHE_DIR=str(output/'cache')),
@@ -178,11 +175,14 @@ print(json.dumps({'probes':len(probes),'passed':True}))
             report['initial'] = state
             if not apple:
                 request('/runtime/wake', {'keep_alive_seconds':0})
-                audio = request('/tts', {'text':'こんにちは。','text_lang':'ja', 'prompt_lang':'ja',
-                    'prompt_text':'おはよう。', 'ref_audio_path':str(reference), 'parallel_infer':False,
+                chinese = 'zh' in release['languages']
+                language = 'all_zh' if chinese else 'ja'
+                audio = request('/tts', {'text':'银行今天营业。' if chinese else 'こんにちは。',
+                    'text_lang':language, 'prompt_lang':language,
+                    'prompt_text':'早上好。' if chinese else 'おはよう。', 'ref_audio_path':str(reference), 'parallel_infer':False,
                     'streaming_mode':False, 'media_type':'wav'})
                 with wave.open(io.BytesIO(audio)) as wav:
-                    report['audio']={'frames':wav.getnframes(),'sampleRate':wav.getframerate()}
+                    report['audio']={'frames':wav.getnframes(),'sampleRate':wav.getframerate(), 'language':language}
                     assert wav.getnframes()>0
                 deadline = time.monotonic()+20
                 while True:

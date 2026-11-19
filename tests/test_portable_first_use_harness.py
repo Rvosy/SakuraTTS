@@ -17,6 +17,30 @@ SPEC.loader.exec_module(harness)
 
 
 class PortableFirstUseHarnessTests(unittest.TestCase):
+    def test_minimum_memory_wake_checks_runtime_initialization(self):
+        service = object.__new__(harness.Service)
+        service.http = Mock()
+        service.state = Mock(return_value={"preparation": "runtime_init", "model_loaded": False,
+                                           "worker_pid": 123})
+        service.record = {}
+        service.wake("minimum-memory")
+        self.assertEqual(service.record["awake"]["worker_pid"], 123)
+        with self.assertRaisesRegex(AssertionError, "model_load"):
+            service.wake("fp16")
+
+    def test_reference_preparation_library_cache_is_separate_from_voice_conditions(self):
+        with tempfile.TemporaryDirectory() as temp:
+            bundle = Path(temp)
+            work = bundle / "cache/references/.preparation-cache"
+            work.mkdir(parents=True)
+            before = harness.require_empty_cache(bundle)
+            (work / "fontlist.json").write_text("{}")
+            self.assertEqual(harness.cache_snapshot(bundle), before)
+            condition = work.parent / "voice"
+            condition.mkdir()
+            (condition / "manifest.json").write_text("{}")
+            self.assertEqual(harness.cache_snapshot(bundle)["references"]["keys"], ["voice"])
+
     def test_execution_check_uses_selected_backend_and_precision(self):
         for backend, profile, description in (("cpu", "balanced", "GPT INT8 / SoVITS FP32"),
                                                ("directml", "fp16", "GPT FP16 / SoVITS FP16"),

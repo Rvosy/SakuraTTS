@@ -7,7 +7,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 REPO = 'SuzushimaArisu/SakuraTTS'
-TARGETS = {'windows-x64', 'macos-arm64'}
+TARGETS = {'windows-x64', 'macos-arm64', 'windows-x64-zh'}
 
 
 def download_url(path):
@@ -22,7 +22,8 @@ def verify_files(api, records):
 
 
 def publish_platform(api, folder, target, release_id, commit, output):
-    extension = '7z' if target == 'windows-x64' else 'tar.gz'
+    windows = target.startswith('windows-x64')
+    extension = '7z' if windows else 'tar.gz'
     archive, = folder.glob('*.' + extension)
     report = json.loads((folder / 'compression-report.json').read_text())
     path = f'previews/{release_id}/{archive.name}'
@@ -42,41 +43,49 @@ def publish_platform(api, folder, target, release_id, commit, output):
     checksum = archive.with_name(archive.name + '.sha256').read_text().split()[0]
     api.upload_file(REPO, 'model', f'{checksum}  {name}\n'.encode(), path + '.sha256',
                     commit_message=f'上传 {release_id} {target} 校验文件', disable_tqdm=True)
-    record = {'platform': target, 'path': path, 'url': download_url(path), 'bytes': archive.stat().st_size,
+    record = {'platform': 'windows-x64' if windows else target,
+              'languages': ['zh', 'ja', 'en'] if target == 'windows-x64-zh' else ['ja', 'en'],
+              'path': path, 'url': download_url(path), 'bytes': archive.stat().st_size,
               'unpackedBytes': report['unpacked_bytes'], 'sourceCommit': commit, 'releaseId': release_id,
-              'validation': 'cpu-synthesis-and-idle' if target == 'windows-x64' else 'imports-and-managed-http'}
+              'validation': 'cpu-synthesis-and-idle' if windows else 'imports-and-managed-http'}
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(record, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 
 
-def publish_index(api, directory, release_id, commit):
+def publish_index(api, directory, release_id, commit, *, with_chinese=False):
     records = [json.loads(path.read_text()) for path in directory.rglob('*.json')]
-    if len(records) != 2 or {r['platform'] for r in records} != TARGETS:
-        raise ValueError('Windows 与 macOS 产物必须全部上传成功')
+    defaults = [r for r in records if 'zh' not in r.get('languages', [])]
+    chinese = [r for r in records if 'zh' in r.get('languages', [])]
+    if (len(defaults) != 2 or {r['platform'] for r in defaults} != {'windows-x64', 'macos-arm64'}
+            or [r['platform'] for r in chinese] != (['windows-x64'] if with_chinese else [])):
+        raise ValueError('所选 Windows 与 macOS 产物必须全部上传成功')
     if any(r['releaseId'] != release_id or r['sourceCommit'] != commit for r in records):
         raise ValueError('两个平台的发布编号或源码提交不同')
     verify_files(api, records)
-    index = {'channel': 'preview', 'releaseId': release_id, 'sourceCommit': commit, 'packages': records}
+    # Existing desktop clients require exactly one default package per platform.
+    index = {'channel': 'preview', 'releaseId': release_id, 'sourceCommit': commit, 'packages': defaults}
+    if chinese:
+        index['variants'] = chinese
     api.upload_file(REPO, 'model', json.dumps(index, ensure_ascii=False, indent=2).encode(),
                     'latest-preview.json', commit_message=f'更新预览版 {release_id}')
-    rows = '\n'.join(f"| {r['platform']} | [下载整合包]({r['url']}) | {r['bytes'] / 1e9:.2f} GB |" for r in sorted(records, key=lambda r:r['platform']))
+    rows = '\n'.join(f"| {r['platform']} | {'中日英' if 'zh' in r.get('languages', []) else '日英'} | [下载整合包]({r['url']}) | {r['bytes'] / 1e9:.2f} GB |" for r in sorted(records, key=lambda r:r['platform']))
     card = f'''---
 license: other
 ---
 # SakuraTTS 整合包
 
-用于 Sakura 桌宠的本地语音引擎。空闲时释放推理进程，对话开始时可提前唤醒。
+本地 GPT-SoVITS 语音合成引擎，可从命令行、Python 或 HTTP 调用。
 
 当前预览版：`{release_id}`。源码提交：[Rvosy/SakuraTTS@{commit[:12]}](https://github.com/Rvosy/SakuraTTS/tree/{commit})。
 
-| 平台 | 文件 | 下载大小 |
-|---|---|---|
+| 平台 | 朗读语言 | 文件 | 下载大小 |
+|---|---|---|---|
 {rows}
 
 Windows x64 同包包含 CPU、NVIDIA CUDA 和 DirectML；macOS 包适用于 Apple silicon。
 Windows 压缩包使用 7z；macOS 使用保留可执行权限的 tar.gz。
 整合包包含 Python、推理运行库和模型准备组件，不包含角色 GPT / SoVITS 权重及个人参考音频。
-在 SakuraTTS 插件设置中导入对应平台的压缩包；再次导入可更新。
+独立使用时解压到可写目录，按包内 README 填写权重路径并启动服务。桌宠用户也可在 SakuraTTS 插件设置中导入压缩包。
 
 Windows CPU 在 CI 验证实际合成和空闲释放；macOS CI 验证导入与 managed HTTP 启动，MLX 硬件合成另在本机验收。
 CUDA、DirectML 真机合成和人工听音不属于本次 CI 验收。
@@ -97,6 +106,7 @@ def main():
     parser.add_argument('--commit', required=True)
     parser.add_argument('--target', choices=sorted(TARGETS))
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--with-chinese', action='store_true')
     args = parser.parse_args()
     from modelscope_hub import HubApi
     api = HubApi(token=os.environ['MODELSCOPE_TOKEN'])
@@ -105,7 +115,7 @@ def main():
             parser.error('platform requires --target and --output')
         publish_platform(api, args.directory, args.target, args.release_id, args.commit, args.output)
     else:
-        publish_index(api, args.directory, args.release_id, args.commit)
+        publish_index(api, args.directory, args.release_id, args.commit, with_chinese=args.with_chinese)
 
 
 if __name__ == '__main__':

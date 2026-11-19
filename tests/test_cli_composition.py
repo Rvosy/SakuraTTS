@@ -75,8 +75,8 @@ assert not set(('numpy', 'torch', 'cupy', 'mlx', 'onnxruntime', 'pyopenjtalk',
         capabilities = json.loads(result.stdout)
         self.assertEqual(capabilities["backends"], ["cuda", "cpu", "directml", "mlx"])
         self.assertEqual(capabilities["profiles"]["cpu"], ["balanced", "low-memory", "minimum-memory"])
-        self.assertEqual(capabilities["languages"], ["ja", "en"])
-        self.assertEqual(capabilities["language_modes"], ["ja", "all_ja", "en", "auto"])
+        self.assertEqual(capabilities["languages"], ["ja", "en", "zh"])
+        self.assertEqual(capabilities["language_modes"], ["ja", "all_ja", "en", "zh", "all_zh", "auto"])
 
 if __name__ == "__main__":
     unittest.main()

@@ -2,7 +2,7 @@
 
 模型目录包含 `model.json`、`gpt/`、`acoustic/` 和 `frontend/`。`references/` 为可选参考缓存，允许模型完全不带参考条件。格式示例见 [model.example.json](../examples/model.example.json)，字段和路径检查由 [Model.load](../sakuratts/model.py) 定义。
 
-`format` 固定为 `sakuratts-model-v1`；`name` 是显示名称；`languages` 是非空语言名称数组；`backend.preferred` 是建议使用的后端名称，省略时为 `cuda`。当前后端包括 `cuda`、`cpu`、Windows `directml` 和实验性 Apple `mlx`，具体模型限制见[兼容矩阵](specs/compatibility-matrix.md)；首次转换生成的模型默认声明 `["ja", "en"]`，资源准备见[日英文本处理](english-frontend.md)。
+`format` 固定为 `sakuratts-model-v1`，`name` 是显示名称，`languages` 是非空语言名称数组。`backend.preferred` 指定建议后端，省略时为 `cuda`。目前有 `cuda`、`cpu`、Windows `directml` 和 Apple `mlx`。从原始权重转换后，模型按准备好的资源声明 `["ja", "en"]` 或 `["ja", "en", "zh"]`。[兼容矩阵](specs/compatibility-matrix.md) · [日英前端](english-frontend.md) · [普通话前端](chinese-frontend.md)
 
 元数据可以描述未来的语言或后端。`Model.load` 检查字段和资源路径，`Model.info()` 返回这些声明；执行支持由 `Engine.load` 的后端选择与前端装配判断。`sakuratts capabilities` 列出已实现能力。修改声明不会转换权重或增加新的语言资源，尚未实现的组合会明确报错。
 

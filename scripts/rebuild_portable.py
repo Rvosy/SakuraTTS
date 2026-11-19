@@ -11,8 +11,10 @@ import build_portable as builder
 from build_preparation import patch_i18n
 
 
-def install_english_dependencies(bundle, site, source, project, recipe, release, manifest):
-    installed = builder.distributions(site)
+def install_language_dependencies(bundle, site, source, project, recipe, release, manifest):
+    # 中断后，磁盘上可能已经出现下一个 wheel 的 METADATA，基包清单仍是上次保存的版本。
+    installed = {name: package for name, package in builder.distributions(site).items()
+                 if (package[0] / 'METADATA').relative_to(bundle).as_posix() in manifest['files']}
     available = builder.distributions(source)
     selected = builder.dependency_names(dict(available, **installed),
         builder.main_requirements(project, recipe), release['python'], release['target'])
@@ -34,24 +36,29 @@ def install_english_dependencies(bundle, site, source, project, recipe, release,
     manifest['components'].update(plan.components)
 
 
-def install_english_resources(bundle, source, inventory, components):
+def install_language_resources(bundle, source, inventory, components, language):
     prep = bundle / 'runtime/preparation'
     manifest_path = prep / 'preparation-manifest.json'
     manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
-    component = 'english-frontend-resources'
-    provenance = json.loads((source / 'source.json').read_text(encoding='utf-8'))
+    component = language + '-frontend-resources'
+    if language == 'english':
+        provenance = json.loads((source / 'source.json').read_text(encoding='utf-8'))
+        resources = builder.tree(source)
+        notices = ('english.md', 'CMUdict-README.txt', 'GPT-SoVITS-LICENSE.txt', 'Apache-2.0.txt')
+    else:
+        provenance, resources = builder.chinese_resources(source)
+        notices = sorted(name for name in provenance['files'] if name.startswith('notices/'))
     manifest['components'][component] = provenance
     components['preparation:' + component] = provenance
-    for path in builder.tree(source):
-        target = prep / 'official/english' / path.relative_to(source)
+    for path in resources:
+        target = prep / 'official' / language / path.relative_to(source)
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, target)
         record(prep, target, manifest['files'], component)
         record(bundle, target, inventory, 'preparation:' + component)
     licenses_path = prep / 'licenses.json'
     licenses = json.loads(licenses_path.read_text(encoding='utf-8'))
-    licenses['components'][component] = {'notices': ['official/english/' + name for name in
-        ('english.md', 'CMUdict-README.txt', 'GPT-SoVITS-LICENSE.txt', 'Apache-2.0.txt')]}
+    licenses['components'][component] = {'notices': [f'official/{language}/{name}' for name in notices]}
     licenses_path.write_text(json.dumps(licenses, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     record(prep, licenses_path, manifest['files'], manifest['files']['licenses.json']['component'])
     manifest['bytes'] = sum(row['bytes'] for row in manifest['files'].values())
@@ -144,22 +151,38 @@ def record(bundle, path, inventory, component='product-or-generated'):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ('bundle', 'wheel', 'threadpoolctl-wheel', 'english-dependencies', 'english-resources', 'ffmpeg', 'ffmpeg-source', 'output'):
+    for name in ('bundle', 'wheel', 'threadpoolctl-wheel', 'english-resources', 'ffmpeg', 'ffmpeg-source', 'output'):
         parser.add_argument('--' + name, required=True, type=Path)
+    parser.add_argument('--language-dependencies', '--english-dependencies', required=True, type=Path)
+    parser.add_argument('--chinese-resources', type=Path)
+    parser.add_argument('--recipe', type=Path)
+    parser.add_argument('--allow-dirty', action='store_true', help='Build a local candidate from uncommitted source')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     bundle = args.bundle.resolve()
-    manifest = json.loads((bundle / 'bundle-manifest.json').read_text())
+    manifest = json.loads((bundle / 'bundle-manifest.json').read_text(encoding='utf-8'))
     release = manifest['release']
     apple = release['target'] == 'macos-arm64'
-    recipe = builder.read_recipe(root / 'packaging/recipes' / ('macos-mlx-ja.toml' if apple else 'windows-x64.toml'))
-    project = tomllib.loads((root / 'pyproject.toml').read_text())['project']
-    if release['backends'] != recipe['backends'] or not release['preparation']:
+    recipe = builder.read_recipe(args.recipe or root / 'packaging/recipes' / ('macos-mlx-ja.toml' if apple else 'windows-x64.toml'))
+    project = tomllib.loads((root / 'pyproject.toml').read_text(encoding='utf-8'))['project']
+    if release['target'] != recipe['target'] or release['backends'] != recipe['backends'] or not release['preparation']:
         raise ValueError('运行环境基包与当前发行组合不匹配')
+    if ('zh' in recipe['languages']) != bool(args.chinese_resources):
+        raise ValueError('中日英配方需要 --chinese-resources 指向完整的离线中文资源')
+    if 'zh' in release['languages'] and 'zh' not in recipe['languages']:
+        raise ValueError('请使用日英基包构建日英版，以免包含中文资源')
+    if args.output.exists():
+        raise FileExistsError(args.output)
+    commit = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
+    dirty = bool(subprocess.check_output(['git', '-C', str(root), 'status', '--porcelain'], text=True).strip())
+    if dirty and not args.allow_dirty:
+        raise ValueError('CI 发行必须使用干净的源码提交')
     site = bundle / ('runtime/main/lib/python3.11/site-packages' if apple else 'runtime/main/Lib/site-packages')
-    install_english_dependencies(bundle, site, args.english_dependencies, project, recipe, release, manifest)
+    install_language_dependencies(bundle, site, args.language_dependencies, project, recipe, release, manifest)
     inventory = manifest['files']
-    install_english_resources(bundle, args.english_resources, inventory, manifest['components'])
+    install_language_resources(bundle, args.english_resources, inventory, manifest['components'], 'english')
+    if args.chinese_resources:
+        install_language_resources(bundle, args.chinese_resources, inventory, manifest['components'], 'chinese')
     upgrade_preparation_threadpoolctl(bundle, args.threadpoolctl_wheel, inventory, manifest['components'])
     update_preparation_i18n(bundle, inventory)
     install_product(bundle, site, args.wheel, inventory)
@@ -195,12 +218,12 @@ def main():
             record(bundle, target, inventory, 'third-party-notices')
     prep = bundle / 'runtime/preparation'
     license_file = prep / 'licenses.json'
-    licenses = json.loads(license_file.read_text())
+    licenses = json.loads(license_file.read_text(encoding='utf-8'))
     analysis = licenses['components']['public-analysis-resource']
     analysis['license_status'] = 'GPT-SoVITS distribution declaration and original model cards are included; see licenses/sakuratts/portable-resources.md at the bundle root.'
     license_file.write_text(json.dumps(licenses, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     prep_manifest_file = prep / 'preparation-manifest.json'
-    prep_manifest = json.loads(prep_manifest_file.read_text())
+    prep_manifest = json.loads(prep_manifest_file.read_text(encoding='utf-8'))
     auxiliary = prep / 'auxiliary-model-sources.json'
     shutil.copy2(root / 'packaging/auxiliary-model-sources.json', auxiliary)
     record(bundle, auxiliary, inventory, 'preparation-inventory')
@@ -210,21 +233,15 @@ def main():
     prep_manifest_file.write_text(json.dumps(prep_manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     for path in (license_file, prep_manifest_file):
         record(bundle, path, inventory, 'preparation-inventory')
-    commit = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
-    dirty = subprocess.check_output(['git', '-C', str(root), 'status', '--porcelain'], text=True).strip()
-    if dirty:
-        raise ValueError('CI 发行必须使用干净的源码提交')
-    release.update(version=project['version'], source_commit=commit, source_dirty=False, languages=recipe['languages'])
+    release.update(version=project['version'], source_commit=commit, source_dirty=dirty, languages=recipe['languages'])
     marker = bundle / 'runtime/portable.json'
-    value = json.loads(marker.read_text())
+    value = json.loads(marker.read_text(encoding='utf-8'))
     value['release'] = release
     marker.write_text(json.dumps(value, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     record(bundle, marker, inventory)
     manifest.update(wheel_sha256=builder.digest(args.wheel), bytes=sum(row['bytes'] for row in inventory.values()))
     (bundle / 'bundle-manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    if args.output.exists():
-        raise FileExistsError(args.output)
     bundle.rename(args.output)
     print(args.output)
 

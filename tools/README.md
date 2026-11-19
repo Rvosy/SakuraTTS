@@ -5,7 +5,8 @@
 | 用途 | 工具 |
 | --- | --- |
 | 准备独立声学解释器 | `prepare_ort_worker_runtime.py` |
-| 准备语言资源 | `prepare_japanese_resources.py`、`prepare_chinese_resources.py`、`prepare_english_resources.py`、`prepare_g2pw_ort.py`；原生英文包使用 [`prepare_english_frontend.py`](../docs/english-frontend.md) |
+| 导出普通话或英文前端 | [`prepare_chinese_frontend.py`](../docs/chinese-frontend.md)、[`prepare_english_frontend.py`](../docs/english-frontend.md) |
+| 准备语言资源表与 G2PW 格式 | `prepare_japanese_resources.py`、`prepare_chinese_resources.py`、`prepare_english_resources.py`、`prepare_g2pw_ort.py` |
 | 转换、重打包历史模型与参考 | `convert_sovits.py`、`repack_weights.py`、`prepare_reference_package.py` |
 | 声学图转换与检查 | `convert_sovits_onnx_fp16.py`、`conv_transpose_polyphase.py`、`split_sovits_vocoder.py`、`vocoder_receptive_field.py` |
 | 历史合成与官方对照 | `synthesize_japanese.py`、`windows_official_baseline.py` |

@@ -2,6 +2,11 @@ name: 构建并发布整合包预览
 
 on:
   workflow_dispatch:
+    inputs:
+      chinese_resources_asset:
+        description: 额外构建 Windows 中日英包时，填写基包草稿中的中文资源 tar.gz 文件名（归档根目录为 chinese）
+        type: string
+        required: false
 
 permissions:
   contents: read
@@ -11,19 +16,40 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  test-weights:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: 复用固定版本验收权重
+        id: weights
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: test-weights
+          key: gpt-sovits-v2proplus-336b2ec4e8d4ac74740798dd40af44e74659ecaf
+      - name: 准备公共验收权重
+        if: steps.weights.outputs.cache-hit != 'true'
+        env:
+          BASE: https://huggingface.co/lj1995/GPT-SoVITS/resolve/336b2ec4e8d4ac74740798dd40af44e74659ecaf
+        run: |
+          mkdir -p test-weights
+          curl --fail --location "$BASE/s1v3.ckpt" --output test-weights/gpt.ckpt
+          curl --fail --location "$BASE/v2Pro/s2Gv2ProPlus.pth" --output test-weights/sovits.pth
+      - name: 供 Windows 各语言包复用
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: test-weights
+          path: test-weights/
+          compression-level: 0
+          retention-days: 1
   build:
+    needs: test-weights
     # GitHub 仅向具备推送权限的调用者返回 Release 草稿。
     permissions:
       contents: write
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - target: windows-x64
-            runner: windows-2022
-          - target: macos-arm64
-            runner: macos-14
-    runs-on: ${{ matrix.runner }}
+        target: ${{ fromJSON(inputs.chinese_resources_asset && '["windows-x64","macos-arm64","windows-x64-zh"]' || '["windows-x64","macos-arm64"]') }}
+    runs-on: ${{ startsWith(matrix.target, 'windows-x64') && 'windows-2022' || 'macos-14' }}
     timeout-minutes: 90
     env:
       PYTHONUTF8: '1'
@@ -46,7 +72,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
-        run: python scripts/fetch_ci_base.py --target '${{ matrix.target }}' --directory "$WORK/base"
+        run: python scripts/fetch_ci_base.py --target '${{ startsWith(matrix.target, 'windows-x64') && 'windows-x64' || 'macos-arm64' }}' --directory "$WORK/base"
+      - name: 读取中文离线前端资源
+        if: matrix.target == 'windows-x64-zh'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ASSET: ${{ inputs.chinese_resources_asset }}
+        shell: bash
+        run: |
+          gh release download runtime-base-20261004 --pattern "$ASSET" --output "$WORK/chinese.tar.gz"
+          python -c "import sys,tarfile; tarfile.open(sys.argv[1]).extractall(sys.argv[2],filter='data')" "$WORK/chinese.tar.gz" "$WORK/base"
       - name: 获取 FFmpeg 源码
         shell: bash
         run: |
@@ -57,7 +92,7 @@ jobs:
         id: ffmpeg-cache
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
-          key: ffmpeg-7.1.2-${{ matrix.runner }}-${{ runner.arch }}-${{ hashFiles('scripts/build_ffmpeg.sh') }}
+          key: ffmpeg-7.1.2-${{ runner.os == 'Windows' && 'windows-2022' || 'macos-14' }}-${{ runner.arch }}-${{ hashFiles('scripts/build_ffmpeg.sh') }}
           path: |
             ${{ env.WORK }}/ffmpeg/ffmpeg
             ${{ env.WORK }}/ffmpeg/ffmpeg.exe
@@ -95,18 +130,37 @@ jobs:
           python -m build --wheel --outdir "$WORK/wheel"
           python -m pip download --only-binary=:all: --no-deps threadpoolctl==3.6.0 --dest "$WORK/threadpoolctl"
           if [[ '${{ runner.os }}' == Windows ]]; then platform=win_amd64; version=3.12; else platform=macosx_14_0_arm64; version=3.11; fi
-          python -c 'import tomllib; print("\n".join(tomllib.load(open("pyproject.toml", "rb"))["project"]["optional-dependencies"]["english"]))' > "$WORK/english-requirements.txt"
-          python -m pip install --only-binary=:all: --platform "$platform" --python-version "$version" \
-            --target "$WORK/english-dependencies" -r "$WORK/english-requirements.txt"
+          extras=(english)
+          recipe=()
+          if [[ '${{ matrix.target }}' == windows-x64-zh ]]; then
+            extras+=(chinese)
+            recipe=(--recipe packaging/recipes/windows-x64-zh.toml --chinese-resources "$WORK/base/chinese")
+          fi
+          python -c 'import sys,tomllib; deps=tomllib.load(open("pyproject.toml","rb"))["project"]["optional-dependencies"]; print("\n".join(dep for name in sys.argv[1:] for dep in deps[name]))' "${extras[@]}" > "$WORK/language-requirements.txt"
+          if [[ '${{ matrix.target }}' == windows-x64-zh ]]; then
+            python -m pip install --target "$WORK/language-dependencies" -r "$WORK/language-requirements.txt"
+          else
+            python -m pip install --only-binary=:all: --platform "$platform" --python-version "$version" \
+              --target "$WORK/language-dependencies" -r "$WORK/language-requirements.txt"
+          fi
           if [[ '${{ runner.os }}' == Windows ]]; then ffmpeg="$WORK/ffmpeg/ffmpeg.exe"; else ffmpeg="$WORK/ffmpeg/ffmpeg"; fi
           python scripts/rebuild_portable.py --bundle "$WORK/base/bundle" --wheel "$WORK"/wheel/*.whl \
             --threadpoolctl-wheel "$WORK"/threadpoolctl/*.whl \
-            --english-dependencies "$WORK/english-dependencies" --english-resources "$WORK/base/english" \
+            --language-dependencies "$WORK/language-dependencies" --english-resources "$WORK/base/english" "${recipe[@]}" \
             --ffmpeg "$ffmpeg" --ffmpeg-source "$WORK/ffmpeg-7.1.2.tar.xz" \
             --output "$WORK/SakuraTTS-${{ matrix.target }}"
+      - name: 读取本次验收权重
+        if: runner.os == 'Windows'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: test-weights
+          path: ${{ env.WORK }}/test-weights
       - name: 验证包内运行环境
         shell: bash
-        run: python scripts/ci_portable_smoke.py --bundle "$WORK/SakuraTTS-${{ matrix.target }}" --output "$WORK/verification"
+        run: |
+          weights=()
+          if [[ '${{ runner.os }}' == Windows ]]; then weights=(--gpt "$WORK/test-weights/gpt.ckpt" --sovits "$WORK/test-weights/sovits.pth"); fi
+          python scripts/ci_portable_smoke.py --bundle "$WORK/SakuraTTS-${{ matrix.target }}" --output "$WORK/verification" "${weights[@]}"
       - name: Windows 7z 归档与内容检查
         if: runner.os == 'Windows'
         shell: pwsh
@@ -150,7 +204,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [windows-x64, macos-arm64]
+        target: ${{ fromJSON(inputs.chinese_resources_asset && '["windows-x64","macos-arm64","windows-x64-zh"]' || '["windows-x64","macos-arm64"]') }}
     env:
       TQDM_MININTERVAL: '10'
     steps:
@@ -195,4 +249,4 @@ jobs:
       - name: 更新预览版入口
         env:
           MODELSCOPE_TOKEN: ${{ secrets.MODELSCOPE_TOKEN }}
-        run: python scripts/publish_modelscope.py index --directory published --release-id 'preview-${{ github.run_id }}-${{ github.run_attempt }}' --commit '${{ github.sha }}'
+        run: python scripts/publish_modelscope.py index --directory published --release-id 'preview-${{ github.run_id }}-${{ github.run_attempt }}' --commit '${{ github.sha }}' ${{ inputs.chinese_resources_asset && '--with-chinese' || '' }}

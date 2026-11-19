@@ -8,6 +8,7 @@ The current model uses phoneme labels (use_char_phoneme=False) and masking.
 This is not Chinese segmentation, tone sandhi, phone conversion or TTS.
 """
 
+from functools import cached_property, partial
 from pathlib import Path
 
 from sakuratts.text.g2pw_inputs import G2PWInputs
@@ -24,11 +25,19 @@ class G2PW:
         self.text = G2PWText(resource_dir, context_chars=context_chars, enable_opencc=enable_opencc)
         # Model IDs use the complete table, before text-query exclusions.
         polyphonic = [line.split("\t") for line in
-                      (Path(resource_dir) / "POLYPHONIC_CHARS.txt").read_text().strip().splitlines()]
-        self.inputs = G2PWInputs(ChineseBertTokenizer(tokenizer_json), polyphonic)
-        self.session = (G2PWSession(model_path, self.inputs.labels, sentence_dedup=sentence_dedup)
-                        if ort_package is None else
-                        G2PWSession.from_ort_package(ort_package, self.inputs.labels, sentence_dedup=sentence_dedup))
+                      (Path(resource_dir) / "POLYPHONIC_CHARS.txt").read_text(encoding="utf-8").strip().splitlines()]
+        self.tokenizer = ChineseBertTokenizer(tokenizer_json)
+        self.inputs = G2PWInputs(self.tokenizer, polyphonic)
+        if ort_package is None:
+            self._open_session = partial(G2PWSession, model_path, self.inputs.labels, sentence_dedup=sentence_dedup)
+        else:
+            self._open_session = partial(G2PWSession.from_ort_package, ort_package, self.inputs.labels,
+                                         sentence_dedup=sentence_dedup)
+
+    @cached_property
+    def session(self):
+        """Dictionary-only phrases need no neural disambiguation."""
+        return self._open_session()
 
     def __call__(self, sentences):
         texts, model_positions, result_positions, sentence_ids, partials = self.text.prepare(sentences)
@@ -43,4 +52,5 @@ class G2PW:
         return partials
 
     def close(self):
-        self.session.close()
+        if "session" in vars(self):
+            self.session.close()

@@ -35,7 +35,7 @@ docs/              使用说明、Spec 与 ADR
 | [profiles.py](../sakuratts/profiles.py) | 后端执行预设、显式选项合并与精度包匹配 |
 | [prepare/converter.py](../sakuratts/prepare/converter.py)、[cache.py](../sakuratts/prepare/cache.py) | 模型转换、转换缓存身份与产物发布 |
 | [prepare/sovits_checkpoint.py](../sakuratts/prepare/sovits_checkpoint.py) | MLX 与 ONNX 导出共用的官方声学权重加载、模型构造及张量校验 |
-| [prepare/prepare_resources.py](../sakuratts/prepare/prepare_resources.py) | 各后端共用的日文前端资源准备与参考音频编码 |
+| [prepare/prepare_resources.py](../sakuratts/prepare/prepare_resources.py) | 各后端共用的模型前端资源装配与参考音频编码 |
 | [TTS_infer_pack/reference.py](../sakuratts/TTS_infer_pack/reference.py) | 请求参考解析、音频条件缓存与转写特征 |
 | [text/](../sakuratts/text) | 语言模式、语言分段、规范化、音素和文本特征组件 |
 | [AR/](../sakuratts/AR) | 语义生成循环、采样、EOS 与长度停止规则 |
@@ -64,9 +64,17 @@ docs/              使用说明、Spec 与 ADR
 
 模型家族由声学 checkpoint 和转换产物描述，设备后端负责执行方式。V2Pro 与 V2ProPlus 共用官方模型加载入口；MLX 和 ONNX 转换器分别输出各自需要的权重包和计算图。MLX 按产物配置读取层数、通道和卷积参数，参考条件必须匹配声学模型家族。整合包示例只选择后端，不根据操作系统指定模型家族。具体支持范围及验证结果由兼容矩阵维护。
 
-`text.profiles` 定义已实现的语言模式，`TextPreprocessor.TextFrontend` 负责共享请求准备，语言处理器生成音素和特征，`TTS_infer_pack.frontend.FrontendRuntime` 装配资源并管理前端进程。`text.LangSegmenter` 只负责语言分段。日文沿用原版零 BERT 特征；中文研究代码尚未接入公共前端。
-
 `SpeechRequest` 负责 HTTP 字段、默认值及请求能力校验。通过检查后，HTTP 调用同一个 `Inference` 和 Engine。参考缓存复用音频条件，转写与语言特征按请求生成。
+
+## 多语言合成与执行精度
+
+GPT-SoVITS 分别按 `prompt_lang` 处理参考录音的转写，按 `text_lang` 处理要朗读的文本。普通话按每个字的音素数展开 BERT 特征，日英使用与音素序列等长的 1024 维零向量。参考与目标的音素和特征拼接后，同一个 GPT 预测目标语义序列，SoVITS 再结合目标音素与参考音频条件生成语音。[上游语言入口](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/GPT_SoVITS/TTS_infer_pack/TTS.py#L1152-L1172) · [音素特征](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/GPT_SoVITS/TTS_infer_pack/TextPreprocessor.py#L191-L220) · [参考与目标拼接](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/GPT_SoVITS/TTS_infer_pack/TTS.py#L911-L920) · [语义生成与声学解码](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/GPT_SoVITS/TTS_infer_pack/TTS.py#L1267-L1317)
+
+Coqui XTTS v2 也让同一份权重合成多种语言。它从参考音频提取 GPT 条件和说话人向量，按目标语言将文本编码为 token，交给 GPT 和 HiFi-GAN。这个接口说明参考音色与目标语言可以独立选择。SakuraTTS 兼容 GPT-SoVITS 权重，因而保留参考转写、音素 ID 和 BERT 特征这套输入。[XTTS 参考音频处理（TTS 0.22.0）](https://github.com/coqui-ai/TTS/blob/fa28f99f1508b5b5366539b2149963edcb80ba62/TTS/tts/models/xtts.py#L480-L495) · [目标语言编码与解码](https://github.com/coqui-ai/TTS/blob/fa28f99f1508b5b5366539b2149963edcb80ba62/TTS/tts/models/xtts.py#L530-L577)
+
+SakuraTTS 的 `FrontendRuntime` 按资源清单装配处理器，`TextFrontend` 对参考转写和目标文本使用同一套分段、音素转换和特征拼接逻辑。普通话前端在 CPU 上按需加载 FP32 模型，BERT 提取文本特征，G2PW 处理需要根据上下文判音的字。新增语言时，前端需给出与模型符号表一致的音素和逐音素特征。每份声音权重在该语言上的发音质量由实际语音验证。[普通话前端](chinese-frontend.md) · [共享合成路径](../sakuratts/TTS_infer_pack/synthesis.py)
+
+上游的 `is_half` 按设备设置推理精度。SakuraTTS 在设备后端选择精度，CUDA 的 `fp16`、`low-memory`、`minimum-memory` 三档对中日英共用同一份 FP16 分块声学包与 FP16 GPT 配置。三档的区别在于声学会话是否分阶段加载，以及 GPT 与声学模型是否错峰驻留。[上游半精度设置](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/GPT_SoVITS/TTS_infer_pack/TTS.py#L690-L715) · [SakuraTTS 推理档位](inference-profiles.md)
 
 ## 进程与资源
 

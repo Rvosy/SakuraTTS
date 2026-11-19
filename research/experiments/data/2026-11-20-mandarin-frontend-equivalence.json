@@ -1,0 +1,177 @@
+{
+  "platform": "Windows 11 x64, AMD Ryzen 7 9700X",
+  "corpus": "research/experiments/configs/mandarin-pronunciation-corpus.txt",
+  "baseline": {
+    "frontend": "Previously built Windows archive, before the sparse mask and lazy creation changes. Both FP32 weights embedded in the ONNX files.",
+    "graphs": {
+      "bert.onnx": {
+        "bytes": 1197638395,
+        "sha256": "bd2e9162e60532898c3834a80acd15ef46c29a7c174274e0394f66800121022b"
+      },
+      "g2pw.onnx": {
+        "bytes": 635212732,
+        "sha256": "2eb3c71fd95117b2e1abef8d2d0cd78aae894bbe7f0fac105ddc9c32ce63cbd0"
+      }
+    }
+  },
+  "production": {
+    "frontend": "Current code with sparse lexicon indices, deferred G2PW session, NumPy top-1 score lookup. Unoptimized FP32 ONNX external data, size threshold 16384 bytes, no custom alignment.",
+    "graphs": {
+      "bert.onnx": {
+        "bytes": 1353018,
+        "sha256": "e96219baedf7ab4af02fce03a8cb77750115ed695f077fcb9db15f7530baa865"
+      },
+      "bert.bin": {
+        "bytes": 1196294144,
+        "sha256": "7f92d808ca37e3f17f8205da07d30712a87dbb1260c6274c3898b23840caeb0f"
+      },
+      "g2pw.onnx": {
+        "bytes": 581134,
+        "sha256": "478b2b5b663bdcb2cbfcc57c7ab28c3bb4087e0f0490f0182256d814c69069f2"
+      },
+      "g2pw.bin": {
+        "bytes": 634635936,
+        "sha256": "f2a26e7ce373a5f800f9f57f3d836f6c0544f840325573058eed4ace73c9f1ae"
+      }
+    },
+    "comparison": {
+      "corpus": "mandarin-pronunciation-corpus.txt",
+      "sentences": 96,
+      "onnxruntime": "1.24.4",
+      "provider": "CPUExecutionProvider",
+      "source_phone_count": 2681,
+      "normalized_mismatches": 0,
+      "word2ph_mismatches": 0,
+      "phone_mismatches": [],
+      "g2pw_top1_differences": 0,
+      "g2pw_label_sequence_mismatches": 0,
+      "g2pw_queries": 660,
+      "arrays": {
+        "bert": {
+          "atol": 1e-05,
+          "rtol": 0.0001,
+          "arrays": 96,
+          "arrays_byte_identical": 96,
+          "shape_mismatches": 0,
+          "values": 2745344,
+          "values_changed": 0,
+          "outside_tolerance": 0,
+          "max_absolute_difference": 0.0
+        },
+        "g2pw": {
+          "atol": 1e-06,
+          "rtol": 1e-05,
+          "arrays": 96,
+          "arrays_byte_identical": 96,
+          "shape_mismatches": 0,
+          "values": 861300,
+          "values_changed": 0,
+          "outside_tolerance": 0,
+          "max_absolute_difference": 0.0
+        },
+        "g2pw_confidence": {
+          "atol": 1e-06,
+          "rtol": 1e-05,
+          "arrays": 96,
+          "arrays_byte_identical": 96,
+          "shape_mismatches": 0,
+          "values": 660,
+          "values_changed": 0,
+          "outside_tolerance": 0,
+          "max_absolute_difference": 0.0
+        }
+      }
+    },
+    "replay": ".venv-cpu-memory/Scripts/python.exe -B research/tools/mandarin_frontend_equivalence.py --python outputs/mandarin-release/extracted/zh-ja-en/SakuraTTS-windows-x64-zh-ja-en/runtime/main/python.exe --resources outputs/mandarin-release/shared-zh --candidate-graphs outputs/mandarin-memory/exported --candidate-source . --output outputs/mandarin-memory/eq-exported"
+  },
+  "int8_candidate": {
+    "purpose": "Compare a size/performance alternative with the original FP32 phone and feature contract. Both inputs use the same packaged CPU frontend.",
+    "quantizer": "onnxruntime 1.30.0 quantize_dynamic, per_channel=True, weight_type=QInt8, op_types_to_quantize=[MatMul,Gather], MatMulConstBOnly=True; activations dynamically quantized, constant Gather tables also quantized.",
+    "model_bytes": {
+      "bert.onnx": {
+        "fp32": 1197638395,
+        "int8": 302082541
+      },
+      "g2pw.onnx": {
+        "fp32": 635212732,
+        "int8": 159708997
+      }
+    },
+    "gather_weight_bytes": {
+      "g2pw_second_order_descriptor": [
+        205678440,
+        51419610
+      ],
+      "bert_word_embeddings": [
+        86540288,
+        21635072
+      ]
+    },
+    "g2pw": {
+      "queries": 660,
+      "labels_changed": 2,
+      "sentences_with_phone_changes": 2,
+      "word2ph_mismatches": 0,
+      "examples": [
+        {
+          "text": "这一着棋下对了，对手招架不住。",
+          "fp32_bopomofo": "ㄓㄠ2",
+          "int8_bopomofo": "ㄓㄨㄛ2",
+          "fp32_confidence": 0.809849202632904,
+          "int8_confidence": 0.4685038924217224
+        },
+        {
+          "text": "单于站在单县的城楼上。",
+          "fp32_bopomofo": "ㄉㄢ1",
+          "int8_bopomofo": "ㄕㄢ4",
+          "fp32_confidence": 0.5214220881462097,
+          "int8_confidence": 0.6637486815452576
+        }
+      ]
+    },
+    "bert": {
+      "reference": "packaged FP32 ONNX; final token features before repeated alignment columns",
+      "rtol": 0.0001,
+      "atol": 1e-05,
+      "cases_passed": 0,
+      "values": 1448960,
+      "outside_tolerance": 1448381,
+      "mae": 0.1074174103243201,
+      "rmse": 0.1369029784357025,
+      "max_abs": 11.569753646850586,
+      "per_character_cosine_min_p50_mean": [
+        0.31447288393974304,
+        0.9910066723823547,
+        0.9903808762033078
+      ]
+    },
+    "cpu_screen": {
+      "method": "Independent sequential process per variant, two ONNX threads and CPU EP. The Mandarin processor runs without Japanese worker or GPT/SoVITS; memory boundaries after the first complete call include dictionary loaders. Timings are medians of five hot trials after a warmup on the first and second corpus sentences. No GPU work.",
+      "samples": {
+        "fp32": {
+          "clean_cold_seconds": 2.2926991000422277,
+          "bert_cold_seconds": 1.255373700056225,
+          "short_hot_median_seconds": 0.058788000023923814,
+          "long_hot_median_seconds": 0.14772569999331608,
+          "after_first_mandarin_target_working_set_bytes": 2143244288,
+          "after_first_mandarin_target_private_bytes": 2629332992
+        },
+        "int8": {
+          "clean_cold_seconds": 2.221775699988939,
+          "bert_cold_seconds": 0.6220624999841675,
+          "short_hot_median_seconds": 0.02858009998453781,
+          "long_hot_median_seconds": 0.060576400021091104,
+          "after_first_mandarin_target_working_set_bytes": 780365824,
+          "after_first_mandarin_target_private_bytes": 1263919104
+        }
+      }
+    }
+  },
+  "sources": {
+    "ort_dynamic_transformers": "https://onnxruntime.ai/docs/performance/model-optimizations/quantization.html",
+    "ort_gather": "https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/python/tools/quantization/operators/gather.py",
+    "optimum_onnx_cpu_profiles": "https://huggingface.co/docs/optimum-onnx/en/onnxruntime/usage_guides/quantization",
+    "g2pw_disambiguation": "https://www.isca-archive.org/interspeech_2022/chen22d_interspeech.pdf",
+    "onnx_external_data": "https://onnx.ai/onnx/repo-docs/ExternalData.html"
+  }
+}
