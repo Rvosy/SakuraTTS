@@ -170,7 +170,7 @@ class PackageSoVITSChunksTests(unittest.TestCase):
         f.rf.rename(f.rf.with_name("rf-unavailable.json"))
         for size in (0, 128, 256):
             self.assertEqual(read_chunked_manifest(f.output, allow_experimental_fp16=True,
-                acoustic_chunk_frames=size, acoustic_arena_shrink=True), (manifest, None))
+                acoustic_chunk_frames=size), (manifest, None))
         screen = json.loads((f.output / "chunk-screen.json").read_text(encoding="utf-8"))
         self.assertFalse(screen["quality_accepted"])
         self.assertFalse(screen["evidence"]["inference_rerun"])

@@ -89,6 +89,7 @@ class SplitAcousticAdapter(ORTChunkedSoVITS):
         self.session = self.vocoder_session = self._run_options = None
         self.last_transfer = None
         self._closed, self._stage_intervals = False, []
+        self.device = "cuda"
         self.acoustic_session_policy = "resident"
         try:
             ORTSoVITS.__init__(self, manifest, sessions["latent"], acoustic_arena_shrink=True)
