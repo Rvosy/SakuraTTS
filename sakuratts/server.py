@@ -231,7 +231,7 @@ def create_app(model=None, *, tts_config=None, backend=None, profile=None, exper
 
     app = FastAPI(title="SakuraTTS", version="0.1.0a1", lifespan=lifespan)
 
-    def start_job(operation, *, cancel_requested=None, preparation_failed=None, cancel_event=None):
+    def start_job(operation, *, cancel_requested=None, cancel_event=None):
         if app.state.busy:
             return None
         runtime = app.state.runtime
@@ -249,12 +249,7 @@ def create_app(model=None, *, tts_config=None, backend=None, profile=None, exper
                     cancel_event.set()
             try:
                 if runtime is not None:
-                    try:
-                        await runtime.ensure_awake(cancel_requested)
-                    except Exception as error:
-                        if preparation_failed is not None:
-                            await preparation_failed(error)
-                        raise
+                    await runtime.ensure_awake(cancel_requested)
                     # The IPC deadline cannot run while its audio callback is
                     # blocked by HTTP backpressure. Unblock that callback here.
                     timeout_handle = asyncio.get_running_loop().call_later(operation_timeout_seconds, expire)
@@ -482,41 +477,27 @@ def create_app(model=None, *, tts_config=None, backend=None, profile=None, exper
             set_stage("音频发送")
             put((rate, encoded))
             set_stage(previous)
-        def synthesize():
-            try:
-                run_synthesis(values, on_fragment=fragment, cancel_requested=stop.is_set)
-            except Exception as error:
-                if not stop.is_set():
-                    put(error)
-                if app.state.runtime is not None:
-                    raise
-            finally:
-                put(None)
-        async def preparation_failed(error):
-            if not stop.is_set():
-                await queue.put(error)
-                await queue.put(None)
-        job = start_job(synthesize, cancel_requested=stop.is_set, preparation_failed=preparation_failed,
-                        cancel_event=stop)
+        operation = partial(run_synthesis, values, on_fragment=fragment, cancel_requested=stop.is_set)
+        job = start_job(operation, cancel_requested=stop.is_set, cancel_event=stop)
         if job is None:
             return busy_response()
         app.state.streams.add(stop)
 
         async def receive_item():
+            if queue.empty() and not job.done():
+                pending = asyncio.create_task(queue.get())
+                try:
+                    done, _ = await asyncio.wait({pending, job}, return_when=asyncio.FIRST_COMPLETED)
+                    if pending in done:
+                        return pending.result()
+                finally:
+                    if not pending.done():
+                        pending.cancel()
+                        await asyncio.gather(pending, return_exceptions=True)
             if not queue.empty():
                 return queue.get_nowait()
-            if job.done():
-                return job.exception() or None
-            pending = asyncio.create_task(queue.get())
-            try:
-                done, _ = await asyncio.wait({pending, job}, return_when=asyncio.FIRST_COMPLETED)
-                if pending in done:
-                    return pending.result()
-                return job.exception() or None
-            finally:
-                if not pending.done():
-                    pending.cancel()
-                    await asyncio.gather(pending, return_exceptions=True)
+            job.result()
+            return None
 
         try:
             first_task = asyncio.create_task(receive_item())
@@ -524,30 +505,26 @@ def create_app(model=None, *, tts_config=None, backend=None, profile=None, exper
             if disconnected:
                 app.state.streams.discard(stop)
                 return Response(status_code=499)
+            if first is None:
+                raise ValueError("No audio generated")
+        except Exception as error:
+            app.state.streams.discard(stop)
+            return error_response(error, synthesis=True)
         except BaseException:
             stop.set()
             app.state.streams.discard(stop)
             raise
-        if first is None or isinstance(first, Exception):
-            stop.set()
-            app.state.streams.discard(stop)
-            return error_response(first or ValueError("No audio generated"), synthesis=True)
         async def body():
             try:
                 if values["media_type"] == "wav":
                     yield wave_header(first[0])
                 yield first[1]
                 while True:
-                    if app.state.runtime is None:
-                        item = await queue.get()
-                    else:
-                        if stop.is_set():
-                            raise SynthesisCancelled("stream_output")
-                        item = await receive_item()
+                    if stop.is_set():
+                        raise SynthesisCancelled("stream_output")
+                    item = await receive_item()
                     if item is None:
                         return
-                    if isinstance(item, Exception):
-                        raise item
                     yield item[1]
             finally:
                 stop.set()

@@ -342,6 +342,7 @@ class ServerTests(unittest.TestCase):
     def test_stream_emits_before_completion_and_disconnect_keeps_worker_owned(self):
         import asyncio
         import json
+        from sakuratts.runtime.cancellation import SynthesisCancelled
         from sakuratts.server import create_app
         first_sent, finish = threading.Event(), threading.Event()
         class FakeInference:
@@ -380,7 +381,8 @@ class ServerTests(unittest.TestCase):
                     self.assertTrue(app.state.busy)
                 finally:
                     finish.set()
-                await asyncio.gather(*app.state.jobs)
+                with self.assertRaises(SynthesisCancelled):
+                    await asyncio.gather(*app.state.jobs)
                 self.assertFalse(app.state.busy)
         with patch("sakuratts.server.Inference", FakeInference):
             asyncio.run(run())
