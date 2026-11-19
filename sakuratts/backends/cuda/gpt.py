@@ -446,9 +446,7 @@ class CUDAGPT:
         w = self.weights
         with self.stream:
             if self.precision == "fp16":
-                result = cp.asnumpy(self._prefill_fp16(phones, prompt, bert))
-                self.stream.synchronize()
-                return result
+                return cp.asnumpy(self._prefill_fp16(phones, prompt, bert))
             text = w["text_embedding"][cp.asarray(phones[0])] + cp.asarray(bert[0]) @ w["bert.weight"].T + w["bert.bias"]
             text += w["text_alpha"] * w["position_encoding"][:t]
             audio = w["audio_embedding"][cp.asarray(prompt[0])] + w["audio_alpha"] * w["position_encoding"][:p]
@@ -478,9 +476,7 @@ class CUDAGPT:
                 ffn = cp.maximum(mixed @ w[pre+"ffn_in.weight"].T + w[pre+"ffn_in.bias"],0)
                 x = self._norm(ffn @ w[pre+"ffn_out.weight"].T,mixed,pre+"norm2",w[pre+"ffn_out.bias"])
             logits = x[-1:] @ w["output.weight"].T
-            result = cp.asnumpy(logits)
-        self.stream.synchronize()
-        return result
+            return cp.asnumpy(logits)
 
     def _linear_fp16(self, x, weight, *, output_dtype=None):
         out = cp.empty((x.shape[0], weight.shape[0]), output_dtype or self.dtype)
@@ -636,6 +632,5 @@ class CUDAGPT:
             else:
                 self._decode_graph_body()
             result=cp.asnumpy(self.workspace["logits"])
-        self.stream.synchronize()
         self.length+=1
         return result

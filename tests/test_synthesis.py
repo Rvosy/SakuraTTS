@@ -113,6 +113,15 @@ class SynthesisTests(unittest.TestCase):
         np.testing.assert_array_equal(quiet.waveform, verbose.waveform)
         self.assertEqual(quiet_rng.bit_generator.state, verbose_rng.bit_generator.state)
 
+    def test_top_p_changes_the_sampled_token_in_complete_synthesis(self):
+        self.gpt.prefill = lambda *args: np.array([[1, 0, -1]], dtype=np.float32)
+        options = dict(early_stop_num=0, repetition_penalty=1,
+                       semantic_random_draw=lambda *args: np.array([[1, 0.01]], dtype=np.float32))
+        unrestricted = self.request(top_p=1, **options)
+        filtered = self.request(top_p=0.8, **options)
+        self.assertEqual(unrestricted.generation.sampled_tokens.tolist(), [1])
+        self.assertEqual(filtered.generation.sampled_tokens.tolist(), [0])
+
     def test_proplus_reference_cannot_be_used_with_pro_acoustic_graph(self):
         self.reference.manifest["model_family"] = "v2ProPlus"
         with self.assertRaisesRegex(ValueError, "must match"):

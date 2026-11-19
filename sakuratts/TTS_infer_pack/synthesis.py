@@ -65,35 +65,31 @@ class SpeechResult:
 
 def single_fragment_pcm(waveform, sample_rate, fragment_interval=0.3):
     """Pinned official non-streaming normalization, trailing silence and cast."""
-    audio = np.asarray(waveform, dtype=np.float32).reshape(-1).copy()
+    audio = np.asarray(waveform, dtype=np.float32).reshape(-1)
     if audio.size == 0:
         raise ValueError("Expected finite nonempty waveform samples")
     maximum = np.max(np.abs(audio))
     if not np.isfinite(maximum):
         raise ValueError("Expected finite nonempty waveform samples")
     if maximum > 1:
-        audio /= maximum
-    silence = np.zeros(int(sample_rate * fragment_interval), dtype=np.float32)
-    return (np.concatenate((audio, silence)) * 32768).astype(np.int16)
+        audio = audio / maximum
+    pcm = np.zeros(audio.size + int(sample_rate * fragment_interval), dtype=np.int16)
+    np.multiply(audio, np.float32(32768), out=pcm[:audio.size], casting="unsafe")
+    return pcm
 
 
-def _validate_model(reference, name, manifest):
+def _validate_reference(reference, sovits=None):
     identity = reference.manifest["identity"]
     if identity["reference_language"] not in SUPPORTED_LANGUAGE_MODES:
         raise ValueError("Unsupported prepared reference language: " + identity["reference_language"])
     family = reference.manifest["model_family"]
     if (family not in ("v2Pro", "v2ProPlus")
-            or name == "sovits" and manifest["config"]["model"]["version"] != family):
+            or sovits is not None and sovits.encoder.manifest["config"]["model"]["version"] != family):
         raise ValueError("Reference family and acoustic architecture must match (V2Pro/V2ProPlus)")
 
 
-def _validate_models(reference, gpt, sovits):
-    _validate_model(reference, "gpt", gpt.weight_manifest)
-    _validate_model(reference, "sovits", sovits.encoder.manifest)
-
-
 def prepare_text_request(text, language, frontend, *, split_method="cut0"):
-    """Prepare official cut0/cut2 fragments in order, without synthesis models.
+    """Prepare the requested text fragments in order, without synthesis models.
 
     Complete preparation precedes generation, including validation of later
     fragments. Do not re-normalize each fragment as a new standalone request.
@@ -144,7 +140,7 @@ def generate_prepared_semantic(prepared: PreparedText, reference: PreparedRefere
     The cancellation predicate is not retained in the returned request. Pass it
     explicitly to synthesize_acoustic to keep cancellation enabled in that phase.
     """
-    _validate_model(reference, "gpt", gpt.weight_manifest)
+    _validate_reference(reference)
     rng = np.random.default_rng() if rng is None else rng
     start = time.perf_counter()
     target = prepared.target
@@ -187,7 +183,7 @@ def synthesize_acoustic(request: PreparedSemantic, *, sovits, speed=1.0, noise_s
     if speed != 1.0 or fragment_interval < 0:
         raise ValueError("Require speed=1 and a nonnegative fragment interval")
     reference = request.reference
-    _validate_model(reference, "sovits", sovits.encoder.manifest)
+    _validate_reference(reference, sovits)
     sovits.validate_reference(reference)
     check_cancelled(cancel_requested, "before_acoustic")
     config = sovits.encoder.manifest["config"]
@@ -201,9 +197,9 @@ def synthesize_acoustic(request: PreparedSemantic, *, sovits, speed=1.0, noise_s
         acoustic_noise = request.rng.standard_normal(noise_shape, dtype=np.float32)
     else:
         acoustic_noise = np.asarray(acoustic_noise)
-    if (acoustic_noise.dtype != np.float32 or acoustic_noise.shape != noise_shape
-            or not np.isfinite(acoustic_noise).all()):
-        raise ValueError(f"Acoustic noise must be finite FP32 with generated-history shape {noise_shape}")
+        if (acoustic_noise.dtype != np.float32 or acoustic_noise.shape != noise_shape
+                or not np.isfinite(acoustic_noise).all()):
+            raise ValueError(f"Acoustic noise must be finite FP32 with generated-history shape {noise_shape}")
     waveform = sovits.decode(semantic, target_phones[None, :], reference.ge, reference.ge512,
                              acoustic_noise, noise_scale=noise_scale, speed=speed)
     check_cancelled(cancel_requested, "after_acoustic")
@@ -232,9 +228,9 @@ def synthesize_prepared(prepared: PreparedText, reference: PreparedReference, *,
     NumPy's RNG is not seed-equivalent to Torch. Explicit draws/noise support
     controlled replay. No reference encoder is loaded by either phase.
     """
-    if speed != 1.0 or top_p != 1.0 or fragment_interval < 0:
-        raise ValueError("Require speed=1, top_p=1 and a nonnegative fragment interval")
-    _validate_models(reference, gpt, sovits)
+    if speed != 1.0 or fragment_interval < 0:
+        raise ValueError("Require speed=1 and a nonnegative fragment interval")
+    _validate_reference(reference, sovits)
     request = generate_prepared_semantic(
         prepared, reference, gpt=gpt, early_stop_num=early_stop_num, top_k=top_k, top_p=top_p,
         temperature=temperature, repetition_penalty=repetition_penalty, rng=rng,
@@ -252,7 +248,7 @@ def synthesize(text, language, reference: PreparedReference, *, frontend, gpt, s
     Use prepare_text then synthesize_prepared to separate frontend-model and
     synthesis-model residency. Both paths execute the same request functions.
     """
-    _validate_models(reference, gpt, sovits)
+    _validate_reference(reference, sovits)
     start = time.perf_counter()
     prepared = prepare_text(text, language, frontend)
     result = synthesize_prepared(prepared, reference, gpt=gpt, sovits=sovits, **parameters)

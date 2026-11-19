@@ -2,7 +2,7 @@
 
 The model provides prefill/decode; this loop never accepts target tokens.
 Explicit random draws and an optional observer support reproducible diagnosis.
-Sampling requires top_p=1 and a nonempty reference prefix.
+Sampling starts from a nonempty reference prefix.
 """
 
 from dataclasses import dataclass
@@ -111,8 +111,8 @@ def generate_semantic(model, phones, prompt, bert, *, eos, top_k=15, top_p=1.0,
     prompt = np.asarray(prompt)
     if prompt.ndim != 2 or prompt.shape[0] != 1 or prompt.shape[1] == 0:
         raise ValueError("Expected one nonempty reference semantic prefix")
-    if top_p != 1.0:
-        raise ValueError("Semantic generation requires top_p=1")
+    if not 0 < top_p <= 1:
+        raise ValueError("top_p must be in (0, 1]")
     if rng is None:
         rng = np.random.default_rng()
     history = prompt[0].copy()
