@@ -18,11 +18,9 @@ class Inference:
         self.model = None
         self.experimental = experimental
         self.reference_audio = None
-        model, self.settings = read_inference_configuration(model, tts_config=tts_config)
+        model, self.settings = read_inference_configuration(model, tts_config=tts_config, profile=profile)
         if self.settings.get("runtime_options"):
             self.experimental = {**self.settings["runtime_options"], **(experimental or {})}
-        if profile is not None:
-            self.settings["profile"] = profile
         if backend is not None:
             self.settings["backend"] = backend
         from ..profiles import resolve_profile, uses_staged_policy
@@ -145,6 +143,8 @@ class Inference:
         self._activate(prepare_initial_model(self.settings, self.experimental), cached_conversion=True)
 
     def set_weights(self, kind, weights_path):
+        if self.model is None:
+            raise ValueError("Configure both initial model weights and frontend resources in --tts-config first")
         import json
         from ..prepare.cache import prepare_checkpoint
         from ..module.reference_condition import sha256_file
@@ -156,7 +156,7 @@ class Inference:
                 self.settings[kind + "_checkpoint"] = str(path)
                 self.logger.debug("%s 权重与当前一致，继续复用", kind.upper())
                 return
-            backend = self.settings.get("backend", self.model.backend if self.model is not None else "cuda")
+            backend = self.settings.get("backend", self.model.backend)
             converted = prepare_checkpoint(kind, path, digest, self.settings,
                                            backend=backend, experimental=self.experimental)
             checkpoint = str(path)
@@ -170,12 +170,10 @@ class Inference:
         if kind == "sovits" and self.engine is not None and self.engine._runtime.name == "mlx":
             expected = "sakuratts-sovits-decode-fp32-v1"
         accepted = {expected}
-        if kind == "sovits" and self.settings.get("backend", self.model.backend if self.model else "cuda") in ("cpu", "cuda"):
+        if kind == "sovits" and self.settings.get("backend", self.model.backend) in ("cpu", "cuda"):
             accepted.add("sakuratts-sovits-chunked-v1")
         if manifest.get("format") not in accepted:
             raise ValueError("Wrong model type for " + kind)
-        if self.model is None:
-            raise ValueError("Configure both initial model weights and frontend resources in --tts-config first")
         config = self.model.runtime_config
         root = self.model.path.parent
         for field in ("gpt", "sovits", "frontend", "acoustic_python", "frontend_python", "main_dictionary"):

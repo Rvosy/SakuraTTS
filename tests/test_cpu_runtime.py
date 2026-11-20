@@ -161,6 +161,22 @@ class CPURuntimeTests(unittest.TestCase):
             self.assertEqual(len(self.acoustics), 1)
             self.gpts[0].close.assert_not_called()
 
+    def test_explicit_service_profile_overrides_imported_half_flag(self):
+        from sakuratts.runtime.inference_process import ProcessInference
+
+        config = self.root / "imported.yaml"
+        original = "custom:\n  device: cuda\n  version: v2ProPlus\n  is_half: true\n"
+        for from_yaml in (False, True):
+            with self.subTest(from_yaml=from_yaml):
+                config.write_text(original + ("sakuratts:\n  profile: balanced\n" if from_yaml else ""),
+                                  encoding="utf-8")
+                options = {} if from_yaml else {"profile": "balanced"}
+                with contextlib.closing(Inference(self.config, tts_config=config, backend="cpu", **options)) as inference:
+                    audio = self.speech_request(inference)
+                    self.assertEqual(audio.report["acoustic_precision"], "fp32")
+                with contextlib.closing(ProcessInference(self.config, tts_config=config, backend="cpu", **options)) as proxy:
+                    self.assertTrue(proxy.configured)
+
     def make_acoustic(self, *args, **kwargs):
         value = SoVITS()
         value.encoder = SimpleNamespace(manifest={

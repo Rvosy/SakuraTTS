@@ -79,8 +79,8 @@ class SpeechRequest(BaseModel):
         if request["streaming_mode"] not in (0, 1, 2, 3):
             raise ValueError("streaming_mode must be 0, 1, 2, 3 or true/false")
         unsupported = []
-        if not 0.5 <= request["speed_factor"] <= 2:
-            raise ValueError("speed_factor must be between 0.5 and 2")
+        if not 0.5 <= request["speed_factor"] <= 100:
+            raise ValueError("speed_factor must be between 0.5 and 100")
         if request["speed_factor"] != 1 and request["streaming_mode"]:
             unsupported.append("speed_factor != 1 with streaming")
         if request["batch_size"] != 1:
@@ -114,10 +114,17 @@ def change_audio_tempo(audio, factor):
     if factor == 1:
         return audio
     started = time.perf_counter()
+    remaining = factor
+    filters = []
+    # A single atempo stage skips samples above 2x.
+    while remaining > 2:
+        filters.append("atempo=2")
+        remaining /= 2
+    filters.append(f"atempo={remaining}")
     result = subprocess.run([
         "ffmpeg", "-hide_banner", "-loglevel", "error", "-f", "s16le",
         "-ar", str(audio.sample_rate), "-ac", "1", "-i", "pipe:0",
-        "-af", f"atempo={factor}", "-f", "s16le", "pipe:1"],
+        "-af", ",".join(filters), "-f", "s16le", "pipe:1"],
         input=pcm_s16le_bytes(audio.pcm), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         timeout=30, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     if result.returncode:

@@ -3,7 +3,7 @@
 from pathlib import Path
 
 
-def read_inference_configuration(model=None, *, tts_config=None):
+def read_inference_configuration(model=None, *, tts_config=None, profile=None):
     """Read service settings without constructing frontends or GPU resources."""
     import json
     settings = {}
@@ -23,8 +23,9 @@ def read_inference_configuration(model=None, *, tts_config=None):
             custom = config.get("custom", config)
             if "device" in custom:
                 settings.setdefault("backend", custom["device"])
-            if custom.get("is_half", False):
-                raise NotImplementedError("Official is_half mode is not yet supported; use is_half: false")
+            if custom.get("is_half", False) and profile is None and settings.get("profile") is None:
+                raise NotImplementedError("Select a SakuraTTS profile with --profile or sakuratts.profile "
+                                          "when the imported configuration sets is_half: true")
             if custom.get("version", "v2ProPlus") not in ("v2Pro", "v2ProPlus"):
                 raise NotImplementedError("The native service currently supports v2Pro and v2ProPlus")
             model = model or settings.get("model")
@@ -33,6 +34,8 @@ def read_inference_configuration(model=None, *, tts_config=None):
                     settings[key + "_checkpoint"] = custom[field]
             if custom.get("cnhuhbert_base_path"):
                 settings["cnhubert"] = custom["cnhuhbert_base_path"]
+    if profile is not None:
+        settings["profile"] = profile
     from ..runtime.portable import preparation_settings
     if "runtime_options" in settings and not isinstance(settings["runtime_options"], dict):
         raise ValueError("sakuratts.runtime_options must be a mapping")

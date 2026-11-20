@@ -234,6 +234,19 @@ class InitialConversionCacheTests(unittest.TestCase):
                     self.assertTrue(all(new != old for new, old in zip(updated, original)))
                     self.assertEqual((convert.call_count, convert_weight.call_count), (2, 2))
 
+    def test_weight_switch_without_initial_model_does_not_convert(self):
+        from sakuratts.TTS_infer_pack.TTS import Inference
+
+        with tempfile.TemporaryDirectory() as temporary:
+            checkpoint = Path(temporary) / "voice.ckpt"
+            checkpoint.write_bytes(b"checkpoint fixture")
+            inference = Inference()
+            self.addCleanup(inference.close)
+            with patch("sakuratts.prepare.cache.prepare_checkpoint") as prepare:
+                with self.assertRaisesRegex(ValueError, "Configure both initial model weights"):
+                    inference.set_weights("gpt", checkpoint)
+                prepare.assert_not_called()
+
     def test_weight_cache_prepares_for_model_backend_and_explicit_override(self):
         from sakuratts.model import Model
         with tempfile.TemporaryDirectory() as temporary:

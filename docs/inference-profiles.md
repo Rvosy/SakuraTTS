@@ -101,7 +101,7 @@ with Engine.load("MODEL", experimental=options) as engine:
     audio.save("outputs/hello.wav")
 ```
 
-A、C、E 可经 `serve MODEL --experimental FILE` 启动 HTTP 服务。H 的总体 `policy="staged"` 可用于 Python Engine、`tts` CLI，或显式启用的 `managed` HTTP 模式；默认 `direct` 仍拒绝 H。YAML 的 `is_half=true` 尚未映射到实验档位；使用上述 JSON 显式选择。
+A、C、E 可经 `serve MODEL --experimental FILE` 启动 HTTP 服务。H 的总体 `policy="staged"` 可用于 Python Engine、`tts` CLI 或 `managed` HTTP 模式。导入包含 `is_half: true` 的原版 YAML 时，用 `--profile` 或 `sakuratts.profile` 选择实际档位。所选后端和档位决定模型精度。
 
 ```powershell
 sakuratts serve MODEL --experimental examples/minimum-vram.json --runtime-mode managed

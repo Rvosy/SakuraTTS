@@ -73,10 +73,10 @@ class ProcessInference:
         for value in (startup_timeout, operation_timeout):
             if isinstance(value, bool) or not math.isfinite(value) or value <= 0:
                 raise ValueError("Inference timeouts must be finite and positive")
-        resolved_model, settings = read_inference_configuration(model, tts_config=tts_config)
+        resolved_model, settings = read_inference_configuration(model, tts_config=tts_config, profile=profile)
         experimental = {**settings.get("runtime_options", {}), **(experimental or {})}
         from ..profiles import resolve_profile, uses_staged_policy
-        profile = settings.get("profile") if profile is None else profile
+        profile = settings.get("profile")
         selected = backend or settings.get("backend") or (resolved_model.backend if isinstance(resolved_model, Model) else None)
         if selected is not None:
             profile, _ = resolve_profile(selected, profile, experimental)

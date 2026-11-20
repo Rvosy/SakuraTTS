@@ -140,7 +140,7 @@ class ServerTests(unittest.TestCase):
                 assert request['speed_factor'] == 1
                 return Audio(pcm, rate, {"status": "completed", "request_ms": 1, "pcm_seconds": 2})
         with patch("sakuratts.server.Inference", FakeInference), TestClient(create_app()) as client:
-            for factor, method in ((1.0, "post"), (0.9, "post"), (1.2, "get")):
+            for factor, method in ((1.0, "post"), (0.9, "post"), (1.2, "get"), (2.5, "post")):
                 with self.subTest(factor=factor, method=method):
                     request = dict(REQUEST, speed_factor=factor)
                     response = (client.post('/tts', json=request) if method == 'post'
@@ -209,7 +209,7 @@ class ServerTests(unittest.TestCase):
                 self.assertEqual(client.get("/models").json(), [{"name": "試験"}])
                 self.assertEqual(client.get("/").status_code, 404)
                 for update in ({"text": " "}, {"ref_audio_path": ""}, {"seed": -2},
-                               {"text_lang": "yue"}, {"speed_factor": 0}, {"speed_factor": 2.1}, {"top_p": 0},
+                               {"text_lang": "yue"}, {"speed_factor": 0}, {"speed_factor": 101}, {"top_p": 0},
                                {"streaming_mode": 2}, {"batch_size": 2}, {"aux_ref_audio_paths": ["a.wav"]}):
                     self.assertEqual(client.post("/tts", json=dict(REQUEST, **update)).status_code, 400)
                 response = client.post("/tts", json=dict(REQUEST, text="limit"))
