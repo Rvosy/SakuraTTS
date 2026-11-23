@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Prepare portable text resources and V2Pro/V2ProPlus references.
 
-Preparation alone needs PyTorch and an explicit GPT-SoVITS source distribution.
+Reference encoding needs PyTorch and an explicit GPT-SoVITS source distribution.
 The resulting packages do not need that distribution for ordinary inference.
 The default worker interpreter is the current development Python; --python can
 select the distribution's existing interpreter without modifying its environment.
@@ -68,6 +68,23 @@ def character_inputs(character):
     if not references:
         raise ValueError("The character contains no reference audio entries")
     return result, references
+
+
+def reference_inputs(path):
+    request = read_json(path)
+    inputs = {key: Path(request[key]).resolve(strict=True) for key in ("gpt", "sovits")}
+    references = request.get("references", [])
+    if not references:
+        raise ValueError("At least one reference is required for preparation")
+    for ref in references:
+        if not ref.get("text", "").strip():
+            raise ValueError("Reference preparation requires a transcript")
+        if ref.get("language") != "ja" and "text_features" not in ref:
+            raise ValueError("Use sakuratts convert --reference-language to prepare this transcript")
+        if ref.get("tone") != "reference":
+            raise ValueError("Direct reference preparation uses the internal name 'reference'")
+        ref["audio"] = str(Path(ref["audio"]).resolve(strict=True))
+    return inputs, references
 
 
 def frontend_preflight():
@@ -382,8 +399,9 @@ def serve():
 def main(argv=None, session=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--official-source", type=Path)
-    parser.add_argument("--character", type=Path)
-    parser.add_argument("--inputs", type=Path, help="JSON containing gpt, sovits and references, without a character directory")
+    reference_source = parser.add_mutually_exclusive_group()
+    reference_source.add_argument("--character", type=Path)
+    reference_source.add_argument("--inputs", type=Path, help="JSON containing gpt, sovits and references, without a character directory")
     parser.add_argument("--frontend", type=Path, help="Reuse and verify an existing frontend package")
     parser.add_argument("--cnhubert", type=Path, help="Explicit upstream cnhuhbert_base_path")
     parser.add_argument("--output", type=Path)
@@ -408,30 +426,18 @@ def main(argv=None, session=None):
     if args.frontend_preflight:
         print(json.dumps(frontend_preflight(), ensure_ascii=False))
         return 0
-    if not all((args.official_source, args.output)) or bool(args.character) == bool(args.inputs):
-        parser.error("--official-source, --output and exactly one of --character/--inputs are required")
-    if args.cpu_threads < 1 or (args.device == "cpu" and args.precision != "fp32"):
-        parser.error("Use positive --cpu-threads; CPU preparation requires --precision fp32")
+    if not args.official_source or not args.output:
+        parser.error("--official-source and --output are required")
     root, output = args.official_source.resolve(strict=True), args.output.resolve()
-    character = args.character.resolve(strict=True) if args.character else None
+    character = args.character.resolve() if args.character else None
     if output == root or root in output.parents or character and (output == character or character in output.parents):
         raise ValueError("Output must be outside the official source and character directories")
-    if character:
-        inputs, references = character_inputs(character)
-    else:
-        request = read_json(args.inputs)
-        inputs = {key: Path(request[key]).resolve(strict=True) for key in ("gpt", "sovits")}
-        references = request.get("references", [])
-        if not references and not args.frontend_only:
-            raise ValueError("At least one reference is required for preparation")
-        for ref in references:
-            if not ref.get("text", "").strip():
-                raise ValueError("Reference preparation requires a transcript")
-            if ref.get("language") != "ja" and "text_features" not in ref:
-                raise ValueError("Use sakuratts convert --reference-language to prepare this transcript")
-            if ref.get("tone") != "reference":
-                raise ValueError("Direct reference preparation uses the internal name 'reference'")
-            ref["audio"] = str(Path(ref["audio"]).resolve(strict=True))
+    if not args.frontend_only:
+        if not character and not args.inputs:
+            parser.error("Reference preparation requires --character or --inputs")
+        if args.cpu_threads < 1 or (args.device == "cpu" and args.precision != "fp32"):
+            parser.error("Use positive --cpu-threads; CPU preparation requires --precision fp32")
+        inputs, references = character_inputs(character) if character else reference_inputs(args.inputs)
     if session is None:
         preflight = inspect_frontend(args.python)
     else:

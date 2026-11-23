@@ -37,10 +37,10 @@ class MLXBertFeatures:
         if manifest["format"] != "sakuratts-bert-features-fp32-v1":
             raise ValueError("Unsupported BERT feature package format")
         weights_file = package / manifest["weights"]["file"]
-        with np.load(weights_file, allow_pickle=False) as archive:
-            if manifest["weights"].get("storage") is None:
-                weights = mx.load(weights_file)
-            else:
+        if manifest["weights"].get("storage") is None:
+            weights = mx.load(weights_file)
+        else:
+            with np.load(weights_file, allow_pickle=False) as archive:
                 weights = {name: mx.array(read_fp32(archive, name)) for name in archive.files}
         mx.eval(*weights.values())
         return cls(manifest["config"], weights)

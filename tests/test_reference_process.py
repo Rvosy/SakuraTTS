@@ -12,6 +12,7 @@ from sakuratts.prepare.reference_process import ReferencePreparer
 
 class ReferenceProcessTests(unittest.TestCase):
     def test_session_reuses_model_identity_and_refreshes_new_audio(self):
+        from sakuratts.model import LEGACY_FORMAT, Model
         from sakuratts.prepare import prepare_resources as resources
         from sakuratts.TTS_infer_pack.TTS import Inference
 
@@ -35,6 +36,8 @@ class ReferenceProcessTests(unittest.TestCase):
 
             session = {}
             inference = Inference()
+            inference.model = Model(root / 'model.json', {
+                'format': LEGACY_FORMAT, 'gpt': 'gpt', 'sovits': 'sovits', 'frontend': 'frontend'})
             inference.engine = SimpleNamespace(_runtime=SimpleNamespace(manifests={
                 kind: {'source': {'checkpoint_sha256': resources.digest(path)}}
                 for kind, path in (('gpt', gpt), ('sovits', sovits))}))

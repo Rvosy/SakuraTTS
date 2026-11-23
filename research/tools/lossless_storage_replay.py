@@ -88,7 +88,7 @@ def main():
                 for language in ("ja", "zh"):
                     data = load_trace(args.official_gpt_run / f"{language}-1-trace.json")
                     expected, keys, values, _ = prefill_fp64(parent / original["weights"]["file"], original["config"],
-                                                            data["phones"], data["prompt"], data["bert"], manifest=original)
+                                                            data["phones"], data["prompt"], data["bert"])
                     actual = np.asarray(model.prefill(data["phones"], data["prompt"], data["bert"]))
                     equal = actual.tobytes() == expected.tobytes()
                     length = data["phones"].shape[1] + data["prompt"].shape[1]

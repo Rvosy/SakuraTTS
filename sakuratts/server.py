@@ -11,12 +11,12 @@ import shutil
 import subprocess
 import threading
 import time
-from typing import Annotated, Optional, Union
+from typing import Annotated, Optional
 import wave
 
 from fastapi import Body, FastAPI, Query, Request
 from fastapi.responses import JSONResponse, Response, StreamingResponse
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 from .engine import Audio, BusyError
 from .TTS_infer_pack.TTS import Inference
 from .runtime.cancellation import SynthesisCancelled
@@ -48,20 +48,13 @@ class SpeechRequest(BaseModel):
     fragment_interval: float = 0.3
     seed: int = -1
     media_type: str = "wav"
-    streaming_mode: Union[bool, int] = False
+    streaming_mode: int | bool = False
     parallel_infer: bool = True
     repetition_penalty: float = 1.35
     sample_steps: int = 32
     super_sampling: bool = False
     overlap_length: int = 2
     min_chunk_length: int = 16
-
-    @field_validator("streaming_mode", mode="before")
-    @classmethod
-    def parse_streaming_mode(cls, value):
-        if isinstance(value, str) and value in ("0", "1", "2", "3"):
-            return int(value)
-        return value
 
     def checked(self):
         request = self.model_dump()
@@ -197,7 +190,6 @@ def create_app(model=None, *, tts_config=None, backend=None, profile=None, exper
         app.state.jobs = set()
         app.state.streams = set()
         app.state.inference = None
-        app.state.model_info = None
         app.state.runtime = None
         try:
             options = {"backend": backend} if backend is not None else {}
@@ -212,12 +204,13 @@ def create_app(model=None, *, tts_config=None, backend=None, profile=None, exper
                 factory = partial(Inference, model, tts_config=tts_config, experimental=experimental, **options)
             inference = await asyncio.get_running_loop().run_in_executor(pool, factory)
             app.state.inference = inference
-            app.state.model_info = inference.info()
             if runtime_mode == "managed":
                 app.state.runtime = ManagedRuntime(inference, pool, idle_sleep_seconds=idle_sleep_seconds)
                 logger.info("控制模式已启动，推理进程按需唤醒")
-            elif inference.info() is None:
-                logger.warning("尚未加载模型，请通过 --tts-config 指定配置")
+            else:
+                app.state.model_info = inference.info()
+                if app.state.model_info is None:
+                    logger.warning("尚未加载模型，请通过 --tts-config 指定配置")
             logger.debug("No default reference audio. Specify ref_audio_path, prompt_text and prompt_lang in /tts.")
             yield
         finally:
@@ -272,7 +265,6 @@ def create_app(model=None, *, tts_config=None, backend=None, profile=None, exper
             finally:
                 if timeout_handle is not None:
                     timeout_handle.cancel()
-                app.state.model_info = app.state.inference.info()
                 app.state.busy = False
                 if runtime is not None:
                     runtime.end_operation(failure)
@@ -290,9 +282,10 @@ def create_app(model=None, *, tts_config=None, backend=None, profile=None, exper
 
     @app.get("/health")
     async def health():
-        info = app.state.model_info
-        loaded = info is not None
-        if app.state.runtime is not None:
+        if app.state.runtime is None:
+            info = app.state.model_info
+            loaded = info is not None
+        else:
             runtime_status = app.state.runtime.snapshot()
             info, loaded = runtime_status["model"], runtime_status["model_loaded"]
         return {"status": "busy" if app.state.busy else "ready", "model_loaded": loaded,
@@ -337,19 +330,26 @@ def create_app(model=None, *, tts_config=None, backend=None, profile=None, exper
             logger.exception("模型或参考音频操作失败")
             return error_response(error, message=failure_message)
 
+    async def change_weights(kind, weights_path):
+        if not weights_path:
+            return error_response(ValueError(f"{kind} weight path is required"))
+
+        def switch():
+            try:
+                app.state.inference.set_weights(kind, weights_path)
+            finally:
+                if app.state.runtime is None:
+                    app.state.model_info = app.state.inference.info()
+
+        return await run_control(switch, f"change {kind} weight failed")
+
     @app.get("/set_gpt_weights")
     async def set_gpt_weights(weights_path: Optional[str] = None):
-        if not weights_path:
-            return error_response(ValueError("gpt weight path is required"))
-        return await run_control(partial(app.state.inference.set_weights, "gpt", weights_path),
-                                 "change gpt weight failed")
+        return await change_weights("gpt", weights_path)
 
     @app.get("/set_sovits_weights")
     async def set_sovits_weights(weights_path: Optional[str] = None):
-        if not weights_path:
-            return error_response(ValueError("sovits weight path is required"))
-        return await run_control(partial(app.state.inference.set_weights, "sovits", weights_path),
-                                 "change sovits weight failed")
+        return await change_weights("sovits", weights_path)
 
     @app.get("/set_refer_audio")
     async def set_refer_audio(refer_audio_path: Optional[str] = None):

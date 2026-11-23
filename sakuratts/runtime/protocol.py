@@ -1,6 +1,7 @@
 """Length-framed NumPy arrays for the local acoustic worker, without pickle."""
 
 import json
+import math
 import struct
 
 import numpy as np
@@ -43,8 +44,8 @@ def read_message(stream):
         shape = tuple(spec["shape"])
         if any(not isinstance(v,int) or v<0 for v in shape):
             raise ValueError("Invalid acoustic transport shape")
-        size = int(np.prod(shape,dtype=np.int64))*dtype.itemsize
-        if size!=spec["bytes"] or not 0<=size<=1024**3:
+        size = math.prod(shape) * dtype.itemsize
+        if size != spec["bytes"] or size > 1024**3:
             raise ValueError("Invalid acoustic transport payload length")
         arrays[name] = np.frombuffer(_read(stream,size),dtype=dtype).reshape(shape)
     return header,arrays

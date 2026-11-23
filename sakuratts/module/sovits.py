@@ -37,18 +37,17 @@ def _package_file(root, spec):
 
 def read_manifest(package, *, diagnostic=False, allow_experimental_fp16=False,
                   acoustic_chunk_frames=None, acoustic_session_policy="resident"):
-    if acoustic_session_policy not in ("resident", "staged"):
-        raise ValueError("acoustic_session_policy must be resident or staged")
+    if acoustic_chunk_frames is not None:
+        from sakuratts.module.chunked_package import read_chunked_manifest
+        return read_chunked_manifest(package, diagnostic=diagnostic,
+            allow_experimental_fp16=allow_experimental_fp16, acoustic_chunk_frames=acoustic_chunk_frames,
+            acoustic_session_policy=acoustic_session_policy)
     package = Path(package).resolve()
     manifest = json.loads((package / "manifest.json").read_text(encoding="utf-8"))
     if manifest.get("format") == "sakuratts-sovits-chunked-v1":
-        from sakuratts.module.chunked_package import read_chunked_manifest
-        return read_chunked_manifest(package, diagnostic=diagnostic,
-            allow_experimental_fp16=allow_experimental_fp16, acoustic_chunk_frames=acoustic_chunk_frames)
-    if acoustic_chunk_frames is not None:
-        raise ValueError("acoustic_chunk_frames requires a chunked acoustic package")
+        raise ValueError("Chunk packages require an explicit nonnegative acoustic_chunk_frames")
     if acoustic_session_policy != "resident":
-        raise ValueError("acoustic_session_policy=staged requires a chunked acoustic package")
+        raise ValueError("Whole-graph acoustic packages require acoustic_session_policy=resident")
     if (manifest["format"] != FORMAT or manifest["dtype"] not in ("float32", "float16")
             or manifest["config"]["model"]["version"] not in ("v2Pro", "v2ProPlus")):
         raise ValueError("Expected a V2Pro/V2ProPlus ONNX acoustic package")
@@ -111,22 +110,27 @@ class ORTSoVITS:
             raise ValueError("acoustic_arena_shrink must be a bool")
         if acoustic_arena_shrink and device != "cuda":
             raise ValueError("Acoustic arena shrinkage requires CUDA execution")
-        manifest, graph = read_manifest(package, diagnostic=diagnostic,
-            allow_experimental_fp16=allow_experimental_fp16, acoustic_chunk_frames=acoustic_chunk_frames,
-            acoustic_session_policy=acoustic_session_policy)
-        if graph is None:
+        if acoustic_chunk_frames is not None:
+            from sakuratts.module.chunked_package import read_chunked_package
+            package = Path(package).resolve()
+            manifest, planner, manifest_bytes = read_chunked_package(package, diagnostic=diagnostic,
+                allow_experimental_fp16=allow_experimental_fp16, acoustic_chunk_frames=acoustic_chunk_frames,
+                acoustic_session_policy=acoustic_session_policy)
             if device == "directml":
                 raise ValueError("Chunked acoustic execution requires CPU or CUDA")
             if device == "cuda" and not acoustic_arena_shrink:
                 raise ValueError("CUDA chunked acoustics require arena shrinkage")
+        else:
+            manifest, graph = read_manifest(package, diagnostic=diagnostic,
+                allow_experimental_fp16=allow_experimental_fp16, acoustic_session_policy=acoustic_session_policy)
         if device == "cuda":
             from sakuratts.backends.cuda.runtime import configure_cuda
             configure_cuda()
         import onnxruntime as ort
 
-        if graph is None:
+        if acoustic_chunk_frames is not None:
             from sakuratts.module.chunked import ORTChunkedSoVITS
-            return ORTChunkedSoVITS.load_verified(package, manifest,
+            return ORTChunkedSoVITS.load_verified(package, manifest, planner, manifest_bytes,
                 chunk_frames=acoustic_chunk_frames, profile_prefix=profile_prefix,
                 acoustic_session_policy=acoustic_session_policy, device=device, device_id=device_id,
                 threads=intra_op_num_threads, enable_cpu_mem_arena=enable_cpu_mem_arena)

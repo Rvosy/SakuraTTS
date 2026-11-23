@@ -8,6 +8,7 @@ FP32 once for the GPU decoder. No persistent FP64 weight copy is retained.
 from __future__ import annotations
 
 import time
+from collections.abc import Mapping
 from contextlib import nullcontext
 
 import numpy as np
@@ -15,24 +16,24 @@ import numpy as np
 from sakuratts.module.weight_storage import read_fp32
 
 
-def prefill_fp64(weights_file, config, phones, prompt, bert, measure=False, *, weights=None):
+def prefill_fp64(source, config, phones, prompt, bert, measure=False):
     """Return rounded FP32 KV/logits using a package or loaded FP32 mapping.
 
-The optional mapping is the caller's existing, validated runtime weights.
-Only the current operation's weights are cast to FP64; no full CPU copy or
-FP64 cache is retained. This path never reads a package file after load.
-"""
+    Only the current operation's weights are cast to FP64. A loaded mapping
+    supplies all weights directly from memory.
+    """
     width, heads = config["hidden_dim"], config["heads"]
     head_dim = width // heads
     t, p = phones.shape[1], prompt.shape[1]
     started = time.perf_counter() if measure else None
     weight_seconds = 0.0
-    context = np.load(weights_file, allow_pickle=False) if weights is None else nullcontext(weights)
+    loaded = isinstance(source, Mapping)
+    context = nullcontext(source) if loaded else np.load(source, allow_pickle=False)
     with context as archive:
         def weight(name):
             nonlocal weight_seconds
             start = time.perf_counter() if measure else None
-            value = read_fp32(archive, name) if weights is None else np.asarray(archive[name])
+            value = np.asarray(archive[name]) if loaded else read_fp32(archive, name)
             if value.dtype != np.float32:
                 raise ValueError(f"FP64 prefill requires expanded FP32 runtime weights: {name}")
             # Copy immediately into FP64: NumPy may expose a writable shared
@@ -87,6 +88,6 @@ FP64 cache is retained. This path never reads a package file after load.
         "cpu_compute_and_housekeeping_seconds": total - weight_seconds if measure else None,
         "cpu_retained_fp32_kv_bytes": sum(value.nbytes for value in keys + values),
         "precision": "All prefill arithmetic float64; completed KV and logits rounded once to float32",
-        "weights": ("Read or losslessly expand original FP32 tensors per layer, then cast to float64; no persistent float64 weight copy"
-                    if weights is None else "Read already loaded FP32 arrays per operation, then cast to float64; no disk reads, repeated hashes or persistent FP64 copy"),
+        "weights": ("Read already loaded FP32 arrays per operation, then cast to float64; no disk reads, repeated hashes or persistent FP64 copy"
+                    if loaded else "Read or losslessly expand original FP32 tensors per layer, then cast to float64; no persistent float64 weight copy"),
     }

@@ -36,7 +36,7 @@ def validate_arrays(arrays):
         array = arrays[name]
         if array.dtype != np.dtype(dtype):
             raise ValueError(f"Reference dtype mismatch: {name}")
-        if not np.isfinite(array).all():
+        if dtype == "float32" and not np.isfinite(array).all():
             raise ValueError(f"Non-finite reference array: {name}")
     phones, prompt = arrays["reference_phones"], arrays["prompt_semantic"]
     if phones.ndim != 1 or phones.size == 0 or (phones < 0).any():
@@ -83,13 +83,6 @@ class BoundAcousticReference:
     ge: np.ndarray
     ge512: np.ndarray
 
-    @staticmethod
-    def _condition(value, name, shape):
-        value = np.asarray(value)
-        if value.dtype != np.float32 or value.shape != shape or not np.isfinite(value).all():
-            raise ValueError(f"Expected finite FP32 {name} with shape {shape}")
-        return value
-
     @classmethod
     def from_reference(cls, reference, model_manifest):
         if not isinstance(reference, PreparedReference):
@@ -100,15 +93,17 @@ class BoundAcousticReference:
         snapshots = {}
         for name in ("ge", "ge512"):
             shape = tuple(model_manifest["inputs"][name]["shape"])
-            value = cls._condition(getattr(reference, name), name, shape)
+            value = np.asarray(getattr(reference, name))
+            if value.dtype != np.float32 or value.shape != shape or not np.isfinite(value).all():
+                raise ValueError(f"Expected finite FP32 {name} with shape {shape}")
             snapshots[name] = np.frombuffer(value.tobytes(order="C"), dtype=np.float32).reshape(shape)
         return cls(snapshots["ge"], snapshots["ge512"])
 
     def validate_conditions(self, ge, ge512):
         for name, value in (("ge", ge), ("ge512", ge512)):
             expected = getattr(self, name)
-            value = self._condition(value, name, expected.shape)
-            if not np.array_equal(value.view(np.uint32), expected.view(np.uint32)):
+            value = np.asarray(value)
+            if value.dtype != np.float32 or not np.array_equal(value.view(np.uint32), expected.view(np.uint32)):
                 raise ValueError(f"Bound acoustic reference {name} differs; load a new model for this reference")
 
     def validate_reference(self, reference):

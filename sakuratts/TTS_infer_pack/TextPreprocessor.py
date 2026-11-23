@@ -16,8 +16,7 @@ from .text_segmentation_method import splits, split_big_text, get_method
 
 def get_first(text: str) -> str:
     pattern = "[" + "".join(re.escape(sep) for sep in splits) + "]"
-    text = re.split(pattern, text)[0].strip()
-    return text
+    return re.split(pattern, text, maxsplit=1)[0].strip()
 
 def merge_short_text_in_array(texts: str, threshold: int) -> list:
     if (len(texts)) < 2:
@@ -49,16 +48,13 @@ def pre_seg_text(text, language, split_method="cut0"):
     if text[0] not in splits and len(get_first(text)) < 4:
         text = ("." if language == "en" else "。") + text
     text = get_method(split_method)(text)
-    while "\n\n" in text:
-        text = text.replace("\n\n", "\n")
-    texts = text.split("\n")
-    if all(part in (None, " ", "\n", "") for part in texts):
+    texts = [part for part in re.findall(r"[^\n]+", text) if part != " "]
+    if not texts:
         raise ValueError("请输入有效文本")
-    texts = [part for part in texts if part not in (None, " ", "")]
     texts = merge_short_text_in_array(texts, 5)
     result = []
     for part in texts:
-        if not part.strip() or not re.sub(r"\W+", "", part):
+        if not re.search(r"\w", part):
             continue
         if part[-1] not in splits:
             part += "." if language == "en" else "。"

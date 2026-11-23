@@ -98,11 +98,11 @@ def main(inference_factory=None):
             if cancelled():
                 from .cancellation import SynthesisCancelled
                 raise SynthesisCancelled("Synthesis cancelled")
-            block = pcm[start:start + MAX_PCM // 2].astype("<i2", copy=False).tobytes()
+            block = np.ascontiguousarray(pcm[start:start + MAX_PCM // 2], dtype="<i2")
             metadata = {"id": serial, "type": kind, "sample_rate": rate}
             if kind == "fragment":
                 metadata["end_of_fragment"] = start + MAX_PCM // 2 >= pcm.size
-            send(metadata, block)
+            send(metadata, memoryview(block).cast("B"))
 
     try:
         while True:
@@ -159,7 +159,7 @@ def main(inference_factory=None):
                     if not streaming:
                         audio_blocks(serial, "audio", result.pcm, result.sample_rate, cancellation.is_set)
                     send({"id": serial, "type": "result", "sample_rate": result.sample_rate,
-                        "report": result.report, "info": inference.info(), "snapshot": snapshot()})
+                        "report": result.report})
                     continue
                 else:
                     raise ValueError("Unknown inference operation")
@@ -169,8 +169,6 @@ def main(inference_factory=None):
                 info = inference.info() if inference is not None else None
                 reply = {"id": serial, "type": "error", "error_type": type(error).__name__,
                     "message": str(error), "info": info, "stage": stage.get()}
-                if info is not None:
-                    reply["snapshot"] = snapshot()
                 send(reply)
                 if operation in ("initialize", "shutdown"):
                     break

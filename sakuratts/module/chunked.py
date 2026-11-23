@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from copy import deepcopy
 import gc
+import hashlib
 import os
-from pathlib import Path
 import time
 import traceback
 from types import SimpleNamespace
@@ -12,8 +12,6 @@ from types import SimpleNamespace
 import numpy as np
 
 from sakuratts.module.sovits import ORTSoVITS
-from sakuratts.module.reference_condition import sha256_file
-from sakuratts.module.vocoder_receptive_field import VocoderReceptiveField
 
 
 def _clear_session_tracebacks(error):
@@ -32,17 +30,15 @@ class ORTChunkedSoVITS(ORTSoVITS):
     """Return a complete FP32 waveform with resident or sequential sessions."""
 
     @classmethod
-    def load_verified(cls, package, manifest, *, chunk_frames, profile_prefix=None,
+    def load_verified(cls, package, manifest, planner, manifest_bytes, *, chunk_frames, profile_prefix=None,
                       acoustic_session_policy="resident", device="cuda", device_id=0,
                       threads=4, enable_cpu_mem_arena=True):
-        """Called only after the public loader validates the self-contained package."""
+        """Use the dependency plan already validated against this manifest."""
         import onnxruntime as ort
 
-        package = Path(package).resolve(strict=True)
         if device == "cuda" and "CUDAExecutionProvider" not in ort.get_available_providers():
             raise RuntimeError("CUDA provider is unavailable for chunked acoustics")
-        planner = VocoderReceptiveField.from_json(package / manifest["rf"]["file"])
-        provenance = {"package_manifest_sha256": sha256_file(package / "manifest.json"),
+        provenance = {"package_manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
                 "package_format": manifest["format"], "settings": deepcopy(manifest["settings"]),
                 "graphs": deepcopy(manifest["graphs"]), "weights": deepcopy(manifest["weights"]),
                 "rf_spec_sha256": manifest["rf"].get("sha256"),

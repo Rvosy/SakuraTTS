@@ -17,7 +17,6 @@ from ..engine import Audio
 from ..TTS_infer_pack.config import read_inference_configuration
 from ..model import Model
 from .cancellation import SynthesisCancelled
-from .pcm import pcm_from_s16le
 from .process_tree import ProcessTree
 
 MAX_METADATA = 4 * 1024 * 1024
@@ -43,7 +42,7 @@ def read_frame(stream):
     metadata = json.loads(_read_exact(stream, metadata_size).decode("utf-8"))
     if not isinstance(metadata, dict):
         raise ValueError("Inference IPC metadata must be an object")
-    return metadata, bytes(_read_exact(stream, pcm_size))
+    return metadata, _read_exact(stream, pcm_size)
 
 
 def write_frame(stream, metadata, pcm=b""):
@@ -252,7 +251,6 @@ class ProcessInference:
                     rate = metadata.get("sample_rate")
                     if not isinstance(rate, int) or isinstance(rate, bool) or not 8000 <= rate <= 384000:
                         raise ValueError("Inference worker returned an invalid sample rate")
-                    block = pcm_from_s16le(pcm)
                     if kind == "fragment":
                         if not isinstance(metadata.get("end_of_fragment"), bool):
                             raise ValueError("Inference worker omitted the fragment boundary")
@@ -260,20 +258,18 @@ class ProcessInference:
                             raise ValueError("Inference worker changed sample rate within a fragment")
                         fragment_rate = rate
                         if not cancellation_sent:
-                            fragment_pcm.extend(block)
+                            fragment_pcm.frombytes(pcm)
                         if metadata["end_of_fragment"]:
-                            if on_fragment is not None and not cancellation_sent:
-                                complete = fragment_pcm
+                            try:
+                                if on_fragment is not None and not cancellation_sent:
+                                    if sys.byteorder != "little":
+                                        fragment_pcm.byteswap()
+                                    on_fragment(fragment_pcm, rate)
+                            finally:
                                 fragment_pcm = array("h")
                                 fragment_rate = None
-                                try:
-                                    on_fragment(complete, rate)
-                                finally:
-                                    del complete
-                            fragment_pcm = array("h")
-                            fragment_rate = None
-                    elif kind == "audio" and not cancellation_sent:
-                        audio_pcm.extend(block)
+                    elif not cancellation_sent:
+                        audio_pcm.frombytes(pcm)
                     continue
                 if kind == "error":
                     raise _RemoteError(metadata)
@@ -281,15 +277,17 @@ class ProcessInference:
                     raise ValueError("Inference worker returned an invalid response")
                 if fragment_rate is not None:
                     raise ValueError("Inference worker ended with an incomplete audio fragment")
-                self._info = metadata.get("info")
-                self._snapshot = metadata.get("snapshot", self._snapshot)
                 if cancellation_sent:
                     # The worker may finish while cancellation is in flight. Its
                     # completed response leaves the transport safe to reuse.
-                    raise _RemoteError(dict(metadata, error_type="SynthesisCancelled", message="Synthesis cancelled"))
+                    raise _RemoteError({"error_type": "SynthesisCancelled", "message": "Synthesis cancelled",
+                                        "info": self._info})
                 if operation == "tts":
-                    report = metadata["report"]
-                    return Audio(audio_pcm, metadata["sample_rate"], report)
+                    if sys.byteorder != "little":
+                        audio_pcm.byteswap()
+                    return Audio(audio_pcm, metadata["sample_rate"], metadata["report"])
+                self._info = metadata.get("info")
+                self._snapshot = metadata.get("snapshot", self._snapshot)
                 if operation == "shutdown":
                     # The terminal reply acknowledges every write. End the
                     # writer before signaling normal EOF to the worker reader.
@@ -303,8 +301,6 @@ class ProcessInference:
             set_stage(metadata.get("stage", "推理"))
             kind = metadata.get("error_type")
             self._info = metadata.get("info")
-            if self._info is not None:
-                self._snapshot = metadata.get("snapshot", self._snapshot)
             if self._info is None or operation in ("initialize", "shutdown"):
                 self._dispose()
             if kind == "SynthesisCancelled":

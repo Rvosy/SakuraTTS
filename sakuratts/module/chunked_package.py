@@ -6,7 +6,7 @@ import json
 import math
 from pathlib import Path
 
-from sakuratts.module.sovits import INPUT_NAMES, _package_file
+from sakuratts.module.sovits import INPUT_NAMES
 from sakuratts.module.vocoder_receptive_field import VocoderReceptiveField
 
 FORMAT = "sakuratts-sovits-chunked-v1"
@@ -24,10 +24,6 @@ def identity_sha256(manifest):
     identity = {key: value for key, value in manifest.items() if key != "validation"}
     return hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(",", ":"),
         ensure_ascii=True, allow_nan=False).encode("utf-8")).hexdigest()
-
-
-def package_file(root, spec):
-    return _package_file(root, spec)
 
 
 def _interfaces(manifest):
@@ -65,11 +61,22 @@ def _interfaces(manifest):
 
 
 def read_chunked_manifest(package, *, diagnostic=False, allow_experimental_fp16=False,
-                          acoustic_chunk_frames=None):
-    root = Path(package).resolve(strict=True)
-    manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+                          acoustic_chunk_frames=None, acoustic_session_policy="resident"):
+    manifest, _, _ = read_chunked_package(package, diagnostic=diagnostic,
+        allow_experimental_fp16=allow_experimental_fp16, acoustic_chunk_frames=acoustic_chunk_frames,
+        acoustic_session_policy=acoustic_session_policy)
+    return manifest, None
+
+
+def read_chunked_package(root, *, diagnostic, allow_experimental_fp16, acoustic_chunk_frames,
+                         acoustic_session_policy):
+    if acoustic_session_policy not in ("resident", "staged"):
+        raise ValueError("acoustic_session_policy must be resident or staged")
+    root = Path(root)
+    manifest_bytes = (root / "manifest.json").read_bytes()
+    manifest = json.loads(manifest_bytes.decode("utf-8"))
     if manifest.get("format") != FORMAT:
-        raise ValueError("Expected a self-contained chunked acoustic package")
+        raise ValueError("acoustic_chunk_frames requires a chunked acoustic package")
     if type(acoustic_chunk_frames) is not int or acoustic_chunk_frames < 0:
         raise ValueError("Chunk packages require an explicit nonnegative acoustic_chunk_frames")
     if diagnostic:
@@ -83,9 +90,9 @@ def read_chunked_manifest(package, *, diagnostic=False, allow_experimental_fp16=
     if dtype == "float16" and not allow_experimental_fp16:
         raise ValueError("FP16 acoustic packages require allow_experimental_fp16=True")
     _interfaces(manifest)
-    planner = VocoderReceptiveField.from_json(package_file(root, manifest["rf"]))
+    planner = VocoderReceptiveField.from_json(root / manifest["rf"]["file"])
     if (planner.samples_per_frame != math.prod(config["model"]["upsample_rates"])
             or planner.samples_per_frame * config["semantic_upsample_factor"] * config["semantic_hz"] != config["sample_rate"]
             or (planner.input_name, planner.output_name, planner.condition_name) != ("decoder_input", "waveform", "ge")):
         raise ValueError("Chunk dependency plan or sample ratio differs from the source model")
-    return manifest, None
+    return manifest, planner, manifest_bytes

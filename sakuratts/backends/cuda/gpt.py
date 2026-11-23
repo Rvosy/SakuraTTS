@@ -323,6 +323,11 @@ def _validate_prefill_query_chunk_size(chunk_size):
         raise ValueError("GPT prefill query chunk size must be a non-negative integer")
 
 
+def _fits_fp16(values):
+    limit = np.finfo(np.float16).max
+    return values.min(initial=0) >= -limit and values.max(initial=0) <= limit
+
+
 class CUDAGPT:
     def __init__(self, manifest, weights, capacity, use_graph=True, precision="fp32",
                  attention="baseline", attention_chunk_size=256, prefill_query_chunk_size=0):
@@ -384,7 +389,7 @@ class CUDAGPT:
                 if precision == "fp16":
                     # Check the expanded tensor before upload; no FP32 GPU
                     # copy or modified model package is needed.
-                    if not np.isfinite(value).all() or np.any(np.abs(value) > np.finfo(np.float16).max):
+                    if not _fits_fp16(value):
                         raise ValueError(f"GPT weight cannot be represented as finite FP16: {name}")
                     value = np.ascontiguousarray(value, dtype=dtype)
                 weights[name] = cp.asarray(value)
@@ -435,10 +440,11 @@ class CUDAGPT:
         t, p = phones.shape[1], prompt.shape[1]
         if min(t,p) < 1 or t+p > self.capacity or max(t,p)>self.config["max_positions"]:
             raise ValueError("Empty sequence or GPT prefill capacity exceeded")
-        if bert.shape != (1,t,self.config["bert_dim"]) or not np.isfinite(bert).all():
-            raise ValueError("BERT features must be finite and align with all phones")
-        if self.precision == "fp16" and np.any(np.abs(bert) > np.finfo(np.float16).max):
-            raise ValueError("BERT features cannot be represented as finite FP16")
+        if bert.shape != (1,t,self.config["bert_dim"]):
+            raise ValueError("BERT features must align with all phones")
+        finite = _fits_fp16(bert) if self.precision == "fp16" else np.isfinite(bert).all()
+        if not finite:
+            raise ValueError(f"BERT features cannot be represented as finite {self.precision.upper()}")
         if phones.min()<0 or phones.max()>=self.config["phoneme_vocab_size"] or prompt.min()<0 or prompt.max()>=self.config["vocab_size"]:
             raise ValueError("Phone or semantic token outside model vocabulary")
         self._allocate_state()

@@ -39,7 +39,6 @@ class MLXGPT:
             raise ValueError("Unsupported dimensions, capacity or position scaling")
         if any(value.dtype != mx.float32 for value in weights.values()):
             raise ValueError("This candidate runtime accepts only FP32 packages")
-        self.weights_file = None
         self.weight_manifest = None
         self.prefill_precision = "fp32"
         self.prefill_profile = None
@@ -53,14 +52,13 @@ class MLXGPT:
         if manifest["format"] != "sakuratts-gpt-fp32-v1" or manifest["architecture"] != "gpt-sovits-ar-postnorm-relu":
             raise ValueError("Unsupported model package format or architecture")
         path = package / manifest["weights"]["file"]
-        with np.load(path, allow_pickle=False) as archive:
-            if manifest["weights"].get("storage") is None:
-                weights = mx.load(path)
-            else:
+        if manifest["weights"].get("storage") is None:
+            weights = mx.load(path)
+        else:
+            with np.load(path, allow_pickle=False) as archive:
                 weights = {name: mx.array(read_fp32(archive, name)) for name in archive.files}
         mx.eval(*weights.values())
         model = cls(manifest["config"], weights, capacity)
-        model.weights_file = path
         model.weight_manifest = manifest
         model.prefill_precision = prefill_precision
         return model
@@ -157,16 +155,13 @@ class MLXGPT:
         return self._run(mx.concatenate([text, audio], axis=1), 0, t + p, mx.array(allowed[None, None]))
 
     def _prefill_fp64(self, phones, prompt, bert, profile):
-        if self.weights_file is None:
-            raise ValueError("FP64 prefill requires a model loaded from a converted package")
         from sakuratts.backends.mlx.gpt_prefill import prefill_fp64
 
         self.keys, self.values = [], []
         self.length = 0
         self.text_length = phones.shape[1]
         first, keys, values, stages = prefill_fp64(
-            self.weights_file, self.config, phones, prompt, bert, measure=profile,
-            weights=self.weights)
+            self.weights, self.config, phones, prompt, bert, measure=profile)
         started = time.perf_counter() if profile else None
         self.length = phones.shape[1] + prompt.shape[1]
         padding = ((0, 0), (0, 0), (0, self.capacity - self.length), (0, 0))

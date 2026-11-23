@@ -173,7 +173,7 @@ class CudaGptPrecisionTests(unittest.TestCase):
             self.assertEqual((root / "weights.npz").read_bytes(), package_bytes)
 
     def test_unrepresentable_fp16_weights_are_rejected(self):
-        for value in (70000, np.inf, np.nan):
+        for value in (70000, -70000, np.inf, -np.inf, np.nan):
             with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 package(root, np.full((2, 2), value, dtype=np.float32))

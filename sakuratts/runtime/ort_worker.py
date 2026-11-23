@@ -1,7 +1,6 @@
 """Private persistent acoustic worker for a separately packaged ORT ABI."""
 
 import argparse
-from copy import deepcopy
 import os
 from pathlib import Path
 import sys
@@ -47,9 +46,8 @@ def serve(model, ready, input_stream, output_stream):
             result=model.decode(*(arrays[name] for name in INPUT_NAMES[:-1]),
                 noise_scale=meta["noise_scale"],speed=meta["speed"],capture=capture)
             waveform,stages=result if capture else (result,{})
-            transport=getattr(model,"last_transfer",None)
             write_message(output_stream,{"status":"ok","compute_ms":(time.perf_counter()-started)*1000,
-                "acoustic_transport":deepcopy(transport)},dict(stages,waveform=waveform))
+                "acoustic_transport":getattr(model,"last_transfer",None)},dict(stages,waveform=waveform))
             arrays.clear()
             stages={}
             waveform=result=None
@@ -92,13 +90,11 @@ def main():
                             acoustic_chunk_frames=args.acoustic_chunk_frames,
                             acoustic_session_policy=args.acoustic_session_policy)
         import onnxruntime
-        runtime=getattr(model,"runtime",None)
-        runtime=runtime if isinstance(runtime,dict) else {}
-        runtime.update(shared_cuda_process=False,private_acoustic_process=True)
-        ready={**deepcopy(runtime),"status":"ready","providers":model.providers,
+        runtime=getattr(model,"runtime",{})
+        ready={**runtime,"status":"ready","shared_cuda_process":False,"private_acoustic_process":True,
+            "providers":model.providers,
             "provider_options":model.provider_options,"python":sys.version,
             "worker_pid":os.getpid(),"executable":sys.executable,
-            "package_manifest_sha256":sha256_file(Path(args.package)/"manifest.json"),
             "diagnostic":args.diagnostic,"chunk_frames":runtime.get("chunk_frames",args.acoustic_chunk_frames),
             "acoustic_dtype":model.encoder.manifest["dtype"],
             "acoustic_arena_shrink":model.acoustic_arena_shrink,
@@ -106,8 +102,10 @@ def main():
             "session_initialization":runtime.get("session_initialization","eager"),
             "onnxruntime":onnxruntime.__version__,"torch_imported":"torch" in sys.modules,
             "onnx_imported":"onnx" in sys.modules}
-        if isinstance(runtime.get("providers"),dict):
-            ready["session_provider_options"]=deepcopy(runtime["providers"])
+        if "package_manifest_sha256" not in ready:
+            ready["package_manifest_sha256"]=sha256_file(Path(args.package)/"manifest.json")
+        if "providers" in runtime:
+            ready["session_provider_options"]=runtime["providers"]
         status=serve(model,ready,sys.stdin.buffer,sys.stdout.buffer)
         model=None
     except BaseException:

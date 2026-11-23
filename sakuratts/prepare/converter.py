@@ -179,28 +179,26 @@ def convert(*, gpt, sovits, official_source, output, reference=None, reference_t
     env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1")
     with tempfile.TemporaryDirectory(prefix=".sakuratts-convert-", dir=output.parent) as temporary:
         temporary = Path(temporary)
-        inputs = temporary / "inputs.json"
         refs = [] if reference is None else [{"audio": str(Path(reference).resolve(strict=True)),
             "text": reference_text, "language": reference_language, "tone": "reference"}]
-        weights = {"gpt": str(paths["gpt"]), "sovits": str(paths["sovits"])}
         prepared = temporary / "prepared"
         command = [interpreter, "-B", str(tools / "prepare_resources.py"),
-                   "--official-source", str(paths["source"]), "--inputs", str(inputs),
-                   "--output", str(prepared), "--python", interpreter]
-        if not refs:
-            command.append("--frontend-only")
+                   "--official-source", str(paths["source"]), "--output", str(prepared), "--python", interpreter]
         if language_model:
             command += ["--language-model", str(Path(language_model).resolve(strict=True))]
         logger.info("准备文本处理与参考资源")
-        if refs and reference_language != "ja":
-            inputs.write_text(json.dumps(weights, ensure_ascii=False), encoding="utf-8")
+        if not refs or reference_language != "ja":
             run_conversion([*command, "--frontend-only"], env=env)
+        if reference_language != "ja":
             features = temporary / "transcript.npz"
             _prepare_transcript(prepared / "frontend", os.path.abspath(frontend_python or acoustic_python or interpreter),
                                 reference_text, reference_language, features)
             refs[0]["text_features"] = str(features)
-        inputs.write_text(json.dumps(dict(weights, references=refs), ensure_ascii=False), encoding="utf-8")
-        run_conversion(command, env=env)
+        if refs:
+            inputs = temporary / "inputs.json"
+            inputs.write_text(json.dumps({"gpt": str(paths["gpt"]), "sovits": str(paths["sovits"]),
+                                         "references": refs}, ensure_ascii=False), encoding="utf-8")
+            run_conversion([*command, "--inputs", str(inputs)], env=env)
         for script, checkpoint, target in (("convert_gpt.py", paths["gpt"], "gpt"),
                                            (acoustic_converter(backend), paths["sovits"], "sovits")):
             logger.info("转换 %s 权重，首次准备需要一些时间", "GPT" if target == "gpt" else "SoVITS")

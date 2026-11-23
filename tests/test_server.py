@@ -239,9 +239,12 @@ class ServerTests(unittest.TestCase):
         calls = []
         class FakeInference:
             def __init__(self, *a, **k): pass
-            def info(self): return {"name": "test"}
+            name = "test"
+            def info(self): return {"name": self.name}
             def close(self): pass
-            def set_weights(self, kind, path): calls.append((kind, path))
+            def set_weights(self, kind, path):
+                self.name = path
+                calls.append((kind, path))
             def set_reference_audio(self, path): calls.append(("reference", path))
             def tts(self, request, on_fragment=None, **kwargs):
                 calls.append(request)
@@ -255,9 +258,11 @@ class ServerTests(unittest.TestCase):
             self.assertEqual(calls[-1]["seed"], -1)
             self.assertEqual(calls[-1]["text_split_method"], "cut5")
             for kind in ("gpt", "sovits"):
+                path = kind + "-weights"
                 self.assertEqual(client.get("/set_" + kind + "_weights",
-                    params={"weights_path": "weights"}).json(), {"message": "success"})
-                self.assertEqual(calls[-1], (kind, "weights"))
+                    params={"weights_path": path}).json(), {"message": "success"})
+                self.assertEqual(calls[-1], (kind, path))
+                self.assertEqual(client.get("/models").json(), [{"name": path}])
             self.assertEqual(client.get("/set_refer_audio", params={"refer_audio_path": "a.wav"}).status_code, 200)
             self.assertEqual(calls[-1], ("reference", "a.wav"))
             raw = client.post("/tts", json=dict(REQUEST, media_type="raw"))
@@ -302,11 +307,15 @@ class ServerTests(unittest.TestCase):
         from sakuratts.server import create_app
         class FakeInference:
             def __init__(self, *args, **kwargs): pass
-            def info(self): return {"name": "test"}
+            model = {"name": "test"}
+            def info(self): return self.model
             def close(self): pass
             def set_weights(self, kind, path):
                 if path == "unsupported":
                     raise NotImplementedError("Unsupported model version")
+                if path == "failed-restore":
+                    self.model = None
+                    raise RuntimeError("Failed to restore previous model")
                 raise ValueError("Cannot load " + path)
             def set_reference_audio(self, path): raise ValueError("Cannot load " + path)
         with patch("sakuratts.server.Inference", FakeInference), TestClient(create_app()) as client:
@@ -329,6 +338,11 @@ class ServerTests(unittest.TestCase):
             self.assertEqual(response.status_code, 400)
             self.assertEqual(response.json(), {"message": "change sovits weight failed",
                 "Exception": "Unsupported model version", "error": "unsupported_feature"})
+            self.assertTrue(client.get("/health").json()["model_loaded"])
+            with self.assertLogs("sakuratts.server", level="ERROR"):
+                response = client.get("/set_sovits_weights", params={"weights_path": "failed-restore"})
+            self.assertEqual(response.status_code, 400)
+            self.assertFalse(client.get("/health").json()["model_loaded"])
 
     def test_empty_startup_has_no_backend_and_no_default_reference(self):
         from fastapi.testclient import TestClient

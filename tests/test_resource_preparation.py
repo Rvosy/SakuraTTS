@@ -17,6 +17,16 @@ spec.loader.exec_module(prepare)
 
 
 class ResourcePreparationTests(unittest.TestCase):
+    def test_frontend_only_prepares_resources_without_voice_weights(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root, user, language = self.fixture(directory)
+            output = Path(directory) / "prepared"
+            with patch.object(prepare, "inspect_frontend", return_value=self.classic_fixture(root)):
+                self.assertEqual(prepare.main(["--official-source", str(root), "--output", str(output),
+                                               "--frontend-only"]), 0)
+            self.assertEqual((output / "frontend/user.dict").read_bytes(), (user / "user.dict").read_bytes())
+            self.assertEqual((output / "frontend/lid.176.bin").read_bytes(), language.read_bytes())
+
     def test_new_reference_preparation_reuses_english_frontend_without_rewriting_it(self):
         with tempfile.TemporaryDirectory() as directory:
             root, _, language = self.fixture(directory)
