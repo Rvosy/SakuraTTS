@@ -24,6 +24,7 @@ CPU / AMD 的当前入口只保留 CPU `int8` 和 DirectML `fp16`，默认参数
 
 文档中的早期方案与交接记录按日期归档：
 
+- [SakuraTTS 与 GPT-SoVITS 的 Mac 多语种对照](notes/macos-multilingual-comparison-20261123.md)
 - [Windows 普通话合成与语言整合包](notes/windows-mandarin-20261120.md)
 - [Windows 普通话前端的系统内存、冷启动与热处理耗时](notes/windows-mandarin-frontend-memory-20261120.md)
 - [RTX 5070 Ti 中日英统一档位、专用显存和 HTTP 耗时](notes/windows-cuda-multilingual-20261120.md)
@@ -31,6 +32,7 @@ CPU / AMD 的当前入口只保留 CPU `int8` 和 DirectML `fp16`，默认参数
 - [Mac 日文运行与部署](notes/japanese-runtime-20260920.md)
 - [Windows 接续与便携验收格式](notes/windows-handoff-20260920.md)
 - [兼容性证据汇总](notes/compatibility-evidence-20260920.md)
+- [GPT-SoVITS 普通包与 NVIDIA 50 系包依赖对比](../docs/research/2026-09-20-gpt-sovits-package-comparison.md)
 - [固定版本上游与本地整合包核查](notes/architecture-audit-20260922.md)
 - [早期精简运行包压缩与运行检查](notes/portable-runtime-bundle-20260922.md)
 - [Radeon 780M：CPU / DirectML 与 Genie 对照](notes/cpu-directml-780m-20260927.md)
