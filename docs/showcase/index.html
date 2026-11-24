@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SakuraTTS · 本地语音合成引擎</title>
+<link rel="stylesheet" href="stage.css"><script defer src="replay-data.js"></script><script defer src="replay.js"></script><script defer src="stage.js"></script>
+</head>
+<body>
+<main id="stage" aria-label="SakuraTTS 产品演示">
+<section class="cover active" data-seconds="5">
+  <h1>SakuraTTS</h1><p class="lead">本地语音合成引擎</p>
+  <aside>SakuraTTS 可以按需加载语音模型，空闲后释放显存。</aside>
+</section>
+<section class="wake" data-seconds="12" inert>
+  <p class="scene-label">应用示例 · 对话中的语音合成</p>
+  <h2 id="wakeLine">模型常驻</h2>
+  <div class="timeline">
+    <div class="time-lane axis"><span></span><div><span class="sent">发出消息</span><span class="text-ready">拿到第一句</span><span class="expired">空闲期满</span></div></div>
+    <div class="time-lane request-lane"><b>大模型请求</b><div class="rail"><span class="task ask">请求</span><span class="task reply">等待回复</span><span class="wake-arrow">唤醒</span></div></div>
+    <div class="time-lane"><b>语音引擎</b><div class="rail"><span class="task prepare">加载</span><span class="task synth">合成语音</span></div></div>
+    <div class="time-lane"><b>播放端</b><div class="rail"><span class="task listen">播放语音</span></div></div>
+    <div class="time-lane"><b>服务状态</b><div class="rail resource">
+      <div class="residency-track">
+        <span class="residency sleep">休眠</span>
+        <span class="residency loaded"><span class="always-label">模型持续占用显存</span><span class="early-label">加载与运行 · 占用显存</span></span>
+        <span class="residency sleep">休眠</span>
+      </div>
+    </div></div>
+  </div>
+  <p class="flow-caption" id="wakeCaption"></p>
+  <aside><span id="wakeNote"></span><a href="../background-runtime.md" target="_blank">运行方式与接入时序</a></aside>
+</section>
+<section class="memory bench" data-seconds="8" inert>
+  <div class="bench-copy"><p class="scene-label">RTX 5060 8 GB · V2ProPlus</p><h2>显存占用</h2>
+    <div class="memory-legend" aria-label="显存图例"><span>峰值</span><span class="idle-only">常驻</span></div>
+  </div>
+  <div class="bench-plot" id="memoryBars" aria-label="峰值与常驻显存，单位 MB">
+    <div class="memory-heading"><span>峰值 / MB</span><span class="idle-only">常驻 / MB</span></div>
+  </div>
+  <p class="caption idle-only">常驻显存取请求结束约一秒后的读数，此时模型尚未休眠。</p>
+  <aside>低显存、极限两档沿用前一轮的原版基线。<a href="../../README.md" target="_blank">完整数据表</a></aside>
+</section>
+<section class="profile-time bench" data-seconds="10" inert>
+  <div class="bench-copy"><p class="scene-label">RTX 5060 8 GB · V2ProPlus</p><h2>合成耗时</h2>
+    <p class="bench-detail">约 26 秒音频</p>
+  </div>
+  <div class="bench-plot" id="timeBars" aria-label="FP32 与 FP16 合成耗时"></div>
+  <p class="caption">模型已加载，计时到收齐音频。取两次热请求的中位数。</p>
+  <aside>原版生成 27.30 秒音频，SakuraTTS FP32 生成 25.90 秒，三个 FP16 档均生成 25.46 秒。<a href="../../README.md" target="_blank">完整数据表</a></aside>
+</section>
+<section class="tech pipeline" data-seconds="17" inert>
+  <p class="scene-label">GPT-SoVITS · 原版合成流程</p>
+  <h2>语音合成的三个阶段</h2>
+  <p class="tech-intro">输入一段文字，引擎用参考录音中的音色把它读出来。</p>
+  <ol class="pipeline-steps">
+    <li><h3>语音 GPT</h3><p>根据文字的读音和参考录音，生成一串语音编码，描述这句话怎么念。</p><div>语音编码</div></li>
+    <li><h3>特征模型</h3><p>把语音编码、读音和参考音色合在一起，算出每一小段声音的声学特征。</p><div>声学特征</div></li>
+    <li><h3>声码器</h3><p>把声学特征转换成可以播放的音频波形。</p><div>音频波形</div></li>
+  </ol>
+  <p class="pipeline-handoff">每一步把结果交给下一步。结果保留下来，刚用完的模型就可以先卸载。</p>
+  <aside>原版由语音 GPT 和 SoVITS 声学模型配合。图里把 SoVITS 展开成特征计算和波形合成两步，后面可以看到 SakuraTTS 如何把这两步分开加载。<a href="../../research/notes/acoustic-session-staging-20260921.md" target="_blank">声学模型的加载顺序</a></aside>
+</section>
+<section class="tech standard" data-seconds="17" inert>
+  <p class="scene-label">FP16 · 原版与标准档</p>
+  <h2>语义缓存与波形分块</h2>
+  <p class="tech-intro">标准档沿用这三个步骤，先收回 GPT 用完的临时显存，再把声码器的计算拆成小块。</p>
+  <div class="decode-grid">
+    <div class="decode-case">
+      <h3>原版</h3>
+      <div class="decode-band whole">整段波形</div>
+      <p>在原版的整段解码模式下，声码器一次处理整个片段。片段越长，同一次计算要放进显存的帧就越多。</p>
+    </div>
+    <div class="decode-case">
+      <h3>标准档 <small>默认</small></h3>
+      <div class="decode-band blocks" aria-label="同一片段分块合成，每块最多 256 帧"><span>256 帧</span><span>256 帧</span><span>…</span><span>末块</span></div>
+      <p>GPT 生成语义后就释放缓存。声码器每 256 帧算一块，再拼回波形。模型权重留在显存里，下一段接着用。</p>
+    </div>
+  </div>
+  <aside>标准档在语义生成结束后释放 KV 缓存、CUDA Graph 和请求工作区。RTX 5060 8 GB 上，原版 FP16 与标准档的实测峰值分别为 2323.2 和 758.2 MB，热请求分别耗时 4.407 和 2.677 秒。这是两条完整推理路径的对照。<a href="../../research/notes/low-vram-20260921.md" target="_blank">实测记录</a></aside>
+</section>
+<section class="tech staging" data-seconds="12" inert>
+  <p class="scene-label">FP16 · 模型驻留</p>
+  <h2>分阶段加载</h2>
+  <div class="staging-layout">
+    <div class="stage-explanation">
+      <div data-tier="standard"><h3>标准档 <small>默认</small></h3><p>三个模型依次计算，全程都留在显存里。下一段到来时，可以直接接着算。</p></div>
+      <div data-tier="low" hidden><h3>低显存档</h3><p>GPT 继续驻留。轮到特征模型才加载，算完就卸载，再加载声码器。每个片段都要花时间重载这两个模型。</p></div>
+      <div data-tier="extreme" hidden><h3>极限档</h3><p>GPT 交出语音编码后也卸载。三个模型各占一个阶段，峰值显存更低，下一段要从加载 GPT 开始。</p></div>
+    </div>
+    <figure class="model-figure">
+      <figcaption>模型驻留区间</figcaption>
+      <div class="model-phases"><span>生成语音编码</span><span>计算声学特征</span><span>合成音频波形</span></div>
+      <div class="model-row"><b>语音 GPT</b><div class="model-track"><i class="gpt-band"></i></div></div>
+      <div class="model-row"><b>特征模型</b><div class="model-track"><i class="feature-band"></i></div></div>
+      <div class="model-row"><b>声码器</b><div class="model-track"><i class="wave-band"></i></div></div>
+    </figure>
+  </div>
+  <aside>RTX 5060 8 GB 上，标准、低显存、极限三档的峰值依次为 758.2、584.1、465.1 MB，同一次长句对照的热请求耗时依次为 2.677、3.560、5.481 秒。片段越多，低显存档和极限档重新加载模型的次数也越多。<a href="../../research/notes/acoustic-session-staging-20260921.md" target="_blank">声学模型错峰实测</a></aside>
+</section>
+<section class="live" inert>
+  <h2>效果演示</h2>
+  <div class="replay-panes">
+    <div class="console-pane">
+      <div class="console-head"><span class="window-lights" aria-hidden="true"><i></i><i></i><i></i></span><strong>SakuraTTS · Terminal</strong><button id="rawLog" aria-pressed="false">原始日志</button></div>
+      <pre id="eventLog" tabindex="0" aria-label="推理日志"></pre>
+    </div>
+    <div class="pet-pane">
+      <div id="petStill" aria-label="桌宠、对话框和输入栏构图预览">
+        <img src="pet-preview.webp" alt="Sakura 桌宠待机立绘">
+        <div class="pet-bubble"><strong>Sakura</strong><span>早上好。</span></div>
+        <div class="pet-composer"><span aria-hidden="true">＋</span>和当前角色说点什么……<span aria-hidden="true">➤</span></div>
+      </div>
+      <video id="petMovie" playsinline preload="metadata" hidden></video>
+    </div>
+  </div>
+  <div class="replay-caption" id="takeKind"></div>
+  <div class="take-heading"><strong id="chartTitle"></strong><span id="chartState"></span></div>
+  <div id="takeChart" aria-label="请求、加载、播放与休眠时序"></div>
+  <div class="take-controls"><button type="button" id="takePlay">播放回放</button><input id="takeSeek" type="range" min="0" step="any" aria-label="回放进度"><output id="takeTime"></output></div>
+  <aside id="takeNote"></aside>
+</section>
+<section class="end" inert><h2>SakuraTTS</h2><a class="project" href="https://github.com/Rvosy/SakuraTTS" target="_blank" rel="noreferrer">github.com/Rvosy/SakuraTTS</a>
+  <aside>安装包、使用方法和实测数据都在项目首页。</aside>
+</section>
+<footer><output id="counter"></output><nav aria-label="演示控制"><button id="prev" title="左方向键">上一页</button><button id="play">自动播放</button><button id="notes" aria-expanded="false">讲稿</button><button id="next" title="空格或右方向键">下一页</button></nav></footer>
+</main></body></html>
