@@ -13,9 +13,11 @@ python api_v2.py -a 127.0.0.1 -p 9880 -c configs/tts_infer.yaml
 python api.py -a 127.0.0.1 -p 9880 -c configs/tts_infer.yaml
 ```
 
-路径按启动工作目录解析，和原版一样；建议使用绝对路径。脚本固定从仓库目录启动。配置提供 `custom.t2s_weights_path` / `vits_weights_path` 时，先转换或复用部署缓存，再加载权重。`sakuratts.model` 可引用已有部署包以跳过完整转换。原始模型和原版配置文件不会被修改。
+直接运行 Python 时，配置文件和权重的相对路径以当前工作目录为准。仓库的 `start-server.bat` 从仓库根目录启动，整合包的脚本从解压目录启动。配置提供 `custom.t2s_weights_path` 和 `custom.vits_weights_path` 时，先转换或复用部署缓存，再加载权重。`sakuratts.model` 可引用已有部署包。若同时填写原始权重路径，服务加载部署包后会按指定路径切换权重。原始模型和原版配置文件不受影响。
 
-无参数时依次检查 `configs/tts_infer.yaml`、原版目录下的 `GPT_SoVITS/configs/tts_infer.yaml`，不会自动发现角色包。显式模型或 `-c` 优先。没有配置时 HTTP 可以启动，但 `model_loaded=false`，合成会提示配置模型。默认 `direct` 模式在启动时加载 GPU 权重；第一次合成仍可能有内核编译等开销。低级 `Engine.load` 保留延迟加载。总体 `policy="staged"` 可用于低级接口或显式启用的 `managed` HTTP 模式，`direct` 仍拒绝该策略。
+`--backend` 优先于 YAML 中的 `sakuratts.backend`，后者优先于 `custom.device`。选择后端后使用对应的 `--profile` 或 `sakuratts.profile`，也可省略档位以使用该后端的默认值。导入设置了 `is_half: true` 的原版 YAML 时必须显式选择 SakuraTTS 档位。
+
+未传入模型位置或 `-c` 时，依次查找 `configs/tts_infer.yaml` 和 `GPT_SoVITS/configs/tts_infer.yaml`。找不到配置时，状态接口仍可访问，`/health` 返回 `model_loaded: false`。默认 `direct` 模式在启动时加载模型。首次合成仍可能需要编译内核或编码参考音频。低级 `Engine.load` 保留延迟加载。`policy="staged"` 用于低级接口或显式启用的 `managed` HTTP 模式。
 
 ## 可选后台控制模式
 
@@ -94,11 +96,11 @@ Prefill、Decode、CUDA Graph 捕获和新参考编码在实际请求时执行�
 
 完整诊断默认保存到 `logs/sakuratts.log`，包含时间、级别、请求编号、完整路径和模型哈希、输入与规范化文本、参考转写、实际参数、缓存来源、细分停止原因和异常堆栈。单文件达到 10 MiB 后轮转，最多保留 3 份备份。错误同时向标准错误流输出完整消息、堆栈和异常链，供启动器或宿主捕获；长堆栈保留换行和末尾原因。准备进程的原始输出也写入该文件；已知的 `enc_q` 训练模块缺失项不在终端展开，其他未匹配权重和警告仍显示。
 
-`start-server.bat --log-level debug` 可在终端展开排错细节，`--log-file PATH` 可指定诊断文件。级别只控制终端显示，文件始终保留完整诊断；`warning` / `error` 级别不会显示动态进度。多个服务实例应指定不同日志文件。
+`start-server.bat --log-level debug` 可在终端展开参考转写、分句后的文本、实际请求参数和缓存信息。`start-server.command` 和 `python api_v2.py` 接受相同的日志选项。`--log-file PATH` 可指定诊断文件，多个服务实例应各用一个文件。日志级别只控制终端显示，文件始终保留完整诊断。`warning` 和 `error` 会隐藏常规推理进度。默认 `direct` 模式在交互终端显示动态采样进度，`managed` 模式从工作进程转发逐行日志。
 
 总耗时包含参考准备，输出 RTF 按包含句间静音的音频时长计算。非流式总耗时不含音频压缩和网络发送；流式总耗时包含片段编码及等待发送队列的时间。日志包含输入文本和本地路径。嵌入 ASGI 时由宿主配置 `sakuratts` 日志级别为 `INFO` 以显示内部进度；低级 SDK 默认保持安静。
 
-一个专用线程负责模型创建、推理、切换和关闭。正在计算或切换时，冲突操作返回 409；这是当前与原版不同的并发约束。模型格式检查失败时保留现有实例；旧 GPU 权重释放后发生的加载失败会使服务处于未加载状态，需要重新加载模型。
+一个专用线程负责模型创建、推理、切换和关闭。正在计算或切换时，冲突操作返回 409。模型格式检查失败时保留现有实例。释放旧模型后若加载新模型失败，服务会尝试恢复旧模型。恢复也失败时，服务记录两次错误，可通过 `/health` 确认模型是否仍已加载。
 
 完整响应的 `X-SakuraTTS-Status` 区分 `completed` 和 `stopped_at_limit`。`X-SakuraTTS-Request-Ms` 包含本次参考解析和原生推理，音频压缩与网络发送不在其中。达到长度限制不表示内容完整。
 

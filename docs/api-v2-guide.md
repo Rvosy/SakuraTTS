@@ -1,26 +1,26 @@
 # API V2 使用说明
 
-SakuraTTS 提供 GPT-SoVITS API v2 的 GET / POST 合成接口。Windows 的 CPU、CUDA、DirectML 与 Apple silicon 的 MLX 使用同一 HTTP 入口。Windows 日英包提供日文、英文和日英混读；中日英包另外提供普通话前端。各设备和模型的实测范围见[兼容矩阵](specs/compatibility-matrix.md)，Apple 安装方法见 [Apple 指南](apple.md)。
+SakuraTTS 提供 GPT-SoVITS API v2 的 GET / POST 合成接口。Windows 的 CPU、CUDA、DirectML 与 Apple silicon 的 MLX 使用同一 HTTP 入口。Windows 日英包支持日语、英语和日英混读，中日英包另支持普通话。Windows 整合包使用 V2ProPlus，Apple MLX 支持 V2Pro 和 V2ProPlus 的日文推理。各设备和模型的实测范围见[兼容矩阵](specs/compatibility-matrix.md)与 [Apple 指南](apple.md)。
 
 这份文档用于客户端接入；部署细节见[快速开始](quickstart.md)，接口实现与生命周期见 [HTTP 服务配置](http-api.md)。对照版本固定为 GPT-SoVITS [`48b1a016`](https://github.com/RVC-Boss/GPT-SoVITS/blob/48b1a0169a28582a8984402f82cf438d3bfa6aca/api_v2.py)。
 
 ## 启动服务
 
-使用[完整整合包](portable-bundle.md)时，将包内的 `configs/tts_infer.example.yaml` 复制为 `configs/tts_infer.yaml`，填写自己的 GPT 和 SoVITS 权重路径；准备组件与解释器位置由整合包绑定。源码安装则先按[Windows 准备指南](setup-windows-nvidia.md)准备运行环境、模型和日文资源，再复制 [配置示例](../examples/tts_infer.example.yaml)，填写权重、源码和解释器路径。完成后启动：
+使用 [Windows 完整整合包](portable-bundle.md)时，将对应后端的配置模板复制为 `configs/tts_infer.yaml`，填写 `custom.t2s_weights_path`（GPT `.ckpt`）和 `custom.vits_weights_path`（SoVITS `.pth`）。双击 `start-server.bat`，或在终端指定配置文件。
 
 ```powershell
 .\start-server.bat -c configs/tts_infer.yaml
 ```
 
-源码安装也可运行：
+[Mac 完整包](apple.md#整合包)使用 `start-server.command`。Windows NVIDIA 源码安装先按[准备指南](setup-windows-nvidia.md)安装依赖，再将[源码配置示例](../examples/tts_infer.example.yaml)复制到 `configs/tts_infer.yaml`，填写权重、官方源码和解释器路径。在仓库根目录运行以下命令。
 
 ```powershell
 python api_v2.py -a 127.0.0.1 -p 9880 -c configs/tts_infer.yaml
 ```
 
-默认地址是 `http://127.0.0.1:9880`。浏览器打开 `/docs` 可查看接口字段，`/health` 可查询模型状态。无配置时服务可以启动，但不能合成；无参数启动优先读取 `configs/tts_infer.yaml`，其次读取 `GPT_SoVITS/configs/tts_infer.yaml`。
+默认地址是 `http://127.0.0.1:9880`。终端显示“服务就绪”后访问 `/health`，默认 `direct` 模式下 `model_loaded: true` 表示模型已加载。HTTP 能连通或 `status: "ready"` 只表示服务可以接收请求。浏览器访问 `/docs` 可查看请求字段。不传配置路径时，服务依次查找 `configs/tts_infer.yaml` 和 `GPT_SoVITS/configs/tts_infer.yaml`。两者都缺失时，服务以未加载模型的状态启动。
 
-原始 `.ckpt` / `.pth` 权重转换，以及首次使用新的参考音频，都需要准备组件；完整包已携带独立解释器、所需官方源码与公共辅助资源，用户提供自己的发声模型和参考音频。精简推理包需要补齐匹配组件，或使用已准备且匹配的资源；安装 HTTP 依赖不会补齐这些组件。配置示例使用 `device: cuda`、`version: v2ProPlus`、`is_half: false`；精度档位通过[推理档位配置](inference-profiles.md)选择。API v2 是接口版本，不代表支持全部 V2 模型家族。
+转换原始权重和编码新参考录音需要准备组件。完整包自带独立解释器、所需官方源码和公共辅助资源，用户提供发声模型和参考录音。精简包可使用已有转换模型和匹配的参考条件，也可补装匹配的准备组件。导入原版 YAML 时，若 `is_half: true`，须另用 `--profile` 或 `sakuratts.profile` 选择 SakuraTTS 档位。[推理档位](inference-profiles.md)
 
 请求中的模型和音频路径都是**服务所在机器上的路径**。它们不是文件上传字段；建议传绝对路径。默认 `direct` 模式在启动时加载模型，第一次请求还可能需要编译内核或准备参考条件。
 
@@ -31,18 +31,16 @@ python api_v2.py -a 127.0.0.1 -p 9880 -c configs/tts_infer.yaml
 | `POST /tts` | JSON 请求，返回音频 | 当前支持的语言、采样与输出参数见下表 |
 | `GET /tts` | 查询参数，返回音频 | 与 POST 共用字段、默认值和校验 |
 | `GET /set_gpt_weights?weights_path=...` | 切换 GPT 权重 | 支持范围内的原始 `.ckpt` 或转换后的 GPT 目录；先配置初始模型与准备环境 |
-| `GET /set_sovits_weights?weights_path=...` | 切换 SoVITS 权重 | 支持范围内的原始 `.pth` 或转换后的声学目录 |
+| `GET /set_sovits_weights?weights_path=...` | 切换 SoVITS 权重 | 支持范围内的原始 `.pth` 或转换后的声学目录，须匹配当前后端和档位 |
 | `GET /set_refer_audio?refer_audio_path=...` | 预先准备参考音频条件 | `/tts` 仍须传参考路径、转写和语言 |
 | `GET /control?command=exit` | 结束独立服务 | 等待资源清理；嵌入 ASGI 时需宿主提供控制回调 |
 | `GET /control?command=restart` | 重启服务状态 | 恢复启动配置，运行中切换的权重不会写回配置；PID 不保证变化 |
 
-`GET /health`、`GET /models`、`GET /docs` 和 `GET /openapi.json` 是附加查询接口。需要空闲休眠、提前唤醒时，可选用[后台控制模式](http-api.md#可选后台控制模式)，它不改变 `/tts` 的参数约定。
+`GET /health` 查询服务与模型状态，`GET /models` 返回当前模型信息，无模型时返回 `[]`。`GET /docs` 和 `GET /openapi.json` 提供接口定义。需要空闲休眠、提前唤醒时，可选用[后台控制模式](http-api.md#可选后台控制模式)。
 
 仓库保留的 `api.py` 启动脚本也启动这套 V2 服务。旧协议的 `/`、`/set_model`、`/change_refer` 返回 404，不能因为启动文件同名就沿用旧客户端协议。
 
 ## 发起一次合成
-
-`parallel_infer` 可省略，也接受 `true` / `false`。当前单项批次按顺序执行。
 
 下面的示例只使用 Python 标准库。替换参考路径和对应的真实日文转写后执行：
 
@@ -174,7 +172,7 @@ call("/set_refer_audio", refer_audio_path="D:/Voices/character.wav")
 
 成功返回 `{"message": "success"}`。两次权重切换是独立操作，应在都成功后再合成。`/set_refer_audio` 的参数名是 `refer_audio_path`；`/tts` 使用 `ref_audio_path`，并继续传入对应的 `prompt_text` 和 `prompt_lang`。
 
-切换只影响当前服务会话。需要下次启动仍使用这组模型时，修改本地启动配置。参考条件可缓存；修改参考转写或语言后会重新计算文本特征。
+切换只影响当前服务会话。固定使用另一套权重时，编辑 YAML 后重启。原始权重切换需要准备组件。参考条件可缓存；修改参考转写或语言后会重新计算文本特征。
 
 ## 出错时如何判断
 

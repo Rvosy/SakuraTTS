@@ -37,16 +37,16 @@ SakuraTTS-Windows/
 
 完整包的 `runtime/preparation/` 携带 HuBERT、Pro 说话人编码器、语言识别模型、日文字典、离线英语资源和必要的原版源码。用户不需要配置内部解释器或源码路径。精简包省略该目录，支持已有转换模型和预先准备的参考条件；尝试转换原始权重或处理新参考时，会提示缺少准备组件。
 
-NVIDIA 包的 `configs/low-vram.json` 和 `configs/minimum-vram.json` 保留低显存选择，需要匹配的 FP16 chunk256 声学包，不能通过切换配置自动转换模型。极限档支持 CLI/Python 和 managed HTTP；FP16 听感验收未完成，默认仍保持 FP32。详见[推理档位](inference-profiles.md)。
+NVIDIA 默认使用 FP32。通过 YAML 导入原始权重时，服务会按所选档位准备或复用缓存。使用已有部署包时，FP16 档需要匹配的 FP16 chunk256 声学资源。极限档用于 CLI、Python 或 managed HTTP，FP16 听感验收仍待完成。[推理档位](inference-profiles.md)
 
 ## 首次使用完整包
 
 1. 将自己的 GPT `.ckpt`、SoVITS `.pth` 放在 `models/`，或保留在其他目录。
-2. 复制 `configs/tts_infer.example.yaml` 为 `configs/tts_infer.yaml`，填写 `t2s_weights_path` 和 `vits_weights_path`。
-3. 双击 `start-server.bat`。终端依次显示前端准备、GPT 转换、SoVITS 转换；完成后开始接收请求。
-4. 按[原版 HTTP 字段](api-v2-guide.md)提交 `/tts`，包含 `ref_audio_path`、`prompt_text`、`prompt_lang` 等。首次参考编码自动完成，返回音频后缓存可复用。
+2. 将所选后端的模板复制为 `configs/tts_infer.yaml`，填写 `t2s_weights_path` 和 `vits_weights_path`。CPU 使用 `tts_infer.example.yaml`，CUDA 和 DirectML 分别使用 `tts_infer.cuda.example.yaml` 和 `tts_infer.directml.example.yaml`。
+3. 双击 `start-server.bat`。首次启动会显示前端准备和权重转换进度。终端显示“服务就绪”后，可通过 `/health` 查看 `model_loaded`。
+4. 按 [API V2 使用说明](api-v2-guide.md)提交 `/tts` 请求。首次使用新参考录音时会编码并缓存参考条件。合成过程中，终端会显示文本特征提取、GPT 采样及 SoVITS 合成。
 
-整个过程使用用户选定的两份权重，不需要手工执行转换命令或提供内部模型目录。当前范围为 V2ProPlus、日文，尚未接入的原版参数按 API 支持表报错。没有 `configs/tts_infer.yaml` 时保持未配置状态，不选择任何默认角色。
+整合包自动转换用户选定的 V2ProPlus 权重。日英包支持日文和英文，中日英包另支持普通话。缺少启动配置时服务仍可接收状态查询，`/health` 会返回 `model_loaded: false`。
 
 后台应用可加 `--runtime-mode managed`。首次转换也计入唤醒等待，慢机器可显式设置 `--wake-timeout-seconds 900`；普通重启命中缓存后不需要再次导出。第一次处理参考的时间也包含在请求时限内。准备默认使用 CPU FP32，主推理默认模式和精度不变。
 

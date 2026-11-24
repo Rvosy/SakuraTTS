@@ -37,9 +37,9 @@ Windows 完整包自带 Python、运行库和模型转换工具，默认使用 C
 
 准备一对受支持的 GPT / SoVITS 权重、一段参考录音和录音中的实际台词后，按以下步骤生成第一段语音。
 
-1. 解压 Windows 包，将 `configs/tts_infer.example.yaml` 复制为 `configs/tts_infer.yaml`，填入两份权重的路径。
-2. 双击 `check-runtime.bat` 检查 CPU，再运行 `start-server.bat`。使用 NVIDIA 时可在终端执行 `.\start-server.bat --backend cuda`，使用 DirectML 时执行 `.\start-server.bat --backend directml`。首次模型转换的进度显示在这个窗口。
-3. 服务启动后，另开 PowerShell 窗口，执行下例生成 `hello.wav`。将参考音频路径和转写换成你自己的。本例使用日文模型和日文参考。
+1. 解压 Windows 包。CPU 使用 `configs/tts_infer.example.yaml`，NVIDIA 或 DirectML 使用 `configs/tts_infer.cuda.example.yaml` 或 `configs/tts_infer.directml.example.yaml`。将选中的模板复制为 `configs/tts_infer.yaml`，填写 `custom.t2s_weights_path` 和 `custom.vits_weights_path`。
+2. 双击 `start-server.bat`。首次启动会显示模型转换进度。看到“服务就绪”后，可访问 `http://127.0.0.1:9880/health`，默认启动方式下 `model_loaded: true` 表示模型已加载。有需要时可先运行 [对应后端的运行环境检查](docs/portable-bundle.md)。
+3. 另开 PowerShell 窗口，执行下例生成 `hello.wav`。将参考音频路径和转写换成你自己的。本例使用日文参考和日文目标文本。
 
 ```powershell
 $request = @{
@@ -52,7 +52,7 @@ $request = @{
 Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:9880/tts' -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes($request)) -OutFile 'hello.wav'
 ```
 
-新参考录音的首次编码也会写入缓存。开发者可在服务的 `/docs` 查看请求字段，或使用 `sakuratts tts` 和 Python 直接生成 WAV。参见 [API v2 使用说明](docs/api-v2-guide.md)、[Python 与命令行快速开始](docs/quickstart.md)和 [Windows 整合包指南](docs/portable-bundle.md)。
+首条请求会准备参考音频并缓存音频条件。启动窗口会显示文本处理、语义 Token 预测和 SoVITS 合成的进度与耗时。需要查看参考转写、分句后的文本和实际参数时，可用 `.\start-server.bat --log-level debug` 启动，或查看 `logs/sakuratts.log`。请求示例、参数与错误响应见 [API V2 使用说明](docs/api-v2-guide.md)。
 
 使用中日英包时，可用 `.\start-server.bat --backend cuda --runtime-mode managed --profile fp16` 启动同一个服务。把请求的 `text_lang` 切为 `zh`、`ja` 或 `en` 即可换朗读语言，`prompt_lang` 填参考录音的语言。需要省显存时把启动档位改为 `low-memory` 或 `minimum-memory`，这个选择对所有语言生效。
 

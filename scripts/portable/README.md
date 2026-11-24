@@ -16,7 +16,7 @@ sakuratts.bat check-runtime --backend directml
 
 多显卡可追加 `--device-id 1`。检查按 DXGI 原编号选择设备，输出适配器名称和软件渲染器标记；DirectML 分别执行 FP32、FP16 矩阵运算并核对实际执行 provider，软件渲染器不能作为 GPU 通过。结果写入 `cache/runtime-check.json`；失败不会改用 CPU 伪装通过。它不验证声音模型或音质。检查失败时报告保留原始异常、所选设备和 Python 路径；可先用 `sakuratts.bat doctor --backend directml` 查看设备列表。若 Python 无法启动，检查是否完整解压、运行库 DLL 是否被隔离；无需另外安装 Python 或 Git。
 
-带 HTTP 的包可双击 `start-server.bat`，默认监听 `127.0.0.1:9880`。没有配置模型时服务保持未加载状态。查看接口说明可访问 `/docs`。
+带 HTTP 的包可双击 `start-server.bat`，默认监听 `127.0.0.1:9880`。填写下节的模型配置后启动，看到“服务就绪”时可访问 `/health`。默认启动方式下，`model_loaded: true` 表示模型已加载。请求字段可在 `/docs` 查看。
 
 ## 原始模型与配置
 
@@ -24,7 +24,7 @@ sakuratts.bat check-runtime --backend directml
 
 1. 将自己的 GPT `.ckpt` 和 SoVITS `.pth` 放进 `models/`。
 2. 复制 `configs/tts_infer.example.yaml` 为 `configs/tts_infer.yaml`，填写两项权重路径。统一包的默认模板使用 CPU；另有 `tts_infer.directml.example.yaml` 和 `tts_infer.cuda.example.yaml`。
-3. 启动 `start-server.bat`，首次转换会显示进度；结果保存在 `cache/`，后续复用。
+3. 双击 `start-server.bat`。首次转换的进度会显示在终端，转换结果缓存在 `cache/`。
 
 同一套原始权重可通过启动参数选择模式：
 
@@ -53,7 +53,7 @@ start-server.bat models/voice-amd --backend directml
 curl.exe -X POST http://127.0.0.1:9880/tts -H "Content-Type: application/json" --data-raw '{"text":"こんにちは。","text_lang":"ja","ref_audio_path":"D:/Voices/reference.wav","prompt_text":"参考音声です。","prompt_lang":"ja","parallel_infer":false}' --output hello.wav
 ```
 
-首次参考编码由独立 CPU 准备进程完成，之后复用缓存；普通推理不导入 PyTorch。完整字段和限制见 [API v2 指南](https://github.com/Rvosy/SakuraTTS/blob/main/docs/api-v2-guide.md)。
+首次参考编码由独立 CPU 准备进程完成，之后复用缓存。终端显示文本处理、语义 Token 预测和 SoVITS 合成的进度。查看参考转写和分句结果可用 `start-server.bat --log-level debug`，完整日志保存在 `logs/sakuratts.log`。完整字段和限制见 [API V2 使用说明](https://github.com/Rvosy/SakuraTTS/blob/main/docs/api-v2-guide.md)。
 
 省略准备组件的精简包只使用已有转换模型和参考条件；需要转换原始权重或新参考时会明确提示缺少准备环境。构建和运行不会自动下载缺失模型或依赖。
 

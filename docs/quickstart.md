@@ -44,7 +44,7 @@ with sakuratts.load("models/mika") as engine:
     audio.save("outputs/greeting.wav")
 ```
 
-复制 [tts_infer.example.yaml](../examples/tts_infer.example.yaml) 为本地 `configs/tts_infer.yaml`，填写路径后运行 `start-server.bat`。其他配置文件用 `start-server.bat -c PATH` 或 `python api.py -c PATH` 载入。已有部署包也可用 `sakuratts serve models/mika` 启动，编码新的参考录音仍需准备环境。服务默认监听 `127.0.0.1:9880`，浏览器打开 `/docs` 可以查看接口。按 `Ctrl+C` 停止。单项批次可省略 `parallel_infer`。[API v2 使用指南](api-v2-guide.md) · [服务配置与缓存](http-api.md)
+复制 [tts_infer.example.yaml](../examples/tts_infer.example.yaml) 为本地 `configs/tts_infer.yaml`，填好模型和准备组件路径后运行 `start-server.bat`。其他配置文件可用 `start-server.bat -c PATH` 或 `python api_v2.py -c PATH` 加载。已有部署包也可用 `sakuratts serve models/mika` 启动，编码新的参考录音仍需准备环境。服务默认监听 `127.0.0.1:9880`。查看 `/health` 确认模型状态，再按 [API V2 使用说明](api-v2-guide.md) 发出第一条请求。按 `Ctrl+C` 停止服务。
 
 终端按请求显示进度和完成摘要，完整诊断保存到 `logs/sakuratts.log`。需要展开细节时使用 `start-server.bat --log-level debug`；`--log-file PATH` 可以更换日志文件。
 
