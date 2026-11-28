@@ -6,7 +6,7 @@ Windows 提供两种语言组合。日英包用于日语、英语和日英混读
 
 默认使用 Windows x64 统一组合，同包提供 CPU、NVIDIA CUDA 与 DirectML，通过配置或 `--backend cpu|cuda|directml` 选择。主环境使用包含 CPU provider 的 DirectML ONNX Runtime，CUDA 声学使用私有 ORT GPU worker，避免多个 ORT 分发包覆盖同一模块。无需按显卡代际拆包。带准备组件的完整包可处理原始权重和新参考；精简包仅适合已有转换资源，按实际分发需求选择，不必同时发布两种大小。
 
-解压后使用 `check-runtime.bat` 检查默认设备，再用 `start-server.bat` 启动服务。统一包默认检查 CPU，DirectML 另运行 `sakuratts.bat check-runtime --backend directml`。无需系统 Python、Git、编译器或 CUDA Toolkit；GPU 模式仍需要系统驱动。CUDA 模式要求 ASCII 安装路径（可含空格），CPU/DirectML 模式不限制中文目录，须对最终解压位置做验收。CPU 首次 INT8 转换支持安装目录和 TEMP/TMP 同时包含中文，无需手动修改系统临时目录。完整安装路径为 ASCII 时，启动器沿用包内 cache/tmp；中文安装路径保留外部 TEMP/TMP。没有模型时服务保持未加载状态，不选择默认角色。
+解压后使用 `check-runtime.bat` 检查默认设备，再用 `start-server.bat` 启动服务。统一包默认检查 CPU，DirectML 另运行 `sakuratts.bat check-runtime --backend directml`。无需系统 Python、Git、编译器或 CUDA Toolkit；GPU 模式仍需要系统驱动。启动器按 `--backend`、YAML 的 `sakuratts.backend`、`custom.device`、发行包默认后端的优先级检查安装路径。选中 CUDA 时要求完整安装路径为 ASCII（可含空格），CPU/DirectML 模式不限制中文目录，须对最终解压位置做验收。CPU 首次 INT8 转换支持安装目录和 TEMP/TMP 同时包含中文，无需手动修改系统临时目录。完整安装路径为 ASCII 时，启动器沿用包内 cache/tmp；中文安装路径保留外部 TEMP/TMP。没有模型时服务保持未加载状态，不选择默认角色。
 
 目标系统为 Windows 10/11 x64。当前 NumPy 2.4.6 轮子的 CPU 基线是 x86-64-v2，见 [NumPy 2.4 发布说明](https://numpy.org/doc/2.4/release/2.4.0-notes.html#modulate-dispatched-x86-cpu-features)；不能将“x64”视为所有旧 CPU 均可运行，也不要求为此拆出一个相同依赖的 CPU 包。准备组件的 PyTorch/MKL 完整链路尚未在旧 CPU 验收。DirectML 官方 Windows 10 1903 / DirectX 12 要求只是执行提供程序的基础条件，不等于整个包的最低系统验收结论。
 
@@ -43,7 +43,7 @@ NVIDIA 默认使用 FP32。通过 YAML 导入原始权重时，服务会按所�
 
 1. 将自己的 GPT `.ckpt`、SoVITS `.pth` 放在 `models/`，或保留在其他目录。
 2. 将所选后端的模板复制为 `configs/tts_infer.yaml`，填写 `t2s_weights_path` 和 `vits_weights_path`。CPU 使用 `tts_infer.example.yaml`，CUDA 和 DirectML 分别使用 `tts_infer.cuda.example.yaml` 和 `tts_infer.directml.example.yaml`。
-3. 双击 `start-server.bat`。首次启动会显示前端准备和权重转换进度。终端显示“服务就绪”后，可通过 `/health` 查看 `model_loaded`。
+3. 双击 `start-server.bat`。启动窗口显示实际配置路径，首次转换还会显示前端准备和权重转换进度。默认模式加载成功后显示“模型已加载”。看到“API 已启动”后，可通过 `/health` 查看 `model_loaded`。
 4. 按 [API V2 使用说明](api-v2-guide.md)提交 `/tts` 请求。首次使用新参考录音时会编码并缓存参考条件。合成过程中，终端会显示文本特征提取、GPT 采样及 SoVITS 合成。
 
 整合包自动转换用户选定的 V2ProPlus 权重。日英包支持日文和英文，中日英包另支持普通话。缺少启动配置时服务仍可接收状态查询，`/health` 会返回 `model_loaded: false`。

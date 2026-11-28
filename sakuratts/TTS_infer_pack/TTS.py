@@ -211,7 +211,7 @@ class Inference:
 
     def tts(self, request, *, on_fragment=None, cancel_requested=None):
         import time
-        from ..runtime.logging import compact, request_id, set_stage
+        from ..runtime.logging import compact, log_text, request_id, set_stage
         request = dict(request)
         if request["seed"] == -1:
             import secrets
@@ -223,9 +223,9 @@ class Inference:
             raise ValueError("Model weights are not loaded; supply --tts-config or a prepared model configuration")
         started = time.perf_counter()
         self._log_weights(announce=False)
-        self.logger.debug("参考音频 | %s | 语言=%s | 转写=%r", request["ref_audio_path"],
-                         request["prompt_lang"], request["prompt_text"])
         set_stage("参考准备")
+        self.logger.debug("参考音频 | %s", request["ref_audio_path"])
+        log_text(self.logger, f"参考转写 [{request['prompt_lang']}]", request["prompt_text"])
         reference = self.references.resolve(request["ref_audio_path"], request["prompt_text"], request["prompt_lang"])
         reference_ms = (time.perf_counter() - started) * 1000
         self.logger.info("参考    %s · 已准备", compact(Path(request["ref_audio_path"]).name))

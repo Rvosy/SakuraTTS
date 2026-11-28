@@ -1,8 +1,10 @@
 """Exercise HTTP validation, single-flight admission, and GPU thread ownership."""
 
 import importlib.util
+from pathlib import Path
 import shutil
 import subprocess
+import tempfile
 import threading
 import unittest
 from unittest.mock import patch
@@ -109,6 +111,18 @@ class ServerTests(unittest.TestCase):
             server.return_value.started = False
             with self.assertRaisesRegex(RuntimeError, "startup failed"):
                 start_server()
+
+    def test_startup_logs_the_configuration_read_by_the_managed_service(self):
+        from fastapi.testclient import TestClient
+        from sakuratts.server import create_app
+        with tempfile.TemporaryDirectory() as folder:
+            config = Path(folder) / "模型 配置.yaml"
+            config.write_text("sakuratts: {model: voice}", encoding="utf-8")
+            with self.assertLogs("sakuratts.server", level="INFO") as logs, \
+                    TestClient(create_app(tts_config=config, runtime_mode="managed")) as client:
+                self.assertTrue(client.get("/runtime").json()["model_configured"])
+                self.assertFalse(client.get("/health").json()["model_loaded"])
+            self.assertIn(f"配置  {config.resolve()}", [record.getMessage() for record in logs.records])
 
     @unittest.skipUnless(shutil.which("ffmpeg"), "FFmpeg is optional")
     def test_compressed_output_can_be_decoded_by_ffmpeg(self):
@@ -347,8 +361,12 @@ class ServerTests(unittest.TestCase):
     def test_empty_startup_has_no_backend_and_no_default_reference(self):
         from fastapi.testclient import TestClient
         from sakuratts.server import create_app
-        with patch("sakuratts.engine.Engine.load") as load, TestClient(create_app()) as client:
-            self.assertFalse(client.get("/health").json()["model_loaded"])
+        with self.assertLogs("sakuratts.server", level="INFO") as logs, \
+                patch("sakuratts.engine.Engine.load") as load, TestClient(create_app()) as client:
+            health = client.get("/health").json()
+            self.assertEqual(health["status"], "ready")
+            self.assertFalse(health["model_loaded"])
+            self.assertIn("尚未配置模型", "\n".join(logs.output))
             self.assertEqual(client.get("/models").json(), [])
             load.assert_not_called()
             self.assertEqual(client.post("/tts", json={"text": "a"}).status_code, 400)

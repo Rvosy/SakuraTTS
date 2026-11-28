@@ -12,7 +12,7 @@ import unittest
 import unicodedata
 from unittest.mock import patch
 
-from sakuratts.runtime.logging import request_id, request_scope, run_conversion, service_logging, terminal_progress_enabled
+from sakuratts.runtime.logging import log_text, request_id, request_scope, run_conversion, service_logging, terminal_progress_enabled
 
 
 class LoggingTests(unittest.TestCase):
@@ -27,9 +27,10 @@ class LoggingTests(unittest.TestCase):
                     patch("shutil.get_terminal_size", return_value=os.terminal_size((columns, 24))):
                 file = Path(folder) / "server.log"
                 with service_logging(file):
-                    logger.info("文本: %s", source, extra={"block": "text", "text": source})
+                    log_text(logger, "参考转写 [ja]", source)
                 details = file.read_text(encoding="utf-8")
             lines = console.getvalue().splitlines()
+            self.assertIn("  参考转写 [ja]", lines)
             content = [line for line in lines if line.startswith("    ")]
             widths = {sum(0 if unicodedata.combining(char) else
                           2 if unicodedata.east_asian_width(char) in ("W", "F") else 1 for char in line)

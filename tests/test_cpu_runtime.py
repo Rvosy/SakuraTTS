@@ -215,11 +215,32 @@ class CPURuntimeTests(unittest.TestCase):
         (package / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
         return package
 
-    def speech_request(self, inference):
+    def speech_request(self, inference, ref_audio_path="reference.wav"):
         with patch.object(inference.references, "resolve", return_value=self.reference):
-            return inference.tts(dict(text="test", text_lang="ja", ref_audio_path="reference.wav",
+            return inference.tts(dict(text="test", text_lang="ja", ref_audio_path=ref_audio_path,
                 prompt_lang="ja", prompt_text="reference", seed=1234, top_k=15, temperature=1.,
                 repetition_penalty=1.35, text_split_method="cut0", fragment_interval=0., split_bucket=False))
+
+    def test_default_terminal_shows_reference_and_normalized_fragments(self):
+        from sakuratts.runtime.logging import log_result, service_logging
+        frontend = self.frontend.text
+        fragment, = frontend.prepare_target("test", "ja", "cut0")
+        fragments = [dict(fragment, norm_text=text) for text in ("第一句。", "第二句。")]
+        console = io.StringIO()
+        log = self.root / "server.log"
+        reference_path = str(self.root / "reference.wav")
+        with patch.object(frontend, "prepare_target", return_value=fragments), \
+                patch("sys.stderr", console), service_logging(log), \
+                contextlib.closing(Inference(self.config, backend="cpu")) as inference:
+            log_result(self.speech_request(inference, ref_audio_path=reference_path))
+        visible = console.getvalue()
+        self.assertIn("参考转写 [ja]\n    reference", visible)
+        self.assertIn("分句 [1/2]\n    第一句。", visible)
+        self.assertIn("分句 [2/2]\n    第二句。", visible)
+        detailed = log.read_text(encoding="utf-8")
+        for diagnostic in ("请求参数:", "SHA256=", "reference_cache", reference_path):
+            self.assertNotIn(diagnostic, visible)
+            self.assertIn(diagnostic, detailed)
 
     def test_failed_switch_releases_candidate_before_restoring_previous_audio(self):
         with contextlib.closing(Inference(self.config, backend="cpu")) as inference:

@@ -2,7 +2,7 @@
 
 本包提供本地语音服务、CLI 和私有 Python。请准备有权使用的 GPT-SoVITS V2ProPlus 权重、参考音频和对应转写。日英版支持日语、英语和日英混读。中日英版另带普通话词典和模型，中文请求使用 `text_lang: "all_zh"`，中文参考转写使用 `prompt_lang: "all_zh"`。实际语言见 `runtime/portable.json` 的 `release.languages`。硬件和音质范围见[兼容矩阵](https://github.com/Rvosy/SakuraTTS/blob/main/docs/specs/compatibility-matrix.md)。
 
-发行组合记录在 `runtime/portable.json`：Windows 统一包由配置或启动参数选择 CPU、DirectML 或 NVIDIA CUDA；CPU/DirectML 共用主环境的 ORT，CUDA ORT 保留在私有 worker。无需预装 Python、Git、编译器或 CUDA Toolkit。GPU 模式需要兼容的系统驱动。CUDA 模式的 CuPy/NVRTC 要求英文安装目录（可含空格）；CPU/DirectML 模式允许中文和空格目录，具体路径仍需通过随包检查。CPU 首次 INT8 转换支持安装目录和 TEMP/TMP 同时包含中文，无需手动修改系统临时目录。完整安装路径为 ASCII 时，启动器沿用包内 cache/tmp；中文安装路径保留外部 TEMP/TMP。
+发行组合记录在 `runtime/portable.json`：Windows 统一包由配置或启动参数选择 CPU、DirectML 或 NVIDIA CUDA；CPU/DirectML 共用主环境的 ORT，CUDA ORT 保留在私有 worker。无需预装 Python、Git、编译器或 CUDA Toolkit。GPU 模式需要兼容的系统驱动。启动器依次按 `--backend`、YAML 的 `sakuratts.backend`、`custom.device`、发行包默认后端检查路径。选中 CUDA 时，CuPy/NVRTC 要求完整安装路径为 ASCII（可含空格）。CPU/DirectML 模式允许中文和空格目录，具体路径仍需通过随包检查。CPU 首次 INT8 转换支持安装目录和 TEMP/TMP 同时包含中文，无需手动修改系统临时目录。完整安装路径为 ASCII 时，启动器沿用包内 cache/tmp；中文安装路径保留外部 TEMP/TMP。
 
 本包面向 Windows 10/11 x64；随包 NumPy 2.4.6 要求 x86-64-v2 指令集，不能视为所有 x64 CPU 通用包。旧 CPU 的完整模型转换链尚未实测。DirectML 的官方基础条件是 Windows 10 1903 及 DirectX 12，这不代表整包已在该最低系统版本验收。代码不按 AMD/Intel 厂商限制硬件；目前真实 GPU 验收仅覆盖 Radeon 780M，Intel 与其他显卡仍需设备测试。
 
@@ -16,7 +16,7 @@ sakuratts.bat check-runtime --backend directml
 
 多显卡可追加 `--device-id 1`。检查按 DXGI 原编号选择设备，输出适配器名称和软件渲染器标记；DirectML 分别执行 FP32、FP16 矩阵运算并核对实际执行 provider，软件渲染器不能作为 GPU 通过。结果写入 `cache/runtime-check.json`；失败不会改用 CPU 伪装通过。它不验证声音模型或音质。检查失败时报告保留原始异常、所选设备和 Python 路径；可先用 `sakuratts.bat doctor --backend directml` 查看设备列表。若 Python 无法启动，检查是否完整解压、运行库 DLL 是否被隔离；无需另外安装 Python 或 Git。
 
-带 HTTP 的包可双击 `start-server.bat`，默认监听 `127.0.0.1:9880`。填写下节的模型配置后启动，看到“服务就绪”时可访问 `/health`。默认启动方式下，`model_loaded: true` 表示模型已加载。请求字段可在 `/docs` 查看。
+带 HTTP 的包可双击 `start-server.bat`，默认监听 `127.0.0.1:9880`。启动窗口显示实际配置路径。默认模式加载成功后显示“模型已加载”，控制模式配置了模型时显示“模型已配置，等待唤醒”，找不到模型配置且未指定模型时显示“尚未配置模型”。看到“API 已启动”后可访问 `/health` 查看 `model_loaded`。请求字段可在 `/docs` 查看。
 
 ## 原始模型与配置
 
@@ -53,7 +53,7 @@ start-server.bat models/voice-amd --backend directml
 curl.exe -X POST http://127.0.0.1:9880/tts -H "Content-Type: application/json" --data-raw '{"text":"こんにちは。","text_lang":"ja","ref_audio_path":"D:/Voices/reference.wav","prompt_text":"参考音声です。","prompt_lang":"ja","parallel_infer":false}' --output hello.wav
 ```
 
-首次参考编码由独立 CPU 准备进程完成，之后复用缓存。终端显示文本处理、语义 Token 预测和 SoVITS 合成的进度。查看参考转写和分句结果可用 `start-server.bat --log-level debug`，完整日志保存在 `logs/sakuratts.log`。完整字段和限制见 [API V2 使用说明](https://github.com/Rvosy/SakuraTTS/blob/main/docs/api-v2-guide.md)。
+首次参考编码由独立 CPU 准备进程完成，之后复用缓存。终端默认显示参考语言与转写、前端处理后的每句文本，以及语义 Token 预测和 SoVITS 合成的进度。查看完整请求参数和缓存来源可用 `start-server.bat --log-level debug`，完整日志保存在 `logs/sakuratts.log`。完整字段和限制见 [API V2 使用说明](https://github.com/Rvosy/SakuraTTS/blob/main/docs/api-v2-guide.md)。
 
 省略准备组件的精简包只使用已有转换模型和参考条件；需要转换原始权重或新参考时会明确提示缺少准备环境。构建和运行不会自动下载缺失模型或依赖。
 

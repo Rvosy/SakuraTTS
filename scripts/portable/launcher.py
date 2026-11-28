@@ -1,5 +1,6 @@
 """Launch the bundled interpreter and the selected release's private libraries."""
 
+import argparse
 import json
 import os
 from pathlib import Path
@@ -8,6 +9,25 @@ import runpy
 import sys
 
 ROOT = Path(__file__).resolve().parent
+
+
+def selected_backend(argv, default):
+    if argv[:1] == ["serve"]:
+        from sakuratts.cli import command_parser
+        from sakuratts.TTS_infer_pack.config import deployment_settings, find_tts_config, read_tts_config
+        args = command_parser().parse_args(argv)
+        if args.backend is not None:
+            return args.backend
+        path = find_tts_config(args.model, args.tts_config, ROOT)
+        if path is not None:
+            config = read_tts_config(path)
+            if "format" not in config:
+                return deployment_settings(config).get("backend", default)
+        return default
+    parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+    parser.add_argument("--backend", default=default)
+    args, _ = parser.parse_known_args(argv)
+    return args.backend
 
 
 def configure():
@@ -22,9 +42,8 @@ def configure():
         if tuple(map(int, platform.mac_ver()[0].split(".")[:2])) < tuple(map(int, release["minimum_macos"].split(".")[:2])):
             raise RuntimeError("This bundle requires macOS " + release["minimum_macos"] + " or later")
     cuda = "cuda" in release.get("backends", [release["backend"]])
-    selected_backend = sys.argv[sys.argv.index("--backend") + 1] if "--backend" in sys.argv and sys.argv.index("--backend") + 1 < len(sys.argv) else release["backend"]
-    if selected_backend == "cuda" and not str(ROOT).isascii():
-        raise RuntimeError("This preview requires an ASCII installation path (for example D:/SakuraTTS). Model paths may contain Unicode.")
+    if not str(ROOT).isascii() and selected_backend(sys.argv[1:], release["backend"]) == "cuda":
+        raise RuntimeError("CUDA requires an ASCII installation path (for example D:/SakuraTTS). Model paths may contain Unicode.")
     for key in list(os.environ):
         if key.upper().startswith(("CUDA_PATH", "CUDA_HOME", "PYTHONPATH", "PYTHONHOME", "DYLD_")):
             os.environ.pop(key)

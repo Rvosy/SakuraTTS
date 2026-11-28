@@ -18,7 +18,9 @@ SakuraTTS 提供 GPT-SoVITS API v2 的 GET / POST 合成接口。Windows 的 CPU
 python api_v2.py -a 127.0.0.1 -p 9880 -c configs/tts_infer.yaml
 ```
 
-默认地址是 `http://127.0.0.1:9880`。终端显示“服务就绪”后访问 `/health`，默认 `direct` 模式下 `model_loaded: true` 表示模型已加载。HTTP 能连通或 `status: "ready"` 只表示服务可以接收请求。浏览器访问 `/docs` 可查看请求字段。不传配置路径时，服务依次查找 `configs/tts_infer.yaml` 和 `GPT_SoVITS/configs/tts_infer.yaml`。两者都缺失时，服务以未加载模型的状态启动。
+默认地址是 `http://127.0.0.1:9880`。省略模型位置和 `-c` 时，服务依次查找 `configs/tts_infer.yaml` 和 `GPT_SoVITS/configs/tts_infer.yaml`。启动窗口显示选中的配置文件路径。模型就绪时，默认 `direct` 模式显示“模型已加载”。配置了模型的 `managed` 模式显示“模型已配置，等待唤醒”。没有模型配置时显示“尚未配置模型”。
+
+看到“API 已启动”后可访问 `/health`。空闲服务的 `status` 为 `ready`，模型加载状态由 `model_loaded` 给出。浏览器访问 `/docs` 可查看请求字段。
 
 转换原始权重和编码新参考录音需要准备组件。完整包自带独立解释器、所需官方源码和公共辅助资源，用户提供发声模型和参考录音。精简包可使用已有转换模型和匹配的参考条件，也可补装匹配的准备组件。导入原版 YAML 时，若 `is_half: true`，须另用 `--profile` 或 `sakuratts.profile` 选择 SakuraTTS 档位。[推理档位](inference-profiles.md)
 

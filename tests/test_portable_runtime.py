@@ -2,6 +2,7 @@
 
 import json
 import importlib.util
+from contextlib import nullcontext
 import os
 from pathlib import Path
 import shutil
@@ -69,6 +70,52 @@ class PortableRuntimeTests(unittest.TestCase):
                     else:
                         self.assertEqual(os.environ["TEMP"], external_temp)
                         self.assertEqual(os.environ["TMP"], external_tmp)
+
+    @unittest.skipUnless(importlib.util.find_spec("yaml"), "Install the server extra for YAML configurations")
+    def test_cuda_path_preflight_uses_the_selected_service_configuration(self):
+        from scripts.portable import launcher
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve() / "樱花 空格"
+            (root / "runtime").mkdir(parents=True)
+            (root / "runtime/portable.json").write_text(json.dumps({"release": {
+                "backend": "cpu", "backends": ["cpu", "directml", "cuda"]}}))
+            local = root / "configs/tts_infer.yaml"
+            original = root / "GPT_SoVITS/configs/tts_infer.yaml"
+            for path in (local, original):
+                path.parent.mkdir(parents=True)
+            original.write_text("custom: {device: cuda}", encoding="utf-8")
+            explicit = "我的 配置.yaml"
+            (root / explicit).write_text("sakuratts: {backend: cuda}\ncustom: {device: cpu}", encoding="utf-8")
+            with patch.object(launcher, "ROOT", root), patch.object(launcher.os, "chdir"), \
+                    patch.object(sys, "executable", str(root / "runtime/main/python.exe")), \
+                    patch.dict(os.environ, {}, clear=True):
+                with patch.object(sys, "argv", ["launcher.py", "serve"]), self.assertRaisesRegex(RuntimeError, "ASCII"):
+                    launcher.configure()
+                local.write_text("sakuratts: {backend: directml}\ncustom: {device: cuda}", encoding="utf-8")
+                for args, cuda in ((["serve", "-p", "9881"], False),
+                                   (["serve", "-c", explicit], True),
+                                   (["serve", "--tts-config", explicit], True),
+                                   (["serve", "--tts-config=" + explicit], True),
+                                   (["serve", "--backend=cuda"], True),
+                                   (["serve", "-c", explicit, "--backend", "cpu"], False),
+                                   (["check-runtime", "--backend=cuda"], True)):
+                    with self.subTest(args=args), patch.object(sys, "argv", ["launcher.py", *args]), \
+                            (self.assertRaisesRegex(RuntimeError, "ASCII") if cuda else nullcontext()):
+                        launcher.configure()
+                local.write_text("custom: {device: cuda}", encoding="utf-8")
+                with patch.object(sys, "argv", ["launcher.py", "serve"]), self.assertRaisesRegex(RuntimeError, "ASCII"):
+                    launcher.configure()
+                with patch.dict(sys.modules, {"yaml": None}):
+                    for args in (["serve", "prepared-model"], ["serve", "--backend=cpu"], ["check-runtime"]):
+                        with self.subTest(args=args), patch.object(sys, "argv", ["launcher.py", *args]):
+                            launcher.configure()
+                    local.unlink()
+                    original.unlink()
+                    with patch.object(sys, "argv", ["launcher.py", "serve"]):
+                        launcher.configure()
+                        (root / "runtime/portable.json").write_text(json.dumps({"release": {"backend": "cuda"}}))
+                        with self.assertRaisesRegex(RuntimeError, "ASCII"):
+                            launcher.configure()
 
     def test_unified_cpu_bundle_configures_cuda_libraries_and_external_cache(self):
         path = Path(__file__).resolve().parents[1] / "scripts/portable/launcher.py"

@@ -109,7 +109,9 @@ class ManagedServerTests(unittest.TestCase):
             def __init__(self, *args, **kwargs): pass
             def info(self): return {"name": "direct-test"}
             def close(self): pass
-        with patch("sakuratts.server.Inference", DirectInference), TestClient(create_app("model")) as client:
+        with self.assertLogs("sakuratts.server", level="INFO") as logs, \
+                patch("sakuratts.server.Inference", DirectInference), TestClient(create_app("model")) as client:
+            self.assertIn("模型已加载", "\n".join(logs.output))
             self.assertTrue(client.get("/health").json()["model_loaded"])
             self.assertEqual(client.get("/runtime").status_code, 404)
             self.assertEqual(client.post("/runtime/wake").status_code, 404)
@@ -119,9 +121,11 @@ class ManagedServerTests(unittest.TestCase):
         from fastapi.testclient import TestClient
         from sakuratts.server import create_app
         fake = process_double()
-        with patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
+        with self.assertLogs("sakuratts.server", level="INFO") as logs, \
+                patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
                 patch("sakuratts.server.Inference", side_effect=AssertionError("Direct engine was constructed")), \
                 TestClient(create_app("model", runtime_mode="managed")) as client:
+            self.assertIn("模型已配置，等待唤醒", "\n".join(logs.output))
             for _ in range(3):
                 status = client.get("/runtime").json()
                 self.assertEqual(status["state"], "sleeping")
@@ -139,8 +143,11 @@ class ManagedServerTests(unittest.TestCase):
         from fastapi.testclient import TestClient
         from sakuratts.server import create_app
         fake = process_double()
-        with patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
+        with self.assertLogs("sakuratts.server", level="INFO") as logs, \
+                patch("sakuratts.runtime.inference_process.ProcessInference", fake), \
                 TestClient(create_app(runtime_mode="managed")) as client:
+            self.assertIn("尚未配置模型", "\n".join(logs.output))
+            self.assertNotIn("等待唤醒", "\n".join(logs.output))
             self.assertFalse(client.get("/runtime").json()["model_configured"])
             self.assertEqual(client.post("/runtime/wake").status_code, 400)
             self.assertEqual(fake.wake_calls, 0)

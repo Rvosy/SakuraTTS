@@ -155,6 +155,8 @@ INT8 单独记录量化范围和生成序列变化。DirectML FP16 路径使用�
 
 HTTP 的 `runtime_mode` 默认 `direct`。省略新选项时，保留现有启动加载、专用线程所有权、默认精度、单请求 409、流式背压、断连取消与模型切换行为，不创建新的完整推理进程、不自动休眠，也不注册 `/runtime` 路由。运行模式与原有 `policy`、`acoustic_session_policy` 分别配置。总体 `policy="staged"` 仅允许显式启用的 `managed` 模式；`direct` 仍在启动时拒绝该策略。
 
+独立 HTTP 服务在启动时显示所用配置文件的路径。终端区分三种模型状态：已加载、已配置且等待唤醒、尚未配置。推理时以 INFO 显示参考语言、参考转写和前端规范化后的每句文本。完整请求参数、权重哈希与缓存来源以 DEBUG 写入诊断日志。
+
 显式 `managed` 模式将完整 `Inference` 和其下属工作进程放入可退出的进程树。控制服务启动后休眠，不加载 NumPy、GPU 计算库或文本前端；`wake` 提示或推理请求才启动推理进程，并按所选档位完成准备。相同准备中的唤醒合并，合成等待这次准备并占用唯一请求位置，不创建请求队列。所有引擎创建、计算、切换和关闭仍在推理进程的同一线程执行。活动操作阻止自动休眠，客户端取消不允许旧计算与新请求重叠。
 
 `GET /runtime` 和 `/health` 不唤醒模型、不续期保活。休眠时模型可以已配置但未加载，`model_loaded=false`。`awake` 表示所选档位准备完成：A / C / E 的 `preparation="model_load"`，模型加载步骤完成后 `model_loaded=true`；H 的 `preparation="runtime_init"`，仅保证推理进程、前端和配置已准备，GPU 权重在执行时错峰加载，因此 `model_loaded` 始终为 `false`，`model` 可返回已选模型信息。该字段不是逐时刻的显存计量，也不保证 E 档延迟创建的声学 Session 已驻留。`/health` 与 `/runtime` 使用相同的 `model_loaded` 含义，所有档位都不保证执行预热和未知参考条件已准备。

@@ -36,6 +36,10 @@ def set_stage(value):
         stage.set(value)
 
 
+def log_text(logger, label, text):
+    logger.info("%s: %s", label, text, extra={"block": "text", "label": label, "text": text})
+
+
 def compact(value, limit=160):
     value = str(value).replace("\r", "\\r").replace("\n", "\\n")
     value = "".join(char if char.isprintable() else " " for char in value)
@@ -101,22 +105,22 @@ class ConsoleFormatter(logging.Formatter):
         except (AttributeError, OSError, ValueError):
             return shutil.get_terminal_size((96, 24)).columns
 
-    def _text_block(self, value):
+    def _text_block(self, label, value):
         width = max(2, min(76, self._columns() - 5))
-        return "  文本\n" + "\n".join("    " + line for line in _wrap_columns(value, width))
+        return "  " + label + "\n" + "\n".join("    " + line for line in _wrap_columns(value, width))
 
     def format(self, record):
         level = record.levelno
         message = record.getMessage()
         block = getattr(record, "block", None)
         if block == "text":
-            return "\n" + self._text_block(record.text) + "\n"
+            return "\n" + self._text_block(getattr(record, "label", "文本"), record.text) + "\n"
         if record.name == "uvicorn.access":
             _, method, path, _, status = record.args
             message = f"HTTP {status} · {method} {str(path).split('?')[0]}"
             level = logging.ERROR if int(status) >= 500 else logging.WARNING
         elif record.name.startswith("uvicorn") and str(record.msg).startswith("Uvicorn running on"):
-            message = "服务就绪，按 Ctrl+C 停止。"
+            message = "API 已启动，按 Ctrl+C 停止。"
         elif record.exc_info and record.exc_info[1] is not None:
             if level >= logging.ERROR:
                 message += "\n" + self.formatException(record.exc_info)

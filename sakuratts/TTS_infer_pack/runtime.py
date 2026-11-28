@@ -9,7 +9,7 @@ import numpy as np
 
 from ..module.reference_condition import PreparedReference
 from .synthesis import prepare_text_request, generate_prepared_semantic, synthesize_acoustic
-from ..runtime.logging import set_stage
+from ..runtime.logging import log_text, set_stage
 
 logger = logging.getLogger("sakuratts.inference")
 
@@ -102,7 +102,7 @@ class InferenceRuntime:
             logger.debug("推理参数 | seed=%d | %s | %s | top_k=%d | temperature=%g | repetition_penalty=%g",
                         seed, language, split_method, top_k, temperature, repetition_penalty)
             logger.debug("切分文本并提取文本特征 | 输入: %r", text)
-            logger.info("文本: %s", text, extra={"block": "text", "text": text})
+            log_text(logger, "文本", text)
             set_stage("文本处理")
             logger.info("提取文本Bert特征")
             request = prepare_text_request(text,language,self.frontend,split_method=split_method)
@@ -117,13 +117,12 @@ class InferenceRuntime:
             if bucketed:
                 execution_order.sort(key=lambda index: len(request.fragments[index].target["norm_text"]))
             rng = np.random.default_rng(seed)
+            count = len(request.fragments)
             for index in execution_order:
                 prepared = request.fragments[index]
-                logger.debug("分句 %d/%d | %d 个音素 | 前端处理后的文本: %r",
-                            index + 1, len(request.fragments), len(prepared.target["phones"]),
-                            prepared.target["norm_text"])
-                if len(request.fragments) > 1:
-                    logger.info("片段 [%d/%d]", index + 1, len(request.fragments))
+                label = f"分句 [{index + 1}/{count}]" if count > 1 else "分句"
+                log_text(logger, label, prepared.target["norm_text"])
+                logger.debug("分句 %d/%d | %d 个音素", index + 1, count, len(prepared.target["phones"]))
                 self._load_gpt()
                 if self.policy != "staged":
                     self._load_sovits()

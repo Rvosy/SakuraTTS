@@ -30,7 +30,7 @@ def main(inference_factory=None):
             try:
                 send({"type": "log", "level": record.levelno, "logger": record.name,
                     "message": self.format(record),
-                    "extra": {key: getattr(record, key) for key in ("block", "text") if hasattr(record, key)}})
+                    "extra": {key: getattr(record, key) for key in ("block", "label", "text") if hasattr(record, key)}})
             except (OSError, ValueError):
                 pass
 

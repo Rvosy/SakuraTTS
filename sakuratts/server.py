@@ -7,6 +7,7 @@ from functools import partial
 import io
 import logging
 import math
+from pathlib import Path
 import shutil
 import subprocess
 import threading
@@ -192,6 +193,8 @@ def create_app(model=None, *, tts_config=None, backend=None, profile=None, exper
         app.state.inference = None
         app.state.runtime = None
         try:
+            if tts_config is not None:
+                logger.info("配置  %s", Path(tts_config).resolve())
             options = {"backend": backend} if backend is not None else {}
             if profile is not None:
                 options["profile"] = profile
@@ -206,11 +209,16 @@ def create_app(model=None, *, tts_config=None, backend=None, profile=None, exper
             app.state.inference = inference
             if runtime_mode == "managed":
                 app.state.runtime = ManagedRuntime(inference, pool, idle_sleep_seconds=idle_sleep_seconds)
-                logger.info("控制模式已启动，推理进程按需唤醒")
+                if inference.configured:
+                    logger.info("控制模式（managed）· 模型已配置，等待唤醒")
+                else:
+                    logger.warning("控制模式（managed）· 尚未配置模型，请通过 --tts-config 指定配置")
             else:
                 app.state.model_info = inference.info()
                 if app.state.model_info is None:
-                    logger.warning("尚未加载模型，请通过 --tts-config 指定配置")
+                    logger.warning("尚未配置模型，请通过 --tts-config 指定配置")
+                else:
+                    logger.info("模型已加载")
             logger.debug("No default reference audio. Specify ref_audio_path, prompt_text and prompt_lang in /tts.")
             yield
         finally:

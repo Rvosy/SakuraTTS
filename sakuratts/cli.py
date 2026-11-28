@@ -19,10 +19,7 @@ def positive_seconds(value):
     return seconds
 
 
-def main(argv=None):
-    for stream in (sys.stdout, sys.stderr):
-        if hasattr(stream, "reconfigure"):
-            stream.reconfigure(encoding="utf-8", errors="replace")
+def command_parser():
     parser = argparse.ArgumentParser(description="SakuraTTS: convert models, synthesize speech, and run a local service")
     try:
         version = metadata.version("sakuratts")
@@ -119,6 +116,14 @@ def main(argv=None):
                             help="Language of the reference transcript (default: ja)")
     conversion.add_argument("--name")
     conversion.add_argument("--output", type=Path, required=True)
+    return parser
+
+
+def main(argv=None):
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+    parser = command_parser()
     args = parser.parse_args(argv)
     if args.command == "capabilities":
         from .backends import available_backends
@@ -193,12 +198,8 @@ def run_product_command(args):
         if not 1 <= args.port <= 65535:
             raise ValueError("Port must be between 1 and 65535")
         from .server import start_server
-        config = args.tts_config
-        if config is None and args.model is None:
-            for candidate in (Path("configs/tts_infer.yaml"), Path("GPT_SoVITS/configs/tts_infer.yaml")):
-                if candidate.is_file():
-                    config = candidate
-                    break
+        from .TTS_infer_pack.config import find_tts_config
+        config = find_tts_config(args.model, args.tts_config)
         start_server(args.model, host=args.host, port=args.port, tts_config=config,
                      backend=args.backend, profile=args.profile, experimental=experimental, log_file=args.log_file,
                      log_level=args.log_level, runtime_mode=args.runtime_mode,
