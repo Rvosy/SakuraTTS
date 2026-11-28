@@ -211,13 +211,17 @@ class Plan:
         name, version = metadata["Name"], metadata["Version"]
         component = target + ":" + name
         self.components[component] = {"name": name, "version": version, "source": "local-installed-RECORD"}
-        site = site.resolve()
+        site_input = Path(os.path.abspath(site))
+        site = site_input.resolve()
         with (directory / "RECORD").open(encoding="utf-8", newline="") as stream:
             for entry, _, _ in csv.reader(stream):
-                path = Path(os.path.normpath(site / entry))
-                if not path.is_relative_to(site):
+                path = Path(os.path.normpath(site_input / entry))
+                if path.is_relative_to(site_input):
+                    local = path.relative_to(site_input)
+                elif path.is_relative_to(site):
+                    local = path.relative_to(site)
+                else:
                     continue  # Environment Scripts/include are not library payloads.
-                local = path.relative_to(site)
                 relative = local.as_posix()
                 if (relative.endswith((".pyc", ".pyo", ".pth")) or "__pycache__" in local.parts
                         or local.name in ("direct_url.json", "uv_cache.json", "uv_build.json")):
